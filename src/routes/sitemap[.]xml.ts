@@ -6,14 +6,7 @@ const BASE_URL = "https://grainhero.app";
 interface SitemapEntry {
   path: string;
   lastmod?: string;
-  changefreq?:
-    | "always"
-    | "hourly"
-    | "daily"
-    | "weekly"
-    | "monthly"
-    | "yearly"
-    | "never";
+  changefreq?: "always" | "hourly" | "daily" | "weekly" | "monthly" | "yearly" | "never";
   priority?: string;
 }
 
@@ -56,12 +49,8 @@ export const Route = createFileRoute("/sitemap.xml")({
             `  <url>`,
             `    <loc>${BASE_URL}${entry.path}</loc>`,
             entry.lastmod ? `    <lastmod>${entry.lastmod}</lastmod>` : null,
-            entry.changefreq
-              ? `    <changefreq>${entry.changefreq}</changefreq>`
-              : null,
-            entry.priority
-              ? `    <priority>${entry.priority}</priority>`
-              : null,
+            entry.changefreq ? `    <changefreq>${entry.changefreq}</changefreq>` : null,
+            entry.priority ? `    <priority>${entry.priority}</priority>` : null,
             `  </url>`,
           ]
             .filter(Boolean)

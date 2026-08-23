@@ -28,12 +28,14 @@ export type TimelineEntry = {
 export const getOrderAuditTimeline = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((d) =>
-    z.object({
-      orderId: z.string().uuid(),
-      sources: z.array(z.enum(["shipment_event", "order_event", "activity_log"])).optional(),
-      actorRole: z.string().optional(),
-      manualOnly: z.boolean().optional(),
-    }).parse(d),
+    z
+      .object({
+        orderId: z.string().uuid(),
+        sources: z.array(z.enum(["shipment_event", "order_event", "activity_log"])).optional(),
+        actorRole: z.string().optional(),
+        manualOnly: z.boolean().optional(),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -42,14 +44,23 @@ export const getOrderAuditTimeline = createServerFn({ method: "GET" })
     const { data: order } = await sb
       .from("buyer_orders")
       .select("id, admin_id, buyer_id, order_number, status")
-      .eq("id", data.orderId).maybeSingle();
+      .eq("id", data.orderId)
+      .maybeSingle();
     if (!order) throw new Error("Order not found");
     const { data: role } = await sb.rpc("get_my_role", { _user_id: context.userId });
     const isSuper = role === "super_admin";
-    const { data: prof } = await sb.from("profiles").select("admin_id").eq("id", context.userId).maybeSingle();
+    const { data: prof } = await sb
+      .from("profiles")
+      .select("admin_id")
+      .eq("id", context.userId)
+      .maybeSingle();
     const tenantAdminId = prof?.admin_id ?? context.userId;
     const isSeller = order.admin_id === tenantAdminId;
-    const { data: buyer } = await sb.from("buyer_accounts").select("id").eq("user_id", context.userId).maybeSingle();
+    const { data: buyer } = await sb
+      .from("buyer_accounts")
+      .select("id")
+      .eq("user_id", context.userId)
+      .maybeSingle();
     const isBuyer = buyer?.id && buyer.id === order.buyer_id;
     if (!isSuper && !isSeller && !isBuyer) throw new Error("Forbidden");
 
@@ -59,13 +70,17 @@ export const getOrderAuditTimeline = createServerFn({ method: "GET" })
 
     const [shipEvents, orderEvents, shipRows, activityRows] = await Promise.all([
       wantShip
-        ? sb.from("buyer_shipment_events")
-            .select("id, event_code, note, metadata, created_at, actor_id, actor_role, is_manual, shipment_id, buyer_shipments!inner(order_id)")
+        ? sb
+            .from("buyer_shipment_events")
+            .select(
+              "id, event_code, note, metadata, created_at, actor_id, actor_role, is_manual, shipment_id, buyer_shipments!inner(order_id)",
+            )
             .eq("buyer_shipments.order_id", data.orderId)
             .order("created_at", { ascending: false })
         : Promise.resolve({ data: [] }),
       wantOrder
-        ? sb.from("buyer_order_events")
+        ? sb
+            .from("buyer_order_events")
             .select("id, from_state, to_state, note, metadata, created_at, actor_id, actor_role")
             .eq("order_id", data.orderId)
             .order("created_at", { ascending: false })
@@ -74,8 +89,11 @@ export const getOrderAuditTimeline = createServerFn({ method: "GET" })
         ? sb.from("buyer_shipments").select("id").eq("order_id", data.orderId)
         : Promise.resolve({ data: [] }),
       wantActivity
-        ? sb.from("activity_logs")
-            .select("id, action, category, description, severity, user_role, user_name, metadata, created_at, entity_ref")
+        ? sb
+            .from("activity_logs")
+            .select(
+              "id, action, category, description, severity, user_role, user_name, metadata, created_at, entity_ref",
+            )
             .eq("entity_ref", data.orderId)
             .order("created_at", { ascending: false })
             .limit(200)
@@ -84,8 +102,8 @@ export const getOrderAuditTimeline = createServerFn({ method: "GET" })
 
     // Collect actor names lazily.
     const actorIds = new Set<string>();
-    for (const r of ((shipEvents.data ?? []) as Row[])) if (r.actor_id) actorIds.add(r.actor_id);
-    for (const r of ((orderEvents.data ?? []) as Row[])) if (r.actor_id) actorIds.add(r.actor_id);
+    for (const r of (shipEvents.data ?? []) as Row[]) if (r.actor_id) actorIds.add(r.actor_id);
+    for (const r of (orderEvents.data ?? []) as Row[]) if (r.actor_id) actorIds.add(r.actor_id);
     const { data: actors } = actorIds.size
       ? await sb.from("profiles").select("id, name, email").in("id", Array.from(actorIds))
       : { data: [] };
@@ -93,7 +111,7 @@ export const getOrderAuditTimeline = createServerFn({ method: "GET" })
 
     const merged: TimelineEntry[] = [];
 
-    for (const r of ((shipEvents.data ?? []) as Row[])) {
+    for (const r of (shipEvents.data ?? []) as Row[]) {
       if (data.manualOnly && !r.is_manual) continue;
       if (data.actorRole && r.actor_role && r.actor_role !== data.actorRole) continue;
       merged.push({
@@ -109,7 +127,7 @@ export const getOrderAuditTimeline = createServerFn({ method: "GET" })
         createdAt: r.created_at,
       });
     }
-    for (const r of ((orderEvents.data ?? []) as Row[])) {
+    for (const r of (orderEvents.data ?? []) as Row[]) {
       if (data.actorRole && r.actor_role && r.actor_role !== data.actorRole) continue;
       merged.push({
         id: `o-${r.id}`,
@@ -124,7 +142,7 @@ export const getOrderAuditTimeline = createServerFn({ method: "GET" })
         createdAt: r.created_at,
       });
     }
-    for (const r of ((activityRows.data ?? []) as Row[])) {
+    for (const r of (activityRows.data ?? []) as Row[]) {
       if (data.actorRole && r.user_role && r.user_role !== data.actorRole) continue;
       merged.push({
         id: `a-${r.id}`,

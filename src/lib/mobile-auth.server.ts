@@ -38,8 +38,10 @@ function stripBearer(key: string): typeof fetch {
       typeof Request !== "undefined" && input instanceof Request ? input.headers : undefined,
     );
     if (init?.headers) new Headers(init.headers).forEach((v, k) => headers.set(k, v));
-    if ((key.startsWith("sb_publishable_") || key.startsWith("sb_secret_")) &&
-        headers.get("Authorization") === `Bearer ${key}`) {
+    if (
+      (key.startsWith("sb_publishable_") || key.startsWith("sb_secret_")) &&
+      headers.get("Authorization") === `Bearer ${key}`
+    ) {
       headers.delete("Authorization");
     }
     headers.set("apikey", key);
@@ -78,19 +80,26 @@ export async function authenticateMobile(request: Request): Promise<MobileContex
 
   const build = Number(request.headers.get("x-app-build") ?? "0");
   if (build && build < settings.min_build) {
-    return bad(426, "upgrade_required", { min_build: settings.min_build, latest_build: settings.latest_build });
+    return bad(426, "upgrade_required", {
+      min_build: settings.min_build,
+      latest_build: settings.latest_build,
+    });
   }
 
   return { supabase, userId: data.claims.sub, settings };
 }
 
-export async function getMobileSettings(supabase: SupabaseClient<Database>): Promise<MobileSettings> {
+export async function getMobileSettings(
+  supabase: SupabaseClient<Database>,
+): Promise<MobileSettings> {
   const { data } = await supabase
     .from("platform_settings")
     .select("config")
     .eq("id", "singleton")
     .maybeSingle();
-  const cfg = ((data?.config ?? {}) as Record<string, unknown>).mobile as Partial<MobileSettings> | undefined;
+  const cfg = ((data?.config ?? {}) as Record<string, unknown>).mobile as
+    | Partial<MobileSettings>
+    | undefined;
   return { ...DEFAULTS, ...(cfg ?? {}) } as MobileSettings;
 }
 

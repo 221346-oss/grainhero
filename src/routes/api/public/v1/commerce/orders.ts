@@ -16,17 +16,27 @@ export const Route = createFileRoute("/api/public/v1/commerce/orders")({
         if (ctx instanceof Response) return ctx;
         const url = new URL(request.url);
         let q: z.infer<typeof querySchema>;
-        try { q = querySchema.parse(Object.fromEntries(url.searchParams)); }
-        catch (e) { return Response.json({ error: (e as Error).message }, { status: 400 }); }
+        try {
+          q = querySchema.parse(Object.fromEntries(url.searchParams));
+        } catch (e) {
+          return Response.json({ error: (e as Error).message }, { status: 400 });
+        }
 
         // buyer_orders.buyer_id references public.buyers(id); resolve via buyer_accounts.
-        const { data: acct } = await ctx.supabase.from("buyer_accounts")
-          .select("buyer_id").eq("user_id", ctx.userId).maybeSingle();
+        const { data: acct } = await ctx.supabase
+          .from("buyer_accounts")
+          .select("buyer_id")
+          .eq("user_id", ctx.userId)
+          .maybeSingle();
         const buyerId = (acct as { buyer_id: string } | null)?.buyer_id;
-        if (!buyerId) return Response.json({ data: [], meta: { version: "v1", next_cursor: null } });
+        if (!buyerId)
+          return Response.json({ data: [], meta: { version: "v1", next_cursor: null } });
 
-        let query = ctx.supabase.from("buyer_orders")
-          .select("id, order_number, status, subtotal, currency, quantity_kg, listing_id, admin_id, channel, created_at, paid_at, dispatched_at, delivered_at, cancelled_at")
+        let query = ctx.supabase
+          .from("buyer_orders")
+          .select(
+            "id, order_number, status, subtotal, currency, quantity_kg, listing_id, admin_id, channel, created_at, paid_at, dispatched_at, delivered_at, cancelled_at",
+          )
           .eq("buyer_id", buyerId)
           .order("created_at", { ascending: false })
           .limit(q.limit + 1);

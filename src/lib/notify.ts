@@ -81,7 +81,10 @@ export async function emitBulk(
   if (!unique.length) return;
   try {
     const rows = unique.map((r) => row({ ...base, recipientId: r }));
-    const { data, error } = await sb.from("notifications").insert(rows as never).select("id");
+    const { data, error } = await sb
+      .from("notifications")
+      .insert(rows as never)
+      .select("id");
     if (error) console.warn("[notify] bulk insert failed", error.message);
     const ids = (data as Array<{ id: string }> | null)?.map((r) => r.id) ?? [];
     if (ids.length) void fanOut(ids);
@@ -138,18 +141,16 @@ export async function emitToSuperAdmins(
   sb: SB,
   base: Omit<NotifInput, "recipientId" | "tenantAdminId">,
 ): Promise<void> {
-  const { data } = await sb
-    .from("user_roles")
-    .select("user_id")
-    .eq("role", "super_admin");
+  const { data } = await sb.from("user_roles").select("user_id").eq("role", "super_admin");
   const ids = (data ?? []).map((r: { user_id: string }) => r.user_id);
   if (!ids.length) return;
   // Each super-admin is their own tenant for admin_id purposes.
-  const rows = ids.map((id: string) =>
-    row({ ...base, recipientId: id, tenantAdminId: id }),
-  );
+  const rows = ids.map((id: string) => row({ ...base, recipientId: id, tenantAdminId: id }));
   try {
-    const { data, error } = await sb.from("notifications").insert(rows as never).select("id");
+    const { data, error } = await sb
+      .from("notifications")
+      .insert(rows as never)
+      .select("id");
     if (error) console.warn("[notify] super-admin fan-out failed", error.message);
     const ids = (data as Array<{ id: string }> | null)?.map((r) => r.id) ?? [];
     if (ids.length) void fanOut(ids);
@@ -166,9 +167,13 @@ async function fanOut(ids: string[]) {
   try {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { dispatchNotification } = await import("@/lib/notify-dispatch.server");
-    await Promise.all(ids.map((id) => dispatchNotification(supabaseAdmin, id).catch((e) => {
-      console.warn("[notify] dispatch failed", id, (e as Error).message);
-    })));
+    await Promise.all(
+      ids.map((id) =>
+        dispatchNotification(supabaseAdmin, id).catch((e) => {
+          console.warn("[notify] dispatch failed", id, (e as Error).message);
+        }),
+      ),
+    );
   } catch (e) {
     console.warn("[notify] fanOut init failed", (e as Error).message);
   }

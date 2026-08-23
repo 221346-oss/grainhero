@@ -15,7 +15,11 @@ export const listDeepLinks = createServerFn({ method: "GET" })
 
 const upsertSchema = z.object({
   id: z.string().uuid().optional(),
-  key: z.string().min(1).max(120).regex(/^[a-z0-9._-]+$/),
+  key: z
+    .string()
+    .min(1)
+    .max(120)
+    .regex(/^[a-z0-9._-]+$/),
   native_route: z.string().min(1).max(300),
   web_fallback: z.string().min(1).max(300),
   description: z.string().max(500).optional(),
@@ -41,7 +45,10 @@ export const deleteDeepLink = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { isSuperAdmin } = await import("./rbac.server");
     if (!(await isSuperAdmin(context.supabase, context.userId))) throw new Error("Forbidden");
-    const { error } = await context.supabase.from("mobile_deep_link_routes").delete().eq("id", data.id);
+    const { error } = await context.supabase
+      .from("mobile_deep_link_routes")
+      .delete()
+      .eq("id", data.id);
     if (error) throw error;
     return { ok: true };
   });

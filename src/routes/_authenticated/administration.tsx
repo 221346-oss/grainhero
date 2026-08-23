@@ -43,7 +43,9 @@ function AdministrationWorkspace() {
   const { tab } = Route.useSearch();
   const navigate = Route.useNavigate();
   const [activeTab, setActiveTabState] = useState<Tab>(tab);
-  useEffect(() => { setActiveTabState(tab); }, [tab]);
+  useEffect(() => {
+    setActiveTabState(tab);
+  }, [tab]);
   function setActiveTab(next: Tab) {
     setActiveTabState(next);
     navigate({ search: { tab: next } });
@@ -87,7 +89,14 @@ function AdministrationWorkspace() {
   });
   const { data: activityData } = useQuery({
     queryKey: ["activity-logs-overview"],
-    queryFn: () => fetchActivityLogs({ page: 1, limit: 1000, search: "", category: null, severity: null } as any),
+    queryFn: () =>
+      fetchActivityLogs({
+        page: 1,
+        limit: 1000,
+        search: "",
+        category: null,
+        severity: null,
+      } as any),
   });
 
   const memberList = (members ?? []) as any[];
@@ -95,7 +104,7 @@ function AdministrationWorkspace() {
   const securityEvents = security?.logs?.length ?? 0;
 
   const counts = {
-    team:     memberList.length,
+    team: memberList.length,
     security: securityEvents,
     activity: 0,
     reports: 0,
@@ -104,9 +113,9 @@ function AdministrationWorkspace() {
   const maxCount = Math.max(...Object.values(counts), 1);
 
   const stats = [
-    { label: "Team Members",   value: memberList.length,  up: true },
-    { label: "Pending Invites",value: pendingMembers,      up: pendingMembers === 0 },
-    { label: "Security Events",value: securityEvents,      up: securityEvents === 0 },
+    { label: "Team Members", value: memberList.length, up: true },
+    { label: "Pending Invites", value: pendingMembers, up: pendingMembers === 0 },
+    { label: "Security Events", value: securityEvents, up: securityEvents === 0 },
   ];
 
   return (
@@ -173,7 +182,9 @@ function AdministrationWorkspace() {
                     />
                     <span
                       className={`text-xs px-1.5 py-0.5 rounded-full font-mono transition-colors ${
-                        isActive ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground/60"
+                        isActive
+                          ? "bg-primary/20 text-primary"
+                          : "bg-muted text-muted-foreground/60"
                       }`}
                     >
                       {counts[tab.key]}
@@ -193,7 +204,7 @@ function AdministrationWorkspace() {
 
           {/* Tab Content */}
           <div className="p-4 md:p-6">
-            {activeTab === "team"     && <TeamSection />}
+            {activeTab === "team" && <TeamSection />}
             {activeTab === "security" && <SecuritySection />}
             {activeTab === "activity" && <ActivityLogsSection />}
             {activeTab === "reports" && <ReportsSection />}

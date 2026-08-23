@@ -5,11 +5,37 @@ import { Link as RouterLink } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { getPlatformMetrics, getPlatformOverviewWidgets } from "@/lib/platform-no-admin.functions";
 import { listTickets, type TicketRow } from "@/lib/tickets.functions";
-import { 
-  Menu, Bell, X, TrendingUp, AlertTriangle, CheckCircle2,
-  Activity, GitBranch, Settings, Moon, Grid3x3, Check, Home, Package, DollarSign, Users,
-  MoreHorizontal, Ticket, ChevronDown, BarChart3, Shield, FileText, Zap, Inbox,
-  Building2, Briefcase, HeartHandshake, Lock, Rocket, Link as LinkIcon
+import {
+  Menu,
+  Bell,
+  X,
+  TrendingUp,
+  AlertTriangle,
+  CheckCircle2,
+  Activity,
+  GitBranch,
+  Settings,
+  Moon,
+  Grid3x3,
+  Check,
+  Home,
+  Package,
+  DollarSign,
+  Users,
+  MoreHorizontal,
+  Ticket,
+  ChevronDown,
+  BarChart3,
+  Shield,
+  FileText,
+  Zap,
+  Inbox,
+  Building2,
+  Briefcase,
+  HeartHandshake,
+  Lock,
+  Rocket,
+  Link as LinkIcon,
 } from "lucide-react";
 
 type NavGroup = {
@@ -27,7 +53,7 @@ import { TicketDetailSheet } from "@/components/app/tickets/TicketDetailSheet";
 
 export function SuperAdminDashboardMobile({ name }: { name?: string }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [sidebarView, setSidebarView] = useState<'navigation' | 'tickets'>('navigation');
+  const [sidebarView, setSidebarView] = useState<"navigation" | "tickets">("navigation");
   const [selectedTicket, setSelectedTicket] = useState<TicketRow | null>(null);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
     primary: true,
@@ -76,7 +102,12 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
         { id: "reporting", label: "Reporting", icon: BarChart3, link: "/platform/reporting" },
         { id: "metrics", label: "Metrics", icon: TrendingUp, link: "/platform/metrics" },
         { id: "key-metrics", label: "Key Metrics", icon: Grid3x3, link: "/platform/key-metrics" },
-        { id: "dispatch-analytics", label: "Dispatch Analytics", icon: Activity, link: "/platform/dispatch-analytics" },
+        {
+          id: "dispatch-analytics",
+          label: "Dispatch Analytics",
+          icon: Activity,
+          link: "/platform/dispatch-analytics",
+        },
       ],
     },
     {
@@ -84,7 +115,12 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
       items: [
         { id: "health", label: "Health", icon: Activity, link: "/platform/health" },
         { id: "monitoring", label: "Monitoring", icon: Activity, link: "/platform/monitoring" },
-        { id: "field-incidents", label: "Field Incidents", icon: AlertTriangle, link: "/monitoring" },
+        {
+          id: "field-incidents",
+          label: "Field Incidents",
+          icon: AlertTriangle,
+          link: "/monitoring",
+        },
       ],
     },
     {
@@ -92,7 +128,12 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
       items: [
         { id: "order-details", label: "Order Details", icon: Package, link: "/platform/orders" },
         { id: "disputes", label: "Disputes", icon: Shield, link: "/platform/disputes" },
-        { id: "invoice-failures", label: "Invoice Failures", icon: FileText, link: "/platform/invoice-failures" },
+        {
+          id: "invoice-failures",
+          label: "Invoice Failures",
+          icon: FileText,
+          link: "/platform/invoice-failures",
+        },
       ],
     },
     {
@@ -106,8 +147,18 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
       label: "LOGISTICS",
       items: [
         { id: "logistics-fleet", label: "Fleet", icon: Package, link: "/platform/logistics/fleet" },
-        { id: "logistics-carriers", label: "Carriers", icon: Package, link: "/platform/logistics/carriers" },
-        { id: "logistics-cc", label: "Command Center", icon: Zap, link: "/platform/logistics/command-center" },
+        {
+          id: "logistics-carriers",
+          label: "Carriers",
+          icon: Package,
+          link: "/platform/logistics/carriers",
+        },
+        {
+          id: "logistics-cc",
+          label: "Command Center",
+          icon: Zap,
+          link: "/platform/logistics/command-center",
+        },
       ],
     },
     {
@@ -121,9 +172,24 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
     {
       label: "MARKETPLACE",
       items: [
-        { id: "marketplace-mobile", label: "Mobile", icon: Package, link: "/platform/marketplace-mobile" },
-        { id: "marketplace-health", label: "Health", icon: Activity, link: "/platform/marketplace-health" },
-        { id: "marketplace-settings", label: "Settings", icon: Settings, link: "/platform/marketplace-settings" },
+        {
+          id: "marketplace-mobile",
+          label: "Mobile",
+          icon: Package,
+          link: "/platform/marketplace-mobile",
+        },
+        {
+          id: "marketplace-health",
+          label: "Health",
+          icon: Activity,
+          link: "/platform/marketplace-health",
+        },
+        {
+          id: "marketplace-settings",
+          label: "Settings",
+          icon: Settings,
+          link: "/platform/marketplace-settings",
+        },
         { id: "reviews", label: "Reviews", icon: BarChart3, link: "/platform/reviews" },
         { id: "sellers", label: "Sellers", icon: Users, link: "/platform/sellers" },
         { id: "quality", label: "Quality", icon: Check, link: "/platform/quality" },
@@ -132,10 +198,30 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
     {
       label: "MOBILE",
       items: [
-        { id: "mobile-settings", label: "Settings", icon: Settings, link: "/platform/mobile-settings" },
-        { id: "mobile-push", label: "Push Diagnostics", icon: Zap, link: "/platform/mobile-push-diagnostics" },
-        { id: "mobile-sync", label: "Sync Monitor", icon: Activity, link: "/platform/mobile-sync-monitor" },
-        { id: "mobile-deep-links", label: "Deep Links", icon: LinkIcon, link: "/platform/mobile-deep-links" },
+        {
+          id: "mobile-settings",
+          label: "Settings",
+          icon: Settings,
+          link: "/platform/mobile-settings",
+        },
+        {
+          id: "mobile-push",
+          label: "Push Diagnostics",
+          icon: Zap,
+          link: "/platform/mobile-push-diagnostics",
+        },
+        {
+          id: "mobile-sync",
+          label: "Sync Monitor",
+          icon: Activity,
+          link: "/platform/mobile-sync-monitor",
+        },
+        {
+          id: "mobile-deep-links",
+          label: "Deep Links",
+          icon: LinkIcon,
+          link: "/platform/mobile-deep-links",
+        },
       ],
     },
     {
@@ -143,12 +229,37 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
       items: [
         { id: "audit-logs", label: "Audit Logs", icon: FileText, link: "/platform/audit-logs" },
         { id: "logs", label: "System Logs", icon: FileText, link: "/platform/logs" },
-        { id: "env-health", label: "Environment Health", icon: Activity, link: "/platform/env-health" },
-        { id: "silo-requests", label: "Silo Requests", icon: Building2, link: "/platform/silo-requests" },
-        { id: "field-settings", label: "Field Settings", icon: Settings, link: "/platform/field-settings" },
+        {
+          id: "env-health",
+          label: "Environment Health",
+          icon: Activity,
+          link: "/platform/env-health",
+        },
+        {
+          id: "silo-requests",
+          label: "Silo Requests",
+          icon: Building2,
+          link: "/platform/silo-requests",
+        },
+        {
+          id: "field-settings",
+          label: "Field Settings",
+          icon: Settings,
+          link: "/platform/field-settings",
+        },
         { id: "messages", label: "Messages", icon: FileText, link: "/platform/messages" },
-        { id: "sla-alerts", label: "SLA Alerts", icon: AlertTriangle, link: "/platform/sla-alerts" },
-        { id: "launch-readiness", label: "Launch Readiness", icon: Rocket, link: "/platform/launch-readiness" },
+        {
+          id: "sla-alerts",
+          label: "SLA Alerts",
+          icon: AlertTriangle,
+          link: "/platform/sla-alerts",
+        },
+        {
+          id: "launch-readiness",
+          label: "Launch Readiness",
+          icon: Rocket,
+          link: "/platform/launch-readiness",
+        },
       ],
     },
   ];
@@ -156,12 +267,12 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
   // Lock body scroll when sidebar is open
   useEffect(() => {
     if (sidebarOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
     }
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
     };
   }, [sidebarOpen]);
 
@@ -178,7 +289,9 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
         qc.invalidateQueries({ queryKey: ["platform-widgets"] });
       })
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [qc]);
 
   const { data: m } = useQuery({
@@ -194,7 +307,7 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
   });
 
   const reporting = w?.reportingStats ?? { totalTickets: 0 };
-  
+
   // Fetch tickets for the mobile tickets panel - Only OPEN tickets
   const ticketsFn = useServerFn(listTickets);
   const { data: ticketData } = useQuery({
@@ -205,9 +318,18 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
   const allTickets = ticketData?.tickets ?? [];
 
   const toggleGroup = (groupLabel: string) => {
-    setExpandedGroups(prev => ({
+    setExpandedGroups((prev) => ({
       ...prev,
-      [groupLabel.toLowerCase().replace(/\s+&\s+/g, '-').replace(/\s+/g, '-')]: !prev[groupLabel.toLowerCase().replace(/\s+&\s+/g, '-').replace(/\s+/g, '-')]
+      [groupLabel
+        .toLowerCase()
+        .replace(/\s+&\s+/g, "-")
+        .replace(/\s+/g, "-")]:
+        !prev[
+          groupLabel
+            .toLowerCase()
+            .replace(/\s+&\s+/g, "-")
+            .replace(/\s+/g, "-")
+        ],
     }));
   };
 
@@ -217,15 +339,15 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
       {sidebarOpen && (
         <>
           {/* Backdrop */}
-          <div 
+          <div
             className="fixed inset-0 bg-black/50 z-50"
             onClick={() => setSidebarOpen(false)}
           ></div>
-          
+
           {/* Drawer */}
           <div className="fixed top-0 left-0 bottom-0 w-80 max-w-[85vw] bg-background border-r z-50 overflow-y-auto">
             <div className="sticky top-0 bg-background border-b px-4 py-4 flex items-center justify-between">
-              {sidebarView === 'navigation' ? (
+              {sidebarView === "navigation" ? (
                 <>
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-lg bg-success flex items-center justify-center">
@@ -233,7 +355,7 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
                     </div>
                     <span className="font-semibold text-foreground">GrainHero</span>
                   </div>
-                  <button 
+                  <button
                     onClick={() => setSidebarOpen(false)}
                     className="p-2 hover:bg-muted rounded-lg transition-colors"
                   >
@@ -244,7 +366,7 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
                 <>
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => setSidebarView('navigation')}
+                      onClick={() => setSidebarView("navigation")}
                       className="p-2 hover:bg-muted rounded-lg transition-colors"
                       aria-label="Back to navigation"
                     >
@@ -252,7 +374,7 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
                     </button>
                     <span className="font-semibold text-foreground">Tickets</span>
                   </div>
-                  <button 
+                  <button
                     onClick={() => setSidebarOpen(false)}
                     className="p-2 hover:bg-muted rounded-lg transition-colors"
                   >
@@ -261,14 +383,17 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
                 </>
               )}
             </div>
-            
+
             <div className="py-1">
-              {sidebarView === 'navigation' ? (
+              {sidebarView === "navigation" ? (
                 // Navigation Groups - Compact Design
                 navigationGroups.map((group, idx) => {
-                  const groupKey = group.label.toLowerCase().replace(/\s+&\s+/g, '-').replace(/\s+/g, '-');
-                  const isExpanded = expandedGroups[groupKey] ?? (idx === 0); // Primary is expanded by default
-                  
+                  const groupKey = group.label
+                    .toLowerCase()
+                    .replace(/\s+&\s+/g, "-")
+                    .replace(/\s+/g, "-");
+                  const isExpanded = expandedGroups[groupKey] ?? idx === 0; // Primary is expanded by default
+
                   return (
                     <div key={group.label} className="mb-1">
                       <button
@@ -278,11 +403,11 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
                         <span className="text-xs font-semibold text-muted-foreground">
                           {group.label}
                         </span>
-                        <ChevronDown 
-                          className={`w-3.5 h-3.5 text-muted-foreground transition-transform flex-shrink-0 ${isExpanded ? 'rotate-0' : '-rotate-90'}`}
+                        <ChevronDown
+                          className={`w-3.5 h-3.5 text-muted-foreground transition-transform flex-shrink-0 ${isExpanded ? "rotate-0" : "-rotate-90"}`}
                         />
                       </button>
-                      
+
                       {isExpanded && (
                         <div className="px-1 py-0.5">
                           {group.items.map((item) => (
@@ -305,7 +430,9 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
                 // Tickets View - List all tickets
                 <div className="space-y-1">
                   <div className="px-4 py-3 border-b">
-                    <p className="text-xs text-muted-foreground">Open incident tickets from all admins</p>
+                    <p className="text-xs text-muted-foreground">
+                      Open incident tickets from all admins
+                    </p>
                   </div>
                   {allTickets.length === 0 ? (
                     <div className="px-4 py-8 text-center">
@@ -319,7 +446,9 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
                         className="w-full text-left px-4 py-2.5 border-b border-border/30 hover:bg-muted/50 transition-colors"
                       >
                         <div className="flex items-start justify-between gap-2 mb-1">
-                          <h4 className="text-sm font-medium text-foreground line-clamp-1">{ticket.title}</h4>
+                          <h4 className="text-sm font-medium text-foreground line-clamp-1">
+                            {ticket.title}
+                          </h4>
                           <Badge variant="outline" className="text-xs shrink-0">
                             {ticket.priority}
                           </Badge>
@@ -338,14 +467,15 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
       )}
 
       {/* Main Content - Responsive web view, NO bottom nav tabs */}
-      <div className="w-full px-4 space-y-4 pb-6"
-           style={{ width: '100%', maxWidth: '100%' }}>
+      <div className="w-full px-4 space-y-4 pb-6" style={{ width: "100%", maxWidth: "100%" }}>
         {/* Welcome Banner */}
         <div className="mb-2">
           <h1 className="text-lg font-semibold text-foreground">
-            Welcome back{name ? `, ${name.split(' ')[0]}` : ''}
+            Welcome back{name ? `, ${name.split(" ")[0]}` : ""}
           </h1>
-          <p className="text-sm text-muted-foreground">Here's what's happening with your platform</p>
+          <p className="text-sm text-muted-foreground">
+            Here's what's happening with your platform
+          </p>
         </div>
 
         {/* 1. Platform Performance */}
@@ -358,7 +488,7 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
               </div>
               <Activity className="w-4 h-4 text-muted-foreground" />
             </div>
-            
+
             <div className="space-y-3">
               <div>
                 <div className="flex items-center justify-between mb-1.5">
@@ -366,27 +496,27 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
                   <span className="text-sm font-bold text-warning">85%</span>
                 </div>
                 <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                  <div className="h-full bg-warning rounded-full" style={{ width: '85%' }}></div>
+                  <div className="h-full bg-warning rounded-full" style={{ width: "85%" }}></div>
                 </div>
               </div>
-              
+
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-xs text-muted-foreground">API Uptime</span>
                   <span className="text-sm font-bold text-success">99.2%</span>
                 </div>
                 <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                  <div className="h-full bg-success rounded-full" style={{ width: '99.2%' }}></div>
+                  <div className="h-full bg-success rounded-full" style={{ width: "99.2%" }}></div>
                 </div>
               </div>
-              
+
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-xs text-muted-foreground">DB Performance</span>
                   <span className="text-sm font-bold text-info">92%</span>
                 </div>
                 <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                  <div className="h-full bg-info rounded-full" style={{ width: '92%' }}></div>
+                  <div className="h-full bg-info rounded-full" style={{ width: "92%" }}></div>
                 </div>
               </div>
             </div>
@@ -403,9 +533,9 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
               </div>
               <DollarSign className="w-4 h-4 text-success" />
             </div>
-            
+
             <div className="text-3xl font-bold text-success mb-2">Rs 24,888</div>
-            
+
             <div className="relative h-16 rounded-md overflow-hidden">
               <svg className="w-full h-full" viewBox="0 0 300 80" preserveAspectRatio="none">
                 <defs>
@@ -414,8 +544,18 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
                     <stop offset="100%" stopColor="hsl(var(--success))" stopOpacity="0" />
                   </linearGradient>
                 </defs>
-                <path d="M 0 60 Q 75 30 150 20 T 300 45 L 300 80 L 0 80" fill="url(#revGradMobile)" stroke="none" />
-                <path d="M 0 60 Q 75 30 150 20 T 300 45" stroke="hsl(var(--success))" strokeWidth="1.5" fill="none" strokeOpacity="0.5" />
+                <path
+                  d="M 0 60 Q 75 30 150 20 T 300 45 L 300 80 L 0 80"
+                  fill="url(#revGradMobile)"
+                  stroke="none"
+                />
+                <path
+                  d="M 0 60 Q 75 30 150 20 T 300 45"
+                  stroke="hsl(var(--success))"
+                  strokeWidth="1.5"
+                  fill="none"
+                  strokeOpacity="0.5"
+                />
               </svg>
             </div>
           </div>
@@ -429,21 +569,21 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
               <div className="text-2xl font-bold text-foreground">{m?.totalTenants ?? 9}</div>
             </div>
           </RouterLink>
-          
+
           <RouterLink to="/platform/users">
             <div className="bg-background rounded-xl p-3 hover:bg-muted/20 transition-colors">
               <div className="text-xs text-muted-foreground mb-1">Users</div>
               <div className="text-2xl font-bold text-foreground">{m?.totalUsers ?? 29}</div>
             </div>
           </RouterLink>
-          
+
           <RouterLink to="/platform/plans">
             <div className="bg-background rounded-xl p-3 hover:bg-muted/20 transition-colors">
               <div className="text-xs text-muted-foreground mb-1">Active Subs</div>
               <div className="text-2xl font-bold text-success">{m?.activeSubscriptions ?? 27}</div>
             </div>
           </RouterLink>
-          
+
           <RouterLink to="/platform/orders">
             <div className="bg-background rounded-xl p-3 hover:bg-muted/20 transition-colors">
               <div className="text-xs text-muted-foreground mb-1">Orders</div>
@@ -458,7 +598,9 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-xs text-muted-foreground mb-1">Critical Alerts</div>
-                <div className={`text-2xl font-bold ${(m?.criticalAlerts ?? 0) > 0 ? 'text-severity-critical' : 'text-success'}`}>
+                <div
+                  className={`text-2xl font-bold ${(m?.criticalAlerts ?? 0) > 0 ? "text-severity-critical" : "text-success"}`}
+                >
                   {m?.criticalAlerts ?? 0}
                 </div>
               </div>
@@ -469,7 +611,7 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
               )}
             </div>
             <div className="mt-2 text-xs text-muted-foreground">
-              {(m?.criticalAlerts ?? 0) === 0 ? 'All systems healthy' : 'Needs attention'}
+              {(m?.criticalAlerts ?? 0) === 0 ? "All systems healthy" : "Needs attention"}
             </div>
           </div>
         </RouterLink>
@@ -487,7 +629,7 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
               <div className="text-xs text-success mt-0.5">+{w?.wowDelta ?? 33}% WoW</div>
             </div>
           </RouterLink>
-          
+
           <RouterLink to="/platform/reporting" search={{ tab: "hardware" }}>
             <div className="bg-background rounded-xl p-3 hover:bg-muted/20 transition-colors">
               <div className="flex items-center justify-between mb-2">
@@ -498,7 +640,7 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
               <div className="text-xs text-muted-foreground mt-0.5">Open tickets</div>
             </div>
           </RouterLink>
-          
+
           <RouterLink to="/platform/pipeline">
             <div className="bg-background rounded-xl p-3 hover:bg-muted/20 transition-colors">
               <div className="flex items-center justify-between mb-2">
@@ -509,7 +651,7 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
               <div className="text-xs text-muted-foreground mt-0.5">CRM contacts</div>
             </div>
           </RouterLink>
-          
+
           <RouterLink to="/platform/health">
             <div className="bg-background rounded-xl p-3 hover:bg-muted/20 transition-colors">
               <div className="flex items-center justify-between mb-2">
@@ -527,31 +669,38 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
           <div className="flex items-center justify-between mb-3">
             <div>
               <h3 className="text-sm font-medium text-foreground">Recent Signups</h3>
-              <p className="text-xs text-muted-foreground mt-0.5">{(w?.recentSignups ?? []).length} total</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {(w?.recentSignups ?? []).length} total
+              </p>
             </div>
             <RouterLink to="/platform/users" className="text-xs text-primary hover:underline">
               View all
             </RouterLink>
           </div>
-          
+
           <div className="space-y-2">
             {(w?.recentSignups ?? []).slice(0, 6).map((signup) => (
-              <div key={signup.id} className="flex items-center gap-2 p-2 hover:bg-muted/30 rounded-lg transition-colors">
+              <div
+                key={signup.id}
+                className="flex items-center gap-2 p-2 hover:bg-muted/30 rounded-lg transition-colors"
+              >
                 <Avatar className="w-8 h-8 flex-shrink-0">
                   <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                    {(signup.name || 'U').substring(0, 2).toUpperCase()}
+                    {(signup.name || "U").substring(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-foreground truncate">{signup.name || 'New User'}</p>
+                  <p className="text-sm font-medium text-foreground truncate">
+                    {signup.name || "New User"}
+                  </p>
                   <p className="text-xs text-muted-foreground truncate">{signup.email}</p>
                 </div>
                 <Badge variant="outline" className="text-xs whitespace-nowrap flex-shrink-0">
-                  {signup.subscription_plan || 'Basic'}
+                  {signup.subscription_plan || "Basic"}
                 </Badge>
               </div>
             ))}
-            
+
             {(!w?.recentSignups || w.recentSignups.length === 0) && (
               <p className="text-xs text-muted-foreground text-center py-4">No recent signups</p>
             )}
@@ -569,11 +718,13 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
               View all
             </RouterLink>
           </div>
-          
+
           {/* 3-Column Compact Metrics */}
           <div className="grid grid-cols-3 gap-2 mb-4">
             <div className="bg-muted/30 rounded-lg p-3 text-center">
-              <div className="text-lg font-bold text-foreground">{(w?.recentSignups ?? []).length}</div>
+              <div className="text-lg font-bold text-foreground">
+                {(w?.recentSignups ?? []).length}
+              </div>
               <div className="text-xs text-muted-foreground mt-1">New Users</div>
             </div>
             <div className="bg-muted/30 rounded-lg p-3 text-center">
@@ -585,10 +736,12 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
               <div className="text-xs text-muted-foreground mt-1">Alerts</div>
             </div>
           </div>
-          
+
           {/* Events Timeline */}
           <div>
-            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Events</div>
+            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+              Events
+            </div>
             <div className="space-y-2.5">
               <div className="flex items-start gap-2">
                 <div className="w-2 h-2 rounded-full bg-success flex-shrink-0 mt-1.5"></div>
@@ -597,7 +750,7 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
                   <p className="text-xs text-muted-foreground">Just now</p>
                 </div>
               </div>
-              
+
               <div className="flex items-start gap-2">
                 <div className="w-2 h-2 rounded-full bg-warning flex-shrink-0 mt-1.5"></div>
                 <div className="flex-1 min-w-0">
@@ -605,7 +758,7 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
                   <p className="text-xs text-muted-foreground">5 mins ago</p>
                 </div>
               </div>
-              
+
               <div className="flex items-start gap-2">
                 <div className="w-2 h-2 rounded-full bg-info flex-shrink-0 mt-1.5"></div>
                 <div className="flex-1 min-w-0">
@@ -619,9 +772,9 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
       </div>
 
       {/* Ticket Detail Sheet */}
-      <TicketDetailSheet 
-        ticket={selectedTicket} 
-        open={!!selectedTicket} 
+      <TicketDetailSheet
+        ticket={selectedTicket}
+        open={!!selectedTicket}
         onClose={() => setSelectedTicket(null)}
       />
     </div>

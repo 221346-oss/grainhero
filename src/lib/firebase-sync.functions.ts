@@ -7,14 +7,14 @@ interface FirebaseLive {
   humidity?: number;
   co2?: number;
   voc?: number;
-  tvoc_ppb?: number;    // GH1 legacy field name
+  tvoc_ppb?: number; // GH1 legacy field name
   moisture?: number;
   fan_state?: number;
   lid_state?: number;
   battery?: number;
   signal?: number;
   ts?: number;
-  timestamp?: number;   // GH1 legacy field name
+  timestamp?: number; // GH1 legacy field name
   timestamp_unix?: number;
 }
 
@@ -89,12 +89,15 @@ export const getLatestFirebaseReadings = createServerFn({ method: "GET" })
     const { fetchAllDevicePayloads } = await import("./firebase-admin.server");
     try {
       const snap = await fetchAllDevicePayloads();
-      const result: Record<string, {
-        temperature: number | null;
-        humidity: number | null;
-        tvoc_ppb: number | null;
-        timestamp: string | null;
-      }> = {};
+      const result: Record<
+        string,
+        {
+          temperature: number | null;
+          humidity: number | null;
+          tvoc_ppb: number | null;
+          timestamp: string | null;
+        }
+      > = {};
 
       for (const [deviceId, payload] of Object.entries(snap)) {
         const p = payload as FirebaseLive;
@@ -103,9 +106,9 @@ export const getLatestFirebaseReadings = createServerFn({ method: "GET" })
         if (typeof ts === "number" && ts < 2_000_000_000) ts = ts * 1000;
         result[deviceId] = {
           temperature: typeof p.temperature === "number" ? p.temperature : null,
-          humidity:    typeof p.humidity    === "number" ? p.humidity    : null,
-          tvoc_ppb:    typeof p.voc         === "number" ? p.voc
-                     : typeof p.tvoc_ppb   === "number" ? p.tvoc_ppb    : null,
+          humidity: typeof p.humidity === "number" ? p.humidity : null,
+          tvoc_ppb:
+            typeof p.voc === "number" ? p.voc : typeof p.tvoc_ppb === "number" ? p.tvoc_ppb : null,
           timestamp: ts !== null ? new Date(ts).toISOString() : null,
         };
       }
@@ -123,7 +126,11 @@ export const getLatestFirebaseReadings = createServerFn({ method: "GET" })
 export const getDeviceLiveTelemetry = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => {
-    if (typeof d !== "object" || d === null || typeof (d as { device_id?: unknown }).device_id !== "string") {
+    if (
+      typeof d !== "object" ||
+      d === null ||
+      typeof (d as { device_id?: unknown }).device_id !== "string"
+    ) {
       throw new Error("device_id required");
     }
     return d as { device_id: string };
@@ -133,7 +140,10 @@ export const getDeviceLiveTelemetry = createServerFn({ method: "POST" })
     try {
       const payload = await fetchLivePayload(data.device_id);
       // Cast through JSON-serializable primitive record to satisfy TanStack's serializable validator.
-      return { ok: true, payload: (payload ?? null) as Record<string, string | number | boolean | null> | null };
+      return {
+        ok: true,
+        payload: (payload ?? null) as Record<string, string | number | boolean | null> | null,
+      };
     } catch (err) {
       console.error("[getDeviceLiveTelemetry] error:", err);
       return { ok: false, payload: null };

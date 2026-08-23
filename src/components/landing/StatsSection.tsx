@@ -1,11 +1,11 @@
-import { motion } from 'framer-motion'
+import { motion } from "framer-motion";
 
 const stats = [
-  { value: '10,000+', label: 'Tons monitored' },
-  { value: '99.2%', label: 'Prediction accuracy' },
-  { value: '50%', label: 'Loss reduction' },
-  { value: '24/7', label: 'Uptime' },
-]
+  { value: "10,000+", label: "Tons monitored" },
+  { value: "99.2%", label: "Prediction accuracy" },
+  { value: "50%", label: "Loss reduction" },
+  { value: "24/7", label: "Uptime" },
+];
 
 export function StatsSection() {
   return (
@@ -30,5 +30,5 @@ export function StatsSection() {
         ))}
       </div>
     </section>
-  )
+  );
 }

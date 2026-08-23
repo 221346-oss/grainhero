@@ -3,12 +3,19 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 async function assertSuperAdmin(ctx: { supabase: any; userId: string }) {
-  const { data } = await ctx.supabase.rpc("has_role", { _user_id: ctx.userId, _role: "super_admin" });
+  const { data } = await ctx.supabase.rpc("has_role", {
+    _user_id: ctx.userId,
+    _role: "super_admin",
+  });
   if (!data) throw new Error("Forbidden: super_admin only");
 }
 
 async function loadSub(supabase: any, subscriptionId: string) {
-  const { data, error } = await supabase.from("subscriptions").select("*").eq("id", subscriptionId).maybeSingle();
+  const { data, error } = await supabase
+    .from("subscriptions")
+    .select("*")
+    .eq("id", subscriptionId)
+    .maybeSingle();
   if (error) throw error;
   if (!data) throw new Error("Subscription not found");
   return data;
@@ -16,7 +23,11 @@ async function loadSub(supabase: any, subscriptionId: string) {
 
 export const adminChangeUserPlan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ subscriptionId: z.string(), planId: z.enum(["basic", "intermediate", "pro"]) }).parse(d))
+  .inputValidator((d) =>
+    z
+      .object({ subscriptionId: z.string(), planId: z.enum(["basic", "intermediate", "pro"]) })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context);
     const sub = await loadSub(context.supabase, data.subscriptionId);
@@ -34,13 +45,16 @@ export const adminChangeUserPlan = createServerFn({ method: "POST" })
 
 export const adminCancelSubscription = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ subscriptionId: z.string(), immediate: z.boolean().optional() }).parse(d))
+  .inputValidator((d) =>
+    z.object({ subscriptionId: z.string(), immediate: z.boolean().optional() }).parse(d),
+  )
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context);
     const sub = await loadSub(context.supabase, data.subscriptionId);
     if (!sub.stripe_subscription_id) throw new Error("Subscription not linked to Stripe");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { setCancelAtPeriodEnd, cancelSubscriptionNow } = await import("@/lib/billing-sync.server");
+    const { setCancelAtPeriodEnd, cancelSubscriptionNow } =
+      await import("@/lib/billing-sync.server");
     if (data.immediate) {
       await cancelSubscriptionNow(supabaseAdmin, sub.stripe_subscription_id);
     } else {

@@ -38,10 +38,12 @@ export const getSlaAlerts = createServerFn({ method: "GET" })
 
     const { data: ships } = await sb
       .from("buyer_shipments")
-      .select("id, order_id, admin_id, status, courier_key, courier_label, tracking_number, tracking_url, dispatched_at, expected_delivery_at, delivered_at, buyer_orders(order_number, buyer_id, buyers(name, company_name))")
+      .select(
+        "id, order_id, admin_id, status, courier_key, courier_label, tracking_number, tracking_url, dispatched_at, expected_delivery_at, delivered_at, buyer_orders(order_number, buyer_id, buyers(name, company_name))",
+      )
       .gte("dispatched_at", prevIso)
       .order("dispatched_at", { ascending: false });
-    const rows = ((ships ?? []) as Row[]);
+    const rows = (ships ?? []) as Row[];
 
     const current = rows.filter((r) => r.dispatched_at && r.dispatched_at >= sinceIso);
     const previous = rows.filter((r) => r.dispatched_at && r.dispatched_at < sinceIso);
@@ -64,12 +66,14 @@ export const getSlaAlerts = createServerFn({ method: "GET" })
     for (const s of current) {
       const key = String(s.admin_id ?? "unknown");
       const b = bySeller.get(key) ?? { adminId: key, current: [], previous: [] };
-      b.current.push(s); bySeller.set(key, b);
+      b.current.push(s);
+      bySeller.set(key, b);
     }
     for (const s of previous) {
       const key = String(s.admin_id ?? "unknown");
       const b = bySeller.get(key) ?? { adminId: key, current: [], previous: [] };
-      b.previous.push(s); bySeller.set(key, b);
+      b.previous.push(s);
+      bySeller.set(key, b);
     }
     const sellerIds = Array.from(bySeller.keys()).filter((k) => k !== "unknown");
     const { data: profiles } = sellerIds.length
@@ -77,24 +81,31 @@ export const getSlaAlerts = createServerFn({ method: "GET" })
       : { data: [] };
     const nameOf = new Map((profiles ?? []).map((p: Row) => [p.id, p.name ?? p.email ?? p.id]));
 
-    const sellerDrops = Array.from(bySeller.values()).map((b) => {
-      const cur = deliveryRate(b.current);
-      const prev = deliveryRate(b.previous);
-      const delta = cur - prev;
-      const overdueCount = b.current.filter((s) => {
-        if (s.status === "delivered" || s.status === "cancelled") return false;
-        const dispatched = s.dispatched_at ? new Date(s.dispatched_at).getTime() : null;
-        const expected = s.expected_delivery_at ? new Date(s.expected_delivery_at).getTime() : null;
-        const limit = expected ?? (dispatched ? dispatched + overdueMs : nowMs);
-        return nowMs > limit;
-      }).length;
-      return {
-        adminId: b.adminId,
-        sellerName: (nameOf.get(b.adminId) as string) ?? "Unknown",
-        currentRate: cur, previousRate: prev, delta,
-        shipments: b.current.length, overdue: overdueCount,
-      };
-    }).sort((a, b) => a.delta - b.delta);
+    const sellerDrops = Array.from(bySeller.values())
+      .map((b) => {
+        const cur = deliveryRate(b.current);
+        const prev = deliveryRate(b.previous);
+        const delta = cur - prev;
+        const overdueCount = b.current.filter((s) => {
+          if (s.status === "delivered" || s.status === "cancelled") return false;
+          const dispatched = s.dispatched_at ? new Date(s.dispatched_at).getTime() : null;
+          const expected = s.expected_delivery_at
+            ? new Date(s.expected_delivery_at).getTime()
+            : null;
+          const limit = expected ?? (dispatched ? dispatched + overdueMs : nowMs);
+          return nowMs > limit;
+        }).length;
+        return {
+          adminId: b.adminId,
+          sellerName: (nameOf.get(b.adminId) as string) ?? "Unknown",
+          currentRate: cur,
+          previousRate: prev,
+          delta,
+          shipments: b.current.length,
+          overdue: overdueCount,
+        };
+      })
+      .sort((a, b) => a.delta - b.delta);
 
     const totalCurrent = current.length;
     const totalPrev = previous.length;
@@ -104,7 +115,10 @@ export const getSlaAlerts = createServerFn({ method: "GET" })
     // Daily trend buckets for both windows so the UI can render
     // "delivery rate this window vs baseline".
     function bucketize(list: Row[]) {
-      const map = new Map<string, { day: string; dispatched: number; delivered: number; overdue: number }>();
+      const map = new Map<
+        string,
+        { day: string; dispatched: number; delivered: number; overdue: number }
+      >();
       for (const s of list) {
         if (!s.dispatched_at) continue;
         const day = new Date(s.dispatched_at).toISOString().slice(0, 10);
@@ -114,15 +128,21 @@ export const getSlaAlerts = createServerFn({ method: "GET" })
         else if (s.status !== "cancelled") {
           const disp = new Date(s.dispatched_at).getTime();
           const exp = s.expected_delivery_at ? new Date(s.expected_delivery_at).getTime() : null;
-          const lim = exp ?? (disp + overdueMs);
+          const lim = exp ?? disp + overdueMs;
           if (nowMs > lim) b.overdue++;
         }
         map.set(day, b);
       }
       return Array.from(map.values()).sort((a, b) => a.day.localeCompare(b.day));
     }
-    const trendCurrent = bucketize(current).map((b) => ({ ...b, rate: b.dispatched ? b.delivered / b.dispatched : 0 }));
-    const trendPrevious = bucketize(previous).map((b) => ({ ...b, rate: b.dispatched ? b.delivered / b.dispatched : 0 }));
+    const trendCurrent = bucketize(current).map((b) => ({
+      ...b,
+      rate: b.dispatched ? b.delivered / b.dispatched : 0,
+    }));
+    const trendPrevious = bucketize(previous).map((b) => ({
+      ...b,
+      rate: b.dispatched ? b.delivered / b.dispatched : 0,
+    }));
     // Historical baseline = mean daily delivery rate across the previous window.
     const baselineRate = trendPrevious.length
       ? trendPrevious.reduce((s, b) => s + b.rate, 0) / trendPrevious.length
@@ -132,7 +152,8 @@ export const getSlaAlerts = createServerFn({ method: "GET" })
       window: { days: data.days },
       totals: {
         overdue: overdue.length,
-        current: totalCurrent, previous: totalPrev,
+        current: totalCurrent,
+        previous: totalPrev,
         currentRate: totalCurrent ? deliveredCurrent / totalCurrent : 0,
         previousRate: totalPrev ? deliveredPrev / totalPrev : 0,
         baselineRate,
@@ -156,10 +177,12 @@ export const getSlaAlerts = createServerFn({ method: "GET" })
 export const getSlaDrilldown = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((d) =>
-    z.object({
-      day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-      bucket: z.enum(["all", "overdue", "delivered", "in_flight"]).default("all"),
-    }).parse(d),
+    z
+      .object({
+        day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+        bucket: z.enum(["all", "overdue", "delivered", "in_flight"]).default("all"),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     await requireSuper(context.supabase, context.userId);
@@ -171,7 +194,9 @@ export const getSlaDrilldown = createServerFn({ method: "GET" })
     const sb = context.supabase as any;
     const { data: rows } = await sb
       .from("buyer_shipments")
-      .select("id, order_id, admin_id, status, courier_key, courier_label, tracking_number, tracking_url, dispatched_at, expected_delivery_at, delivered_at, buyer_orders(order_number, buyers(name, company_name))")
+      .select(
+        "id, order_id, admin_id, status, courier_key, courier_label, tracking_number, tracking_url, dispatched_at, expected_delivery_at, delivered_at, buyer_orders(order_number, buyers(name, company_name))",
+      )
       .gte("dispatched_at", startIso)
       .lte("dispatched_at", endIso)
       .order("dispatched_at", { ascending: true });
@@ -181,8 +206,10 @@ export const getSlaDrilldown = createServerFn({ method: "GET" })
       const disp = s.dispatched_at ? new Date(s.dispatched_at).getTime() : null;
       const exp = s.expected_delivery_at ? new Date(s.expected_delivery_at).getTime() : null;
       const limit = exp ?? (disp ? disp + overdueMs : nowMs);
-      const overdueHours = s.status !== "delivered" && s.status !== "cancelled"
-        ? Math.max(0, (nowMs - limit) / 3600_000) : 0;
+      const overdueHours =
+        s.status !== "delivered" && s.status !== "cancelled"
+          ? Math.max(0, (nowMs - limit) / 3600_000)
+          : 0;
       return { ...s, overdueHours };
     });
     const filtered = (enriched as Row[]).filter((s) => {

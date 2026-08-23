@@ -63,7 +63,10 @@ const invoiceExportColumns: ExportColumn<Invoice>[] = [
   { header: "Paid", value: (i) => i.amount_paid ?? 0 },
   { header: "Currency", value: (i) => i.currency ?? "" },
   { header: "Status", value: (i) => i.payment_status ?? "" },
-  { header: "Due date", value: (i) => i.due_date ? new Date(i.due_date).toLocaleDateString() : "" },
+  {
+    header: "Due date",
+    value: (i) => (i.due_date ? new Date(i.due_date).toLocaleDateString() : ""),
+  },
   { header: "Dispatch #", value: (i) => i.grain_dispatches?.dispatch_number ?? "" },
 ];
 
@@ -76,7 +79,10 @@ const outstandingExportColumns: ExportColumn<OutstandingDispatch>[] = [
   { header: "Remaining", value: (d) => d.remaining },
   { header: "Currency", value: (d) => d.currency ?? "" },
   { header: "Status", value: (d) => d.status },
-  { header: "Dispatched", value: (d) => d.dispatched_at ? new Date(d.dispatched_at).toLocaleDateString() : "" },
+  {
+    header: "Dispatched",
+    value: (d) => (d.dispatched_at ? new Date(d.dispatched_at).toLocaleDateString() : ""),
+  },
 ];
 
 const paymentExportColumns: ExportColumn<Payment>[] = [
@@ -85,17 +91,25 @@ const paymentExportColumns: ExportColumn<Payment>[] = [
   { header: "Currency", value: (p) => p.currency ?? "" },
   { header: "Method", value: (p) => p.payment_method ?? "" },
   { header: "Status", value: (p) => p.status ?? "" },
-  { header: "Date", value: (p) => p.payment_date ? new Date(p.payment_date).toLocaleDateString() : "" },
+  {
+    header: "Date",
+    value: (p) => (p.payment_date ? new Date(p.payment_date).toLocaleDateString() : ""),
+  },
   { header: "Dispatch #", value: (p) => p.grain_dispatches?.dispatch_number ?? "" },
 ];
 
 function payBadge(s: string | null) {
   switch (s) {
-    case "paid": return "bg-emerald-100 text-emerald-800 border-emerald-200";
-    case "partial": return "bg-amber-100 text-amber-800 border-amber-200";
-    case "overdue": return "bg-red-100 text-red-800 border-red-200";
-    case "cancelled": return "bg-slate-100 text-slate-600 border-slate-200";
-    default: return "bg-blue-100 text-blue-800 border-blue-200";
+    case "paid":
+      return "bg-emerald-100 text-emerald-800 border-emerald-200";
+    case "partial":
+      return "bg-amber-100 text-amber-800 border-amber-200";
+    case "overdue":
+      return "bg-red-100 text-red-800 border-red-200";
+    case "cancelled":
+      return "bg-slate-100 text-slate-600 border-slate-200";
+    default:
+      return "bg-blue-100 text-blue-800 border-blue-200";
   }
 }
 
@@ -111,37 +125,59 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
 
   const [q, setQ] = useState("");
   const [wizardOpen, setWizardOpen] = useState(false);
-  const [resumeDispatch, setResumeDispatch] = useState<{ id: string; dispatchNumber: string } | null>(null);
+  const [resumeDispatch, setResumeDispatch] = useState<{
+    id: string;
+    dispatchNumber: string;
+  } | null>(null);
 
-  function openNewSale() { setResumeDispatch(null); setWizardOpen(true); }
-  function openReopen(d: OutstandingDispatch) { setResumeDispatch({ id: d.id, dispatchNumber: d.dispatch_number }); setWizardOpen(true); }
+  function openNewSale() {
+    setResumeDispatch(null);
+    setWizardOpen(true);
+  }
+  function openReopen(d: OutstandingDispatch) {
+    setResumeDispatch({ id: d.id, dispatchNumber: d.dispatch_number });
+    setWizardOpen(true);
+  }
 
   // Managers see revenue read-only: no outgoing sale creation, no mark-paid action
   const canWrite = role === "admin" || role === "super_admin";
 
   const markM = useMutation({
     mutationFn: (id: string) => markFn({ data: { id } }),
-    onSuccess: () => { toast.success("Invoice marked paid"); qc.invalidateQueries({ queryKey: ["revenue"] }); },
+    onSuccess: () => {
+      toast.success("Invoice marked paid");
+      qc.invalidateQueries({ queryKey: ["revenue"] });
+    },
     onError: (e: any) => toast.error(e.message ?? "Failed"),
   });
 
   const invoices = data?.invoices ?? [];
   const payments = data?.payments ?? [];
   const outstandingDispatches = (data?.outstandingDispatches ?? []) as OutstandingDispatch[];
-  const totals = data?.totals ?? { invoiced: 0, paid: 0, collected: 0, outstanding: 0, due: 0, overdue: 0, countInvoices: 0, countPayments: 0 };
+  const totals = data?.totals ?? {
+    invoiced: 0,
+    paid: 0,
+    collected: 0,
+    outstanding: 0,
+    due: 0,
+    overdue: 0,
+    countInvoices: 0,
+    countPayments: 0,
+  };
   const byStatus = data?.byStatus ?? {};
 
   const filteredInv = useMemo(() => {
     const term = q.trim().toLowerCase();
     if (!term) return invoices;
-    return invoices.filter((i: any) =>
-      i.invoice_number?.toLowerCase().includes(term) ||
-      i.buyer_name?.toLowerCase().includes(term) ||
-      i.buyer_company?.toLowerCase().includes(term) ||
-      i.batch_ref?.toLowerCase().includes(term) ||
-      i.title?.toLowerCase().includes(term) || // Added title field if it exists
-      // Also search in dispatch information
-      i.grain_dispatches?.dispatch_number?.toLowerCase().includes(term)
+    return invoices.filter(
+      (i: any) =>
+        i.invoice_number?.toLowerCase().includes(term) ||
+        i.buyer_name?.toLowerCase().includes(term) ||
+        i.buyer_company?.toLowerCase().includes(term) ||
+        i.batch_ref?.toLowerCase().includes(term) ||
+        i.title?.toLowerCase().includes(term) || // Added title field if it exists
+        // Also search in dispatch information
+        i.grain_dispatches?.dispatch_number?.toLowerCase().includes(term),
     );
   }, [invoices, q]);
 
@@ -156,7 +192,8 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
       )}
       {!canWrite && (
         <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 border-border rounded-lg px-4 py-2">
-          <span className="text-amber-500">●</span> Read-only — outgoing invoice creation is restricted to admin.
+          <span className="text-amber-500">●</span> Read-only — outgoing invoice creation is
+          restricted to admin.
         </div>
       )}
 
@@ -171,10 +208,20 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
         <Card className="border-amber-500/30 bg-amber-500/5">
           <CardHeader className="flex flex-row justify-between items-center gap-3">
             <div>
-              <CardTitle className="text-sm flex items-center gap-2"><AlertCircle className="h-4 w-4 text-amber-600" /> Outstanding payments</CardTitle>
-              <CardDescription>Approved dispatches with no fully-recorded payment — closed out of the payment step before a receipt was added.</CardDescription>
+              <CardTitle className="text-sm flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 text-amber-600" /> Outstanding payments
+              </CardTitle>
+              <CardDescription>
+                Approved dispatches with no fully-recorded payment — closed out of the payment step
+                before a receipt was added.
+              </CardDescription>
             </div>
-            <ExportMenu filename="outstanding-payments" title="Outstanding Payments" rows={outstandingDispatches} columns={outstandingExportColumns} />
+            <ExportMenu
+              filename="outstanding-payments"
+              title="Outstanding Payments"
+              rows={outstandingDispatches}
+              columns={outstandingExportColumns}
+            />
           </CardHeader>
           <CardContent className="p-0">
             <div className="divide-y">
@@ -182,18 +229,36 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
                 <div key={d.id} className="p-3 flex flex-col sm:flex-row sm:items-center gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <Badge variant="outline" className="gap-1"><Truck className="h-3 w-3" /> {d.dispatch_number}</Badge>
-                      <span className="text-sm font-medium">{d.buyers?.name ?? "—"}{d.buyers?.company_name ? ` · ${d.buyers.company_name}` : ""}</span>
+                      <Badge variant="outline" className="gap-1">
+                        <Truck className="h-3 w-3" /> {d.dispatch_number}
+                      </Badge>
+                      <span className="text-sm font-medium">
+                        {d.buyers?.name ?? "—"}
+                        {d.buyers?.company_name ? ` · ${d.buyers.company_name}` : ""}
+                      </span>
                     </div>
                     <div className="text-xs text-muted-foreground mt-1">
-                      {d.dispatched_at ? `Dispatched ${new Date(d.dispatched_at).toLocaleDateString()}` : "Not yet dispatched"} · {d.paid > 0 ? `${money(d.paid, d.currency)} of ${money(d.total_amount, d.currency)} paid` : "No payment recorded"}
+                      {d.dispatched_at
+                        ? `Dispatched ${new Date(d.dispatched_at).toLocaleDateString()}`
+                        : "Not yet dispatched"}{" "}
+                      ·{" "}
+                      {d.paid > 0
+                        ? `${money(d.paid, d.currency)} of ${money(d.total_amount, d.currency)} paid`
+                        : "No payment recorded"}
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-xs text-amber-600 font-semibold">{money(d.remaining, d.currency)} due</div>
+                    <div className="text-xs text-amber-600 font-semibold">
+                      {money(d.remaining, d.currency)} due
+                    </div>
                   </div>
                   {canWrite && (
-                    <Button size="sm" variant="outline" onClick={() => openReopen(d)} className="gap-1.5">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => openReopen(d)}
+                      className="gap-1.5"
+                    >
                       <RotateCcw className="h-3.5 w-3.5" /> Reopen
                     </Button>
                   )}
@@ -213,17 +278,38 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
         <TabsContent value="invoices">
           <Card>
             <CardHeader className="flex flex-row justify-between items-center gap-3">
-              <div><CardTitle>Buyer invoices</CardTitle><CardDescription>{filteredInv.length} of {invoices.length}</CardDescription></div>
+              <div>
+                <CardTitle>Buyer invoices</CardTitle>
+                <CardDescription>
+                  {filteredInv.length} of {invoices.length}
+                </CardDescription>
+              </div>
               <div className="flex items-center gap-2">
-                <div className="relative"><Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" /><Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search invoices, buyers, batches..." className="pl-8 w-64" /></div>
-                <ExportMenu filename="invoices" title="Buyer Invoices" rows={filteredInv} columns={invoiceExportColumns} />
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    value={q}
+                    onChange={(e) => setQ(e.target.value)}
+                    placeholder="Search invoices, buyers, batches..."
+                    className="pl-8 w-64"
+                  />
+                </div>
+                <ExportMenu
+                  filename="invoices"
+                  title="Buyer Invoices"
+                  rows={filteredInv}
+                  columns={invoiceExportColumns}
+                />
               </div>
             </CardHeader>
             <CardContent className="p-0">
               {/* Fixed height container for 4 entries with vertical scroll */}
               <div className="divide-y h-[320px] overflow-y-auto">
                 {filteredInv.map((i: any) => {
-                  const remaining = Math.max(0, Number(i.total_amount) - Number(i.amount_paid ?? 0));
+                  const remaining = Math.max(
+                    0,
+                    Number(i.total_amount) - Number(i.amount_paid ?? 0),
+                  );
                   const dispatch = i.grain_dispatches;
                   const qtyKg = dispatch ? Number(dispatch.total_qty_kg ?? 0) : null;
                   const pricePerKg = qtyKg ? Number(i.total_amount) / qtyKg : null;
@@ -232,27 +318,53 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-semibold text-foreground">{i.invoice_number}</span>
-                          <Badge className={payBadge(i.payment_status)}>{i.payment_status ?? "pending"}</Badge>
-                          {dispatch && <Badge variant="outline" className="gap-1"><Truck className="h-3 w-3" /> {dispatch.dispatch_number}</Badge>}
+                          <Badge className={payBadge(i.payment_status)}>
+                            {i.payment_status ?? "pending"}
+                          </Badge>
+                          {dispatch && (
+                            <Badge variant="outline" className="gap-1">
+                              <Truck className="h-3 w-3" /> {dispatch.dispatch_number}
+                            </Badge>
+                          )}
                         </div>
-                        <div className="text-xs text-muted-foreground mt-1">{i.buyer_name ?? "—"}{i.buyer_company ? ` · ${i.buyer_company}` : ""}{i.batch_ref ? ` · ${i.batch_ref}` : ""}{i.due_date ? ` · due ${new Date(i.due_date).toLocaleDateString()}` : ""}</div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {i.buyer_name ?? "—"}
+                          {i.buyer_company ? ` · ${i.buyer_company}` : ""}
+                          {i.batch_ref ? ` · ${i.batch_ref}` : ""}
+                          {i.due_date ? ` · due ${new Date(i.due_date).toLocaleDateString()}` : ""}
+                        </div>
                         {qtyKg != null && pricePerKg != null && (
-                          <div className="text-[11px] text-muted-foreground mt-0.5">{qtyKg.toLocaleString()} kg (~{kgToMan(qtyKg).toFixed(1)} man) · {money(pricePerKg, i.currency)}/kg · {money(pricePerKgToPerMan(pricePerKg), i.currency)}/man</div>
+                          <div className="text-[11px] text-muted-foreground mt-0.5">
+                            {qtyKg.toLocaleString()} kg (~{kgToMan(qtyKg).toFixed(1)} man) ·{" "}
+                            {money(pricePerKg, i.currency)}/kg ·{" "}
+                            {money(pricePerKgToPerMan(pricePerKg), i.currency)}/man
+                          </div>
                         )}
                       </div>
                       <div className="text-right">
                         <div className="font-bold">{money(i.total_amount, i.currency)}</div>
-                        {remaining > 0 && <div className="text-xs text-amber-600">{money(remaining, i.currency)} due</div>}
+                        {remaining > 0 && (
+                          <div className="text-xs text-amber-600">
+                            {money(remaining, i.currency)} due
+                          </div>
+                        )}
                       </div>
                       {remaining > 0 && canWrite && (
-                        <Button size="sm" variant="outline" onClick={() => markM.mutate(i.id)} disabled={markM.isPending}>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => markM.mutate(i.id)}
+                          disabled={markM.isPending}
+                        >
                           <DollarSign className="h-3.5 w-3.5 mr-1" /> Mark paid
                         </Button>
                       )}
                     </div>
                   );
                 })}
-                {filteredInv.length === 0 && <div className="p-8 text-center text-sm text-muted-foreground">No invoices.</div>}
+                {filteredInv.length === 0 && (
+                  <div className="p-8 text-center text-sm text-muted-foreground">No invoices.</div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -261,8 +373,16 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
         <TabsContent value="payments">
           <Card>
             <CardHeader className="flex flex-row justify-between items-center gap-3">
-              <div><CardTitle>Recent payments</CardTitle><CardDescription>{payments.length} entries</CardDescription></div>
-              <ExportMenu filename="payments" title="Payments" rows={payments} columns={paymentExportColumns} />
+              <div>
+                <CardTitle>Recent payments</CardTitle>
+                <CardDescription>{payments.length} entries</CardDescription>
+              </div>
+              <ExportMenu
+                filename="payments"
+                title="Payments"
+                rows={payments}
+                columns={paymentExportColumns}
+              />
             </CardHeader>
             <CardContent className="p-0">
               {/* Fixed height container for 4 entries with vertical scroll */}
@@ -272,10 +392,23 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
                     <div>
                       <div className="font-medium flex items-center gap-2">
                         {p.payment_reference ?? p.id.slice(0, 8)}
-                        {p.grain_dispatches && <Badge variant="outline" className="gap-1 text-[10px]"><Truck className="h-3 w-3" /> {p.grain_dispatches.dispatch_number}</Badge>}
-                        {p.receipt_url && <Badge variant="outline" className="text-[10px]">OCR receipt</Badge>}
+                        {p.grain_dispatches && (
+                          <Badge variant="outline" className="gap-1 text-[10px]">
+                            <Truck className="h-3 w-3" /> {p.grain_dispatches.dispatch_number}
+                          </Badge>
+                        )}
+                        {p.receipt_url && (
+                          <Badge variant="outline" className="text-[10px]">
+                            OCR receipt
+                          </Badge>
+                        )}
                       </div>
-                      <div className="text-xs text-muted-foreground">{p.payment_method}{p.payment_date ? ` · ${new Date(p.payment_date).toLocaleDateString()}` : ""}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {p.payment_method}
+                        {p.payment_date
+                          ? ` · ${new Date(p.payment_date).toLocaleDateString()}`
+                          : ""}
+                      </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="font-semibold">{money(p.amount, p.currency)}</span>
@@ -283,7 +416,11 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
                     </div>
                   </div>
                 ))}
-                {payments.length === 0 && <div className="p-8 text-center text-sm text-muted-foreground">No payments recorded.</div>}
+                {payments.length === 0 && (
+                  <div className="p-8 text-center text-sm text-muted-foreground">
+                    No payments recorded.
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

@@ -10,12 +10,16 @@ import { SilosSection } from "@/components/grain-operations/SilosSection";
 
 import { BuyersSection } from "@/components/grain-operations/BuyersSection";
 import { PendingApprovalsSection } from "@/components/grain-operations/PendingApprovalsSection";
-import { Package, Warehouse, Users, TrendingUp, TrendingDown, Maximize2, Truck } from "lucide-react";
 import {
-  listGrainBatches,
-  listSilos,
-  listBuyers,
-} from "@/lib/operations.functions";
+  Package,
+  Warehouse,
+  Users,
+  TrendingUp,
+  TrendingDown,
+  Maximize2,
+  Truck,
+} from "lucide-react";
+import { listGrainBatches, listSilos, listBuyers } from "@/lib/operations.functions";
 import { getMyRole } from "@/lib/roles.functions";
 import { SiloStatusPie, type StatusSlice } from "@/components/grain-operations/SiloStatusPie";
 import { type FlowGroup } from "@/components/grain-operations/SiloFlowDiagram";
@@ -36,9 +40,16 @@ export const Route = createFileRoute("/_authenticated/grain-operations")({
   head: () => ({
     meta: [
       { title: "Grain Operations — Grain Hero" },
-      { name: "description", content: "Grain Operations workspace in the Grain Hero platform — private, sign-in required." },
+      {
+        name: "description",
+        content:
+          "Grain Operations workspace in the Grain Hero platform — private, sign-in required.",
+      },
       { property: "og:title", content: "Grain Operations — Grain Hero" },
-      { property: "og:description", content: "Grain Operations workspace in the Grain Hero platform." },
+      {
+        property: "og:description",
+        content: "Grain Operations workspace in the Grain Hero platform.",
+      },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
@@ -128,7 +139,12 @@ function GrainOperationsWorkspace() {
   // used on each silo card, just aggregated for the bird's-eye view.
   const statusPieData: StatusSlice[] = (() => {
     const byTone: Record<FlowGroup["tone"], number> = {
-      yellow: 0, orange: 0, green: 0, blue: 0, purple: 0, red: 0,
+      yellow: 0,
+      orange: 0,
+      green: 0,
+      blue: 0,
+      purple: 0,
+      red: 0,
     };
     if (Array.isArray(batches)) {
       for (const b of batches as Array<{ status?: string | null }>) {
@@ -212,27 +228,32 @@ function GrainOperationsWorkspace() {
                 Last 12 Cycles
               </p>
             </div>
-            
+
             <div className="space-y-6 flex-1 flex flex-col justify-center mt-2">
               {/* Metric 1: Total Grain */}
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center w-[45%] min-w-[120px]">
                   <div className="truncate">
                     <p className="text-xs font-medium text-muted-foreground">Total Grain</p>
-                    <p className="text-base font-black text-foreground truncate">{totalKg.toLocaleString()} kg</p>
+                    <p className="text-base font-black text-foreground truncate">
+                      {totalKg.toLocaleString()} kg
+                    </p>
                   </div>
                 </div>
                 <div className="flex-1 flex items-center justify-center px-2">
                   <div className="w-full h-1 bg-muted rounded-full relative overflow-hidden">
                     {/* Placeholder static progress for demo */}
-                    <div className="absolute left-0 top-0 bottom-0 bg-amber-500 rounded-full" style={{ width: '0%' }} />
+                    <div
+                      className="absolute left-0 top-0 bottom-0 bg-amber-500 rounded-full"
+                      style={{ width: "0%" }}
+                    />
                   </div>
                 </div>
                 <div className="text-right w-12 shrink-0">
                   <span className="text-sm font-bold text-muted-foreground">0.0%</span>
                 </div>
               </div>
-              
+
               {/* Divider */}
               <div className="h-px w-full bg-border" />
 
@@ -241,12 +262,17 @@ function GrainOperationsWorkspace() {
                 <div className="flex items-center w-[45%] min-w-[120px]">
                   <div className="truncate">
                     <p className="text-xs font-medium text-muted-foreground">Active Silos</p>
-                    <p className="text-base font-black text-foreground truncate">{activeSilos} online</p>
+                    <p className="text-base font-black text-foreground truncate">
+                      {activeSilos} online
+                    </p>
                   </div>
                 </div>
                 <div className="flex-1 flex items-center justify-center px-2">
                   <div className="w-full h-1 bg-muted rounded-full relative overflow-hidden">
-                    <div className="absolute left-0 top-0 bottom-0 bg-emerald-500 rounded-full" style={{ width: '0%' }} />
+                    <div
+                      className="absolute left-0 top-0 bottom-0 bg-emerald-500 rounded-full"
+                      style={{ width: "0%" }}
+                    />
                   </div>
                 </div>
                 <div className="text-right w-12 shrink-0">
@@ -262,12 +288,17 @@ function GrainOperationsWorkspace() {
                 <div className="flex items-center w-[45%] min-w-[120px]">
                   <div className="truncate">
                     <p className="text-xs font-medium text-muted-foreground">Dispatched</p>
-                    <p className="text-base font-black text-foreground truncate">{dispatchedKg.toLocaleString()} kg</p>
+                    <p className="text-base font-black text-foreground truncate">
+                      {dispatchedKg.toLocaleString()} kg
+                    </p>
                   </div>
                 </div>
                 <div className="flex-1 flex items-center justify-center px-2">
                   <div className="w-full h-1 bg-muted rounded-full relative overflow-hidden">
-                    <div className="absolute left-0 top-0 bottom-0 bg-blue-500 rounded-full" style={{ width: '0%' }} />
+                    <div
+                      className="absolute left-0 top-0 bottom-0 bg-blue-500 rounded-full"
+                      style={{ width: "0%" }}
+                    />
                   </div>
                 </div>
                 <div className="text-right w-12 shrink-0">

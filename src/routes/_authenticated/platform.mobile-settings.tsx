@@ -20,9 +20,16 @@ export const Route = createFileRoute("/_authenticated/platform/mobile-settings")
   head: () => ({
     meta: [
       { title: "Platform · Mobile Settings — Grain Hero" },
-      { name: "description", content: "Platform · Mobile Settings workspace in the Grain Hero platform — private, sign-in required." },
+      {
+        name: "description",
+        content:
+          "Platform · Mobile Settings workspace in the Grain Hero platform — private, sign-in required.",
+      },
       { property: "og:title", content: "Platform · Mobile Settings — Grain Hero" },
-      { property: "og:description", content: "Platform · Mobile Settings workspace in the Grain Hero platform." },
+      {
+        property: "og:description",
+        content: "Platform · Mobile Settings workspace in the Grain Hero platform.",
+      },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
@@ -35,7 +42,9 @@ function MobileSettingsPage() {
   const qc = useQueryClient();
   const { data } = useQuery({ queryKey: ["mobile-settings"], queryFn: () => load() });
   const [s, setS] = useState<MobileSettingsShape>(DEFAULT_MOBILE_SETTINGS);
-  useEffect(() => { if (data?.settings) setS(data.settings); }, [data]);
+  useEffect(() => {
+    if (data?.settings) setS(data.settings);
+  }, [data]);
 
   const mut = useMutation({
     mutationFn: () => save({ data: s }),
@@ -52,58 +61,120 @@ function MobileSettingsPage() {
     <AdminPageShell
       title="Mobile app settings"
       subtitle="Control mobile client versioning, sync limits, upload buckets, feature flags, and deep-link scheme. Applied to every Flutter build on next refresh."
-      actions={<Button onClick={() => mut.mutate()} disabled={mut.isPending}>{mut.isPending ? "Saving…" : "Save changes"}</Button>}
+      actions={
+        <Button onClick={() => mut.mutate()} disabled={mut.isPending}>
+          {mut.isPending ? "Saving…" : "Save changes"}
+        </Button>
+      }
     >
       <div className="grid gap-4 xl:grid-cols-2">
         <Card>
-          <CardHeader><CardTitle>Versioning</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Versioning</CardTitle>
+          </CardHeader>
           <CardContent className="grid gap-3 sm:grid-cols-3">
             <Field label="Min build">
-              <Input type="number" value={s.min_build} onChange={(e) => patch({ min_build: Number(e.target.value) })} />
+              <Input
+                type="number"
+                value={s.min_build}
+                onChange={(e) => patch({ min_build: Number(e.target.value) })}
+              />
             </Field>
             <Field label="Latest build">
-              <Input type="number" value={s.latest_build} onChange={(e) => patch({ latest_build: Number(e.target.value) })} />
+              <Input
+                type="number"
+                value={s.latest_build}
+                onChange={(e) => patch({ latest_build: Number(e.target.value) })}
+              />
             </Field>
             <Field label="Force update below">
-              <Input type="number" value={s.force_update_below} onChange={(e) => patch({ force_update_below: Number(e.target.value) })} />
+              <Input
+                type="number"
+                value={s.force_update_below}
+                onChange={(e) => patch({ force_update_below: Number(e.target.value) })}
+              />
             </Field>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader><CardTitle>Sync limits</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Sync limits</CardTitle>
+          </CardHeader>
           <CardContent className="grid gap-3 sm:grid-cols-3">
             <Field label="Default page size">
-              <Input type="number" value={s.sync_page_size} onChange={(e) => patch({ sync_page_size: Number(e.target.value) })} />
+              <Input
+                type="number"
+                value={s.sync_page_size}
+                onChange={(e) => patch({ sync_page_size: Number(e.target.value) })}
+              />
             </Field>
             <Field label="Max page size">
-              <Input type="number" value={s.max_sync_page_size} onChange={(e) => patch({ max_sync_page_size: Number(e.target.value) })} />
+              <Input
+                type="number"
+                value={s.max_sync_page_size}
+                onChange={(e) => patch({ max_sync_page_size: Number(e.target.value) })}
+              />
             </Field>
             <Field label="Heartbeat (seconds)">
-              <Input type="number" value={s.heartbeat_interval_seconds} onChange={(e) => patch({ heartbeat_interval_seconds: Number(e.target.value) })} />
+              <Input
+                type="number"
+                value={s.heartbeat_interval_seconds}
+                onChange={(e) => patch({ heartbeat_interval_seconds: Number(e.target.value) })}
+              />
             </Field>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader><CardTitle>Deep link</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Deep link</CardTitle>
+          </CardHeader>
           <CardContent className="grid gap-3 sm:grid-cols-2">
             <Field label="URI scheme">
-              <Input value={s.deep_link.scheme} onChange={(e) => patch({ deep_link: { ...s.deep_link, scheme: e.target.value } })} />
+              <Input
+                value={s.deep_link.scheme}
+                onChange={(e) => patch({ deep_link: { ...s.deep_link, scheme: e.target.value } })}
+              />
             </Field>
             <Field label="Universal host">
-              <Input value={s.deep_link.universal_host} onChange={(e) => patch({ deep_link: { ...s.deep_link, universal_host: e.target.value } })} />
+              <Input
+                value={s.deep_link.universal_host}
+                onChange={(e) =>
+                  patch({ deep_link: { ...s.deep_link, universal_host: e.target.value } })
+                }
+              />
             </Field>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader><CardTitle>Uploads &amp; flags (JSON)</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Uploads &amp; flags (JSON)</CardTitle>
+          </CardHeader>
           <CardContent className="space-y-3">
             <Field label="Upload buckets">
-              <Textarea rows={6} value={JSON.stringify(s.uploads, null, 2)}
-                onChange={(e) => { try { patch({ uploads: JSON.parse(e.target.value) }); } catch { /* ignore */ } }} />
+              <Textarea
+                rows={6}
+                value={JSON.stringify(s.uploads, null, 2)}
+                onChange={(e) => {
+                  try {
+                    patch({ uploads: JSON.parse(e.target.value) });
+                  } catch {
+                    /* ignore */
+                  }
+                }}
+              />
             </Field>
             <Field label="Feature flags">
-              <Textarea rows={4} value={JSON.stringify(s.feature_flags, null, 2)}
-                onChange={(e) => { try { patch({ feature_flags: JSON.parse(e.target.value) }); } catch { /* ignore */ } }} />
+              <Textarea
+                rows={4}
+                value={JSON.stringify(s.feature_flags, null, 2)}
+                onChange={(e) => {
+                  try {
+                    patch({ feature_flags: JSON.parse(e.target.value) });
+                  } catch {
+                    /* ignore */
+                  }
+                }}
+              />
             </Field>
           </CardContent>
         </Card>

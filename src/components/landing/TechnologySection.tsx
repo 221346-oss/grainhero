@@ -1,51 +1,57 @@
-import { motion } from 'framer-motion'
-import { Cpu, Cloud, Smartphone, Zap, Wifi, Brain } from 'lucide-react'
+import { motion } from "framer-motion";
+import { Cpu, Cloud, Smartphone, Zap, Wifi, Brain } from "lucide-react";
 
 const techFeatures = [
   {
     icon: Cpu,
-    title: 'IoT Sensor Network',
-    description: 'Advanced sensors monitor temperature, humidity, CO₂ levels, and moisture content in real-time.',
+    title: "IoT Sensor Network",
+    description:
+      "Advanced sensors monitor temperature, humidity, CO₂ levels, and moisture content in real-time.",
   },
   {
     icon: Brain,
-    title: 'Machine Learning AI',
-    description: 'Predictive algorithms analyze patterns to forecast spoilage risks before they occur.',
+    title: "Machine Learning AI",
+    description:
+      "Predictive algorithms analyze patterns to forecast spoilage risks before they occur.",
   },
   {
     icon: Cloud,
-    title: 'Cloud Platform',
-    description: 'Secure cloud infrastructure ensures your data is always accessible from anywhere.',
+    title: "Cloud Platform",
+    description:
+      "Secure cloud infrastructure ensures your data is always accessible from anywhere.",
   },
   {
     icon: Smartphone,
-    title: 'Mobile & Web Apps',
-    description: 'Monitor your silos on-the-go with intuitive mobile and web applications.',
+    title: "Mobile & Web Apps",
+    description: "Monitor your silos on-the-go with intuitive mobile and web applications.",
   },
   {
     icon: Wifi,
-    title: 'Real-Time Sync',
-    description: 'Low-latency data transmission ensures you always have the latest information.',
+    title: "Real-Time Sync",
+    description: "Low-latency data transmission ensures you always have the latest information.",
   },
   {
     icon: Zap,
-    title: 'Automated Control',
-    description: 'Integrate with ventilation and cooling systems for automated climate control.',
+    title: "Automated Control",
+    description: "Integrate with ventilation and cooling systems for automated climate control.",
   },
-]
+];
 
 export function TechnologySection() {
   return (
-    <section id="technology" className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-[#111512] relative overflow-hidden">
+    <section
+      id="technology"
+      className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-[#111512] relative overflow-hidden"
+    >
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <div
           style={{
             backgroundImage:
-              'radial-gradient(circle at 2px 2px, rgba(47,172,12,0.4) 1px, transparent 0)',
-            backgroundSize: '40px 40px',
-            width: '100%',
-            height: '100%',
+              "radial-gradient(circle at 2px 2px, rgba(47,172,12,0.4) 1px, transparent 0)",
+            backgroundSize: "40px 40px",
+            width: "100%",
+            height: "100%",
           }}
         />
       </div>
@@ -91,8 +97,7 @@ export function TechnologySection() {
             </motion.div>
           ))}
         </div>
-
       </div>
     </section>
-  )
+  );
 }

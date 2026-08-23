@@ -1,4 +1,5 @@
 # Grain Operations & Alert Triage Fixes
+
 **Date**: August 3, 2026  
 **Status**: ✅ Completed
 
@@ -7,6 +8,7 @@
 ## Summary
 
 Fixed two issues:
+
 1. **Removed duplicate "Grain Batches" tab** from Grain Operations page
 2. **Added spoiled/damaged batches** to Alert Triage card on Manager Dashboard
 
@@ -15,9 +17,11 @@ Fixed two issues:
 ## Issue 1: Duplicate Grain Batches Tab
 
 ### Problem
+
 The Grain Operations page had duplicate "Grain Batches" tabs in the navigation, causing confusion and potential routing issues.
 
 ### Root Cause
+
 In `src/routes/_authenticated/grain-operations.tsx`, the `ALL_TABS` array had two entries for "Grain Batches":
 
 ```typescript
@@ -31,6 +35,7 @@ const ALL_TABS = [
 ```
 
 ### Solution
+
 Removed the duplicate entry:
 
 ```typescript
@@ -43,18 +48,21 @@ const ALL_TABS = [
 ```
 
 ### Impact
+
 ✅ Clean navigation with 4 distinct tabs  
 ✅ No confusion between duplicate options  
-✅ Correct routing behavior  
+✅ Correct routing behavior
 
 ---
 
 ## Issue 2: Spoiled Batches in Alert Triage
 
 ### Problem
+
 The Alert Triage card on the Manager Dashboard only showed system alerts. Spoiled/damaged grain batches (which are critical alerts) were not visible, requiring managers to manually navigate to Grain Operations to find them.
 
 ### Requirements
+
 - Show batches with `damaged` or `expired` status in the Alert Triage card
 - Combine with existing alerts for unified triage view
 - Link spoiled batches directly to filtered Grain Operations view
@@ -65,6 +73,7 @@ The Alert Triage card on the Manager Dashboard only showed system alerts. Spoile
 #### Backend Changes (`src/lib/manager-dashboard.functions.ts`)
 
 **1. Added spoiled batches query:**
+
 ```typescript
 // Fetch spoiled/damaged batches for alert triage
 context.supabase
@@ -77,6 +86,7 @@ context.supabase
 ```
 
 **2. Added to return object:**
+
 ```typescript
 return {
   // ...
@@ -91,6 +101,7 @@ return {
 #### Frontend Changes (`src/components/dashboards/ManagerBento.tsx`)
 
 **1. Added spoiledBatches prop:**
+
 ```typescript
 spoiledBatches: Array<{
   id: string;
@@ -103,6 +114,7 @@ spoiledBatches: Array<{
 ```
 
 **2. Combined alerts and spoiled batches:**
+
 ```typescript
 const combinedAlerts = [
   // Regular alerts
@@ -132,6 +144,7 @@ const combinedAlerts = [
 ```
 
 **3. Updated card:**
+
 ```typescript
 <BentoCard
   title="Alert triage"
@@ -157,18 +170,21 @@ const combinedAlerts = [
 ## Technical Details
 
 ### Spoilage Status Values
+
 - **`damaged`** - Batch confirmed as spoiled/damaged
 - **`expired`** - Batch exceeded safe storage duration
 
 ### Alert Triage Display Format
 
 **System Alerts:**
+
 - Title: Alert title from `grain_alerts` table
 - Secondary: Alert type
 - Badge: Priority pill (low, medium, high, critical)
 - Link: `/grain-alerts`
 
 **Spoiled Batches:**
+
 - Title: "Spoiled: [batch_id]"
 - Secondary: Grain type + quantity
 - Badge: Status (damaged/expired) with red background
@@ -181,11 +197,13 @@ const combinedAlerts = [
 ### Before
 
 **Alert Triage Card:**
+
 - Only showed system-generated alerts
 - No visibility into spoiled batches
 - Managers had to manually check Grain Operations
 
 **Navigation:**
+
 - Duplicate "Grain Batches" tabs
 - Confusing interface
 
@@ -195,17 +213,17 @@ const combinedAlerts = [
 ✅ Shows combined alerts + spoiled batches  
 ✅ One-click access to filtered damaged batches view  
 ✅ Clear visual distinction (red badges for spoilage)  
-✅ Unified triage interface  
+✅ Unified triage interface
 
 **Navigation:**
 ✅ Clean, single "Grain Batches" tab  
-✅ Clear tab structure  
+✅ Clear tab structure
 
 ---
 
 ## Files Modified
 
-1. **src/routes/_authenticated/grain-operations.tsx**
+1. **src/routes/\_authenticated/grain-operations.tsx**
    - Removed duplicate "Grain Batches" tab entry
 
 2. **src/lib/manager-dashboard.functions.ts**
@@ -227,6 +245,7 @@ const combinedAlerts = [
 ## Testing Checklist
 
 ### Grain Operations Navigation
+
 - [ ] Only one "Grain Batches" tab visible
 - [ ] All 4 tabs render correctly (Batches, Silos, Warehouses, Buyers)
 - [ ] Manager role sees only 3 tabs (no Warehouses)
@@ -234,6 +253,7 @@ const combinedAlerts = [
 - [ ] No duplicate routing issues
 
 ### Alert Triage Card
+
 - [ ] Shows system alerts with priority badges
 - [ ] Shows spoiled batches with red badges
 - [ ] Correct count displays (alerts + spoiled)
@@ -243,6 +263,7 @@ const combinedAlerts = [
 - [ ] Combined list sorts by most recent first
 
 ### Data Integrity
+
 - [ ] Only `damaged` and `expired` batches appear
 - [ ] Batches filtered by tenant `admin_id`
 - [ ] Limit of 10 spoiled batches enforced
@@ -253,12 +274,14 @@ const combinedAlerts = [
 ## Performance Considerations
 
 ### Query Optimization
+
 - Indexed query on `status` and `admin_id` columns
 - Limited to 10 most recent spoiled batches
 - Sorted by `created_at DESC` for relevance
 - No joins required
 
 ### Component Performance
+
 - Combined arrays processed once per render
 - Badge components memoized
 - Efficient mapping with unique keys
@@ -268,6 +291,7 @@ const combinedAlerts = [
 ## Future Enhancements
 
 ### Potential Improvements
+
 1. **Priority Sorting** - Show critical alerts before low-priority items
 2. **Batch Age Indicator** - Show how long batch has been spoiled
 3. **Spoilage Reason** - Add reason field to damaged batches
@@ -284,7 +308,7 @@ const combinedAlerts = [
 ✅ **ESLint**: 0 errors, 2 pre-existing warnings  
 ✅ **Prettier**: All files formatted  
 ✅ **Component Design**: Modular and reusable  
-✅ **Prop Types**: Clear interfaces defined  
+✅ **Prop Types**: Clear interfaces defined
 
 ---
 
@@ -299,6 +323,7 @@ const combinedAlerts = [
 ## Changelog
 
 ### v1.0.0 - August 3, 2026
+
 - ✅ Removed duplicate Grain Batches tab from navigation
 - ✅ Added spoiled batches query to manager dashboard
 - ✅ Combined alerts and spoiled batches in Alert Triage card

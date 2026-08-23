@@ -132,20 +132,36 @@ export function neonFill(color: string) {
 }
 
 /** Stacked-bar segment shape: side edges at 1.5px, shared seams hairline. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const neonSegmentShape = (stroke: string, topSeam = 0.5) => (props: any) => {
-  const { x, y, width, height, fill } = props;
-  if (!height || height <= 0) return <g />;
-  return (
-    <g>
-      <rect x={x} y={y} width={width} height={height} fill={fill} stroke="none" />
-      <line x1={x} y1={y + height} x2={x + width} y2={y + height} stroke={stroke} strokeWidth={topSeam} />
-      <line x1={x} y1={y} x2={x} y2={y + height} stroke={stroke} strokeWidth={1.5} />
-      <line x1={x + width} y1={y} x2={x + width} y2={y + height} stroke={stroke} strokeWidth={1.5} />
-      <line x1={x} y1={y} x2={x + width} y2={y} stroke={stroke} strokeWidth={0.5} />
-    </g>
-  );
-};
+
+export const neonSegmentShape =
+  (stroke: string, topSeam = 0.5) =>
+  (props: any) => {
+    const { x, y, width, height, fill } = props;
+    if (!height || height <= 0) return <g />;
+    return (
+      <g>
+        <rect x={x} y={y} width={width} height={height} fill={fill} stroke="none" />
+        <line
+          x1={x}
+          y1={y + height}
+          x2={x + width}
+          y2={y + height}
+          stroke={stroke}
+          strokeWidth={topSeam}
+        />
+        <line x1={x} y1={y} x2={x} y2={y + height} stroke={stroke} strokeWidth={1.5} />
+        <line
+          x1={x + width}
+          y1={y}
+          x2={x + width}
+          y2={y + height}
+          stroke={stroke}
+          strokeWidth={1.5}
+        />
+        <line x1={x} y1={y} x2={x + width} y2={y} stroke={stroke} strokeWidth={0.5} />
+      </g>
+    );
+  };
 
 /* ── shared recharts axis / grid / tooltip config ────────────────────────── */
 
@@ -226,16 +242,22 @@ export function NeonPanel({
       {(title || action) && (
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="min-w-0">
-            {title && (index
-              ? (
+            {title &&
+              (index ? (
                 <p className="flex items-center gap-2.5 truncate">
-                  <span className="text-[10px] font-semibold tabular-nums text-muted-foreground/40">{index}</span>
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{title}</span>
+                  <span className="text-[10px] font-semibold tabular-nums text-muted-foreground/40">
+                    {index}
+                  </span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    {title}
+                  </span>
                 </p>
-              )
-              : <p className="text-[13px] font-medium text-foreground truncate">{title}</p>
+              ) : (
+                <p className="text-[13px] font-medium text-foreground truncate">{title}</p>
+              ))}
+            {subtitle && (
+              <p className="text-[12px] text-muted-foreground mt-0.5 truncate">{subtitle}</p>
             )}
-            {subtitle && <p className="text-[12px] text-muted-foreground mt-0.5 truncate">{subtitle}</p>}
           </div>
           {action}
         </div>
@@ -282,7 +304,9 @@ export function StatGrid({
             >
               {s.value}
             </p>
-            {s.hint && <p className="text-[11px] text-muted-foreground mt-0.5 truncate">{s.hint}</p>}
+            {s.hint && (
+              <p className="text-[11px] text-muted-foreground mt-0.5 truncate">{s.hint}</p>
+            )}
           </Tag>
         );
       })}
@@ -314,7 +338,14 @@ export function SeverityBadge({ severity }: { severity: string }) {
       <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
         <rect x="2" y="10" width="3" height="4" rx="0.5" opacity={on(true)} />
         <rect x="6.5" y="7" width="3" height="7" rx="0.5" opacity={on(s !== "low")} />
-        <rect x="11" y="4" width="3" height="10" rx="0.5" opacity={on(s === "high" || s === "critical")} />
+        <rect
+          x="11"
+          y="4"
+          width="3"
+          height="10"
+          rx="0.5"
+          opacity={on(s === "high" || s === "critical")}
+        />
       </svg>
       {s}
     </span>
@@ -322,11 +353,18 @@ export function SeverityBadge({ severity }: { severity: string }) {
 }
 
 /** Compact legend matching the hatch swatches. */
-export function NeonLegend({ items }: { items: Array<{ label: string; color: string; value?: ReactNode }> }) {
+export function NeonLegend({
+  items,
+}: {
+  items: Array<{ label: string; color: string; value?: ReactNode }>;
+}) {
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-3">
       {items.map((it) => (
-        <span key={it.label} className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+        <span
+          key={it.label}
+          className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground"
+        >
           <span
             className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
             style={{ background: it.color, opacity: 0.35, border: `1px solid ${it.color}` }}
@@ -342,7 +380,13 @@ export function NeonLegend({ items }: { items: Array<{ label: string; color: str
 }
 
 /** Empty state shared by all charts. */
-export function ChartEmpty({ label = "No data yet", height = 200 }: { label?: string; height?: number }) {
+export function ChartEmpty({
+  label = "No data yet",
+  height = 200,
+}: {
+  label?: string;
+  height?: number;
+}) {
   return (
     <div
       className="flex items-center justify-center text-[12px] text-muted-foreground border-dashed border-border rounded-md"

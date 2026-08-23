@@ -6,11 +6,23 @@ import { supabase } from "@/integrations/supabase/client";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { AdminSummaryTiles } from "@/components/app/admin/AdminSummaryTiles";
 import { AdminDataCard } from "@/components/app/admin/AdminDataCard";
-import { ResponsiveTabs, ResponsiveTabsList, ResponsiveTabsTrigger, ResponsiveTabsContent } from "@/components/app/mobile/ResponsiveTabs";
+import {
+  ResponsiveTabs,
+  ResponsiveTabsList,
+  ResponsiveTabsTrigger,
+  ResponsiveTabsContent,
+} from "@/components/app/mobile/ResponsiveTabs";
 
 import { Badge } from "@/components/ui/badge";
-import { getPlatformOverviewWidgets, getPlatformReportingDetails } from "@/lib/platform-no-admin.functions";
-import { getCustomerFeedback, getWarehouseOperationsMetrics, getTechnicianPerformance } from "@/lib/platform-reporting.functions";
+import {
+  getPlatformOverviewWidgets,
+  getPlatformReportingDetails,
+} from "@/lib/platform-no-admin.functions";
+import {
+  getCustomerFeedback,
+  getWarehouseOperationsMetrics,
+  getTechnicianPerformance,
+} from "@/lib/platform-reporting.functions";
 import { listTickets, deleteTicket, type TicketRow } from "@/lib/tickets.functions";
 import { TicketDetailSheet } from "@/components/app/tickets/TicketDetailSheet";
 import { attachTicketForUser } from "@/lib/ticketMessages";
@@ -22,7 +34,9 @@ import { useRealtimeInvalidate } from "@/hooks/use-realtime-invalidate";
 
 export const Route = createFileRoute("/_authenticated/platform/reporting")({
   head: () => ({ meta: [{ title: "Platform reporting — GrainHero" }] }),
-  validateSearch: (search: Record<string, unknown>) => ({ tab: (search.tab as string) || "hardware" }),
+  validateSearch: (search: Record<string, unknown>) => ({
+    tab: (search.tab as string) || "hardware",
+  }),
   component: PlatformReportingPage,
 });
 
@@ -76,7 +90,9 @@ function PlatformReportingPage() {
   });
 
   const [selectedTicket, setSelectedTicket] = useState<TicketRow | null>(null);
-  const [ticketStatusFilter, setTicketStatusFilter] = useState<"all" | "open" | "resolved" | "closed">("all");
+  const [ticketStatusFilter, setTicketStatusFilter] = useState<
+    "all" | "open" | "resolved" | "closed"
+  >("all");
 
   const deleteTicketMut = useMutation({
     mutationFn: (id: string) => deleteTicketFn({ data: { id } }),
@@ -90,9 +106,34 @@ function PlatformReportingPage() {
   // Keep reporting tab live when tickets change
   useRealtimeInvalidate("field_tickets", [["field-tickets", "all"]]);
 
-  const stats = w?.reportingStats ?? { hardwareIssues: 0, bugReports: 0, managerQueries: 0, totalTickets: 0 };
-  const feedback = feedbackData ?? { feedback: [], aggregates: { totalCount: 0, avgOverallRating: 0, avgTechnicianRating: 0, avgInstallQuality: 0, recommendPercent: 0, recommendCount: 0 } };
-  const warehouses = warehouseData ?? { warehouses: [], platformAggregates: { totalWarehouses: 0, avgUtilizationPercent: 0, totalActiveSilos: 0, totalRecentAlerts: 0, totalQualityIncidents: 0 }, insights: { topUtilized: [], underUtilized: [], withIssues: [] } };
+  const stats = w?.reportingStats ?? {
+    hardwareIssues: 0,
+    bugReports: 0,
+    managerQueries: 0,
+    totalTickets: 0,
+  };
+  const feedback = feedbackData ?? {
+    feedback: [],
+    aggregates: {
+      totalCount: 0,
+      avgOverallRating: 0,
+      avgTechnicianRating: 0,
+      avgInstallQuality: 0,
+      recommendPercent: 0,
+      recommendCount: 0,
+    },
+  };
+  const warehouses = warehouseData ?? {
+    warehouses: [],
+    platformAggregates: {
+      totalWarehouses: 0,
+      avgUtilizationPercent: 0,
+      totalActiveSilos: 0,
+      totalRecentAlerts: 0,
+      totalQualityIncidents: 0,
+    },
+    insights: { topUtilized: [], underUtilized: [], withIssues: [] },
+  };
   const technicians = techData ?? { technicians: [] };
   const allTickets: TicketRow[] = ticketData?.tickets ?? [];
 
@@ -112,10 +153,11 @@ function PlatformReportingPage() {
     if (!currentUserId) return;
     allTickets.forEach((t) => attachTicketForUser(t.id, currentUserId));
   }, [allTickets, currentUserId]);
-  const filteredTickets = useMemo(() =>
-    ticketStatusFilter === "all"
-      ? allTickets
-      : allTickets.filter((t) => t.status === ticketStatusFilter),
+  const filteredTickets = useMemo(
+    () =>
+      ticketStatusFilter === "all"
+        ? allTickets
+        : allTickets.filter((t) => t.status === ticketStatusFilter),
     [allTickets, ticketStatusFilter],
   );
 
@@ -126,7 +168,17 @@ function PlatformReportingPage() {
     >
       <AdminSummaryTiles
         columns={4}
-        active={tabState === "tickets" ? "total" : tabState === "hardware" ? "hw" : tabState === "bugs" ? "bugs" : tabState === "queries" ? "queries" : undefined}
+        active={
+          tabState === "tickets"
+            ? "total"
+            : tabState === "hardware"
+              ? "hw"
+              : tabState === "bugs"
+                ? "bugs"
+                : tabState === "queries"
+                  ? "queries"
+                  : undefined
+        }
         onSelect={(key) => {
           if (key === "total") handleTabChange("tickets");
           else if (key === "hw") handleTabChange("hardware");
@@ -143,19 +195,34 @@ function PlatformReportingPage() {
 
       <ResponsiveTabs value={tabState} onValueChange={handleTabChange}>
         <ResponsiveTabsList>
-          <ResponsiveTabsTrigger value="hardware">Hardware ({details?.hardwareOrders?.length ?? 0})</ResponsiveTabsTrigger>
-          <ResponsiveTabsTrigger value="bugs">Bug reports ({(details?.bugReports?.length ?? 0) + bugTickets.length})</ResponsiveTabsTrigger>
-          <ResponsiveTabsTrigger value="queries">Manager queries ({details?.managerQueries?.length ?? 0})</ResponsiveTabsTrigger>
-          <ResponsiveTabsTrigger value="feedback">Customer Feedback ({feedback.feedback.length})</ResponsiveTabsTrigger>
-          <ResponsiveTabsTrigger value="warehouses">Warehouse Metrics ({warehouses.warehouses.length})</ResponsiveTabsTrigger>
-          <ResponsiveTabsTrigger value="technicians">Technicians ({technicians.technicians.length})</ResponsiveTabsTrigger>
+          <ResponsiveTabsTrigger value="hardware">
+            Hardware ({details?.hardwareOrders?.length ?? 0})
+          </ResponsiveTabsTrigger>
+          <ResponsiveTabsTrigger value="bugs">
+            Bug reports ({(details?.bugReports?.length ?? 0) + bugTickets.length})
+          </ResponsiveTabsTrigger>
+          <ResponsiveTabsTrigger value="queries">
+            Manager queries ({details?.managerQueries?.length ?? 0})
+          </ResponsiveTabsTrigger>
+          <ResponsiveTabsTrigger value="feedback">
+            Customer Feedback ({feedback.feedback.length})
+          </ResponsiveTabsTrigger>
+          <ResponsiveTabsTrigger value="warehouses">
+            Warehouse Metrics ({warehouses.warehouses.length})
+          </ResponsiveTabsTrigger>
+          <ResponsiveTabsTrigger value="technicians">
+            Technicians ({technicians.technicians.length})
+          </ResponsiveTabsTrigger>
           <ResponsiveTabsTrigger value="tickets">
             Incident Tickets ({allTickets.length})
           </ResponsiveTabsTrigger>
         </ResponsiveTabsList>
 
         <ResponsiveTabsContent value="hardware" className="mt-4">
-          <AdminDataCard title="Open hardware orders" description="Install and hardware orders needing attention">
+          <AdminDataCard
+            title="Open hardware orders"
+            description="Install and hardware orders needing attention"
+          >
             {isLoading ? (
               <p className="p-6 text-sm text-muted-foreground">Loading…</p>
             ) : (
@@ -172,22 +239,32 @@ function PlatformReportingPage() {
                   {(details?.hardwareOrders ?? []).map((o: Record<string, unknown>) => (
                     <tr key={String(o.id)} className="hover:bg-muted/20">
                       <td className="px-4 py-2">
-                        <p className="font-medium text-foreground">{String(o.customer_name ?? o.customer_email ?? "—")}</p>
-                        <p className="text-[11px] text-muted-foreground">{String(o.customer_email ?? "")}</p>
+                        <p className="font-medium text-foreground">
+                          {String(o.customer_name ?? o.customer_email ?? "—")}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {String(o.customer_email ?? "")}
+                        </p>
                       </td>
                       <td className="px-2 py-2">
                         <Badge variant="outline" className="capitalize">
                           {String(o.status ?? "unknown").replace(/_/g, " ")}
                         </Badge>
                       </td>
-                      <td className="px-2 py-2 text-muted-foreground hidden md:table-cell">{String(o.contact_phone ?? "—")}</td>
+                      <td className="px-2 py-2 text-muted-foreground hidden md:table-cell">
+                        {String(o.contact_phone ?? "—")}
+                      </td>
                       <td className="px-4 py-2 text-right text-muted-foreground whitespace-nowrap">
                         {o.created_at ? new Date(String(o.created_at)).toLocaleDateString() : "—"}
                       </td>
                     </tr>
                   ))}
                   {!details?.hardwareOrders?.length && (
-                    <tr><td colSpan={4} className="text-center text-muted-foreground py-8">No open hardware orders</td></tr>
+                    <tr>
+                      <td colSpan={4} className="text-center text-muted-foreground py-8">
+                        No open hardware orders
+                      </td>
+                    </tr>
                   )}
                 </tbody>
               </table>
@@ -202,7 +279,9 @@ function PlatformReportingPage() {
             description="Bug reports submitted by admins via the incident ticket form"
           >
             {bugTickets.length === 0 ? (
-              <p className="p-6 text-sm text-muted-foreground text-center">No bug report tickets submitted yet</p>
+              <p className="p-6 text-sm text-muted-foreground text-center">
+                No bug report tickets submitted yet
+              </p>
             ) : (
               <div className="divide-y divide-slate-100">
                 {bugTickets.map((t) => (
@@ -224,8 +303,8 @@ function PlatformReportingPage() {
                               t.priority === "high"
                                 ? "bg-red-50 text-red-700 border-red-200"
                                 : t.priority === "medium"
-                                ? "bg-amber-50 text-amber-700 border-amber-200"
-                                : "bg-muted text-muted-foreground border-border/40",
+                                  ? "bg-amber-50 text-amber-700 border-amber-200"
+                                  : "bg-muted text-muted-foreground border-border/40",
                             )}
                           >
                             {t.priority}
@@ -237,14 +316,16 @@ function PlatformReportingPage() {
                               t.status === "open"
                                 ? "border-slate-300 text-muted-foreground"
                                 : t.status === "resolved"
-                                ? "border-emerald-300 text-emerald-700 bg-emerald-50"
-                                : "bg-muted text-muted-foreground border-border/40",
+                                  ? "border-emerald-300 text-emerald-700 bg-emerald-50"
+                                  : "bg-muted text-muted-foreground border-border/40",
                             )}
                           >
                             {t.status}
                           </Badge>
                         </div>
-                        <p className="text-xs text-muted-foreground line-clamp-2">{t.description}</p>
+                        <p className="text-xs text-muted-foreground line-clamp-2">
+                          {t.description}
+                        </p>
                         {(t.admin_name || t.admin_email) && (
                           <p className="text-[11px] text-muted-foreground mt-0.5">
                             From: {t.admin_name ?? t.admin_email}
@@ -280,9 +361,13 @@ function PlatformReportingPage() {
                   <tr key={String(b.id)} className="hover:bg-muted/20">
                     <td className="px-4 py-2">
                       <p className="font-medium text-foreground">{String(b.action ?? "Error")}</p>
-                      <p className="text-[11px] text-muted-foreground truncate max-w-md">{String(b.description ?? "")}</p>
+                      <p className="text-[11px] text-muted-foreground truncate max-w-md">
+                        {String(b.description ?? "")}
+                      </p>
                     </td>
-                    <td className="px-2 py-2 text-muted-foreground">{String(b.user_name ?? b.user_role ?? "—")}</td>
+                    <td className="px-2 py-2 text-muted-foreground">
+                      {String(b.user_name ?? b.user_role ?? "—")}
+                    </td>
                     <td className="px-2 py-2">
                       <Badge variant="outline" className="border-red-300 text-red-700 capitalize">
                         {String(b.severity ?? "error")}
@@ -294,7 +379,11 @@ function PlatformReportingPage() {
                   </tr>
                 ))}
                 {!details?.bugReports?.length && (
-                  <tr><td colSpan={4} className="text-center text-muted-foreground py-8">No system error logs</td></tr>
+                  <tr>
+                    <td colSpan={4} className="text-center text-muted-foreground py-8">
+                      No system error logs
+                    </td>
+                  </tr>
                 )}
               </tbody>
             </table>
@@ -318,10 +407,16 @@ function PlatformReportingPage() {
               <tbody className="divide-y divide-slate-100">
                 {(details?.managerQueries ?? []).map((q: Record<string, unknown>) => (
                   <tr key={String(q.id)} className="hover:bg-muted/20">
-                    <td className="px-4 py-2 font-medium text-foreground">{String(q.action ?? "Query")}</td>
+                    <td className="px-4 py-2 font-medium text-foreground">
+                      {String(q.action ?? "Query")}
+                    </td>
                     <td className="px-2 py-2 text-muted-foreground">
                       {String(q.user_name ?? "—")}
-                      {q.user_role ? <span className="text-[11px] text-muted-foreground ml-1">({String(q.user_role)})</span> : null}
+                      {q.user_role ? (
+                        <span className="text-[11px] text-muted-foreground ml-1">
+                          ({String(q.user_role)})
+                        </span>
+                      ) : null}
                     </td>
                     <td className="px-2 py-2 text-muted-foreground hidden md:table-cell truncate max-w-xs">
                       {String(q.description ?? "")}
@@ -332,7 +427,11 @@ function PlatformReportingPage() {
                   </tr>
                 ))}
                 {!details?.managerQueries?.length && (
-                  <tr><td colSpan={4} className="text-center text-muted-foreground py-8">No manager queries yet</td></tr>
+                  <tr>
+                    <td colSpan={4} className="text-center text-muted-foreground py-8">
+                      No manager queries yet
+                    </td>
+                  </tr>
                 )}
               </tbody>
             </table>
@@ -346,7 +445,9 @@ function PlatformReportingPage() {
             <div className="bg-background px-3 py-3">
               <div className="flex items-center gap-1.5 mb-1">
                 <Star className="w-3 h-3 text-muted-foreground" />
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Avg Rating</span>
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Avg Rating
+                </span>
               </div>
               <div className="text-xl font-bold tabular-nums text-foreground">
                 {feedback.aggregates.avgOverallRating.toFixed(1)}
@@ -354,14 +455,18 @@ function PlatformReportingPage() {
               </div>
             </div>
             <div className="bg-background px-3 py-3">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">Technician</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">
+                Technician
+              </span>
               <div className="text-xl font-bold tabular-nums text-foreground">
                 {feedback.aggregates.avgTechnicianRating.toFixed(1)}
                 <span className="text-sm text-muted-foreground">/5</span>
               </div>
             </div>
             <div className="bg-background px-3 py-3">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">Install Quality</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">
+                Install Quality
+              </span>
               <div className="text-xl font-bold tabular-nums text-foreground">
                 {feedback.aggregates.avgInstallQuality.toFixed(1)}
                 <span className="text-sm text-muted-foreground">/5</span>
@@ -370,19 +475,28 @@ function PlatformReportingPage() {
             <div className="bg-background px-3 py-3">
               <div className="flex items-center gap-1.5 mb-1">
                 <CheckCircle2 className="w-3 h-3 text-muted-foreground" />
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Recommend</span>
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Recommend
+                </span>
               </div>
               <div className="text-xl font-bold tabular-nums text-success">
                 {feedback.aggregates.recommendPercent.toFixed(0)}%
               </div>
             </div>
             <div className="bg-background px-3 py-3">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">Total</span>
-              <div className="text-xl font-bold tabular-nums text-foreground">{feedback.aggregates.totalCount}</div>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">
+                Total
+              </span>
+              <div className="text-xl font-bold tabular-nums text-foreground">
+                {feedback.aggregates.totalCount}
+              </div>
             </div>
           </div>
 
-          <AdminDataCard title="Recent customer feedback" description="Post-installation reviews and ratings">
+          <AdminDataCard
+            title="Recent customer feedback"
+            description="Post-installation reviews and ratings"
+          >
             {loadingFeedback ? (
               <p className="p-6 text-sm text-muted-foreground">Loading feedback...</p>
             ) : feedback.feedback.length === 0 ? (
@@ -426,15 +540,23 @@ function PlatformReportingPage() {
                         <span className="text-muted-foreground">Tech: {f.technician_rating}/5</span>
                       )}
                       {f.installation_quality && (
-                        <span className="text-muted-foreground">Quality: {f.installation_quality}/5</span>
+                        <span className="text-muted-foreground">
+                          Quality: {f.installation_quality}/5
+                        </span>
                       )}
                       {f.would_recommend !== null && (
-                        <Badge variant={f.would_recommend ? "default" : "secondary"} className="text-xs">
+                        <Badge
+                          variant={f.would_recommend ? "default" : "secondary"}
+                          className="text-xs"
+                        >
                           {f.would_recommend ? "Recommends" : "Doesn't recommend"}
                         </Badge>
                       )}
                       {f.follow_up_required && (
-                        <Badge variant="outline" className="text-xs border-amber-300 text-amber-700">
+                        <Badge
+                          variant="outline"
+                          className="text-xs border-amber-300 text-amber-700"
+                        >
                           Follow-up needed
                         </Badge>
                       )}
@@ -451,19 +573,25 @@ function PlatformReportingPage() {
           {/* Warehouse stats - Neon hairline grid */}
           <div className="grid gap-px bg-border rounded-md overflow-hidden grid-cols-2 md:grid-cols-4">
             <div className="bg-background px-3 py-3">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">Total Warehouses</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">
+                Total Warehouses
+              </span>
               <div className="text-xl font-bold tabular-nums text-foreground">
                 {warehouses.platformAggregates.totalWarehouses}
               </div>
             </div>
             <div className="bg-background px-3 py-3">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">Avg Utilization</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">
+                Avg Utilization
+              </span>
               <div className="text-xl font-bold tabular-nums text-info">
                 {warehouses.platformAggregates.avgUtilizationPercent}%
               </div>
             </div>
             <div className="bg-background px-3 py-3">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">Active Silos</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">
+                Active Silos
+              </span>
               <div className="text-xl font-bold tabular-nums text-foreground">
                 {warehouses.platformAggregates.totalActiveSilos}
               </div>
@@ -471,7 +599,9 @@ function PlatformReportingPage() {
             <div className="bg-background px-3 py-3">
               <div className="flex items-center gap-1.5 mb-1">
                 <AlertTriangle className="w-3 h-3 text-muted-foreground" />
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Incidents</span>
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Incidents
+                </span>
               </div>
               <div className="text-xl font-bold tabular-nums text-warning">
                 {warehouses.platformAggregates.totalQualityIncidents}
@@ -492,11 +622,17 @@ function PlatformReportingPage() {
               ) : (
                 <div className="divide-y divide-slate-100">
                   {warehouses.insights.topUtilized.map((w: any) => (
-                    <div key={w.warehouse_id} className="p-3 flex items-center justify-between hover:bg-muted/20">
+                    <div
+                      key={w.warehouse_id}
+                      className="p-3 flex items-center justify-between hover:bg-muted/20"
+                    >
                       <div>
-                        <div className="font-medium text-sm text-foreground">{w.warehouse_name}</div>
+                        <div className="font-medium text-sm text-foreground">
+                          {w.warehouse_name}
+                        </div>
                         <div className="text-xs text-muted-foreground">
-                          {w.active_silos} silos · {(w.total_capacity_kg / 1000).toFixed(1)}t capacity
+                          {w.active_silos} silos · {(w.total_capacity_kg / 1000).toFixed(1)}t
+                          capacity
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -511,7 +647,10 @@ function PlatformReportingPage() {
               )}
             </AdminDataCard>
 
-            <AdminDataCard title="Warehouses with issues" description="Recent alerts or quality incidents">
+            <AdminDataCard
+              title="Warehouses with issues"
+              description="Recent alerts or quality incidents"
+            >
               {warehouses.insights.withIssues.length === 0 ? (
                 <p className="p-6 text-sm text-muted-foreground text-center">No issues reported</p>
               ) : (
@@ -520,8 +659,12 @@ function PlatformReportingPage() {
                     <div key={w.warehouse_id} className="p-3 hover:bg-muted/20">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
-                          <div className="font-medium text-sm text-foreground">{w.warehouse_name}</div>
-                          <div className="text-xs text-muted-foreground">{w.location_desc || "—"}</div>
+                          <div className="font-medium text-sm text-foreground">
+                            {w.warehouse_name}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {w.location_desc || "—"}
+                          </div>
                         </div>
                         <div className="flex flex-col items-end gap-1 text-xs">
                           {w.recent_alerts > 0 && (
@@ -546,7 +689,10 @@ function PlatformReportingPage() {
 
         {/* Technician Performance Tab */}
         <ResponsiveTabsContent value="technicians" className="mt-4">
-          <AdminDataCard title="Technician performance" description="Installation metrics and customer ratings">
+          <AdminDataCard
+            title="Technician performance"
+            description="Installation metrics and customer ratings"
+          >
             {loadingTech ? (
               <div className="p-4 space-y-3">
                 <Skeleton className="h-10 w-full rounded-md" />
@@ -581,14 +727,16 @@ function PlatformReportingPage() {
                             t.technician_status === "available"
                               ? "border-emerald-300 text-emerald-700"
                               : t.technician_status === "busy"
-                              ? "border-amber-300 text-amber-700"
-                              : "border-slate-300 text-muted-foreground"
+                                ? "border-amber-300 text-amber-700"
+                                : "border-slate-300 text-muted-foreground"
                           }
                         >
                           {t.technician_status || "—"}
                         </Badge>
                       </td>
-                      <td className="px-2 py-3 text-center font-medium">{t.total_installations || 0}</td>
+                      <td className="px-2 py-3 text-center font-medium">
+                        {t.total_installations || 0}
+                      </td>
                       <td className="px-2 py-3 text-center text-emerald-600 font-medium">
                         {t.completed_installations || 0}
                       </td>
@@ -596,7 +744,9 @@ function PlatformReportingPage() {
                         {t.avg_technician_rating ? (
                           <div className="flex items-center justify-center gap-1">
                             <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                            <span className="font-medium">{t.avg_technician_rating.toFixed(1)}</span>
+                            <span className="font-medium">
+                              {t.avg_technician_rating.toFixed(1)}
+                            </span>
                           </div>
                         ) : (
                           <span className="text-muted-foreground">—</span>
@@ -639,7 +789,9 @@ function PlatformReportingPage() {
                       : "border-border/40 text-muted-foreground hover:border-slate-300 hover:bg-muted/20",
                   )}
                 >
-                  {s === "all" ? `All (${allTickets.length})` : `${s} (${allTickets.filter((t) => t.status === s).length})`}
+                  {s === "all"
+                    ? `All (${allTickets.length})`
+                    : `${s} (${allTickets.filter((t) => t.status === s).length})`}
                 </button>
               ))}
             </div>
@@ -648,7 +800,9 @@ function PlatformReportingPage() {
               <p className="p-6 text-sm text-muted-foreground">Loading tickets…</p>
             ) : filteredTickets.length === 0 ? (
               <p className="p-6 text-sm text-muted-foreground text-center">
-                {allTickets.length === 0 ? "No tickets raised yet" : `No ${ticketStatusFilter} tickets`}
+                {allTickets.length === 0
+                  ? "No tickets raised yet"
+                  : `No ${ticketStatusFilter} tickets`}
               </p>
             ) : (
               <div className="divide-y divide-slate-100">
@@ -662,7 +816,9 @@ function PlatformReportingPage() {
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          <span className="font-semibold text-sm text-foreground">{ticket.title}</span>
+                          <span className="font-semibold text-sm text-foreground">
+                            {ticket.title}
+                          </span>
                           {/* Priority */}
                           <Badge
                             className={cn(
@@ -670,8 +826,8 @@ function PlatformReportingPage() {
                               ticket.priority === "high"
                                 ? "bg-red-50 text-red-700 border-red-200"
                                 : ticket.priority === "medium"
-                                ? "bg-amber-50 text-amber-700 border-amber-200"
-                                : "bg-muted text-muted-foreground border-border/40",
+                                  ? "bg-amber-50 text-amber-700 border-amber-200"
+                                  : "bg-muted text-muted-foreground border-border/40",
                             )}
                           >
                             {ticket.priority}
@@ -684,8 +840,8 @@ function PlatformReportingPage() {
                               ticket.status === "open"
                                 ? "border-slate-300 text-muted-foreground"
                                 : ticket.status === "resolved"
-                                ? "border-emerald-300 text-emerald-700 bg-emerald-50"
-                                : "bg-muted text-muted-foreground border-border/40",
+                                  ? "border-emerald-300 text-emerald-700 bg-emerald-50"
+                                  : "bg-muted text-muted-foreground border-border/40",
                             )}
                           >
                             {ticket.status}
@@ -763,4 +919,3 @@ function PlatformReportingPage() {
     </AdminPageShell>
   );
 }
-

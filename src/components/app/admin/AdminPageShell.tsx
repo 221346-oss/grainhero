@@ -23,7 +23,7 @@ export function AdminPageShell({
   className,
 }: AdminPageShellProps) {
   const ticketCount = useTicketCount();
-  
+
   // Get user profile data
   const profileFn = useServerFn(getMyProfile);
   const { data: profile } = useQuery({
@@ -41,18 +41,12 @@ export function AdminPageShell({
       >
         <div className="w-full px-4 py-4 pb-8 space-y-4 bg-background">
           <div>
-            <h1 className="text-lg font-semibold text-foreground break-words">
-              {title}
-            </h1>
+            <h1 className="text-lg font-semibold text-foreground break-words">{title}</h1>
             {subtitle && (
-              <p className="text-xs text-muted-foreground mt-1 break-words">
-                {subtitle}
-              </p>
+              <p className="text-xs text-muted-foreground mt-1 break-words">{subtitle}</p>
             )}
           </div>
-          <div className="w-full">
-            {children}
-          </div>
+          <div className="w-full">{children}</div>
         </div>
       </MobilePageLayout>
 

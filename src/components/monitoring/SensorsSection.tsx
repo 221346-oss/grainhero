@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -27,21 +27,43 @@ export function SensorsSection() {
             <table className="w-full text-sm">
               <thead className="bg-muted/40 border-b border-border/40">
                 <tr>
-                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Device</th>
-                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Type</th>
-                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Status</th>
-                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Battery</th>
-                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Location</th>
+                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+                    Device
+                  </th>
+                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+                    Type
+                  </th>
+                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+                    Battery
+                  </th>
+                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+                    Location
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {(devices as any[]).map((d) => (
                   <tr key={d.id} className="hover:bg-muted/40 transition-colors">
                     <td className="px-4 py-3 text-foreground font-medium">{d.device_name}</td>
-                    <td className="px-4 py-3 text-muted-foreground text-xs">{d.device_type ?? "—"}</td>
-                    <td className="px-4 py-3"><span className={`text-xs px-2 py-1 rounded ${d.status === "active" ? "bg-emerald-500/20 text-emerald-400" : "bg-red-500/20 text-red-400"}`}>{d.status}</span></td>
-                    <td className="px-4 py-3 text-muted-foreground text-xs">{d.battery_level ?? "—"}%</td>
-                    <td className="px-4 py-3 text-muted-foreground text-xs">{d.silos?.name ?? d.warehouses?.name ?? "—"}</td>
+                    <td className="px-4 py-3 text-muted-foreground text-xs">
+                      {d.device_type ?? "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`text-xs px-2 py-1 rounded ${d.status === "active" ? "bg-emerald-500/20 text-emerald-400" : "bg-red-500/20 text-red-400"}`}
+                      >
+                        {d.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground text-xs">
+                      {d.battery_level ?? "—"}%
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground text-xs">
+                      {d.silos?.name ?? d.warehouses?.name ?? "—"}
+                    </td>
                   </tr>
                 ))}
               </tbody>

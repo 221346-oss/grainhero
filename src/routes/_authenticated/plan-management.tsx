@@ -2,8 +2,22 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Check, Loader2, AlertTriangle, Clock, Sparkles, TrendingUp, Users, Boxes, Cpu,
-  ShieldCheck, Zap, Flame, HeartHandshake, ArrowRight, CreditCard, ExternalLink,
+  Check,
+  Loader2,
+  AlertTriangle,
+  Clock,
+  Sparkles,
+  TrendingUp,
+  Users,
+  Boxes,
+  Cpu,
+  ShieldCheck,
+  Zap,
+  Flame,
+  HeartHandshake,
+  ArrowRight,
+  CreditCard,
+  ExternalLink,
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -21,7 +35,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -33,9 +52,16 @@ export const Route = createFileRoute("/_authenticated/plan-management")({
   head: () => ({
     meta: [
       { title: "Plan Management — Grain Hero" },
-      { name: "description", content: "Plan Management workspace in the Grain Hero platform — private, sign-in required." },
+      {
+        name: "description",
+        content:
+          "Plan Management workspace in the Grain Hero platform — private, sign-in required.",
+      },
       { property: "og:title", content: "Plan Management — Grain Hero" },
-      { property: "og:description", content: "Plan Management workspace in the Grain Hero platform." },
+      {
+        property: "og:description",
+        content: "Plan Management workspace in the Grain Hero platform.",
+      },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
@@ -115,11 +141,12 @@ function PlanManagementPage() {
 
   const initiateMut = useMutation({
     mutationFn: (v: {
-      requested_plan: string; billing_cycle: Cycle;
-      downgrade_reason?: string; downgrade_reason_details?: string;
+      requested_plan: string;
+      billing_cycle: Cycle;
+      downgrade_reason?: string;
+      downgrade_reason_details?: string;
       retention_offer_declined?: boolean;
-    }) =>
-      initiate({ data: v as any }),
+    }) => initiate({ data: v as any }),
     onSuccess: (res: any) => {
       if (res?.url) {
         toast.success("Redirecting to Stripe checkout…");
@@ -181,7 +208,12 @@ function PlanManagementPage() {
   );
   const pending = state?.pending ?? null;
   const usage = state?.usage ?? { silos: 0, users: 0, sensors: 0, actuators: 0 };
-  const retention = state?.retention ?? { discount_pct: 0, active_until: null, offer_used_at: null, offer_available: true };
+  const retention = state?.retention ?? {
+    discount_pct: 0,
+    active_until: null,
+    offer_used_at: null,
+    offer_available: true,
+  };
 
   // Recommend a plan when usage is >= 70% of current limits on any dimension.
   const recommendedPlanId = useMemo(() => {
@@ -270,9 +302,11 @@ function PlanManagementPage() {
               {pending.status === "scheduled" ? "Scheduled plan change" : "Awaiting Stripe payment"}
             </div>
             <div>
-              {pending.current_plan ?? currentPlan} → <b>{pending.requested_plan}</b>{" "}
-              ({pending.billing_cycle ?? "monthly"})
-              {pending.apply_at ? ` — applies on ${new Date(pending.apply_at).toLocaleDateString()}` : ""}
+              {pending.current_plan ?? currentPlan} → <b>{pending.requested_plan}</b> (
+              {pending.billing_cycle ?? "monthly"})
+              {pending.apply_at
+                ? ` — applies on ${new Date(pending.apply_at).toLocaleDateString()}`
+                : ""}
             </div>
           </div>
           <Button size="sm" variant="outline" onClick={() => cancelMut.mutate(pending.id)}>
@@ -303,8 +337,8 @@ function PlanManagementPage() {
                 isRecommended
                   ? "border-emerald-500 ring-2 ring-emerald-500/50 bg-gradient-to-b from-emerald-500/15 via-card to-card shadow-lg"
                   : isCurrent
-                  ? "border-emerald-500 ring-1 ring-emerald-500/40 bg-gradient-to-b from-emerald-500/10 via-card to-card shadow-md"
-                  : "border-border bg-card hover:shadow-md"
+                    ? "border-emerald-500 ring-1 ring-emerald-500/40 bg-gradient-to-b from-emerald-500/10 via-card to-card shadow-md"
+                    : "border-border bg-card hover:shadow-md"
               }`}
             >
               {isRecommended && (
@@ -319,9 +353,7 @@ function PlanManagementPage() {
                   {p.name}
                   {p.plan_id === "pro" && <Flame className="h-3.5 w-3.5 text-amber-500" />}
                 </h3>
-                {isCurrent && (
-                  <Badge className="bg-emerald-600 text-white border-0">Current</Badge>
-                )}
+                {isCurrent && <Badge className="bg-emerald-600 text-white border-0">Current</Badge>}
               </div>
               <div className="mt-4 flex items-baseline gap-1.5 h-10">
                 <AnimatePresence mode="popLayout" initial={false}>
@@ -358,14 +390,18 @@ function PlanManagementPage() {
                   isCurrent
                     ? "bg-muted text-muted-foreground pointer-events-none"
                     : isDowngrade
-                    ? "bg-card border border-border text-foreground hover:bg-muted"
-                    : "bg-emerald-600 hover:bg-emerald-700 text-white"
+                      ? "bg-card border border-border text-foreground hover:bg-muted"
+                      : "bg-emerald-600 hover:bg-emerald-700 text-white"
                 }`}
                 variant={isDowngrade ? "outline" : "default"}
                 disabled={isCurrent}
                 onClick={() => openIntent(p.plan_id)}
               >
-                {isCurrent ? "Current plan" : isDowngrade ? "Downgrade" : (
+                {isCurrent ? (
+                  "Current plan"
+                ) : isDowngrade ? (
+                  "Downgrade"
+                ) : (
                   <span className="inline-flex items-center gap-1.5">
                     Upgrade now <ArrowRight className="h-3.5 w-3.5" />
                   </span>
@@ -382,9 +418,7 @@ function PlanManagementPage() {
           loading={previewQ.isLoading}
           preview={previewQ.data}
           onCancel={() => setSelected(null)}
-          onConfirm={() =>
-            initiateMut.mutate({ requested_plan: selected, billing_cycle: billing })
-          }
+          onConfirm={() => initiateMut.mutate({ requested_plan: selected, billing_cycle: billing })}
           pending={initiateMut.isPending}
         />
       )}
@@ -416,10 +450,18 @@ function PlanManagementPage() {
               <span>Your next {currentCycle} bill</span>
               <span className="text-right">
                 <span className="line-through text-muted-foreground mr-2">
-                  {fmtPKR(currentCycle === "yearly" ? (currentPlanRow?.price_yearly_pkr ?? 0) : (currentPlanRow?.price_monthly_pkr ?? 0))}
+                  {fmtPKR(
+                    currentCycle === "yearly"
+                      ? (currentPlanRow?.price_yearly_pkr ?? 0)
+                      : (currentPlanRow?.price_monthly_pkr ?? 0),
+                  )}
                 </span>
                 <b className="text-emerald-600">
-                  {fmtPKR((currentCycle === "yearly" ? (currentPlanRow?.price_yearly_pkr ?? 0) : (currentPlanRow?.price_monthly_pkr ?? 0)) * 0.8)}
+                  {fmtPKR(
+                    (currentCycle === "yearly"
+                      ? (currentPlanRow?.price_yearly_pkr ?? 0)
+                      : (currentPlanRow?.price_monthly_pkr ?? 0)) * 0.8,
+                  )}
                 </b>
               </span>
             </div>
@@ -435,7 +477,10 @@ function PlanManagementPage() {
             <Button
               variant="ghost"
               className="w-full text-muted-foreground hover:text-foreground"
-              onClick={() => { setRetentionOpen(false); setReasonOpen(true); }}
+              onClick={() => {
+                setRetentionOpen(false);
+                setReasonOpen(true);
+              }}
             >
               No thanks, continue downgrade
             </Button>
@@ -495,7 +540,13 @@ function PlanManagementPage() {
   );
 }
 
-function BillingToggle({ billing, setBilling }: { billing: Cycle; setBilling: (c: Cycle) => void }) {
+function BillingToggle({
+  billing,
+  setBilling,
+}: {
+  billing: Cycle;
+  setBilling: (c: Cycle) => void;
+}) {
   return (
     <div className="inline-flex items-center rounded-full border border-border bg-muted/40 p-1">
       {(["monthly", "yearly"] as const).map((period) => {
@@ -518,9 +569,11 @@ function BillingToggle({ billing, setBilling }: { billing: Cycle; setBilling: (c
             )}
             <span className="relative z-10 capitalize">{period}</span>
             {period === "yearly" && (
-              <span className={`relative z-10 ml-1.5 text-[9px] font-black px-1.5 py-0.5 rounded-full ${
-                isActive ? "bg-white/20 text-white" : "bg-emerald-500/15 text-emerald-600"
-              }`}>
+              <span
+                className={`relative z-10 ml-1.5 text-[9px] font-black px-1.5 py-0.5 rounded-full ${
+                  isActive ? "bg-white/20 text-white" : "bg-emerald-500/15 text-emerald-600"
+                }`}
+              >
                 2 MOS FREE
               </span>
             )}
@@ -534,14 +587,33 @@ function BillingToggle({ billing, setBilling }: { billing: Cycle; setBilling: (c
 /* ------------------------- Hero + Usage + Persuasion ------------------------- */
 
 function HeroBanner({
-  planName, cycle, periodEnd, billing, setBilling, retention, onManageBilling, portalLoading,
+  planName,
+  cycle,
+  periodEnd,
+  billing,
+  setBilling,
+  retention,
+  onManageBilling,
+  portalLoading,
 }: {
-  planName: string; cycle: Cycle; periodEnd: string | null;
-  billing: Cycle; setBilling: (c: Cycle) => void;
-  retention: { discount_pct: number; active_until: string | null; offer_used_at: string | null; offer_available: boolean };
-  onManageBilling: () => void; portalLoading: boolean;
+  planName: string;
+  cycle: Cycle;
+  periodEnd: string | null;
+  billing: Cycle;
+  setBilling: (c: Cycle) => void;
+  retention: {
+    discount_pct: number;
+    active_until: string | null;
+    offer_used_at: string | null;
+    offer_available: boolean;
+  };
+  onManageBilling: () => void;
+  portalLoading: boolean;
 }) {
-  const hasDiscount = retention.discount_pct > 0 && retention.active_until && new Date(retention.active_until) > new Date();
+  const hasDiscount =
+    retention.discount_pct > 0 &&
+    retention.active_until &&
+    new Date(retention.active_until) > new Date();
   return (
     <div className="relative overflow-hidden rounded-2xl border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 via-card to-card p-5 md:p-6">
       <div className="absolute -top-16 -right-16 h-52 w-52 rounded-full bg-emerald-500/15 blur-3xl pointer-events-none" />
@@ -559,7 +631,14 @@ function HeroBanner({
               ? `Renews on ${new Date(periodEnd).toLocaleDateString()}`
               : "First cycle starts on your next change."}
             {hasDiscount && (
-              <> · <span className="text-emerald-600 font-semibold">{retention.discount_pct}% loyalty discount active</span> until {new Date(retention.active_until!).toLocaleDateString()}</>
+              <>
+                {" "}
+                ·{" "}
+                <span className="text-emerald-600 font-semibold">
+                  {retention.discount_pct}% loyalty discount active
+                </span>{" "}
+                until {new Date(retention.active_until!).toLocaleDateString()}
+              </>
             )}
           </p>
         </div>
@@ -585,7 +664,9 @@ function HeroBanner({
 }
 
 function UsageStrip({
-  limits, usage, hasRecommendation,
+  limits,
+  usage,
+  hasRecommendation,
 }: {
   limits: { users: number; silos: number; batches: number; sensors: number };
   usage: { silos: number; users: number; sensors: number; actuators: number };
@@ -623,7 +704,9 @@ function UsageStrip({
                     <it.icon className="h-3.5 w-3.5" />
                     {it.label}
                   </span>
-                  <span className={`font-bold ${critical ? "text-red-600" : hot ? "text-amber-600" : "text-foreground"}`}>
+                  <span
+                    className={`font-bold ${critical ? "text-red-600" : hot ? "text-amber-600" : "text-foreground"}`}
+                  >
                     {it.used} / {it.cap === 999 || it.cap === 9999 ? "∞" : it.cap}
                   </span>
                 </div>
@@ -632,7 +715,11 @@ function UsageStrip({
                   className={`mt-2 h-2 ${critical ? "[&>div]:bg-red-500" : hot ? "[&>div]:bg-amber-500" : "[&>div]:bg-emerald-500"}`}
                 />
                 <div className="mt-1 text-[10px] text-muted-foreground">
-                  {critical ? "You're about to hit the ceiling" : hot ? "Getting close — upgrade unlocks more" : "Plenty of room"}
+                  {critical
+                    ? "You're about to hit the ceiling"
+                    : hot
+                      ? "Getting close — upgrade unlocks more"
+                      : "Plenty of room"}
                 </div>
               </div>
             );
@@ -645,7 +732,8 @@ function UsageStrip({
 
 function RoiCalculator({ currentPlan }: { currentPlan: string }) {
   // A simple, honest ROI card — spoilage prevention alone typically pays back the upgrade.
-  const spoilagePctSavings = currentPlan === "basic" ? 1.5 : currentPlan === "intermediate" ? 0.75 : 0.25;
+  const spoilagePctSavings =
+    currentPlan === "basic" ? 1.5 : currentPlan === "intermediate" ? 0.75 : 0.25;
   return (
     <Card className="md:col-span-1 relative overflow-hidden">
       <div className="absolute -top-8 -right-8 h-28 w-28 rounded-full bg-emerald-500/10 blur-2xl pointer-events-none" />
@@ -660,10 +748,15 @@ function RoiCalculator({ currentPlan }: { currentPlan: string }) {
         <Row label="Sensor coverage" value="+50%" />
         <Row
           label="Est. spoilage reduction"
-          value={<span className="text-emerald-600 font-bold">~{spoilagePctSavings}% of stock value</span>}
+          value={
+            <span className="text-emerald-600 font-bold">
+              ~{spoilagePctSavings}% of stock value
+            </span>
+          }
         />
         <div className="rounded-md border-dashed border-emerald-500/40 bg-emerald-500/5 p-2.5 text-[11px] text-foreground/80">
-          For a mid-size operator, that's typically <b className="text-emerald-600">10×</b> the upgrade cost recovered each month.
+          For a mid-size operator, that's typically <b className="text-emerald-600">10×</b> the
+          upgrade cost recovered each month.
         </div>
       </CardContent>
     </Card>
@@ -683,7 +776,11 @@ function ValueMatrix({ plans, currentPlanId }: { plans: any[]; currentPlanId: st
   const rows: { label: string; key: keyof any; format?: (n: number) => string }[] = [
     { label: "Team members", key: "users", format: (n) => (n >= 999 ? "Unlimited" : String(n)) },
     { label: "Silos", key: "silos" },
-    { label: "Grain batches", key: "batches", format: (n) => (n >= 9999 ? "Unlimited" : String(n)) },
+    {
+      label: "Grain batches",
+      key: "batches",
+      format: (n) => (n >= 9999 ? "Unlimited" : String(n)),
+    },
     { label: "IoT sensors", key: "sensors", format: (n) => (n >= 999 ? "Unlimited" : String(n)) },
   ];
   return (
@@ -699,7 +796,9 @@ function ValueMatrix({ plans, currentPlanId }: { plans: any[]; currentPlanId: st
               <th className="text-left font-medium py-2 pr-2">Capability</th>
               {plans.map((p) => (
                 <th key={p.plan_id} className="text-right font-semibold py-2 px-2">
-                  <span className={p.plan_id === currentPlanId ? "text-emerald-600" : "text-foreground"}>
+                  <span
+                    className={p.plan_id === currentPlanId ? "text-emerald-600" : "text-foreground"}
+                  >
                     {p.name}
                   </span>
                 </th>
@@ -761,8 +860,11 @@ function SocialProofStrip() {
         </div>
         <div className="hidden md:block h-8 w-px bg-border" />
         <blockquote className="text-sm text-foreground/80 italic">
-          "Upgrading to Professional paid for itself in the first month — we caught two moisture spikes before they became losses."
-          <span className="not-italic text-xs text-muted-foreground block mt-0.5">— Farm operator, Multan</span>
+          "Upgrading to Professional paid for itself in the first month — we caught two moisture
+          spikes before they became losses."
+          <span className="not-italic text-xs text-muted-foreground block mt-0.5">
+            — Farm operator, Multan
+          </span>
         </blockquote>
       </div>
     </div>
@@ -770,7 +872,11 @@ function SocialProofStrip() {
 }
 
 function PreviewPanel({
-  loading, preview, onCancel, onConfirm, pending,
+  loading,
+  preview,
+  onCancel,
+  onConfirm,
+  pending,
 }: {
   loading: boolean;
   preview: any;
@@ -793,7 +899,10 @@ function PreviewPanel({
         ) : (
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <SummaryTile label="From" value={`${preview.current_plan} (${preview.current_cycle})`} />
+              <SummaryTile
+                label="From"
+                value={`${preview.current_plan} (${preview.current_cycle})`}
+              />
               <SummaryTile label="To" value={`${preview.new_plan} (${preview.new_cycle})`} />
               <SummaryTile
                 label="Days remaining"
@@ -811,8 +920,10 @@ function PreviewPanel({
                   {fmtPKR(preview.prorated_charge_pkr)}
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">
-                  Full {preview.new_cycle} price {fmtPKR(preview.new_price_pkr)}. Stripe applies proration credit for unused days.
-                  {preview.quote_source !== "stripe" && " Final amount is confirmed on Stripe's invoice."}
+                  Full {preview.new_cycle} price {fmtPKR(preview.new_price_pkr)}. Stripe applies
+                  proration credit for unused days.
+                  {preview.quote_source !== "stripe" &&
+                    " Final amount is confirmed on Stripe's invoice."}
                 </div>
                 <Button
                   onClick={onConfirm}
@@ -825,7 +936,9 @@ function PreviewPanel({
                       ? `Charge ${fmtPKR(preview.prorated_charge_pkr)} to card on file`
                       : `Subscribe — ${fmtPKR(preview.prorated_charge_pkr)}`}
                 </Button>
-                <Button variant="outline" onClick={onCancel} className="mt-4 ml-2">Cancel</Button>
+                <Button variant="outline" onClick={onCancel} className="mt-4 ml-2">
+                  Cancel
+                </Button>
               </div>
             ) : (
               <div className="rounded-lg border-amber-400/40 bg-amber-500/5 p-4">
@@ -834,8 +947,8 @@ function PreviewPanel({
                 </div>
                 <div className="text-sm text-foreground mt-1">
                   This is a {preview.direction}. It will apply on{" "}
-                  <b>{new Date(preview.current_period_end).toLocaleDateString()}</b>.
-                  You keep your current plan features until then, and no refund is issued.
+                  <b>{new Date(preview.current_period_end).toLocaleDateString()}</b>. You keep your
+                  current plan features until then, and no refund is issued.
                 </div>
                 <Button
                   onClick={onConfirm}
@@ -844,7 +957,9 @@ function PreviewPanel({
                 >
                   {pending ? "Scheduling…" : "Schedule at period end"}
                 </Button>
-                <Button variant="outline" onClick={onCancel} className="mt-4 ml-2">Cancel</Button>
+                <Button variant="outline" onClick={onCancel} className="mt-4 ml-2">
+                  Cancel
+                </Button>
               </div>
             )}
           </div>
@@ -857,7 +972,9 @@ function PreviewPanel({
 function SummaryTile({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl border-border bg-card p-3">
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">{label}</div>
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+        {label}
+      </div>
       <div className="text-sm font-semibold text-foreground mt-0.5">{value}</div>
     </div>
   );

@@ -1,23 +1,23 @@
-import { useRef, useState } from 'react'
-import { motion } from 'framer-motion'
-import { Play, Volume2, VolumeX } from 'lucide-react'
-import brandAd from '@/assets/brand-ad.mp4.asset.json'
-import { getAssetUrl } from '@/lib/utils'
+import { useRef, useState } from "react";
+import { motion } from "framer-motion";
+import { Play, Volume2, VolumeX } from "lucide-react";
+import brandAd from "@/assets/brand-ad.mp4.asset.json";
+import { getAssetUrl } from "@/lib/utils";
 
 export function AdShowcase() {
-  const ref = useRef<HTMLVideoElement>(null)
-  const [playing, setPlaying] = useState(false)
-  const [muted, setMuted] = useState(true)
+  const ref = useRef<HTMLVideoElement>(null);
+  const [playing, setPlaying] = useState(false);
+  const [muted, setMuted] = useState(true);
 
   const start = () => {
-    const v = ref.current
-    if (!v) return
-    v.muted = false
-    setMuted(false)
-    v.currentTime = 0
-    v.play().catch(() => {})
-    setPlaying(true)
-  }
+    const v = ref.current;
+    if (!v) return;
+    v.muted = false;
+    setMuted(false);
+    v.currentTime = 0;
+    v.play().catch(() => {});
+    setPlaying(true);
+  };
 
   return (
     <section className="bg-[#111512] px-5 py-14 sm:px-8 sm:py-20">
@@ -34,12 +34,12 @@ export function AdShowcase() {
           </h2>
           <button
             onClick={() => {
-              const v = ref.current
-              if (!v) return
-              v.muted = !muted
-              setMuted(!muted)
+              const v = ref.current;
+              if (!v) return;
+              v.muted = !muted;
+              setMuted(!muted);
             }}
-            aria-label={muted ? 'Unmute film' : 'Mute film'}
+            aria-label={muted ? "Unmute film" : "Mute film"}
             className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#FAFAF7]/30 text-[#FAFAF7] transition-colors hover:bg-[#FAFAF7] hover:text-[#111512]"
           >
             {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
@@ -76,5 +76,5 @@ export function AdShowcase() {
         </motion.div>
       </div>
     </section>
-  )
+  );
 }

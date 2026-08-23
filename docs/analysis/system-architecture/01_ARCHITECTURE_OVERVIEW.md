@@ -1,4 +1,5 @@
 # GrainHero — Full Architecture Overview
+
 ## Both Stacks: Data Flow · Service Map · Schema · Middleware · Environment Vars
 
 > **Status**: Discovery only — no code modified  
@@ -269,34 +270,34 @@ erDiagram
 
 ### Original Backend ([farmHomeBackend-main/.env](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBackend-main/.env))
 
-| Variable | Purpose | Example |
-|---|---|---|
-| `MONGODB_URI` | MongoDB Atlas connection string | `mongodb+srv://...` |
-| `JWT_SECRET` | JWT signing secret | 64-char random string |
-| `MQTT_BROKER_URL` | Mosquitto broker address | `mqtt://192.168.100.229:1883` |
-| `FIREBASE_PROJECT_ID` | Firebase project | `smart-silo-8ce12` |
-| `FIREBASE_PRIVATE_KEY` | Firebase Admin SDK key | Base64 PEM |
-| `FIREBASE_CLIENT_EMAIL` | Firebase service account | `firebase-adminsdk@...` |
-| `STRIPE_SECRET_KEY` | Stripe API key | `sk_live_...` |
-| `OPENWEATHER_API_KEY` | Weather data API | `abc123...` |
-| `RESEND_API_KEY` | Email service | `re_...` |
-| `TWILIO_ACCOUNT_SID` | SMS service | `ACxxxx...` |
-| `PYTHON_PATH` | Path to Python binary | `/usr/bin/python3` |
+| Variable                | Purpose                         | Example                       |
+| ----------------------- | ------------------------------- | ----------------------------- |
+| `MONGODB_URI`           | MongoDB Atlas connection string | `mongodb+srv://...`           |
+| `JWT_SECRET`            | JWT signing secret              | 64-char random string         |
+| `MQTT_BROKER_URL`       | Mosquitto broker address        | `mqtt://192.168.100.229:1883` |
+| `FIREBASE_PROJECT_ID`   | Firebase project                | `smart-silo-8ce12`            |
+| `FIREBASE_PRIVATE_KEY`  | Firebase Admin SDK key          | Base64 PEM                    |
+| `FIREBASE_CLIENT_EMAIL` | Firebase service account        | `firebase-adminsdk@...`       |
+| `STRIPE_SECRET_KEY`     | Stripe API key                  | `sk_live_...`                 |
+| `OPENWEATHER_API_KEY`   | Weather data API                | `abc123...`                   |
+| `RESEND_API_KEY`        | Email service                   | `re_...`                      |
+| `TWILIO_ACCOUNT_SID`    | SMS service                     | `ACxxxx...`                   |
+| `PYTHON_PATH`           | Path to Python binary           | `/usr/bin/python3`            |
 
-### Supabase Stack ([.env.local](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero-main%20(Supabase)/grainhero-main/.env.local))
+### Supabase Stack ([.env.local](<file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero-main%20(Supabase)/grainhero-main/.env.local>))
 
-| Variable | Purpose | Where Used |
-|---|---|---|
-| `VITE_SUPABASE_URL` | Supabase project URL | All client-side Supabase calls |
-| `VITE_SUPABASE_ANON_KEY` | Supabase anon/public key | Client Supabase init |
-| `SUPABASE_SERVICE_ROLE_KEY` | Admin operations | Edge Functions (server-only) |
-| `VITE_GEMINI_API_KEY` | Gemini LLM advisory | [ai-insights.functions.ts](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero-main%20(Supabase)/grainhero-main/src/lib/ai-insights.functions.ts) |
-| `VITE_STRIPE_PUBLISHABLE_KEY` | Stripe client-side | Checkout components |
-| `STRIPE_SECRET_KEY` | Stripe webhooks | [stripe.server.ts](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero-main%20(Supabase)/grainhero-main/src/lib/) |
-| `VITE_FIREBASE_API_KEY` | Firebase config | [useFirebaseSensor.ts](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero-main%20(Supabase)/grainhero-main/src/hooks/useFirebaseSensor.ts) |
-| `ML_SERVICE_URL` | FastAPI endpoint | Edge Function /ingest (to add) |
-| `ML_SERVICE_API_KEY` | ML service auth | Edge Function /ingest (to add) |
-| `OPEN_METEO_BASE_URL` | Weather (no key needed) | Edge Function fetch-weather (to add) |
+| Variable                      | Purpose                  | Where Used                                                                                                                                                |
+| ----------------------------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `VITE_SUPABASE_URL`           | Supabase project URL     | All client-side Supabase calls                                                                                                                            |
+| `VITE_SUPABASE_ANON_KEY`      | Supabase anon/public key | Client Supabase init                                                                                                                                      |
+| `SUPABASE_SERVICE_ROLE_KEY`   | Admin operations         | Edge Functions (server-only)                                                                                                                              |
+| `VITE_GEMINI_API_KEY`         | Gemini LLM advisory      | [ai-insights.functions.ts](<file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero-main%20(Supabase)/grainhero-main/src/lib/ai-insights.functions.ts>) |
+| `VITE_STRIPE_PUBLISHABLE_KEY` | Stripe client-side       | Checkout components                                                                                                                                       |
+| `STRIPE_SECRET_KEY`           | Stripe webhooks          | [stripe.server.ts](<file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero-main%20(Supabase)/grainhero-main/src/lib/>)                                 |
+| `VITE_FIREBASE_API_KEY`       | Firebase config          | [useFirebaseSensor.ts](<file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero-main%20(Supabase)/grainhero-main/src/hooks/useFirebaseSensor.ts>)       |
+| `ML_SERVICE_URL`              | FastAPI endpoint         | Edge Function /ingest (to add)                                                                                                                            |
+| `ML_SERVICE_API_KEY`          | ML service auth          | Edge Function /ingest (to add)                                                                                                                            |
+| `OPEN_METEO_BASE_URL`         | Weather (no key needed)  | Edge Function fetch-weather (to add)                                                                                                                      |
 
 ---
 
@@ -323,15 +324,15 @@ graph TD
 
 ## 7. Real-Time Architecture Comparison
 
-| Mechanism | Original Stack | Supabase Stack |
-|---|---|---|
-| Protocol | Socket.IO (WebSocket + polling fallback) | Supabase Realtime (PostgreSQL CDC) |
-| Trigger | `emit()` from Node.js service after DB write | Postgres `AFTER INSERT` via logical replication |
-| Client hook | `useSocket()` in Next.js | [useRealtimeInvalidate.ts](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero-main%20(Supabase)/grainhero-main/src/hooks/useRealtimeInvalidate.ts) + React Query |
-| Latency | ~100ms | ~200–500ms |
-| Offline support | Socket.IO reconnect | Supabase client auto-reconnect |
-| Channel auth | JWT verification | Supabase RLS on channel subscription |
-| **Current status** | ✅ Working | ⚠️ Connected but no DB inserts from IoT |
+| Mechanism          | Original Stack                               | Supabase Stack                                                                                                                                                            |
+| ------------------ | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Protocol           | Socket.IO (WebSocket + polling fallback)     | Supabase Realtime (PostgreSQL CDC)                                                                                                                                        |
+| Trigger            | `emit()` from Node.js service after DB write | Postgres `AFTER INSERT` via logical replication                                                                                                                           |
+| Client hook        | `useSocket()` in Next.js                     | [useRealtimeInvalidate.ts](<file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero-main%20(Supabase)/grainhero-main/src/hooks/useRealtimeInvalidate.ts>) + React Query |
+| Latency            | ~100ms                                       | ~200–500ms                                                                                                                                                                |
+| Offline support    | Socket.IO reconnect                          | Supabase client auto-reconnect                                                                                                                                            |
+| Channel auth       | JWT verification                             | Supabase RLS on channel subscription                                                                                                                                      |
+| **Current status** | ✅ Working                                   | ⚠️ Connected but no DB inserts from IoT                                                                                                                                   |
 
 ---
 
@@ -409,16 +410,16 @@ sequenceDiagram
 
 ## 10. Open Architecture Decisions
 
-| Decision | Current State | Recommendation |
-|---|---|---|
-| MQTT bridge hosting | Runs on local PC | Move to VPS with PM2 for production |
-| ML service hosting | Not deployed | Fly.io Hobby ($5–7/mo) — fastest cold start |
-| LoRaWAN network server | Not deployed | ChirpStack on same VPS as MQTT bridge |
-| Supabase project | Dev project | Create Production project (Pro tier, $25/mo) |
-| Firebase dependency | Both stacks depend on Firebase | Supabase stack should eventually drop Firebase RTDB and use Supabase Storage/Realtime only |
-| Edge Function cold start | ~200ms warm / ~2s cold | Keep Edge Functions warm with dummy cron call |
-| Multi-tenant isolation | RLS policies exist | Verify with penetration test in Sprint 5 |
+| Decision                 | Current State                  | Recommendation                                                                             |
+| ------------------------ | ------------------------------ | ------------------------------------------------------------------------------------------ |
+| MQTT bridge hosting      | Runs on local PC               | Move to VPS with PM2 for production                                                        |
+| ML service hosting       | Not deployed                   | Fly.io Hobby ($5–7/mo) — fastest cold start                                                |
+| LoRaWAN network server   | Not deployed                   | ChirpStack on same VPS as MQTT bridge                                                      |
+| Supabase project         | Dev project                    | Create Production project (Pro tier, $25/mo)                                               |
+| Firebase dependency      | Both stacks depend on Firebase | Supabase stack should eventually drop Firebase RTDB and use Supabase Storage/Realtime only |
+| Edge Function cold start | ~200ms warm / ~2s cold         | Keep Edge Functions warm with dummy cron call                                              |
+| Multi-tenant isolation   | RLS policies exist             | Verify with penetration test in Sprint 5                                                   |
 
 ---
 
-*Generated 2026-07-10. Architecture based on complete reading of both codebases, firmware, and Supabase migrations.*
+_Generated 2026-07-10. Architecture based on complete reading of both codebases, firmware, and Supabase migrations._

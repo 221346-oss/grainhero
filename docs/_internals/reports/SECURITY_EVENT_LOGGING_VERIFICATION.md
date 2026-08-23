@@ -4,6 +4,7 @@
 **Status:** ✅ COMPLETE
 
 ## Overview
+
 Manager action security event logging has been fully implemented to track and audit all manager-initiated actions for admin review in the Security Center.
 
 ---
@@ -11,12 +12,14 @@ Manager action security event logging has been fully implemented to track and au
 ## 1. Logging Framework
 
 ### Activity Logger (`src/lib/activity.ts`)
+
 - ✅ Base `logActivity()` function inserts into `activity_logs` table
 - ✅ New `logManagerAction()` helper function with manager-specific metadata
 - ✅ Default severity "warning" for manager actions (vs "info" for normal actions)
 - ✅ Metadata includes: `actor_role: "manager"`, `event_type: "manager_action"`, `requires_admin_review: true`
 
 ### Database Schema
+
 - ✅ `activity_logs` table has `severity` field (info, warning, error, critical)
 - ✅ `metadata` JSONB field stores rich action details
 - ✅ RLS policies allow tenant admins to read activity logs for their tenant
@@ -29,6 +32,7 @@ Manager action security event logging has been fully implemented to track and au
 ### Batch Operations (`src/lib/operations.functions.ts`)
 
 #### Batch Creation (upsertGrainBatch - new batch)
+
 - ✅ Action: `batch.created`
 - ✅ Severity: `"warning"` if role === "manager", else `"info"`
 - ✅ Metadata:
@@ -41,6 +45,7 @@ Manager action security event logging has been fully implemented to track and au
 - ✅ Target: grain_batch entity
 
 #### Batch Editing (upsertGrainBatch - update existing)
+
 - ✅ Action: `batch.updated`
 - ✅ Severity: `"warning"` if role === "manager", else `"info"`
 - ✅ Metadata:
@@ -53,6 +58,7 @@ Manager action security event logging has been fully implemented to track and au
 ### QC Operations (`src/lib/batch-qc.functions.ts`)
 
 #### QC Pass/Fail Decision (reviewBatchQC)
+
 - ✅ Action: `batch.qc_passed` or `batch.qc_failed`
 - ✅ Severity: `"warning"` (manager decision)
 - ✅ Metadata:
@@ -63,6 +69,7 @@ Manager action security event logging has been fully implemented to track and au
 - ✅ Target: grain_batch entity
 
 #### Manager Batch Approval (reviewManagerBatch - admin action)
+
 - ✅ Action: `batch.manager_batch_approved` or `batch.manager_batch_rejected`
 - ✅ Severity: `"warning"` (affects manager's work)
 - ✅ Metadata:
@@ -80,18 +87,21 @@ Manager action security event logging has been fully implemented to track and au
 ### Activity Logs Section (`src/components/administration/ActivityLogsSection.tsx`)
 
 #### Manager Actions Quick Filter
+
 - ✅ New "Manager Actions" tile shows count of manager warning events
 - ✅ Clicking tile toggles manager-only view
 - ✅ Filters: `actor_role === "manager"` AND `severity === "warning"`
 - ✅ Disabled controls when manager-only filter active
 
 #### Role-Based Filter Dropdown
+
 - ✅ Available to all admin roles (admin, super_admin)
 - ✅ Options: all, manager, admin, technician, super_admin
 - ✅ Allows filtering by any role's actions
 - ✅ Combines with severity filter
 
 #### Display Features
+
 - ✅ Color-coded severity badges (warning = amber)
 - ✅ Action names formatted for readability
 - ✅ Entity references (batch IDs) as clickable filters
@@ -102,6 +112,7 @@ Manager action security event logging has been fully implemented to track and au
 ### Security Center Dashboard (`src/components/administration/SecuritySection.tsx`)
 
 #### Manager Actions Summary Card
+
 - ✅ Orange-colored tile showing manager action count
 - ✅ Position: Primary security dashboard (among User Access, Incidents)
 - ✅ Displays recent manager actions with:
@@ -111,6 +122,7 @@ Manager action security event logging has been fully implemented to track and au
   - Hover effect for visibility
 
 #### Enhanced Data Fetching (`src/lib/operations2.functions.ts`)
+
 - ✅ getSecurityOverview() now fetches manager logs separately
 - ✅ Filters: `severity === "warning"` from activity_logs
 - ✅ Joins with user_roles to identify manager actions
@@ -147,6 +159,7 @@ Admin Access Control
 ## 5. Testing Checklist
 
 ### Manager User Flow
+
 - [ ] Manager creates new batch → Log entry created with severity="warning"
 - [ ] Manager edits batch → Log entry with severity="warning" and previousStatus
 - [ ] Manager reviews QC (pass) → batch.qc_passed with severity="warning"
@@ -154,6 +167,7 @@ Admin Access Control
 - [ ] Manager can view own actions in Activity Logs (filtered to self)
 
 ### Admin User Flow
+
 - [ ] Admin opens Activity Logs section
 - [ ] Admin clicks "Manager Actions" tile → Shows only manager warning events
 - [ ] Admin can see: action type, batch ID, timestamp, metadata details
@@ -163,6 +177,7 @@ Admin Access Control
 - [ ] Admin can drill down to full manager action details
 
 ### Super Admin Flow
+
 - [ ] Super admin sees all manager actions across all tenants
 - [ ] Can filter by tenant via actor_role filter (if UI supports)
 - [ ] Comprehensive audit trail visible
@@ -171,14 +186,14 @@ Admin Access Control
 
 ## 6. Severity Levels & Interpretation
 
-| Severity  | Triggered By | Interpretation |
-|-----------|-------------|-----------------|
-| info      | Admin batch create | Normal operational action |
-| warning   | Manager batch create/edit | Requires monitoring - manager initiated action |
-| warning   | Manager QC decision | Requires monitoring - manager control point |
-| warning   | Admin batch approval (manager created) | Requires oversight - effects manager batch |
-| error     | System/validation failures | Operational issue |
-| critical  | Security violations | Urgent attention required |
+| Severity | Triggered By                           | Interpretation                                 |
+| -------- | -------------------------------------- | ---------------------------------------------- |
+| info     | Admin batch create                     | Normal operational action                      |
+| warning  | Manager batch create/edit              | Requires monitoring - manager initiated action |
+| warning  | Manager QC decision                    | Requires monitoring - manager control point    |
+| warning  | Admin batch approval (manager created) | Requires oversight - effects manager batch     |
+| error    | System/validation failures             | Operational issue                              |
+| critical | Security violations                    | Urgent attention required                      |
 
 ---
 
@@ -204,14 +219,14 @@ Admin Access Control
 
 ## 8. Implementation Files Modified
 
-| File | Changes |
-|------|---------|
-| src/lib/activity.ts | Added logManagerAction() helper with manager metadata |
-| src/lib/operations.functions.ts | Enhanced batch creation/edit logging with severity |
-| src/lib/batch-qc.functions.ts | Enhanced QC decision logging with warning severity |
-| src/components/administration/ActivityLogsSection.tsx | Added Manager Actions filter tile and role filter |
-| src/components/administration/SecuritySection.tsx | Added Manager Actions card to dashboard |
-| src/lib/operations2.functions.ts | Enhanced getSecurityOverview to fetch manager logs |
+| File                                                  | Changes                                               |
+| ----------------------------------------------------- | ----------------------------------------------------- |
+| src/lib/activity.ts                                   | Added logManagerAction() helper with manager metadata |
+| src/lib/operations.functions.ts                       | Enhanced batch creation/edit logging with severity    |
+| src/lib/batch-qc.functions.ts                         | Enhanced QC decision logging with warning severity    |
+| src/components/administration/ActivityLogsSection.tsx | Added Manager Actions filter tile and role filter     |
+| src/components/administration/SecuritySection.tsx     | Added Manager Actions card to dashboard               |
+| src/lib/operations2.functions.ts                      | Enhanced getSecurityOverview to fetch manager logs    |
 
 ---
 

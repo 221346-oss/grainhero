@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -26,7 +26,7 @@ export function AlertsFunnel() {
     (a) =>
       a.acknowledged_at ||
       a.resolved_at ||
-      ["acknowledged", "escalated", "resolved"].includes(a.status)
+      ["acknowledged", "escalated", "resolved"].includes(a.status),
   );
   const resolved = list.filter((a) => a.resolved_at || a.status === "resolved");
 
@@ -39,31 +39,44 @@ export function AlertsFunnel() {
 
   const avgMin = (arr: any[], a: string, b: string) =>
     arr.length
-      ? arr.reduce(
-          (s, x) => s + (new Date(x[a]).getTime() - new Date(x[b]).getTime()) / 60000,
-          0
-        ) / arr.length
+      ? arr.reduce((s, x) => s + (new Date(x[a]).getTime() - new Date(x[b]).getTime()) / 60000, 0) /
+        arr.length
       : 0;
   const mtta = avgMin(
     list.filter((a) => a.acknowledged_at && a.triggered_at),
     "acknowledged_at",
-    "triggered_at"
+    "triggered_at",
   );
   const mttr = avgMin(
     resolved.filter((a) => a.resolved_at && a.triggered_at),
     "resolved_at",
-    "triggered_at"
+    "triggered_at",
   );
   const criticalOpen = list.filter(
-    (a) => a.priority === "critical" && a.status === "pending"
+    (a) => a.priority === "critical" && a.status === "pending",
   ).length;
 
   if (list.length === 0) return null;
 
   const metrics = [
-    { label: "Mean Time to Acknowledge", value: fmtMinutes(mtta), icon: Clock, tint: "text-amber-400" },
-    { label: "Mean Time to Resolve", value: fmtMinutes(mttr), icon: CheckCircle2, tint: "text-emerald-400" },
-    { label: "Critical Open", value: `${criticalOpen}`, icon: AlertTriangle, tint: "text-rose-400" },
+    {
+      label: "Mean Time to Acknowledge",
+      value: fmtMinutes(mtta),
+      icon: Clock,
+      tint: "text-amber-400",
+    },
+    {
+      label: "Mean Time to Resolve",
+      value: fmtMinutes(mttr),
+      icon: CheckCircle2,
+      tint: "text-emerald-400",
+    },
+    {
+      label: "Critical Open",
+      value: `${criticalOpen}`,
+      icon: AlertTriangle,
+      tint: "text-rose-400",
+    },
   ];
 
   return (

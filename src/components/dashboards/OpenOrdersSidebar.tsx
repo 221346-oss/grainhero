@@ -1,7 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getOpenOrders } from "@/lib/open-orders.functions";
-import { X, Clock, User, Package, DollarSign, Calendar, Building2, Phone, Mail } from "lucide-react";
+import {
+  X,
+  Clock,
+  User,
+  Package,
+  DollarSign,
+  Calendar,
+  Building2,
+  Phone,
+  Mail,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface OpenOrdersSidebarProps {
@@ -22,21 +32,21 @@ export function OpenOrdersSidebar({ isOpen, onClose }: OpenOrdersSidebarProps) {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", { 
+    return date.toLocaleDateString("en-US", {
       year: "numeric",
-      month: "short", 
+      month: "short",
       day: "numeric",
       hour: "2-digit",
-      minute: "2-digit"
+      minute: "2-digit",
     });
   };
 
   const formatDateOnly = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", { 
+    return date.toLocaleDateString("en-US", {
       year: "numeric",
-      month: "short", 
-      day: "numeric"
+      month: "short",
+      day: "numeric",
     });
   };
 
@@ -44,65 +54,70 @@ export function OpenOrdersSidebar({ isOpen, onClose }: OpenOrdersSidebarProps) {
     const colors: Record<string, string> = {
       pending: "bg-yellow-100 text-yellow-800",
       confirmed: "bg-blue-100 text-blue-800",
-      in_progress: "bg-green-100 text-green-800"
+      in_progress: "bg-green-100 text-green-800",
     };
     return colors[status] || "bg-gray-100 text-gray-800";
   };
 
   const formatStatus = (status: string) => {
-    return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    return status.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
   };
 
   const formatCurrency = (amount: number) => {
-    return amount.toLocaleString("en-US", { 
-      style: "currency", 
+    return amount.toLocaleString("en-US", {
+      style: "currency",
       currency: "USD",
       minimumFractionDigits: 0,
-      maximumFractionDigits: 0 
+      maximumFractionDigits: 0,
     });
   };
 
   const getDeadlineStatus = (deadlineString: string | null) => {
     if (!deadlineString) return null;
-    
+
     const deadline = new Date(deadlineString);
     const now = new Date();
     const diffDays = Math.ceil((deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays < 0) {
-      return { status: 'overdue', text: `${Math.abs(diffDays)} days overdue`, color: 'text-red-600' };
+      return {
+        status: "overdue",
+        text: `${Math.abs(diffDays)} days overdue`,
+        color: "text-red-600",
+      };
     } else if (diffDays <= 3) {
-      return { status: 'urgent', text: `${diffDays} days left`, color: 'text-orange-600' };
+      return { status: "urgent", text: `${diffDays} days left`, color: "text-orange-600" };
     } else if (diffDays <= 7) {
-      return { status: 'soon', text: `${diffDays} days left`, color: 'text-yellow-600' };
+      return { status: "soon", text: `${diffDays} days left`, color: "text-yellow-600" };
     }
-    return { status: 'normal', text: `${diffDays} days left`, color: 'text-green-600' };
+    return { status: "normal", text: `${diffDays} days left`, color: "text-green-600" };
   };
 
   return (
     <>
       {/* Backdrop - only render when open (no shadow) */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-40 transition-opacity duration-300 ease-in-out"
           onClick={onClose}
           style={{
-            opacity: isOpen ? 1 : 0
+            opacity: isOpen ? 1 : 0,
           }}
         />
       )}
-      
+
       {/* Sliding Container - always render for smooth animation */}
-      <div className={`
+      <div
+        className={`
         fixed top-0 right-0 h-full w-[500px] bg-white dark:bg-gray-900 z-50 
         transform transition-all duration-300 ease-in-out border-l
         border-gray-200 dark:border-gray-700
-        ${isOpen ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}
+        ${isOpen ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"}
       `}
-      style={{
-        visibility: isOpen ? 'visible' : 'hidden',
-        transitionDelay: isOpen ? '0ms' : '300ms'
-      }}
+        style={{
+          visibility: isOpen ? "visible" : "hidden",
+          transitionDelay: isOpen ? "0ms" : "300ms",
+        }}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b bg-blue-50 dark:bg-blue-900/20">
@@ -115,12 +130,7 @@ export function OpenOrdersSidebar({ isOpen, onClose }: OpenOrdersSidebarProps) {
               {orders.length} active buyer orders
             </p>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            className="h-8 w-8 p-0"
-          >
+          <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0">
             <X className="h-4 w-4" />
           </Button>
         </div>
@@ -156,7 +166,9 @@ export function OpenOrdersSidebar({ isOpen, onClose }: OpenOrdersSidebarProps) {
                           {order.order_number}
                         </h3>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
+                          <span
+                            className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}
+                          >
                             {formatStatus(order.status)}
                           </span>
                           {deadlineStatus && (
@@ -182,7 +194,7 @@ export function OpenOrdersSidebar({ isOpen, onClose }: OpenOrdersSidebarProps) {
                         <div>
                           <p className="text-gray-600 dark:text-gray-400">Grain Type</p>
                           <p className="font-medium text-gray-900 dark:text-gray-100">
-                            {order.grain_type || 'Not specified'}
+                            {order.grain_type || "Not specified"}
                           </p>
                         </div>
                       </div>
@@ -193,7 +205,9 @@ export function OpenOrdersSidebar({ isOpen, onClose }: OpenOrdersSidebarProps) {
                         <div>
                           <p className="text-gray-600 dark:text-gray-400">Quantity</p>
                           <p className="font-medium text-gray-900 dark:text-gray-100">
-                            {order.quantity_kg ? `${Math.round(order.quantity_kg / 1000).toLocaleString()}t` : 'TBD'}
+                            {order.quantity_kg
+                              ? `${Math.round(order.quantity_kg / 1000).toLocaleString()}t`
+                              : "TBD"}
                           </p>
                         </div>
                       </div>
@@ -228,8 +242,12 @@ export function OpenOrdersSidebar({ isOpen, onClose }: OpenOrdersSidebarProps) {
                       <div className="mb-3 p-2 bg-gray-100 dark:bg-gray-700 rounded">
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-gray-400" />
-                          <span className="text-sm text-gray-600 dark:text-gray-400">Delivery Deadline:</span>
-                          <span className={`text-sm font-medium ${deadlineStatus?.color || 'text-gray-900 dark:text-gray-100'}`}>
+                          <span className="text-sm text-gray-600 dark:text-gray-400">
+                            Delivery Deadline:
+                          </span>
+                          <span
+                            className={`text-sm font-medium ${deadlineStatus?.color || "text-gray-900 dark:text-gray-100"}`}
+                          >
                             {formatDateOnly(order.delivery_deadline)}
                           </span>
                         </div>
@@ -241,7 +259,9 @@ export function OpenOrdersSidebar({ isOpen, onClose }: OpenOrdersSidebarProps) {
                       <div className="pt-3 border-t border-gray-200 dark:border-gray-600">
                         <div className="flex items-center gap-2 mb-2">
                           <User className="h-4 w-4 text-gray-400" />
-                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Buyer Details</span>
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Buyer Details
+                          </span>
                         </div>
                         <div className="space-y-1 text-sm">
                           <div className="flex items-center gap-2">
@@ -253,13 +273,17 @@ export function OpenOrdersSidebar({ isOpen, onClose }: OpenOrdersSidebarProps) {
                           {order.buyers.email && (
                             <div className="flex items-center gap-2">
                               <Mail className="h-3 w-3 text-gray-400" />
-                              <span className="text-gray-600 dark:text-gray-400">{order.buyers.email}</span>
+                              <span className="text-gray-600 dark:text-gray-400">
+                                {order.buyers.email}
+                              </span>
                             </div>
                           )}
                           {order.buyers.phone && (
                             <div className="flex items-center gap-2">
                               <Phone className="h-3 w-3 text-gray-400" />
-                              <span className="text-gray-600 dark:text-gray-400">{order.buyers.phone}</span>
+                              <span className="text-gray-600 dark:text-gray-400">
+                                {order.buyers.phone}
+                              </span>
                             </div>
                           )}
                         </div>

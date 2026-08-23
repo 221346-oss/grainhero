@@ -52,14 +52,25 @@ export function PlanManagementSection() {
     max_sensors: usePlanGate("max_sensors"),
   };
   const USAGE_LABELS: Partial<Record<PlanNumericFeature, string>> = {
-    max_users: "Users", max_silos: "Silos", max_batches: "Batches", max_sensors: "Sensors",
+    max_users: "Users",
+    max_silos: "Silos",
+    max_batches: "Batches",
+    max_sensors: "Sensors",
   };
 
   const tiles = useMemo(
     () => [
       { key: "plan", label: "Current plan", value: current?.name ?? currentPlan },
-      { key: "price", label: "Monthly", value: current ? `$${(current.price_cents / 100).toFixed(0)}` : "—" },
-      { key: "pending", label: "Pending requests", value: requests.filter((r: any) => r.status === "pending").length },
+      {
+        key: "price",
+        label: "Monthly",
+        value: current ? `$${(current.price_cents / 100).toFixed(0)}` : "—",
+      },
+      {
+        key: "pending",
+        label: "Pending requests",
+        value: requests.filter((r: any) => r.status === "pending").length,
+      },
       { key: "auto", label: "Auto-upgrade", value: autoUpgrade ? "On" : "Off" },
     ],
     [current, currentPlan, requests, autoUpgrade],
@@ -68,7 +79,11 @@ export function PlanManagementSection() {
   const reqMut = useMutation({
     mutationFn: (v: { requested_plan: string }) => request({ data: { ...v, note: note || null } }),
     onSuccess: (res: any) => {
-      toast.success(res.auto_applied ? "Upgrade applied automatically" : "Change requested — awaiting super admin");
+      toast.success(
+        res.auto_applied
+          ? "Upgrade applied automatically"
+          : "Change requested — awaiting super admin",
+      );
       setNote("");
       qc.invalidateQueries({ queryKey: ["my-plan-change-requests"] });
       qc.invalidateQueries({ queryKey: ["my-profile"] });
@@ -95,18 +110,26 @@ export function PlanManagementSection() {
 
   return (
     <div className="space-y-6">
-      <p className="text-sm text-muted-foreground">Compare plans, request an upgrade or downgrade, and manage auto-upgrade.</p>
+      <p className="text-sm text-muted-foreground">
+        Compare plans, request an upgrade or downgrade, and manage auto-upgrade.
+      </p>
 
       <AdminSummaryTiles tiles={tiles} columns={4} />
 
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-lg">Preferences</CardTitle>
-          <CardDescription>Auto-approve upgrades so they apply without super-admin review.</CardDescription>
+          <CardDescription>
+            Auto-approve upgrades so they apply without super-admin review.
+          </CardDescription>
         </CardHeader>
         <CardContent className="flex items-center justify-between">
           <div className="text-sm text-foreground">Automatically apply upgrade requests</div>
-          <Switch checked={autoUpgrade} onCheckedChange={(v) => autoMut.mutate(v)} disabled={autoMut.isPending} />
+          <Switch
+            checked={autoUpgrade}
+            onCheckedChange={(v) => autoMut.mutate(v)}
+            disabled={autoMut.isPending}
+          />
         </CardContent>
       </Card>
 
@@ -126,13 +149,23 @@ export function PlanManagementSection() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-2 text-sm text-foreground">
-                {(["max_users", "max_silos", "max_batches", "max_sensors"] as PlanNumericFeature[]).map((feature) => {
+                {(
+                  ["max_users", "max_silos", "max_batches", "max_sensors"] as PlanNumericFeature[]
+                ).map((feature) => {
                   const gate = isCurrent ? usageGates[feature]?.data : undefined;
                   return (
                     <div key={feature} className="flex justify-between">
                       <span className="text-muted-foreground">{USAGE_LABELS[feature]}</span>
                       {isCurrent && gate ? (
-                        <span className={gate.used != null && Number(gate.limit) > 0 && gate.used >= Number(gate.limit) ? "font-semibold text-amber-600" : ""}>
+                        <span
+                          className={
+                            gate.used != null &&
+                            Number(gate.limit) > 0 &&
+                            gate.used >= Number(gate.limit)
+                              ? "font-semibold text-amber-600"
+                              : ""
+                          }
+                        >
                           {gate.used ?? "—"} / {p[feature]}
                         </span>
                       ) : (
@@ -190,16 +223,27 @@ export function PlanManagementSection() {
                   {r.current_plan ?? "—"} → <span className="font-medium">{r.requested_plan}</span>
                 </td>
                 <td className="px-2 py-2">
-                  <Badge variant="outline" className={r.direction === "upgrade" ? "border-emerald-300 text-emerald-700" : "border-amber-300 text-amber-700"}>
+                  <Badge
+                    variant="outline"
+                    className={
+                      r.direction === "upgrade"
+                        ? "border-emerald-300 text-emerald-700"
+                        : "border-amber-300 text-amber-700"
+                    }
+                  >
                     {r.direction}
                   </Badge>
                 </td>
                 <td className="px-2 py-2">
-                  <Badge variant="outline" className="text-slate-600">{r.status}</Badge>
+                  <Badge variant="outline" className="text-slate-600">
+                    {r.status}
+                  </Badge>
                 </td>
                 <td className="px-4 py-2 text-right">
                   {r.status === "pending" ? (
-                    <Button size="sm" variant="outline" onClick={() => cancelMut.mutate(r.id)}>Cancel</Button>
+                    <Button size="sm" variant="outline" onClick={() => cancelMut.mutate(r.id)}>
+                      Cancel
+                    </Button>
                   ) : (
                     <span className="text-xs text-muted-foreground">—</span>
                   )}
@@ -208,7 +252,9 @@ export function PlanManagementSection() {
             ))}
             {requests.length === 0 && !reqQ.isLoading && (
               <tr>
-                <td colSpan={5} className="text-center text-muted-foreground py-8">No requests yet</td>
+                <td colSpan={5} className="text-center text-muted-foreground py-8">
+                  No requests yet
+                </td>
               </tr>
             )}
           </tbody>

@@ -35,15 +35,7 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { TicketDiscussion } from "./TicketDiscussion";
-import {
-  CheckCircle2,
-  User,
-  CalendarClock,
-  MessageSquare,
-  X,
-  Info,
-  Trash2,
-} from "lucide-react";
+import { CheckCircle2, User, CalendarClock, MessageSquare, X, Info, Trash2 } from "lucide-react";
 import { useEffect, useRef } from "react";
 
 const PRIORITY_BADGE: Record<string, string> = {
@@ -102,8 +94,7 @@ export function TicketDetailSheet({ ticket, open, onClose }: Props) {
   });
 
   const resolveMut = useMutation({
-    mutationFn: ({ id, note }: { id: string; note?: string }) =>
-      resolveFn({ data: { id, note } }),
+    mutationFn: ({ id, note }: { id: string; note?: string }) => resolveFn({ data: { id, note } }),
     onSuccess: () => {
       toast.success("Ticket marked as resolved — admin will be notified");
       setResolveNote("");
@@ -181,10 +172,7 @@ export function TicketDetailSheet({ ticket, open, onClose }: Props) {
               </Badge>
               <Badge
                 variant="outline"
-                className={cn(
-                  "text-[10px] font-semibold uppercase",
-                  STATUS_BADGE[ticket.status],
-                )}
+                className={cn("text-[10px] font-semibold uppercase", STATUS_BADGE[ticket.status])}
               >
                 {ticket.status}
               </Badge>
@@ -258,22 +246,17 @@ export function TicketDetailSheet({ ticket, open, onClose }: Props) {
                 <div className="flex items-center gap-1.5 text-emerald-600">
                   <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
                   <span className="font-medium">Resolved</span>
-                  <span className="ml-auto">
-                    {new Date(ticket.resolved_at).toLocaleString()}
-                  </span>
+                  <span className="ml-auto">{new Date(ticket.resolved_at).toLocaleString()}</span>
                 </div>
               )}
               {ticket.closed_at && (
                 <div className="flex items-center gap-1.5 text-muted-foreground">
                   <X className="h-3.5 w-3.5 shrink-0" />
                   <span className="font-medium">Closed</span>
-                  <span className="ml-auto">
-                    {new Date(ticket.closed_at).toLocaleString()}
-                  </span>
+                  <span className="ml-auto">{new Date(ticket.closed_at).toLocaleString()}</span>
                 </div>
               )}
             </div>
-
           </div>
 
           {/* Footer actions — always visible at bottom, generous padding */}
@@ -281,7 +264,9 @@ export function TicketDetailSheet({ ticket, open, onClose }: Props) {
             {/* Super admin resolve note input — lives in footer, not body */}
             {isSuperAdmin && isActionable && showNoteInput && (
               <div className="space-y-1.5">
-                <p className="text-xs text-muted-foreground font-medium">Resolution note (optional)</p>
+                <p className="text-xs text-muted-foreground font-medium">
+                  Resolution note (optional)
+                </p>
                 <Textarea
                   value={resolveNote}
                   onChange={(e) => setResolveNote(e.target.value)}
@@ -346,7 +331,10 @@ export function TicketDetailSheet({ ticket, open, onClose }: Props) {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => { setShowNoteInput(false); setResolveNote(""); }}
+                        onClick={() => {
+                          setShowNoteInput(false);
+                          setResolveNote("");
+                        }}
                         disabled={isPending}
                       >
                         Cancel

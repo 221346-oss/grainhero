@@ -62,7 +62,8 @@ function computeEMADelta(history: number[]): number | null {
 }
 
 function calculateDewPoint(temperature: number, humidity: number) {
-  const a = 17.27, b = 237.7;
+  const a = 17.27,
+    b = 237.7;
   const alpha = (a * temperature) / (b + temperature) + Math.log(humidity / 100);
   return Math.round(((b * alpha) / (a - alpha)) * 100) / 100;
 }
@@ -116,7 +117,12 @@ function buildSafetyGuardrail(
     confidence: 0,
     source: "safety_guardrail",
     trustworthy: false,
-    factors: [reason, ...(temperature >= 35 ? ["temperature ≥ 35°C"] : []), ...(humidity >= 75 ? ["humidity ≥ 75%"] : []), ...(moisture >= 15 ? ["grain moisture ≥ 15%"] : [])],
+    factors: [
+      reason,
+      ...(temperature >= 35 ? ["temperature ≥ 35°C"] : []),
+      ...(humidity >= 75 ? ["humidity ≥ 75%"] : []),
+      ...(moisture >= 15 ? ["grain moisture ≥ 15%"] : []),
+    ],
   };
 }
 
@@ -145,13 +151,27 @@ export const runMLPrediction = createServerFn({ method: "POST" })
     // real, always-available silo-level signal.
     const { data: batchRows } = await (supabase as any)
       .from("grain_batches")
-      .select("id, batch_id, grain_type, moisture_content, intake_date, quantity_kg, dispatched_quantity_kg, remaining_kg")
+      .select(
+        "id, batch_id, grain_type, moisture_content, intake_date, quantity_kg, dispatched_quantity_kg, remaining_kg",
+      )
       .eq("silo_id", data.siloId)
       .order("intake_date", { ascending: true, nullsFirst: false });
-    type BatchRow = { id: string; batch_id: string; grain_type: string; moisture_content: number | null; intake_date: string; quantity_kg: number; dispatched_quantity_kg: number | null; remaining_kg: number | null };
-    const batch = ((batchRows ?? []) as BatchRow[])
-      .find((b) => (b.remaining_kg ?? Math.max(0, Number(b.quantity_kg ?? 0) - Number(b.dispatched_quantity_kg ?? 0))) > 0)
-      ?? null;
+    type BatchRow = {
+      id: string;
+      batch_id: string;
+      grain_type: string;
+      moisture_content: number | null;
+      intake_date: string;
+      quantity_kg: number;
+      dispatched_quantity_kg: number | null;
+      remaining_kg: number | null;
+    };
+    const batch =
+      ((batchRows ?? []) as BatchRow[]).find(
+        (b) =>
+          (b.remaining_kg ??
+            Math.max(0, Number(b.quantity_kg ?? 0) - Number(b.dispatched_quantity_kg ?? 0))) > 0,
+      ) ?? null;
 
     // 2. Sensor device (for Firebase actuation)
     const { data: device } = await supabase
@@ -164,7 +184,9 @@ export const runMLPrediction = createServerFn({ method: "POST" })
     // 3. Latest 20 readings for history + EMA
     const { data: readings, error: readingsError } = await supabase
       .from("sensor_readings")
-      .select("temperature_value, humidity_value, moisture_value, voc_value, co2_value, airflow, fan_state, fan_duty_cycle, fan_rpm, reading_timestamp")
+      .select(
+        "temperature_value, humidity_value, moisture_value, voc_value, co2_value, airflow, fan_state, fan_duty_cycle, fan_rpm, reading_timestamp",
+      )
       .eq("silo_id", data.siloId)
       .order("reading_timestamp", { ascending: false })
       .limit(20);
@@ -180,13 +202,20 @@ export const runMLPrediction = createServerFn({ method: "POST" })
       throw new Error("Temperature and humidity readings are required for ML prediction");
     }
 
-    const tempHistory = readings.map((r) => toNumberOrNull(r.temperature_value)).filter((v): v is number => v !== null).reverse();
-    const humHistory = readings.map((r) => toNumberOrNull(r.humidity_value)).filter((v): v is number => v !== null).reverse();
+    const tempHistory = readings
+      .map((r) => toNumberOrNull(r.temperature_value))
+      .filter((v): v is number => v !== null)
+      .reverse();
+    const humHistory = readings
+      .map((r) => toNumberOrNull(r.humidity_value))
+      .filter((v): v is number => v !== null)
+      .reverse();
     const grainType = String(batch?.grain_type || "rice").toLowerCase();
     // Live sensor reading takes priority — it's the real current silo
     // condition. Batch moisture-at-intake is only a fallback for silos
     // whose sensor doesn't report moisture.
-    const grainMoisture = toNumberOrNull(latestReading.moisture_value) ?? toNumberOrNull(batch?.moisture_content) ?? 13;
+    const grainMoisture =
+      toNumberOrNull(latestReading.moisture_value) ?? toNumberOrNull(batch?.moisture_content) ?? 13;
     const co2 = toNumberOrNull(latestReading.co2_value);
     const voc = toNumberOrNull(latestReading.voc_value);
 
@@ -203,7 +232,10 @@ export const runMLPrediction = createServerFn({ method: "POST" })
       airflow: toNumberOrNull(latestReading.airflow) ?? 0,
       temperature_history: tempHistory,
       humidity_history: humHistory,
-      moisture_history: readings.map((r) => toNumberOrNull(r.moisture_value)).filter((v): v is number => v !== null).reverse(),
+      moisture_history: readings
+        .map((r) => toNumberOrNull(r.moisture_value))
+        .filter((v): v is number => v !== null)
+        .reverse(),
     };
 
     // 5. ML Cascade
@@ -253,7 +285,13 @@ export const runMLPrediction = createServerFn({ method: "POST" })
           };
         } else {
           // Box 3b: Safety guardrail (honest refusal)
-          prediction = buildSafetyGuardrail(temperature, humidity, grainMoisture, voc, fallbackReason);
+          prediction = buildSafetyGuardrail(
+            temperature,
+            humidity,
+            grainMoisture,
+            voc,
+            fallbackReason,
+          );
         }
       }
     } catch (err) {
@@ -281,7 +319,13 @@ export const runMLPrediction = createServerFn({ method: "POST" })
           source: prediction.source,
           trustworthy: prediction.trustworthy,
           reasons: prediction.factors,
-          features: { ...inferenceInput, delta_temp: computeEMADelta(tempHistory), delta_rh: computeEMADelta(humHistory), temperature_trend: calculateTrend(tempHistory), humidity_trend: calculateTrend(humHistory) },
+          features: {
+            ...inferenceInput,
+            delta_temp: computeEMADelta(tempHistory),
+            delta_rh: computeEMADelta(humHistory),
+            temperature_trend: calculateTrend(tempHistory),
+            humidity_trend: calculateTrend(humHistory),
+          },
         },
       })
       .select("id")
@@ -300,25 +344,61 @@ export const runMLPrediction = createServerFn({ method: "POST" })
         title: "Human review required for spoilage prediction",
         message: `ML unavailable. Safety guardrail classified this silo as ${prediction.riskClass} risk.`,
         alert_type: "in-app",
-        priority: prediction.riskClass === "critical" ? "critical" : prediction.riskClass === "high" ? "high" : "medium",
+        priority:
+          prediction.riskClass === "critical"
+            ? "critical"
+            : prediction.riskClass === "high"
+              ? "high"
+              : "medium",
         source: "ai",
         status: "pending",
-        trigger_conditions: { fallback_reason: fallbackReason, factors: prediction.factors, temperature, humidity, moisture: grainMoisture, voc, co2 },
-        ai_context: { prediction_id: predictionRecord?.id ?? null, backup_strategy: "human_review_and_safety_guardrail" },
+        trigger_conditions: {
+          fallback_reason: fallbackReason,
+          factors: prediction.factors,
+          temperature,
+          humidity,
+          moisture: grainMoisture,
+          voc,
+          co2,
+        },
+        ai_context: {
+          prediction_id: predictionRecord?.id ?? null,
+          backup_strategy: "human_review_and_safety_guardrail",
+        },
         created_by: userId,
       });
     }
 
     // 8. MQTT Actuator Command with Fumigation Interlock
-    const shouldActuate = prediction.riskScore >= 30 || humidity >= 70 || (voc !== null && voc > 400);
+    const shouldActuate =
+      prediction.riskScore >= 30 || humidity >= 70 || (voc !== null && voc > 400);
     if (device?.device_id && shouldActuate) {
-      let fanOn = false, pwm = 0;
-      let led2 = false, led3 = false, led4 = false;
+      let fanOn = false,
+        pwm = 0;
+      let led2 = false,
+        led3 = false,
+        led4 = false;
 
-      if (prediction.riskClass === "critical" || prediction.riskScore >= 80) { fanOn = true; pwm = 100; led4 = true; }
-      else if (prediction.riskClass === "high" || prediction.riskScore >= 60) { fanOn = true; pwm = 80; led3 = true; }
-      else if (prediction.riskClass === "moderate" || prediction.riskScore >= 30 || humidity >= 70 || (voc !== null && voc > 400)) { fanOn = true; pwm = 60; led3 = true; }
-      else { led2 = true; }
+      if (prediction.riskClass === "critical" || prediction.riskScore >= 80) {
+        fanOn = true;
+        pwm = 100;
+        led4 = true;
+      } else if (prediction.riskClass === "high" || prediction.riskScore >= 60) {
+        fanOn = true;
+        pwm = 80;
+        led3 = true;
+      } else if (
+        prediction.riskClass === "moderate" ||
+        prediction.riskScore >= 30 ||
+        humidity >= 70 ||
+        (voc !== null && voc > 400)
+      ) {
+        fanOn = true;
+        pwm = 60;
+        led3 = true;
+      } else {
+        led2 = true;
+      }
 
       // === FUMIGATION INTERLOCK — block all fan ON commands if fumigation is active ===
       const fumigationActive = (silo as any).fumigation_active === true;
@@ -332,7 +412,10 @@ export const runMLPrediction = createServerFn({ method: "POST" })
         await writeFirebaseControl(device.device_id, {
           ml_requested_fan: fanOn,
           target_fan_speed: pwm,
-          ml_decision: prediction.source === "safety_guardrail" ? `guardrail_${prediction.riskClass}` : prediction.riskClass,
+          ml_decision:
+            prediction.source === "safety_guardrail"
+              ? `guardrail_${prediction.riskClass}`
+              : prediction.riskClass,
           led2,
           led3,
           led4,

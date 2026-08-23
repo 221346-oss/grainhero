@@ -11,12 +11,36 @@ export type FlowGroup = {
 // 6-stage scheme: yellow = pending, orange = QC, green = stored,
 // blue = processing, purple = dispatched, red = issue.
 const TONE_CLS: Record<FlowGroup["tone"], { dot: string; text: string; bg: string }> = {
-  yellow: { dot: "bg-amber-500", text: "text-amber-700 dark:text-amber-400", bg: "bg-amber-500/10 border-amber-500/30" },
-  orange: { dot: "bg-orange-500", text: "text-orange-700 dark:text-orange-400", bg: "bg-orange-500/10 border-orange-500/30" },
-  green: { dot: "bg-emerald-500", text: "text-emerald-700 dark:text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/30" },
-  blue: { dot: "bg-blue-500", text: "text-blue-700 dark:text-blue-400", bg: "bg-blue-500/10 border-blue-500/30" },
-  purple: { dot: "bg-purple-500", text: "text-purple-700 dark:text-purple-400", bg: "bg-purple-500/10 border-purple-500/30" },
-  red: { dot: "bg-red-500", text: "text-red-700 dark:text-red-400", bg: "bg-red-500/10 border-red-500/30" },
+  yellow: {
+    dot: "bg-amber-500",
+    text: "text-amber-700 dark:text-amber-400",
+    bg: "bg-amber-500/10 border-amber-500/30",
+  },
+  orange: {
+    dot: "bg-orange-500",
+    text: "text-orange-700 dark:text-orange-400",
+    bg: "bg-orange-500/10 border-orange-500/30",
+  },
+  green: {
+    dot: "bg-emerald-500",
+    text: "text-emerald-700 dark:text-emerald-400",
+    bg: "bg-emerald-500/10 border-emerald-500/30",
+  },
+  blue: {
+    dot: "bg-blue-500",
+    text: "text-blue-700 dark:text-blue-400",
+    bg: "bg-blue-500/10 border-blue-500/30",
+  },
+  purple: {
+    dot: "bg-purple-500",
+    text: "text-purple-700 dark:text-purple-400",
+    bg: "bg-purple-500/10 border-purple-500/30",
+  },
+  red: {
+    dot: "bg-red-500",
+    text: "text-red-700 dark:text-red-400",
+    bg: "bg-red-500/10 border-red-500/30",
+  },
 };
 
 /**
@@ -43,21 +67,27 @@ export function SiloFlowDiagram({
     <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 py-2">
       {/* Incoming */}
       <div className="space-y-1.5">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Incoming</p>
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">
+          Incoming
+        </p>
         {incoming.length === 0 ? (
           <p className="text-[10px] text-muted-foreground text-right">None</p>
         ) : (
           incoming.map((g) => (
-            <div key={g.label} className={`flex items-center justify-end gap-1.5 rounded-md border px-2 py-1 ${TONE_CLS[g.tone].bg}`}>
+            <div
+              key={g.label}
+              className={`flex items-center justify-end gap-1.5 rounded-md border px-2 py-1 ${TONE_CLS[g.tone].bg}`}
+            >
               <div className="text-right">
-                <p className={`text-[10px] font-semibold ${TONE_CLS[g.tone].text}`}>{g.label} · {g.count}</p>
-                <p className="text-[9px] text-muted-foreground tabular-nums">{g.kg.toLocaleString()}kg</p>
+                <p className={`text-[10px] font-semibold ${TONE_CLS[g.tone].text}`}>
+                  {g.label} · {g.count}
+                </p>
+                <p className="text-[9px] text-muted-foreground tabular-nums">
+                  {g.kg.toLocaleString()}kg
+                </p>
               </div>
               <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${TONE_CLS[g.tone].dot}`} />
-              <motion.div
-                className="overflow-hidden w-5 shrink-0"
-                aria-hidden
-              >
+              <motion.div className="overflow-hidden w-5 shrink-0" aria-hidden>
                 <motion.div
                   animate={{ x: [-16, 4] }}
                   transition={{ duration: 1.1, repeat: Infinity, ease: "easeInOut" }}
@@ -82,21 +112,28 @@ export function SiloFlowDiagram({
           <Warehouse className="absolute inset-0 m-auto h-5 w-5 text-foreground/70" />
         </div>
         <p className="text-[10px] font-semibold tabular-nums">{pct}%</p>
-        <p className="text-[9px] text-muted-foreground truncate max-w-[64px] text-center" title={siloName}>{siloName}</p>
+        <p
+          className="text-[9px] text-muted-foreground truncate max-w-[64px] text-center"
+          title={siloName}
+        >
+          {siloName}
+        </p>
       </div>
 
       {/* Outgoing */}
       <div className="space-y-1.5">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Outgoing</p>
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Outgoing
+        </p>
         {outgoing.length === 0 ? (
           <p className="text-[10px] text-muted-foreground">None</p>
         ) : (
           outgoing.map((g) => (
-            <div key={g.label} className={`flex items-center gap-1.5 rounded-md border px-2 py-1 ${TONE_CLS[g.tone].bg}`}>
-              <motion.div
-                className="overflow-hidden w-5 shrink-0"
-                aria-hidden
-              >
+            <div
+              key={g.label}
+              className={`flex items-center gap-1.5 rounded-md border px-2 py-1 ${TONE_CLS[g.tone].bg}`}
+            >
+              <motion.div className="overflow-hidden w-5 shrink-0" aria-hidden>
                 <motion.div
                   animate={{ x: [-4, 16] }}
                   transition={{ duration: 1.1, repeat: Infinity, ease: "easeInOut" }}
@@ -106,8 +143,12 @@ export function SiloFlowDiagram({
               </motion.div>
               <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${TONE_CLS[g.tone].dot}`} />
               <div>
-                <p className={`text-[10px] font-semibold ${TONE_CLS[g.tone].text}`}>{g.label} · {g.count}</p>
-                <p className="text-[9px] text-muted-foreground tabular-nums">{g.kg.toLocaleString()}kg</p>
+                <p className={`text-[10px] font-semibold ${TONE_CLS[g.tone].text}`}>
+                  {g.label} · {g.count}
+                </p>
+                <p className="text-[9px] text-muted-foreground tabular-nums">
+                  {g.kg.toLocaleString()}kg
+                </p>
               </div>
             </div>
           ))

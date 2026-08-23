@@ -1,74 +1,94 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { motion } from 'framer-motion'
-import { Search, MessageCircle, Book, Video, Mail, Phone } from 'lucide-react'
-import { NewGlassNav } from '@/components/landing/NewGlassNav'
-import { NewFooter } from '@/components/landing/NewFooter'
+import { createFileRoute } from "@tanstack/react-router";
+import { motion } from "framer-motion";
+import { Search, MessageCircle, Book, Video, Mail, Phone } from "lucide-react";
+import { NewGlassNav } from "@/components/landing/NewGlassNav";
+import { NewFooter } from "@/components/landing/NewFooter";
 
-export const Route = createFileRoute('/help')({
+export const Route = createFileRoute("/help")({
   head: () => ({
     meta: [
-      { title: 'Help Center — GrainHero' },
+      { title: "Help Center — GrainHero" },
       {
-        name: 'description',
-        content: 'Get help and support for GrainHero. Find answers, tutorials, and contact our support team.',
+        name: "description",
+        content:
+          "Get help and support for GrainHero. Find answers, tutorials, and contact our support team.",
       },
-      { property: 'og:title', content: "Help Center — GrainHero" },
-      { property: 'og:description', content: "Get help and support for GrainHero. Find answers, tutorials, and contact our support team." },
-      { property: 'og:url', content: 'https://grainhero.app/help' },
-      { property: 'og:type', content: 'website' },
-      { name: 'twitter:card', content: 'summary_large_image' },
+      { property: "og:title", content: "Help Center — GrainHero" },
+      {
+        property: "og:description",
+        content:
+          "Get help and support for GrainHero. Find answers, tutorials, and contact our support team.",
+      },
+      { property: "og:url", content: "https://grainhero.app/help" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [{ rel: 'canonical', href: 'https://grainhero.app/help' }],
+    links: [{ rel: "canonical", href: "https://grainhero.app/help" }],
   }),
   component: HelpCenterPage,
-})
+});
 
 function HelpCenterPage() {
   const helpCategories = [
     {
       icon: Book,
-      title: 'Getting Started',
-      description: 'Learn the basics of GrainHero and set up your first silo monitoring system.',
-      topics: ['Installation Guide', 'First-Time Setup', 'Quick Start Tutorial', 'Mobile App Basics'],
+      title: "Getting Started",
+      description: "Learn the basics of GrainHero and set up your first silo monitoring system.",
+      topics: [
+        "Installation Guide",
+        "First-Time Setup",
+        "Quick Start Tutorial",
+        "Mobile App Basics",
+      ],
     },
     {
       icon: Video,
-      title: 'Video Tutorials',
-      description: 'Watch step-by-step video guides covering all aspects of the platform.',
-      topics: ['Sensor Installation', 'Dashboard Overview', 'Alert Configuration', 'Report Generation'],
+      title: "Video Tutorials",
+      description: "Watch step-by-step video guides covering all aspects of the platform.",
+      topics: [
+        "Sensor Installation",
+        "Dashboard Overview",
+        "Alert Configuration",
+        "Report Generation",
+      ],
     },
     {
       icon: MessageCircle,
-      title: 'FAQs',
-      description: 'Find quick answers to the most commonly asked questions.',
-      topics: ['Billing & Pricing', 'Technical Support', 'Account Management', 'Features & Capabilities'],
+      title: "FAQs",
+      description: "Find quick answers to the most commonly asked questions.",
+      topics: [
+        "Billing & Pricing",
+        "Technical Support",
+        "Account Management",
+        "Features & Capabilities",
+      ],
     },
     {
       icon: Search,
-      title: 'Troubleshooting',
-      description: 'Resolve common issues and technical problems quickly.',
-      topics: ['Connection Issues', 'Sensor Calibration', 'Alert Problems', 'Data Sync Issues'],
+      title: "Troubleshooting",
+      description: "Resolve common issues and technical problems quickly.",
+      topics: ["Connection Issues", "Sensor Calibration", "Alert Problems", "Data Sync Issues"],
     },
-  ]
+  ];
 
   return (
     <main className="min-h-screen bg-[#EDE9D4]">
       <NewGlassNav />
-      
+
       {/* Hero Section */}
       <section className="relative pt-32 pb-16 sm:pt-40 sm:pb-24 px-4 sm:px-6 lg:px-8 bg-[#252d26] overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div
             style={{
               backgroundImage:
-                'radial-gradient(circle at 2px 2px, rgba(47,172,12,0.4) 1px, transparent 0)',
-              backgroundSize: '40px 40px',
-              width: '100%',
-              height: '100%',
+                "radial-gradient(circle at 2px 2px, rgba(47,172,12,0.4) 1px, transparent 0)",
+              backgroundSize: "40px 40px",
+              width: "100%",
+              height: "100%",
             }}
           />
         </div>
-        
+
         <div className="max-w-4xl mx-auto text-center relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -86,7 +106,7 @@ function HelpCenterPage() {
             <p className="text-xl text-[#EDE9D4]/80 leading-relaxed mb-8">
               Find answers, tutorials, and get support for all your GrainHero needs
             </p>
-            
+
             {/* Search Bar */}
             <div className="max-w-2xl mx-auto relative">
               <input
@@ -162,5 +182,5 @@ function HelpCenterPage() {
 
       <NewFooter />
     </main>
-  )
+  );
 }

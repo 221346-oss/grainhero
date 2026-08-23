@@ -1,21 +1,21 @@
-import type { ReactNode } from 'react'
-import { motion } from 'framer-motion'
-import { Link } from '@tanstack/react-router'
-import { ChevronRight } from 'lucide-react'
-import { NewGlassNav } from '@/components/landing/NewGlassNav'
-import { NewFooter } from '@/components/landing/NewFooter'
+import type { ReactNode } from "react";
+import { motion } from "framer-motion";
+import { Link } from "@tanstack/react-router";
+import { ChevronRight } from "lucide-react";
+import { NewGlassNav } from "@/components/landing/NewGlassNav";
+import { NewFooter } from "@/components/landing/NewFooter";
 
 export interface Crumb {
-  label: string
-  to?: string
+  label: string;
+  to?: string;
 }
 
 interface MarketingPageProps {
-  eyebrow?: string
-  title: ReactNode
-  intro: string
-  crumbs: Crumb[]
-  children: ReactNode
+  eyebrow?: string;
+  title: ReactNode;
+  intro: string;
+  crumbs: Crumb[];
+  children: ReactNode;
 }
 
 /**
@@ -33,8 +33,8 @@ export function MarketingPage({ eyebrow, title, intro, crumbs, children }: Marke
           className="absolute inset-0 opacity-[0.12]"
           style={{
             backgroundImage:
-              'radial-gradient(circle at 2px 2px, rgba(47,168,79,0.5) 1px, transparent 0)',
-            backgroundSize: '38px 38px',
+              "radial-gradient(circle at 2px 2px, rgba(47,168,79,0.5) 1px, transparent 0)",
+            backgroundSize: "38px 38px",
           }}
         />
         <div className="relative z-10 mx-auto max-w-4xl">
@@ -83,7 +83,7 @@ export function MarketingPage({ eyebrow, title, intro, crumbs, children }: Marke
 
       <NewFooter />
     </div>
-  )
+  );
 }
 
 export function Section({
@@ -91,16 +91,16 @@ export function Section({
   heading,
   children,
 }: {
-  id?: string
-  heading: string
-  children: ReactNode
+  id?: string;
+  heading: string;
+  children: ReactNode;
 }) {
   return (
     <motion.section
       id={id}
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-80px' }}
+      viewport={{ once: true, margin: "-80px" }}
       transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       className="mb-14 scroll-mt-28 last:mb-0"
     >
@@ -109,7 +109,7 @@ export function Section({
       </h2>
       <div className="space-y-4 text-[15px] leading-relaxed text-[#111512]/75">{children}</div>
     </motion.section>
-  )
+  );
 }
 
 export function DataTable({
@@ -117,9 +117,9 @@ export function DataTable({
   columns,
   rows,
 }: {
-  caption?: string
-  columns: string[]
-  rows: string[][]
+  caption?: string;
+  columns: string[];
+  rows: string[][];
 }) {
   return (
     <div className="overflow-x-auto rounded-xl border border-[#111512]/10">
@@ -143,9 +143,7 @@ export function DataTable({
                 <td
                   key={i}
                   className={
-                    i === 0
-                      ? 'px-4 py-3 font-medium text-[#111512]'
-                      : 'px-4 py-3 text-[#111512]/70'
+                    i === 0 ? "px-4 py-3 font-medium text-[#111512]" : "px-4 py-3 text-[#111512]/70"
                   }
                 >
                   {cell}
@@ -156,7 +154,7 @@ export function DataTable({
         </tbody>
       </table>
     </div>
-  )
+  );
 }
 
 export function FaqList({ items }: { items: { q: string; a: string }[] }) {
@@ -174,7 +172,7 @@ export function FaqList({ items }: { items: { q: string; a: string }[] }) {
         </details>
       ))}
     </div>
-  )
+  );
 }
 
 export function NextSteps({ links }: { links: { to: string; label: string; note: string }[] }) {
@@ -194,30 +192,30 @@ export function NextSteps({ links }: { links: { to: string; label: string; note:
         </Link>
       ))}
     </div>
-  )
+  );
 }
 
 export function breadcrumbLd(crumbs: { label: string; url: string }[]) {
   return {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
     itemListElement: crumbs.map((c, i) => ({
-      '@type': 'ListItem',
+      "@type": "ListItem",
       position: i + 1,
       name: c.label,
       item: c.url,
     })),
-  }
+  };
 }
 
 export function faqLd(items: { q: string; a: string }[]) {
   return {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
     mainEntity: items.map((i) => ({
-      '@type': 'Question',
+      "@type": "Question",
       name: i.q,
-      acceptedAnswer: { '@type': 'Answer', text: i.a },
+      acceptedAnswer: { "@type": "Answer", text: i.a },
     })),
-  }
+  };
 }

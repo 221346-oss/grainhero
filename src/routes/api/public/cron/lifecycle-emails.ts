@@ -21,18 +21,14 @@ export const Route = createFileRoute("/api/public/cron/lifecycle-emails")({
 
 async function runLifecycleCron(request: Request) {
   const url = new URL(request.url);
-  const apiKey =
-    request.headers.get("apikey") ??
-    url.searchParams.get("apikey") ??
-    "";
+  const apiKey = request.headers.get("apikey") ?? url.searchParams.get("apikey") ?? "";
   const cronSecret = request.headers.get("x-cron-secret") ?? "";
 
   const anon = process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.SUPABASE_ANON_KEY ?? "";
   const expected = process.env.CRON_SECRET ?? "";
 
   const authorized =
-    (anon && apiKey && apiKey === anon) ||
-    (expected && cronSecret && cronSecret === expected);
+    (anon && apiKey && apiKey === anon) || (expected && cronSecret && cronSecret === expected);
   if (!authorized) {
     return new Response("Unauthorized", { status: 401 });
   }
@@ -43,7 +39,13 @@ async function runLifecycleCron(request: Request) {
   const now = Date.now();
   const day = 24 * 60 * 60 * 1000;
 
-  const results: Record<string, number> = { day3: 0, day10: 0, trial_ending: 0, reengagement: 0, errors: 0 };
+  const results: Record<string, number> = {
+    day3: 0,
+    day10: 0,
+    trial_ending: 0,
+    reengagement: 0,
+    errors: 0,
+  };
 
   // Fetch a reasonable batch of candidate profiles.
   const { data: profiles, error } = await supabaseAdmin

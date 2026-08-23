@@ -1,7 +1,9 @@
 # GrainHero Research Knowledge Base
+
 > **Auto-generated Catalog of All Research Papers**
 
 ## Smartsilo.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\Smartsilo.pdf`
 
 **Abstract / First Page Extract:**
@@ -37,6 +39,7 @@ successfully monitors and controls storage air temperature,
 ---
 
 ## A53-1823-1989-eng.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\A53-1823-1989-eng.pdf`
 
 **Abstract / First Page Extract:**
@@ -56,6 +59,7 @@ http://www.archive.org/details/spoilageheatingoOOmill
 ---
 
 ## AI-driven_technologies_for_pest_monitoring_unsound.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\AI-driven_technologies_for_pest_monitoring_unsound.pdf`
 
 **Abstract / First Page Extract:**
@@ -82,39 +86,40 @@ including  application  significance,  ex
 ---
 
 ## SensorsforGrainStorageNeethirajanASABE.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\SensorsforGrainStorageNeethirajanASABE.pdf`
 
 **Abstract / First Page Extract:**
 
 ```text
-The authors are solely responsible for the content of this te chnical presentation. The technical presentation does not necessarily reflect the 
-official position of the American Society of Agricultural  and Biological Engineers (ASABE), and its printing and distribution d oes not 
-constitute an endorsement of views which may be expressed. Techni cal presentations are not subject to the formal peer review process by 
-ASABE editorial committees; therefore, they ar e not to be presented as refereed publicat ions. Citation of this work should stat e that it is 
-from an ASABE meeting paper. EXAMPLE: Author's Last Name, In itials. 2007. Title of Presentation. ASABE Paper No. 076179. St. 
-Joseph, Mich.: ASABE. For information about securing permission to  reprint or reproduce a techni cal presentation, please contac t ASABE 
-at rutter@asabe.org or 269-429-0300 (2950 Niles Road, St. Joseph, MI 49085-9659 USA). 
- 
- 
- 
- 
- 
- 
-An ASABE Meeting Presentation 
- 
+The authors are solely responsible for the content of this te chnical presentation. The technical presentation does not necessarily reflect the
+official position of the American Society of Agricultural  and Biological Engineers (ASABE), and its printing and distribution d oes not
+constitute an endorsement of views which may be expressed. Techni cal presentations are not subject to the formal peer review process by
+ASABE editorial committees; therefore, they ar e not to be presented as refereed publicat ions. Citation of this work should stat e that it is
+from an ASABE meeting paper. EXAMPLE: Author's Last Name, In itials. 2007. Title of Presentation. ASABE Paper No. 076179. St.
+Joseph, Mich.: ASABE. For information about securing permission to  reprint or reproduce a techni cal presentation, please contac t ASABE
+at rutter@asabe.org or 269-429-0300 (2950 Niles Road, St. Joseph, MI 49085-9659 USA).
+
+
+
+
+
+
+An ASABE Meeting Presentation
+
 Paper Number: 076179
-Sensors for Grain Storage  
-S. Neethirajan 
-Department of Biosystems Engineering, University of Manitoba, Winnipeg, Canada R3T 5V6 
-D.S. Jayas 
-Distinguished Professor, Canada Research Chair in Stored-Grain Ecosystems, Associate 
-Vice-president (Research), University of Manitoba, Winnipeg, MB, Canada R3T 2N2  
-Written for presentation at the 
-2007 ASABE Annual International Meeting 
-Sponsored by ASABE 
-Minneapolis Convention Center 
-Minneapolis, Minnesota 
-17 - 20 June 2007 
+Sensors for Grain Storage
+S. Neethirajan
+Department of Biosystems Engineering, University of Manitoba, Winnipeg, Canada R3T 5V6
+D.S. Jayas
+Distinguished Professor, Canada Research Chair in Stored-Grain Ecosystems, Associate
+Vice-president (Research), University of Manitoba, Winnipeg, MB, Canada R3T 2N2
+Written for presentation at the
+2007 ASABE Annual International Meeting
+Sponsored by ASABE
+Minneapolis Convention Center
+Minneapolis, Minnesota
+17 - 20 June 2007
 Abstract. Post harvest stored grain
 ...
 ```
@@ -122,49 +127,50 @@ Abstract. Post harvest stored grain
 ---
 
 ## Design_and_Development_of_a_Model_Smart_Storage_Sy.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\Design_and_Development_of_a_Model_Smart_Storage_Sy.pdf`
 
 **Abstract / First Page Extract:**
 
 ```text
-© Publisher: Ebubekir Altuntas. This is an Open Access article and 
-is licensed (CC-BY-NC-4.0) under a Creative Commons Attribution 4.0 International License. 
- 
- 
- 
- 
-Turkish Journal of Agricultural  
-Engineering Research 
- 
-https://dergipark.org.tr/en/pub/turkager 
-  https://doi.org/10.46592/turkager.1297511 
- 
-Research Article 
- 
- 
-Turk J Agr Eng Res 
-(TURKAGER) 
- 
-ISSN: 2717-8420 
-2023, 4(1), 125-132 
- 
-Design and Development of a Model Smart Storage System 
- 
-Omokaro IDAMAaID, Ovuakporaye Godwin EKRUYOTAa*ID 
- 
-aDepartment of Computer Engineering, Delta State University of Science and Technology, Ozoro, NIGERIA 
- 
-(*): Corresponding Author: g.o.softsystem@gmail.com 
- 
-ABSTRACT  
-  
-Food security has become a global major problem, due to the rapid increase in population growth. This has 
-necessity the development of an effective agricultural products’ storage system, to alleviate the problem of 
-food wastage. This study was embarked upon to develop a prototype of universal smart storage system for 
-farm products, by using the internet of thing (IoT). The storage structure consists of four princi pal 
-constituents which were; the power source, storage chamber, central processing system, and peripheral 
-component interconnect (PCI) heater and PCI fan. The developed model was tested at a pre-set temperature 
-and relative humidity of 32C and 62% RH respectively. The results revealed that the developed system had 
+© Publisher: Ebubekir Altuntas. This is an Open Access article and
+is licensed (CC-BY-NC-4.0) under a Creative Commons Attribution 4.0 International License.
+
+
+
+
+Turkish Journal of Agricultural
+Engineering Research
+
+https://dergipark.org.tr/en/pub/turkager
+  https://doi.org/10.46592/turkager.1297511
+
+Research Article
+
+
+Turk J Agr Eng Res
+(TURKAGER)
+
+ISSN: 2717-8420
+2023, 4(1), 125-132
+
+Design and Development of a Model Smart Storage System
+
+Omokaro IDAMAaID, Ovuakporaye Godwin EKRUYOTAa*ID
+
+aDepartment of Computer Engineering, Delta State University of Science and Technology, Ozoro, NIGERIA
+
+(*): Corresponding Author: g.o.softsystem@gmail.com
+
+ABSTRACT
+
+Food security has become a global major problem, due to the rapid increase in population growth. This has
+necessity the development of an effective agricultural products’ storage system, to alleviate the problem of
+food wastage. This study was embarked upon to develop a prototype of universal smart storage system for
+farm products, by using the internet of thing (IoT). The storage structure consists of four princi pal
+constituents which were; the power source, storage chamber, central processing system, and peripheral
+component interconnect (PCI) heater and PCI fan. The developed model was tested at a pre-set temperature
+and relative humidity of 32C and 62% RH respectively. The results revealed that the developed system had
 an efficiency of 85%. Though, the smart model had a failur
 ...
 ```
@@ -172,6 +178,7 @@ an efficiency of 85%. Though, the smart model had a failur
 ---
 
 ## neethirajan2008.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\neethirajan2008.pdf`
 
 **Abstract / First Page Extract:**
@@ -216,6 +223,7 @@ is a need to collect data. This has
 ---
 
 ## AgricResCommentaryFoodSecurity12124.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\AgricResCommentaryFoodSecurity12124.pdf`
 
 **Abstract / First Page Extract:**
@@ -244,6 +252,7 @@ and pulses (collectively referred to as gra
 ---
 
 ## WirelessDataPA.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\WirelessDataPA.pdf`
 
 **Abstract / First Page Extract:**
@@ -279,6 +288,7 @@ into a  structure.  Thermocouples are typically  used and are integ
 ---
 
 ## pdfviewer.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\pdfviewer.pdf`
 
 **Abstract / First Page Extract:**
@@ -306,6 +316,7 @@ difference predicted by a linear element model (88 linear elements each layer) i
 ---
 
 ## SIMULTANEOUSMONITORINGOFSTOREDGRAIN.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\SIMULTANEOUSMONITORINGOFSTOREDGRAIN.pdf`
 
 **Abstract / First Page Extract:**
@@ -313,8 +324,8 @@ difference predicted by a linear element model (88 linear elements each layer) i
 ```text
 Applied Engineering in Agriculture
 V ol. 25(4): 595‐604 2009 American Society of Agricultural and Biological Engineers ISSN 0883-8542 595
-SIMULTANEOUS MONITORING OF STORED GRAIN 
-WITH RELATIVE HUMIDITY, TEMPERATURE, 
+SIMULTANEOUS MONITORING OF STORED GRAIN
+WITH RELATIVE HUMIDITY, TEMPERATURE,
 AND CARBON DIOXIDE SENSORS
 H. B. Gonzales,  P. R. Armstrong,  R. G. Maghirang
 ABSTRACT. Grain moisture content (MC) and temperature (T) are the primary factors affecting grain deterioration in storage.
@@ -334,6 +345,7 @@ top to bottom of the bin. CO2 sensors were effective in indirectly detecting moi
 ---
 
 ## GrainHero_Component_Assessment.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\GrainHero_Component_Assessment.pdf`
 
 **Abstract / First Page Extract:**
@@ -379,57 +391,58 @@ $2-4 / Rs
 ---
 
 ## INDUSTRIAL SILO ARCHITECTURE INFO- LAIBA DILDAR.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\INDUSTRIAL SILO ARCHITECTURE INFO- LAIBA DILDAR.pdf`
 
 **Abstract / First Page Extract:**
 
 ```text
-Industrial Wheat Storage System (China-Based Reference) 
- Introduction 
-China operates one of the world's largest grain storage networks through organizations such as 
-Sinograin (China Grain Reserves Group) and COFCO. Modern grain warehouses in China 
-increasingly use Industrial Internet of Things (IIoT) technologies, wireless sensor networks, 
-PLC-based automation, and centralized monitoring platforms to minimize post-harvest losses, 
-improve food safety, and optimize energy consumption. 
-The proposed GrainHero Smart Wheat Storage System adopts these industrial principles and 
-adapts them for deployment in Pakistan. Rather than replacing existing infrastructure, GrainHero 
-is designed as a modular retrofit platform that can be integrated into conventional grain 
-warehouses and silos. 
-The system continuously monitors grain conditions, automatically controls ventilation, records 
-historical data, predicts spoilage risks, and provides operators with real-time alerts through a 
-cloud dashboard. 
- 
- Industrial Wheat Storage Workflow 
-The complete industrial workflow consists of the following stages: 
-Farmer 
-   │ 
-Harvesting 
-   │ 
-Transportation 
-   │ 
-Warehouse Receiving Station 
-   │ 
-Truck Weighbridge 
-   │ 
-Automatic Grain Sampling 
-   │ 
-Laboratory Quality Inspection 
-   │ 
-Cleaning & Separation 
-   │ 
-Grain Drying 
-   │ 
-Bucket Elevator 
-   │ 
-Belt Conveyor 
-   │ 
-Smart Wheat Silo 
-   │ 
-24/7 Wireless Monitoring 
-   │ 
-Automatic Aeration 
-   │ 
-Periodic Inspection 
+Industrial Wheat Storage System (China-Based Reference)
+ Introduction
+China operates one of the world's largest grain storage networks through organizations such as
+Sinograin (China Grain Reserves Group) and COFCO. Modern grain warehouses in China
+increasingly use Industrial Internet of Things (IIoT) technologies, wireless sensor networks,
+PLC-based automation, and centralized monitoring platforms to minimize post-harvest losses,
+improve food safety, and optimize energy consumption.
+The proposed GrainHero Smart Wheat Storage System adopts these industrial principles and
+adapts them for deployment in Pakistan. Rather than replacing existing infrastructure, GrainHero
+is designed as a modular retrofit platform that can be integrated into conventional grain
+warehouses and silos.
+The system continuously monitors grain conditions, automatically controls ventilation, records
+historical data, predicts spoilage risks, and provides operators with real-time alerts through a
+cloud dashboard.
+
+ Industrial Wheat Storage Workflow
+The complete industrial workflow consists of the following stages:
+Farmer
+   │
+Harvesting
+   │
+Transportation
+   │
+Warehouse Receiving Station
+   │
+Truck Weighbridge
+   │
+Automatic Grain Sampling
+   │
+Laboratory Quality Inspection
+   │
+Cleaning & Separation
+   │
+Grain Drying
+   │
+Bucket Elevator
+   │
+Belt Conveyor
+   │
+Smart Wheat Silo
+   │
+24/7 Wireless Monitoring
+   │
+Automatic Aeration
+   │
+Periodic Inspection
    │
 ...
 ```
@@ -437,6 +450,7 @@ Periodic Inspection
 ---
 
 ## foods-14-01024-v2.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\foods-14-01024-v2.pdf`
 
 **Abstract / First Page Extract:**
@@ -483,6 +497,7 @@ a
 ---
 
 ## agriculture-15-01870.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\agriculture-15-01870.pdf`
 
 **Abstract / First Page Extract:**
@@ -530,6 +545,7 @@ system integrates seque
 ---
 
 ## grain_silo_benchmarking.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\grain_silo_benchmarking.pdf`
 
 **Abstract / First Page Extract:**
@@ -546,10 +562,10 @@ and low-end components (DHT11/MQ series), your design represents a commercial pa
 multi-depth gas sensing matrices (Sensirion SHT45, SCD40, SEN55), ultra-low-power long-range transceivers
 (RAK3172), an ESP32 prototyping testbed, and an adaptive seasonal Machine Learning threshold model, your
 system moves beyond simple telemetry into commercial predictive grain preservation, perfectly adapted for the
-structural and cost challenges of the Pakistani agricultural sector. 
+structural and cost challenges of the Pakistani agricultural sector.
 2. Academic Benchmarking & Paper Evaluation Matrix
 Below is the master compliance and structural matrix detailing exactly what each paper accomplished, their specific
-research URLs, and how your current system fundamentally advances beyond their technical limitations. 
+research URLs, and how your current system fundamentally advances beyond their technical limitations.
 # Paper Title & Sourced LinkWhat Was Done In the Paper (Technical
 Scope)
 Your Architecture vs. Paper (Technical
@@ -563,30 +579,31 @@ Devel
 ---
 
 ## 2505.01301v1.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\2505.01301v1.pdf`
 
 **Abstract / First Page Extract:**
 
 ```text
-_____________________________________________________________________________________________________________________________ ________ 
-*Corresponding author (chetanmb@utk.edu) 
-_____________________________________________________________________________________ 
-Electronic Nose for Agricultural Grain Pest Detection, Identification, and 
-Monitoring: A Review 
-Chetan M Badgujar1*, Sai Swaminathan2, and Alison Gerken3 
-1Department of Biosystems Engineering & Soil Science, University of Tennessee, Knoxville, TN, USA. 
-2Department of Electrical Engineering & Computer Science, University of Tennessee, Knoxville, TN, USA. 
-3USDA-ARS, Center of Grain & Animal Health Research, Manhattan, KS, USA. 
-_____________________________________________________________________________________ 
-Highlights: 
-• A systematic literature review was conducted on 21 research studies. 
-• E-nose technology is low-cost, rapid, non-invasive, and accurate for odor-based pest detection. 
-• E-nose can detect and identify microscopic (Fungi) and hidden insects with good accuracy. 
-• E-nose performance is influenced by storage duration, storage parameters, pest species type, and 
-pest density. 
-Abstract: Biotic pest attacks and infestations are major causes of stored grain losses, leading to 
-significant food and economic losses. Conventional, manual, sampling-based pest recognition methods 
-are labor-intensive, time-consuming, costly, require expertise, and may not even detect hidden 
+_____________________________________________________________________________________________________________________________ ________
+*Corresponding author (chetanmb@utk.edu)
+_____________________________________________________________________________________
+Electronic Nose for Agricultural Grain Pest Detection, Identification, and
+Monitoring: A Review
+Chetan M Badgujar1*, Sai Swaminathan2, and Alison Gerken3
+1Department of Biosystems Engineering & Soil Science, University of Tennessee, Knoxville, TN, USA.
+2Department of Electrical Engineering & Computer Science, University of Tennessee, Knoxville, TN, USA.
+3USDA-ARS, Center of Grain & Animal Health Research, Manhattan, KS, USA.
+_____________________________________________________________________________________
+Highlights:
+• A systematic literature review was conducted on 21 research studies.
+• E-nose technology is low-cost, rapid, non-invasive, and accurate for odor-based pest detection.
+• E-nose can detect and identify microscopic (Fungi) and hidden insects with good accuracy.
+• E-nose performance is influenced by storage duration, storage parameters, pest species type, and
+pest density.
+Abstract: Biotic pest attacks and infestations are major causes of stored grain losses, leading to
+significant food and economic losses. Conventional, manual, sampling-based pest recognition methods
+are labor-intensive, time-consuming, costly, require expertise, and may not even detect hidden
 infestations. In recent
 ...
 ```
@@ -594,6 +611,7 @@ infestations. In recent
 ---
 
 ## Aby_iastate_0097M_19060.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\Aby_iastate_0097M_19060.pdf`
 
 **Abstract / First Page Extract:**
@@ -603,23 +621,23 @@ Wireless sensors for quality monitoring and management of stored grain inventori
 by
 Guy Roger Aby
 A thesis submitted to the graduate faculty
-in partial fulfillment of the requirements for the degree of 
+in partial fulfillment of the requirements for the degree of
 MASTER OF SCIENCE
-Major: Industrial and Agricultural Technology 
+Major: Industrial and Agricultural Technology
 Program of Study Committee:
 Dirk E. Maier, Major Professor
 Carl J. Bern
 Thomas Brumm
-The student author, whose presentation of the scholarship herein was approved by the program 
-of study committee, is solely responsible for the content of this thesis. The Graduate College will 
-ensure this thesis is globally accessible and will not permit alterations after a degree is conferred. 
+The student author, whose presentation of the scholarship herein was approved by the program
+of study committee, is solely responsible for the content of this thesis. The Graduate College will
+ensure this thesis is globally accessible and will not permit alterations after a degree is conferred.
 Iowa State University
 Ames, Iowa
 2020
 Copyright © Guy Roger Aby, 2020. All rights reserved.
 ii
 DEDICATION
-This thesis is dedicated to my father Eugene Aby, my mother Claudine Aby, and my wife 
+This thesis is dedicated to my father Eugene Aby, my mother Claudine Aby, and my wife
 Safi Aby for their love and support.
 ...
 ```
@@ -627,6 +645,7 @@ Safi Aby for their love and support.
 ---
 
 ## AgricResCommentaryFoodSecurity12124.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\PrimaryOption\AgricResCommentaryFoodSecurity12124.pdf`
 
 **Abstract / First Page Extract:**
@@ -655,6 +674,7 @@ and pulses (collectively referred to as gra
 ---
 
 ## neethirajan2008.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\PrimaryOption\neethirajan2008.pdf`
 
 **Abstract / First Page Extract:**
@@ -699,6 +719,7 @@ is a need to collect data. This has
 ---
 
 ## AI-driven_technologies_for_pest_monitoring_unsound.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\PrimaryOption\AI-driven_technologies_for_pest_monitoring_unsound.pdf`
 
 **Abstract / First Page Extract:**
@@ -725,49 +746,50 @@ including  application  significance,  ex
 ---
 
 ## Design_and_Development_of_a_Model_Smart_Storage_Sy.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\PrimaryOption\Design_and_Development_of_a_Model_Smart_Storage_Sy.pdf`
 
 **Abstract / First Page Extract:**
 
 ```text
-© Publisher: Ebubekir Altuntas. This is an Open Access article and 
-is licensed (CC-BY-NC-4.0) under a Creative Commons Attribution 4.0 International License. 
- 
- 
- 
- 
-Turkish Journal of Agricultural  
-Engineering Research 
- 
-https://dergipark.org.tr/en/pub/turkager 
-  https://doi.org/10.46592/turkager.1297511 
- 
-Research Article 
- 
- 
-Turk J Agr Eng Res 
-(TURKAGER) 
- 
-ISSN: 2717-8420 
-2023, 4(1), 125-132 
- 
-Design and Development of a Model Smart Storage System 
- 
-Omokaro IDAMAaID, Ovuakporaye Godwin EKRUYOTAa*ID 
- 
-aDepartment of Computer Engineering, Delta State University of Science and Technology, Ozoro, NIGERIA 
- 
-(*): Corresponding Author: g.o.softsystem@gmail.com 
- 
-ABSTRACT  
-  
-Food security has become a global major problem, due to the rapid increase in population growth. This has 
-necessity the development of an effective agricultural products’ storage system, to alleviate the problem of 
-food wastage. This study was embarked upon to develop a prototype of universal smart storage system for 
-farm products, by using the internet of thing (IoT). The storage structure consists of four princi pal 
-constituents which were; the power source, storage chamber, central processing system, and peripheral 
-component interconnect (PCI) heater and PCI fan. The developed model was tested at a pre-set temperature 
-and relative humidity of 32C and 62% RH respectively. The results revealed that the developed system had 
+© Publisher: Ebubekir Altuntas. This is an Open Access article and
+is licensed (CC-BY-NC-4.0) under a Creative Commons Attribution 4.0 International License.
+
+
+
+
+Turkish Journal of Agricultural
+Engineering Research
+
+https://dergipark.org.tr/en/pub/turkager
+  https://doi.org/10.46592/turkager.1297511
+
+Research Article
+
+
+Turk J Agr Eng Res
+(TURKAGER)
+
+ISSN: 2717-8420
+2023, 4(1), 125-132
+
+Design and Development of a Model Smart Storage System
+
+Omokaro IDAMAaID, Ovuakporaye Godwin EKRUYOTAa*ID
+
+aDepartment of Computer Engineering, Delta State University of Science and Technology, Ozoro, NIGERIA
+
+(*): Corresponding Author: g.o.softsystem@gmail.com
+
+ABSTRACT
+
+Food security has become a global major problem, due to the rapid increase in population growth. This has
+necessity the development of an effective agricultural products’ storage system, to alleviate the problem of
+food wastage. This study was embarked upon to develop a prototype of universal smart storage system for
+farm products, by using the internet of thing (IoT). The storage structure consists of four princi pal
+constituents which were; the power source, storage chamber, central processing system, and peripheral
+component interconnect (PCI) heater and PCI fan. The developed model was tested at a pre-set temperature
+and relative humidity of 32C and 62% RH respectively. The results revealed that the developed system had
 an efficiency of 85%. Though, the smart model had a failur
 ...
 ```
@@ -775,6 +797,7 @@ an efficiency of 85%. Though, the smart model had a failur
 ---
 
 ## Smartsilo.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\PrimaryOption\Smartsilo.pdf`
 
 **Abstract / First Page Extract:**
@@ -810,39 +833,40 @@ successfully monitors and controls storage air temperature,
 ---
 
 ## SensorsforGrainStorageNeethirajanASABE.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\PrimaryOption\SensorsforGrainStorageNeethirajanASABE.pdf`
 
 **Abstract / First Page Extract:**
 
 ```text
-The authors are solely responsible for the content of this te chnical presentation. The technical presentation does not necessarily reflect the 
-official position of the American Society of Agricultural  and Biological Engineers (ASABE), and its printing and distribution d oes not 
-constitute an endorsement of views which may be expressed. Techni cal presentations are not subject to the formal peer review process by 
-ASABE editorial committees; therefore, they ar e not to be presented as refereed publicat ions. Citation of this work should stat e that it is 
-from an ASABE meeting paper. EXAMPLE: Author's Last Name, In itials. 2007. Title of Presentation. ASABE Paper No. 076179. St. 
-Joseph, Mich.: ASABE. For information about securing permission to  reprint or reproduce a techni cal presentation, please contac t ASABE 
-at rutter@asabe.org or 269-429-0300 (2950 Niles Road, St. Joseph, MI 49085-9659 USA). 
- 
- 
- 
- 
- 
- 
-An ASABE Meeting Presentation 
- 
+The authors are solely responsible for the content of this te chnical presentation. The technical presentation does not necessarily reflect the
+official position of the American Society of Agricultural  and Biological Engineers (ASABE), and its printing and distribution d oes not
+constitute an endorsement of views which may be expressed. Techni cal presentations are not subject to the formal peer review process by
+ASABE editorial committees; therefore, they ar e not to be presented as refereed publicat ions. Citation of this work should stat e that it is
+from an ASABE meeting paper. EXAMPLE: Author's Last Name, In itials. 2007. Title of Presentation. ASABE Paper No. 076179. St.
+Joseph, Mich.: ASABE. For information about securing permission to  reprint or reproduce a techni cal presentation, please contac t ASABE
+at rutter@asabe.org or 269-429-0300 (2950 Niles Road, St. Joseph, MI 49085-9659 USA).
+
+
+
+
+
+
+An ASABE Meeting Presentation
+
 Paper Number: 076179
-Sensors for Grain Storage  
-S. Neethirajan 
-Department of Biosystems Engineering, University of Manitoba, Winnipeg, Canada R3T 5V6 
-D.S. Jayas 
-Distinguished Professor, Canada Research Chair in Stored-Grain Ecosystems, Associate 
-Vice-president (Research), University of Manitoba, Winnipeg, MB, Canada R3T 2N2  
-Written for presentation at the 
-2007 ASABE Annual International Meeting 
-Sponsored by ASABE 
-Minneapolis Convention Center 
-Minneapolis, Minnesota 
-17 - 20 June 2007 
+Sensors for Grain Storage
+S. Neethirajan
+Department of Biosystems Engineering, University of Manitoba, Winnipeg, Canada R3T 5V6
+D.S. Jayas
+Distinguished Professor, Canada Research Chair in Stored-Grain Ecosystems, Associate
+Vice-president (Research), University of Manitoba, Winnipeg, MB, Canada R3T 2N2
+Written for presentation at the
+2007 ASABE Annual International Meeting
+Sponsored by ASABE
+Minneapolis Convention Center
+Minneapolis, Minnesota
+17 - 20 June 2007
 Abstract. Post harvest stored grain
 ...
 ```
@@ -850,6 +874,7 @@ Abstract. Post harvest stored grain
 ---
 
 ## pdfviewer.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\PrimaryOption\pdfviewer.pdf`
 
 **Abstract / First Page Extract:**
@@ -877,6 +902,7 @@ difference predicted by a linear element model (88 linear elements each layer) i
 ---
 
 ## A53-1823-1989-eng.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\PrimaryOption\A53-1823-1989-eng.pdf`
 
 **Abstract / First Page Extract:**
@@ -896,6 +922,7 @@ http://www.archive.org/details/spoilageheatingoOOmill
 ---
 
 ## WirelessDataPA.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\PrimaryOption\WirelessDataPA.pdf`
 
 **Abstract / First Page Extract:**
@@ -931,30 +958,31 @@ into a  structure.  Thermocouples are typically  used and are integ
 ---
 
 ## 2505.01301v1.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\PrimaryOption\2505.01301v1.pdf`
 
 **Abstract / First Page Extract:**
 
 ```text
-_____________________________________________________________________________________________________________________________ ________ 
-*Corresponding author (chetanmb@utk.edu) 
-_____________________________________________________________________________________ 
-Electronic Nose for Agricultural Grain Pest Detection, Identification, and 
-Monitoring: A Review 
-Chetan M Badgujar1*, Sai Swaminathan2, and Alison Gerken3 
-1Department of Biosystems Engineering & Soil Science, University of Tennessee, Knoxville, TN, USA. 
-2Department of Electrical Engineering & Computer Science, University of Tennessee, Knoxville, TN, USA. 
-3USDA-ARS, Center of Grain & Animal Health Research, Manhattan, KS, USA. 
-_____________________________________________________________________________________ 
-Highlights: 
-• A systematic literature review was conducted on 21 research studies. 
-• E-nose technology is low-cost, rapid, non-invasive, and accurate for odor-based pest detection. 
-• E-nose can detect and identify microscopic (Fungi) and hidden insects with good accuracy. 
-• E-nose performance is influenced by storage duration, storage parameters, pest species type, and 
-pest density. 
-Abstract: Biotic pest attacks and infestations are major causes of stored grain losses, leading to 
-significant food and economic losses. Conventional, manual, sampling-based pest recognition methods 
-are labor-intensive, time-consuming, costly, require expertise, and may not even detect hidden 
+_____________________________________________________________________________________________________________________________ ________
+*Corresponding author (chetanmb@utk.edu)
+_____________________________________________________________________________________
+Electronic Nose for Agricultural Grain Pest Detection, Identification, and
+Monitoring: A Review
+Chetan M Badgujar1*, Sai Swaminathan2, and Alison Gerken3
+1Department of Biosystems Engineering & Soil Science, University of Tennessee, Knoxville, TN, USA.
+2Department of Electrical Engineering & Computer Science, University of Tennessee, Knoxville, TN, USA.
+3USDA-ARS, Center of Grain & Animal Health Research, Manhattan, KS, USA.
+_____________________________________________________________________________________
+Highlights:
+• A systematic literature review was conducted on 21 research studies.
+• E-nose technology is low-cost, rapid, non-invasive, and accurate for odor-based pest detection.
+• E-nose can detect and identify microscopic (Fungi) and hidden insects with good accuracy.
+• E-nose performance is influenced by storage duration, storage parameters, pest species type, and
+pest density.
+Abstract: Biotic pest attacks and infestations are major causes of stored grain losses, leading to
+significant food and economic losses. Conventional, manual, sampling-based pest recognition methods
+are labor-intensive, time-consuming, costly, require expertise, and may not even detect hidden
 infestations. In recent
 ...
 ```
@@ -962,6 +990,7 @@ infestations. In recent
 ---
 
 ## Aby_iastate_0097M_19060.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\PrimaryOption\Aby_iastate_0097M_19060.pdf`
 
 **Abstract / First Page Extract:**
@@ -971,23 +1000,23 @@ Wireless sensors for quality monitoring and management of stored grain inventori
 by
 Guy Roger Aby
 A thesis submitted to the graduate faculty
-in partial fulfillment of the requirements for the degree of 
+in partial fulfillment of the requirements for the degree of
 MASTER OF SCIENCE
-Major: Industrial and Agricultural Technology 
+Major: Industrial and Agricultural Technology
 Program of Study Committee:
 Dirk E. Maier, Major Professor
 Carl J. Bern
 Thomas Brumm
-The student author, whose presentation of the scholarship herein was approved by the program 
-of study committee, is solely responsible for the content of this thesis. The Graduate College will 
-ensure this thesis is globally accessible and will not permit alterations after a degree is conferred. 
+The student author, whose presentation of the scholarship herein was approved by the program
+of study committee, is solely responsible for the content of this thesis. The Graduate College will
+ensure this thesis is globally accessible and will not permit alterations after a degree is conferred.
 Iowa State University
 Ames, Iowa
 2020
 Copyright © Guy Roger Aby, 2020. All rights reserved.
 ii
 DEDICATION
-This thesis is dedicated to my father Eugene Aby, my mother Claudine Aby, and my wife 
+This thesis is dedicated to my father Eugene Aby, my mother Claudine Aby, and my wife
 Safi Aby for their love and support.
 ...
 ```
@@ -995,6 +1024,7 @@ Safi Aby for their love and support.
 ---
 
 ## 1-s2.0-S2665917422001064-main.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\1-s2.0-S2665917422001064-main.pdf`
 
 **Abstract / First Page Extract:**
@@ -1004,7 +1034,7 @@ Measurement: Sensors 24 (2022) 100472
 Available online 17 September 2022
 2665-9174/© 2022 The Authors. Published by Elsevier Ltd. This is an open access article under the CC BY-NC-ND license ( http://creativecommons.org/licenses/by-
 nc-nd/4.0/).
-Automated food grain monitoring system for warehouse using IOT 
+Automated food grain monitoring system for warehouse using IOT
 Lydia J
 a
 , Leones Sherwin Vimalraj S
@@ -1012,29 +1042,29 @@ b , *
 , Monisha R
 b
 , Murugan R
-c 
-a
-Department of Electrical and Electronics Engineering, Easwari Engineering College, Chennai, 600089, India 
-b
-Department of Electronics and Communication Engineering, Panimalar Engineering College, Chennai, 600123, India 
 c
-Department of Electrical and Electronics Engineering, St.Peter ’ s College of Engineering and Technology, Chennai, 600054, India   
-ARTICLE INFO  
-Keywords: 
-Food grain 
-Temperature 
-Humidity 
-CO 
-Motion 
-Vibration 
-Grain level 
-And smoke 
-ABSTRACT  
-One of the most significant sources of income in a developing nation like India is agriculture. Good food storage 
-is essential for ensuring food security, which is impacted by both food loss and wastage. Therefore, if losses can 
-be decreased, there will be more food available. To maintain good storage facilities and stop food losses in this 
-project, an IoT-enabled monitoring system will be deployed in remote locations with restricted access. This 
-proposed system tracks and controls warehouse variables like grain level, temperature, humidity, vibration, CO, 
+a
+Department of Electrical and Electronics Engineering, Easwari Engineering College, Chennai, 600089, India
+b
+Department of Electronics and Communication Engineering, Panimalar Engineering College, Chennai, 600123, India
+c
+Department of Electrical and Electronics Engineering, St.Peter ’ s College of Engineering and Technology, Chennai, 600054, India
+ARTICLE INFO
+Keywords:
+Food grain
+Temperature
+Humidity
+CO
+Motion
+Vibration
+Grain level
+And smoke
+ABSTRACT
+One of the most significant sources of income in a developing nation like India is agriculture. Good food storage
+is essential for ensuring food security, which is impacted by both food loss and wastage. Therefore, if losses can
+be decreased, there will be more food available. To maintain good storage facilities and stop food losses in this
+project, an IoT-enabled monitoring system will be deployed in remote locations with restricted access. This
+proposed system tracks and controls warehouse variables like grain level, temperature, humidity, vibration, CO,
 motion and smoke, all of which have a big impact on grains and their weig
 ...
 ```
@@ -1042,6 +1072,7 @@ motion and smoke, all of which have a big impact on grains and their weig
 ---
 
 ## foods-14-03426.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\foods-14-03426.pdf`
 
 **Abstract / First Page Extract:**
@@ -1090,12 +1121,13 @@ mechanisms with real-time sensor data. T
 ---
 
 ## 1-s2.0-S277237552500098X-main.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\1-s2.0-S277237552500098X-main.pdf`
 
 **Abstract / First Page Extract:**
 
 ```text
-Enhancing wheat storage efficiency: A microcontroller-based environment 
+Enhancing wheat storage efficiency: A microcontroller-based environment
 control system for silo
 Muhammad Mateen
 a
@@ -1105,7 +1137,7 @@ c
 a , b , *
 , Ma Wenqiu
 a
-,  
+,
 Abreham Arebe Tola
 a
 a
@@ -1124,11 +1156,11 @@ Relative humidity
 Fan control system
 ABSTRACT
 Agricultural activities are incomplete without the proper wheat storage, and maintaining optimal storage con -
-ditions requires an effective management system. This study presents a control system designed to improve the 
-storage conditions of wheat using an Arduino UNO, a DHT22 sensor, and a fan cooling system to manage the 
-environment. The device continually monitors temperature and relative humidity, as well as giving a non- 
-destructive evaluation of the moisture content of wheat kept in silos. During the study, the system confirmed 
-its efficacy by effectively maintaining appropriate storage conditions, such as average temperature and humidity 
+ditions requires an effective management system. This study presents a control system designed to improve the
+storage conditions of wheat using an Arduino UNO, a DHT22 sensor, and a fan cooling system to manage the
+environment. The device continually monitors temperature and relative humidity, as well as giving a non-
+destructive evaluation of the moisture content of wheat kept in silos. During the study, the system confirmed
+its efficacy by effectively maintaining appropriate storage conditions, such as average temperature and humidity
 levels, which encourage safe wheat storage. The automatic fan system effectively regulates temperature fluc -
 tuations, providing ideal conditions. The study examined the system ’ s capacity to control essenti
 ...
@@ -1137,6 +1169,7 @@ tuations, providing ideal conditions. The study examined the system ’ s capaci
 ---
 
 ## sensors-25-03583-v2.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\sensors-25-03583-v2.pdf`
 
 **Abstract / First Page Extract:**
@@ -1186,29 +1219,30 @@ i.durlik@pm.szczecin.pl
 ---
 
 ## s41598-025-89710-w.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\s41598-025-89710-w.pdf`
 
 **Abstract / First Page Extract:**
 
 ```text
-Research on rechargeable 
-agricultural wireless sensor 
-network based on ZigBee immune 
+Research on rechargeable
+agricultural wireless sensor
+network based on ZigBee immune
 routing repair algorithm
-Ruipeng Tang1, Yinhe Wu2, Jun Tan3, Binghong Guan4, Narendra Kumar Aridas1 & 
+Ruipeng Tang1, Yinhe Wu2, Jun Tan3, Binghong Guan4, Narendra Kumar Aridas1 &
 Mohamad Sofian Abu Talip1
-WSN (wireless sensor network) plays a very important role in the agricultural environment monitoring. 
-Although solar energy and other power supply methods are used to solve the node energy problem, 
-the monitoring equipment works outdoors for a long time, which is easily affected by the environment. 
-The supply is unstable to cause abnormalities in some nodes. So this study proposes a ZIRRA algorithm 
-(ZigBee immune routing repair algorithm) for the rechargeable agricultural WSN. It simulates the 
-working mechanism of the immune system and designs modules such as identification, processing, 
-cloning and storage, which can provide a better repair strategy for abnormal nodes. Then it compares 
-the quality of the backup nodes and replaces the backup nodes with poor quality, so that the optimal 
-paths are maintained between source nodes and middle relay nodes, which increases the optimization 
-ability of the algorithm. The experimental results show that the ZIRRA algorithm shows significant 
-advantages in routing node repair mechanism. Compared with the LFRA, AR-TORA and ICCO 
-algorithms, the average routing energy consumption of the ZIRRA algorithm reduced  35.33%, 58.37% 
+WSN (wireless sensor network) plays a very important role in the agricultural environment monitoring.
+Although solar energy and other power supply methods are used to solve the node energy problem,
+the monitoring equipment works outdoors for a long time, which is easily affected by the environment.
+The supply is unstable to cause abnormalities in some nodes. So this study proposes a ZIRRA algorithm
+(ZigBee immune routing repair algorithm) for the rechargeable agricultural WSN. It simulates the
+working mechanism of the immune system and designs modules such as identification, processing,
+cloning and storage, which can provide a better repair strategy for abnormal nodes. Then it compares
+the quality of the backup nodes and replaces the backup nodes with poor quality, so that the optimal
+paths are maintained between source nodes and middle relay nodes, which increases the optimization
+ability of the algorithm. The experimental results show that the ZIRRA algorithm shows significant
+advantages in routing node repair mechanism. Compared with the LFRA, AR-TORA and ICCO
+algorithms, the average routing energy consumption of the ZIRRA algorithm reduced  35.33%, 58.37%
 and 45.15% , the data transmission delay reduced by 23.72%, 36.74% and 16.28%, and the avera
 ...
 ```
@@ -1216,39 +1250,40 @@ and 45.15% , the data transmission delay reduced by 23.72%, 36.74% and 16.28%, a
 ---
 
 ## ijatcse1231022021.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\ijatcse1231022021.pdf`
 
 **Abstract / First Page Extract:**
 
 ```text
-Mir Sajjad Hussain Talpur  et al.,  International Journal of Advanced Trends in Computer Science and Engineering, 10(2), March - April 2021, 1356 – 1361 
-1356 
- 
- 
- 
-ABSTRACT 
- 
-The agriculture sector plays a pivotal role in Pakistan because 
-agriculture is the source of food production that provides 
-direct cultivation to the state and, as we are all familiar with 
-that, the most challengi ng task is to provide grains during 
-droughts and pandemic situations. Grains are essential 
-among food products because of their large contribution to 
-food for the country’s population. Thus, au tomatically 
-making grain storage equally important, but the grain storing 
-system in Pakistan is very poor currently. And because of that 
-poor system, we lose a considerable amount every year in the 
-storing process. We are in such a period that, along with the 
-population, the need for food is steadily rising, so we do not 
-have the luxury of wasting anything that we produce to feed. 
-To effectively maintain and overcome grain damage, it is 
-critical to design or develop a grain storage monitoring 
-system based on current research and proposed technologies.  
-The design and development of grain storage monitoring 
-system is achievable with the deployment of IoT sensor IoT 
-technology. Furthermore, this research deals with 
-deployments of sensors in the grain storage mo nitoring area 
-which ensures the accumulation of real -time data and then 
+Mir Sajjad Hussain Talpur  et al.,  International Journal of Advanced Trends in Computer Science and Engineering, 10(2), March - April 2021, 1356 – 1361
+1356
+
+
+
+ABSTRACT
+
+The agriculture sector plays a pivotal role in Pakistan because
+agriculture is the source of food production that provides
+direct cultivation to the state and, as we are all familiar with
+that, the most challengi ng task is to provide grains during
+droughts and pandemic situations. Grains are essential
+among food products because of their large contribution to
+food for the country’s population. Thus, au tomatically
+making grain storage equally important, but the grain storing
+system in Pakistan is very poor currently. And because of that
+poor system, we lose a considerable amount every year in the
+storing process. We are in such a period that, along with the
+population, the need for food is steadily rising, so we do not
+have the luxury of wasting anything that we produce to feed.
+To effectively maintain and overcome grain damage, it is
+critical to design or develop a grain storage monitoring
+system based on current research and proposed technologies.
+The design and development of grain storage monitoring
+system is achievable with the deployment of IoT sensor IoT
+technology. Furthermore, this research deals with
+deployments of sensors in the grain storage mo nitoring area
+which ensures the accumulation of real -time data and then
 analyze and come up with a decision to overcome ab
 ...
 ```
@@ -1256,6 +1291,7 @@ analyze and come up with a decision to overcome ab
 ---
 
 ## insects-15-00557.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\insects-15-00557.pdf`
 
 **Abstract / First Page Extract:**
@@ -1301,6 +1337,7 @@ quantity and quality of stored grains. Drawing inspiration from the detection ab
 ---
 
 ## 1-s2.0-S2666351122000535-main.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\1-s2.0-S2666351122000535-main.pdf`
 
 **Abstract / First Page Extract:**
@@ -1335,6 +1372,7 @@ renewable energy harvesting or wireless charging to impr
 ---
 
 ## electronics-15-00752-v2.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\electronics-15-00752-v2.pdf`
 
 **Abstract / First Page Extract:**
@@ -1375,6 +1413,7 @@ generates heat, creating temperature gradients that
 ---
 
 ## logistics-10-00064.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\logistics-10-00064.pdf`
 
 **Abstract / First Page Extract:**
@@ -1416,6 +1455,7 @@ with external covariates, constructs temporal and lag
 ---
 
 ## journal.pone.0286433.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\journal.pone.0286433.pdf`
 
 **Abstract / First Page Extract:**
@@ -1459,6 +1499,7 @@ in inventory management . The
 ---
 
 ## engproc-118-00090.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\engproc-118-00090.pdf`
 
 **Abstract / First Page Extract:**
@@ -1503,6 +1544,7 @@ The system integrates
 ---
 
 ## s41598-021-83086-3.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\s41598-021-83086-3.pdf`
 
 **Abstract / First Page Extract:**
@@ -1511,24 +1553,24 @@ The system integrates
 1
 Vol.:(0123456789)Scientific Reports |         (2021) 11:3692  | https://doi.org/10.1038/s41598-021-83086-3
 www.nature.com/scientificreports
-Field evaluation of hermetic 
-and synthetic pesticide‑based 
-technologies in smallholder 
-sorghum grain storage in hot 
+Field evaluation of hermetic
+and synthetic pesticide‑based
+technologies in smallholder
+sorghum grain storage in hot
 and arid climates
-Macdonald Mubayiwa1, Brighton M. Mvumi 1*, Tanya Stathers2, Shaw Mlambo1 & 
+Macdonald Mubayiwa1, Brighton M. Mvumi 1*, Tanya Stathers2, Shaw Mlambo1 &
 Tinashe Nyabako1
-Field evaluation of six grain storage technologies under hot and arid conditions (32–42 °C; 
-rainfall < 450 mm/year) in two locations in Zimbabwe were conducted over two storage seasons. The 
-treatments included three hermetic technologies (Purdue Improved Crop Storage bags, GrainPro 
-Super Grainbags, metal silos); three synthetic pesticide‑based treatments; and an untreated 
-control, all using threshed sorghum grain. Sampling was at eight ‑week intervals for 32 weeks. Highly 
-significant differences (p < 0.01) occurred between hermetic and non‑hermetic treatments regarding 
-grain damage, weight loss, insect pest populations, and grain moisture content; with the hermetic 
-containers exhibiting superior grain protection. Weight losses were low (< 3%) in hermetic treatments 
-compared to pesticide‑based treatments (3.7 to 14.2%). Tribolium castaneum developed in metal silos, 
-deltamethrin‑incorporated polypropylene bags and a pesticide treatment containing deltamethrin 
-0.13% and fenitrothion 1% while Sitotroga cerealella developed in a pesticide treatment containing 
+Field evaluation of six grain storage technologies under hot and arid conditions (32–42 °C;
+rainfall < 450 mm/year) in two locations in Zimbabwe were conducted over two storage seasons. The
+treatments included three hermetic technologies (Purdue Improved Crop Storage bags, GrainPro
+Super Grainbags, metal silos); three synthetic pesticide‑based treatments; and an untreated
+control, all using threshed sorghum grain. Sampling was at eight ‑week intervals for 32 weeks. Highly
+significant differences (p < 0.01) occurred between hermetic and non‑hermetic treatments regarding
+grain damage, weight loss, insect pest populations, and grain moisture content; with the hermetic
+containers exhibiting superior grain protection. Weight losses were low (< 3%) in hermetic treatments
+compared to pesticide‑based treatments (3.7 to 14.2%). Tribolium castaneum developed in metal silos,
+deltamethrin‑incorporated polypropylene bags and a pesticide treatment containing deltamethrin
+0.13% and fenitrothion 1% while Sitotroga cerealella developed in a pesticide treatment containing
 pirimiphos‑methyl 0.16% + thiamethoxam 0.036%
 ...
 ```
@@ -1536,6 +1578,7 @@ pirimiphos‑methyl 0.16% + thiamethoxam 0.036%
 ---
 
 ## fsufs-06-767089.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\fsufs-06-767089.pdf`
 
 **Abstract / First Page Extract:**
@@ -1593,13 +1636,14 @@ presents an anal
 ---
 
 ## 16+IJBSM+Volume+17+issue+2+February+2026+Oyewole+and+Raji.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\16+IJBSM+Volume+17+issue+2+February+2026+Oyewole+and+Raji.pdf`
 
 **Abstract / First Page Extract:**
 
 ```text
 © 2024 PP House
-Beyond Metal Silos: Low-cost Hermetic Bags for Smallholder Grain 
+Beyond Metal Silos: Low-cost Hermetic Bags for Smallholder Grain
 Protection
 Article AR6667
 DOI: HTTPS://DOI.ORG/10.23910/1.2026.6667
@@ -1607,14 +1651,14 @@ Review Article
 RECEIVED on 03rd September 2025        RECEIVED in revised form on 15th January 2026        ACCEPTED in final form on 04th February 2026        PUBLISHED on 20th February 2026
 IJBSM February 2026, 17(2): 01-13
 https://ojs.pphouse.org/index.php/IJBSM
-Citation (VANCOUVER): Oyewole and Raji, Beyond Metal Silos: Low-cost Hermetic Bags for Smallholder Grain Protection. International 
-Journal of Bio-resource and Stress Management, 2026; 17(2), 01-13. HTTPS://DOI.ORG/10.23910/1.2026.6667. 
+Citation (VANCOUVER): Oyewole and Raji, Beyond Metal Silos: Low-cost Hermetic Bags for Smallholder Grain Protection. International
+Journal of Bio-resource and Stress Management, 2026; 17(2), 01-13. HTTPS://DOI.ORG/10.23910/1.2026.6667.
 Copyright: © 2026 Oyewole and Raji. This is an open access article distributed under the terms of the Creative Commons Attribution-
-NonCommercial-ShareAlike 4.0 International License, that permits unrestricted use, distribution and reproduction in any medium after 
+NonCommercial-ShareAlike 4.0 International License, that permits unrestricted use, distribution and reproduction in any medium after
 the author(s) and source are credited.
-Data Availability Statement: Legal restrictions are imposed on the public sharing of raw data. However, authors have full right to transfer 
-or share the data in raw form upon request subject to either meeting the conditions of the original consents and the original research 
-study. Further, access of data needs to meet whether the user complies with the ethical and legal obligations as data controllers to allow 
+Data Availability Statement: Legal restrictions are imposed on the public sharing of raw data. However, authors have full right to transfer
+or share the data in raw form upon request subject to either meeting the conditions of the original consents and the original research
+study. Further, access of data needs to meet whether the user complies with the ethical and legal obligations as data controllers to allow
 for secondary use of the data outside of the original study.
 Conflict of interests: The authors have declared that no conflic
 ...
@@ -1623,37 +1667,38 @@ Conflict of interests: The authors have declared that no conflic
 ---
 
 ## Purdue+Improved+Crop+Storage+(PICS)+Bags+-+AJASFR.Vol20.No1.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\Purdue+Improved+Crop+Storage+(PICS)+Bags+-+AJASFR.Vol20.No1.pdf`
 
 **Abstract / First Page Extract:**
 
 ```text
-ISSN: 3027-2637     www.afropolitanjournals.com 
- 
- 
-Afropolitan Journals 
-83      Vol. 20, No. 1 2025   African Journal of Agricultural Science and Food Research 
-This open-access article is distributed under 
-Creative Commons Attribution 4.0 license 
-Purdue Improved Crop Storage (PICS) Bags : An Innovative 
-Hermetic Storage Technology for Postharvest Crop 
-Management in Developing Countries 
- 
-Oyewole O. S.  1; Abdulbaki, M. K.  2; Adisa, A. A.  2; Adebiyi, A. O.  3; Raji, 
-M. A.  2; Balogun, B.  2, Ajao, T. O.  1; Ibitoye O.  2; and Aremu, M. B.   2 
-1Postharvest Engineering Research Department, Nigerian Stored Products Research Institute, P.M.B 5044, 
-Ibadan, Nigeria. 2Durable Crops Research Department, Nigerian Stored Products Research Institute, P.M.B 
-5044 Ibadan, Nigeria. 3Postharvest Engineering Research Department, Nigerian Stored Products Research 
-Institute, P.M.B 1489 Ilorin, Nigeria. 
-Corresponding author: oyewoleos@nspri.gov.ng 
-DOI: https://doi.org/10.62154/ajasfr.2025.020.01016 
- 
- 
-Abstract 
-Postharvest losses remain a major barrier to food security and economic growth in developing 
-countries, where smallholder farmers often lack access to effective crop storage solutions. The 
-Purdue Improved Crop Storage (PICS) bag, develop ed by Purdue University, is a triple -layer 
-hermetic storage technology designed to reduce such losses without the use of chem ical 
+ISSN: 3027-2637     www.afropolitanjournals.com
+
+
+Afropolitan Journals
+83      Vol. 20, No. 1 2025   African Journal of Agricultural Science and Food Research
+This open-access article is distributed under
+Creative Commons Attribution 4.0 license
+Purdue Improved Crop Storage (PICS) Bags : An Innovative
+Hermetic Storage Technology for Postharvest Crop
+Management in Developing Countries
+
+Oyewole O. S.  1; Abdulbaki, M. K.  2; Adisa, A. A.  2; Adebiyi, A. O.  3; Raji,
+M. A.  2; Balogun, B.  2, Ajao, T. O.  1; Ibitoye O.  2; and Aremu, M. B.   2
+1Postharvest Engineering Research Department, Nigerian Stored Products Research Institute, P.M.B 5044,
+Ibadan, Nigeria. 2Durable Crops Research Department, Nigerian Stored Products Research Institute, P.M.B
+5044 Ibadan, Nigeria. 3Postharvest Engineering Research Department, Nigerian Stored Products Research
+Institute, P.M.B 1489 Ilorin, Nigeria.
+Corresponding author: oyewoleos@nspri.gov.ng
+DOI: https://doi.org/10.62154/ajasfr.2025.020.01016
+
+
+Abstract
+Postharvest losses remain a major barrier to food security and economic growth in developing
+countries, where smallholder farmers often lack access to effective crop storage solutions. The
+Purdue Improved Crop Storage (PICS) bag, develop ed by Purdue University, is a triple -layer
+hermetic storage technology designed to reduce such losses without the use of chem ical
 pesticides. This review examines the design, functionality and impact of PICS bags,
 ...
 ```
@@ -1661,6 +1706,7 @@ pesticides. This review examines the design, functionality and impact of PICS ba
 ---
 
 ## agriculture-15-00151-v2 (1).pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\agriculture-15-00151-v2 (1).pdf`
 
 **Abstract / First Page Extract:**
@@ -1708,43 +1754,44 @@ such studies. Hence, this study exa
 ---
 
 ## as_2022091415195310.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\as_2022091415195310.pdf`
 
 **Abstract / First Page Extract:**
 
 ```text
-Agricultural Sciences, 2022, 13, 989-1011 
-https://www.scirp.org/journal/as 
-ISSN Online: 2156-8561 
-ISSN Print: 2156-8553 
- 
-DOI: 10.4236/as.2022.139061  Sep.  15, 2022 989 Agricultural Sciences 
- 
- 
- 
- 
-Grain Hermetic Storage Adoption in Northern 
-Uganda: Awareness, Use, and the Constraints 
-to Technology Adoption 
-Francis Okori1*, Sam Cherotich1, Alex Abaca2,3, Emmanuel Baidhe1, Francis Adibaku4,  
-James Denis Onyinge5  
-1Department of Agricultural and Biosystems Engineering, Makerere University, Kampala, Uganda 
-2National Agricultural Research Organization (NARO), Abi Zonal Agricultural Research and Development Institute, Arua, 
-Uganda 
-3Department of Crop Science, Faculty of Agriculture and Environmental Sciences, Muni University, Arua, Uganda 
-4Department of Food Science and Postharvest Technology, Gulu University, Gulu, Uganda 
-5Agriculture and Market Support Programme, United Nations World Food Programme, Kampala, Uganda 
- 
- 
- 
-Abstract 
-Post-harvest storage losses (PHLs) remain significant in Sub -Saharan Africa 
-(SSA) due to several factors mainly insect pests and molds. Hermetic storage 
-technologies (HSTs) are being promoted to address these storage losses. In 
-Uganda, HSTs were first introduced in 2012. However, its use among farming 
-households remains low today. Data were collected from 306 smallholder 
-farmers from four districts of Northern Uganda using a pre -tested semi - 
-structured questionnaire to understand their knowledge, use, and constraints 
+Agricultural Sciences, 2022, 13, 989-1011
+https://www.scirp.org/journal/as
+ISSN Online: 2156-8561
+ISSN Print: 2156-8553
+
+DOI: 10.4236/as.2022.139061  Sep.  15, 2022 989 Agricultural Sciences
+
+
+
+
+Grain Hermetic Storage Adoption in Northern
+Uganda: Awareness, Use, and the Constraints
+to Technology Adoption
+Francis Okori1*, Sam Cherotich1, Alex Abaca2,3, Emmanuel Baidhe1, Francis Adibaku4,
+James Denis Onyinge5
+1Department of Agricultural and Biosystems Engineering, Makerere University, Kampala, Uganda
+2National Agricultural Research Organization (NARO), Abi Zonal Agricultural Research and Development Institute, Arua,
+Uganda
+3Department of Crop Science, Faculty of Agriculture and Environmental Sciences, Muni University, Arua, Uganda
+4Department of Food Science and Postharvest Technology, Gulu University, Gulu, Uganda
+5Agriculture and Market Support Programme, United Nations World Food Programme, Kampala, Uganda
+
+
+
+Abstract
+Post-harvest storage losses (PHLs) remain significant in Sub -Saharan Africa
+(SSA) due to several factors mainly insect pests and molds. Hermetic storage
+technologies (HSTs) are being promoted to address these storage losses. In
+Uganda, HSTs were first introduced in 2012. However, its use among farming
+households remains low today. Data were collected from 306 smallholder
+farmers from four districts of Northern Uganda using a pre -tested semi -
+structured questionnaire to understand their knowledge, use, and constraints
 to the
 ...
 ```
@@ -1752,6 +1799,7 @@ to the
 ---
 
 ## agriculture-15-00151-v2.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\agriculture-15-00151-v2.pdf`
 
 **Abstract / First Page Extract:**
@@ -1799,6 +1847,7 @@ such studies. Hence, this study exa
 ---
 
 ## J Sci Food Agric - 2023 - Ngoma - Comparative utility of hermetic and conventional grain storage bags for smallholder.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\J Sci Food Agric - 2023 - Ngoma - Comparative utility of hermetic and conventional grain storage bags for smallholder.pdf`
 
 **Abstract / First Page Extract:**
@@ -1828,6 +1877,7 @@ niﬁcantly higher in conventional bags. The improved
 ---
 
 ## International Journal of Food Science - 2021 - El-Kholy - Performance Analysis and Quality Evaluation of Wheat Storage in.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\International Journal of Food Science - 2021 - El-Kholy - Performance Analysis and Quality Evaluation of Wheat Storage in.pdf`
 
 **Abstract / First Page Extract:**
@@ -1859,33 +1909,34 @@ and falling number, while there were
 ---
 
 ## IJB-V18-No1-p199-212.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\IJB-V18-No1-p199-212.pdf`
 
 **Abstract / First Page Extract:**
 
 ```text
-199  Sadiq et al.   
- 
-Int. J. Biosci.  202 1 
-     
-REVIEW PAPER REVIEW PAPER REVIEW PAPER REVIEW PAPER                                                                                                                                                                                                                                                                                                                                                                                        OPEN ACCESS OPEN ACCESS OPEN ACCESS OPEN ACCESS     
- 
-Prospects of post-harvest processing of cereal grains in 
-Pakistan: A review 
- 
-Luqman Sadiq *1 , Zia -Ul -Haq 1, Zulfiqar Ali 2, Hamza Muneer Asam 1, Talha Mehmood 1, 
-Muhammad Kazim Nawaz 1 
- 
-1Faculty of Agricultural Engineering & Technology, PMAS Arid Agriculture University, 
-Rawalpindi, Pakistan 
-2Agricultural Engineering Institute, National Agricultural Research Centre, Islamabad, Pakistan 
- 
-Key  words:  Cereal grains, Pakistan, Post-harvest processing  
-http://dx.doi.org/10.12692/ijb/18.1.199-212   Article published on January 30 , 2021 
-Abstract  
-Wheat, rice, and maize are the three most important cereal grains used as staple food in all over the world and 
-especially, in Pakistan, wheat is the principal source of the daily calorie and protein intake of the population with 
-balance coming from animal source. In the pre-historic period of agriculture, farmer observed that dry grains stored 
+199  Sadiq et al.
+
+Int. J. Biosci.  202 1
+
+REVIEW PAPER REVIEW PAPER REVIEW PAPER REVIEW PAPER                                                                                                                                                                                                                                                                                                                                                                                        OPEN ACCESS OPEN ACCESS OPEN ACCESS OPEN ACCESS
+
+Prospects of post-harvest processing of cereal grains in
+Pakistan: A review
+
+Luqman Sadiq *1 , Zia -Ul -Haq 1, Zulfiqar Ali 2, Hamza Muneer Asam 1, Talha Mehmood 1,
+Muhammad Kazim Nawaz 1
+
+1Faculty of Agricultural Engineering & Technology, PMAS Arid Agriculture University,
+Rawalpindi, Pakistan
+2Agricultural Engineering Institute, National Agricultural Research Centre, Islamabad, Pakistan
+
+Key  words:  Cereal grains, Pakistan, Post-harvest processing
+http://dx.doi.org/10.12692/ijb/18.1.199-212   Article published on January 30 , 2021
+Abstract
+Wheat, rice, and maize are the three most important cereal grains used as staple food in all over the world and
+especially, in Pakistan, wheat is the principal source of the daily calorie and protein intake of the population with
+balance coming from animal source. In the pre-historic period of agriculture, farmer observed that dry grains stored
 longer than wet grains. Moreover, insects as well
 ...
 ```
@@ -1893,32 +1944,33 @@ longer than wet grains. Moreover, insects as well
 ---
 
 ## fsufs-9-1640274.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\fsufs-9-1640274.pdf`
 
 **Abstract / First Page Extract:**
 
 ```text
 Frontiers in Sustainable Food Systems 01 frontiersin.org
-Increasing adoption of grain 
-postharvest technology by 
-smallholder farmers: a 
+Increasing adoption of grain
+postharvest technology by
+smallholder farmers: a
 five-pronged strategy
-Theresa Nakoma-Ngoma 1,2, John F. Leslie 3, Maurice Monjerezi 4, 
-Brighton M. Mvumi 2, Tafireyi Chamboko 5, Elija Kamundi 1, 
-Andrew Thadzi 1, Bertha Kachala 1, Aggrey Pemba Gama 6, 
+Theresa Nakoma-Ngoma 1,2, John F. Leslie 3, Maurice Monjerezi 4,
+Brighton M. Mvumi 2, Tafireyi Chamboko 5, Elija Kamundi 1,
+Andrew Thadzi 1, Bertha Kachala 1, Aggrey Pemba Gama 6,
 Beston Maonga 7, Jagger Harvey 3† and Limbikani Matumba 1*
-1 FoodPlus Research Group, Faculty of Life Sciences Natural Resources, Lilongwe University of 
-Agriculture and Natural Resources (LUANAR), Lilongwe, Malawi, 2 Department of Agricultural and 
-Biosystems Engineering, Faculty of Agriculture Environment and Food Systems (FAEFS), University of 
-Zimbabwe (UZ), Harare, Zimbabwe, 3 Department of Plant Pathology, Throckmorton Plant Sciences 
-Center, Kansas State University, Manhattan, KS, United States, 4 Centre for Resilient Agri-Food Systems 
-(CRAFS), University of Malawi, Zomba, Malawi, 5 Department of Agricultural Business Development 
-and Economics, Faculty of Agriculture Environment and Food Systems (FAEFS), University of 
-Zimbabwe (UZ), Harare, Zimbabwe, 6 Department of Food Science and Technology, Bunda College, 
-Lilongwe University of Agriculture and Natural Resources (LUANAR), Lilongwe, Malawi, 7 Department 
-of Agricultural and Applied Economics, Bunda College, Lilongwe University of Agriculture and Natural 
+1 FoodPlus Research Group, Faculty of Life Sciences Natural Resources, Lilongwe University of
+Agriculture and Natural Resources (LUANAR), Lilongwe, Malawi, 2 Department of Agricultural and
+Biosystems Engineering, Faculty of Agriculture Environment and Food Systems (FAEFS), University of
+Zimbabwe (UZ), Harare, Zimbabwe, 3 Department of Plant Pathology, Throckmorton Plant Sciences
+Center, Kansas State University, Manhattan, KS, United States, 4 Centre for Resilient Agri-Food Systems
+(CRAFS), University of Malawi, Zomba, Malawi, 5 Department of Agricultural Business Development
+and Economics, Faculty of Agriculture Environment and Food Systems (FAEFS), University of
+Zimbabwe (UZ), Harare, Zimbabwe, 6 Department of Food Science and Technology, Bunda College,
+Lilongwe University of Agriculture and Natural Resources (LUANAR), Lilongwe, Malawi, 7 Department
+of Agricultural and Applied Economics, Bunda College, Lilongwe University of Agriculture and Natural
 Resources (LUANAR), Lilongwe, Malawi
-Grain postharvest losses (PHLs) reduce food security, income stability, and climate 
+Grain postharvest losses (PHLs) reduce food security, income stability, and climate
 re
 ...
 ```
@@ -1926,44 +1978,44 @@ re
 ---
 
 ## 5(2),245-263.pdf
+
 **Path:** `c:\Users\Nexgen\Downloads\FYP\Research Papers\5(2),245-263.pdf`
 
 **Abstract / First Page Extract:**
 
 ```text
-THE ASIAN BULLETIN OF GREEN MANAGEMENT AND CIRCULAR ECONOMY  
- Vol 5, Issue 2(2025) 
-245 
- 
-Assessing post-harvest losses in value chain of wheat farmers in 
-district Shikarpur, Sindh  
-Tahir Hussain*, Mehar ul Nissa Rais, Musawir Ali*, Hira Bibi, Aijaz Ali, Hasnain Ali  
-Chronicle Abstract  
-Article history 
-Received: Aug 23, 2025 
-Received in the revised format: Sept13, 
-2025 
-Accepted: Oct 21, 2025 
-Available online: Nov 29, 2025 
-Wheat plays a vital role in ensuring food security and economic 
-livelihood in Pakistan, yet significant post -harvest and value chain 
-losses hinder its productivity, particularly in District Shikarpur, Sindh. 
-This study was conducted to investigate the exte nt, causes, and 
-consequences of these losses along the wheat value chain and to 
-propose practical interventions for mitigation. The research was 
-carried out in two selected talukas of Shikarpur District, covering 
-four Union Councils with a sample of 120 wh eat farmers (30 from 
-each UC). Data were collected through structured personal 
-interviews using the KoboCollect tool for real-time data recording. 
-Findings revealed a series of interconnected challenges across the 
-value chain. In the pre-harvest phase, 77.5% of farmers reported a 
-lack of modern machinery for land preparation, while 75.83% 
-faced high costs of certified seed, and 80.83% were burdened by 
-the high cost of fertilizer. Water shortages (55.83%) and poor 
-access to pesticide application equipment (6 5.83%) further 
+THE ASIAN BULLETIN OF GREEN MANAGEMENT AND CIRCULAR ECONOMY
+ Vol 5, Issue 2(2025)
+245
+
+Assessing post-harvest losses in value chain of wheat farmers in
+district Shikarpur, Sindh
+Tahir Hussain*, Mehar ul Nissa Rais, Musawir Ali*, Hira Bibi, Aijaz Ali, Hasnain Ali
+Chronicle Abstract
+Article history
+Received: Aug 23, 2025
+Received in the revised format: Sept13,
+2025
+Accepted: Oct 21, 2025
+Available online: Nov 29, 2025
+Wheat plays a vital role in ensuring food security and economic
+livelihood in Pakistan, yet significant post -harvest and value chain
+losses hinder its productivity, particularly in District Shikarpur, Sindh.
+This study was conducted to investigate the exte nt, causes, and
+consequences of these losses along the wheat value chain and to
+propose practical interventions for mitigation. The research was
+carried out in two selected talukas of Shikarpur District, covering
+four Union Councils with a sample of 120 wh eat farmers (30 from
+each UC). Data were collected through structured personal
+interviews using the KoboCollect tool for real-time data recording.
+Findings revealed a series of interconnected challenges across the
+value chain. In the pre-harvest phase, 77.5% of farmers reported a
+lack of modern machinery for land preparation, while 75.83%
+faced high costs of certified seed, and 80.83% were burdened by
+the high cost of fertilizer. Water shortages (55.83%) and poor
+access to pesticide application equipment (6 5.83%) further
 con
 ...
 ```
 
 ---
-

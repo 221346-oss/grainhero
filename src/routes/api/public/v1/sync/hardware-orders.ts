@@ -9,10 +9,13 @@ export const Route = createFileRoute("/api/public/v1/sync/hardware-orders")({
         const ctx = await authenticateMobile(request);
         if (ctx instanceof Response) return ctx;
         const url = new URL(request.url);
-        const result = await runSync(ctx.supabase, ctx.settings,
+        const result = await runSync(
+          ctx.supabase,
+          ctx.settings,
           url.searchParams.get("since"),
           Number(url.searchParams.get("limit")) || null,
-          { table: "hardware_orders", cursorColumn: "updated_at" });
+          { table: "hardware_orders", cursorColumn: "updated_at" },
+        );
         return Response.json(result);
       },
     },

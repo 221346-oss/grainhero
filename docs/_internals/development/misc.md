@@ -18,8 +18,6 @@ Invite member functionality check
 Email sending working hai ya nahi
 Kaunsa kaam pehle karun? 🎯
 
-
-
 login page or signup page waly sary pages ka bhi skelton un k jesa hi bna do
 
 dashboard my sidebar ka bhi bnao skeleton
@@ -29,9 +27,6 @@ yeh jo pehli pic hy, aesa skelton nhi bnana, na to yeh centered align hy or na h
 pic my jo skelton hy wesa bnao sab ka
 
 logo my GrainHero my G or H thora or bara kro
-
-
-
 
 skeleton
 

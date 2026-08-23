@@ -48,7 +48,13 @@ export const Route = createFileRoute("/api/public/cron/sync-firebase")({
           .select("id, device_id, silo_id, warehouse_id, admin_id");
 
         // Build a lookup map by device_id for O(1) access
-        type DeviceRow = { id: string; device_id: string; silo_id: string; warehouse_id: string | null; admin_id: string };
+        type DeviceRow = {
+          id: string;
+          device_id: string;
+          silo_id: string;
+          warehouse_id: string | null;
+          admin_id: string;
+        };
         const deviceMap = new Map<string, DeviceRow>();
         for (const d of knownDevices ?? []) deviceMap.set(d.device_id, d as DeviceRow);
 
@@ -84,8 +90,9 @@ export const Route = createFileRoute("/api/public/cron/sync-firebase")({
         // Fire a non-blocking ping to keep the ML container warm.
         const mlUrl = process.env.GRAINHERO_ML_API_URL;
         if (mlUrl) {
-          fetch(`${mlUrl.replace(/\/$/, "")}/health`, { method: "GET" })
-            .catch(e => console.warn("[ML Warmup] Failed to ping HuggingFace:", e.message));
+          fetch(`${mlUrl.replace(/\/$/, "")}/health`, { method: "GET" }).catch((e) =>
+            console.warn("[ML Warmup] Failed to ping HuggingFace:", e.message),
+          );
         }
 
         // Shared ML utility — tries HuggingFace API then local Python fallback
@@ -93,27 +100,27 @@ export const Route = createFileRoute("/api/public/cron/sync-firebase")({
 
         let synced = 0;
         const now = new Date();
-        
+
         // 1. Process all devices (known + newly auto-registered)
         for (const dev of devices) {
           // snap is a unified map keyed by device_id → flat payload.
           const live = snap?.[dev.device_id];
           if (!live) continue;
-          
+
           // Check multiple keys to support legacy GH1 Arduino payloads
           const g = (k1: string, k2?: string) => {
             if (typeof live[k1] === "number") return live[k1] as number;
             if (k2 && typeof live[k2] === "number") return live[k2] as number;
             return null;
           };
-          
+
           const temp = g("temperature");
           const hum = g("humidity");
           const voc = g("voc", "tvoc_ppb");
           const co2 = g("co2");
           const ambientLight = g("light", "light_pct");
           const soilMoisture = g("soil_moisture_pct");
-          
+
           let moist = g("moisture");
           if (moist === null && soilMoisture !== null) {
             moist = Math.round((25 - (soilMoisture / 100) * 17) * 10) / 10;
@@ -127,19 +134,19 @@ export const Route = createFileRoute("/api/public/cron/sync-firebase")({
           // Compute GH1 Pest Score
           let pestScore = 0.0;
           if (voc !== null) {
-            if (voc > 1000) pestScore += 0.40;
-            else if (voc > 500) pestScore += 0.30;
-            else if (voc > 250) pestScore += 0.20;
+            if (voc > 1000) pestScore += 0.4;
+            else if (voc > 500) pestScore += 0.3;
+            else if (voc > 250) pestScore += 0.2;
             else if (voc > 100) pestScore += 0.08;
           }
           if (hum !== null) {
             if (hum > 80) pestScore += 0.25;
             else if (hum > 70) pestScore += 0.18;
-            else if (hum > 65) pestScore += 0.10;
+            else if (hum > 65) pestScore += 0.1;
           }
           if (temp !== null) {
             if (temp > 35) pestScore += 0.18;
-            else if (temp > 30) pestScore += 0.20;
+            else if (temp > 30) pestScore += 0.2;
             else if (temp > 25) pestScore += 0.12;
             else if (temp > 20) pestScore += 0.05;
           }
@@ -150,7 +157,7 @@ export const Route = createFileRoute("/api/public/cron/sync-firebase")({
             else if (moist > 13) pestScore += 0.03;
           }
           pestScore = Math.min(1.0, Math.max(0.0, pestScore));
-          
+
           let mlRiskClass: string | null = null;
           let mlRiskScore: number | null = null;
           let mlConfidence: number | null = null;
@@ -165,8 +172,11 @@ export const Route = createFileRoute("/api/public/cron/sync-firebase")({
           const batch = activeBatchMap.get(dev.silo_id);
           if (temp != null && hum != null) {
             batchId = batch?.id ?? null;
-            const storageDays = batch?.intake_date ?
-              Math.floor((now.getTime() - new Date(batch.intake_date).getTime()) / (1000 * 3600 * 24)) : 0;
+            const storageDays = batch?.intake_date
+              ? Math.floor(
+                  (now.getTime() - new Date(batch.intake_date).getTime()) / (1000 * 3600 * 24),
+                )
+              : 0;
 
             // GH1 parity: throttle ML auto-trigger to once per 60 seconds per device
             const mlThrottleCutoff = new Date(now.getTime() - 60_000).toISOString();
@@ -183,21 +193,24 @@ export const Route = createFileRoute("/api/public/cron/sync-firebase")({
               if (recentMl) {
                 // Skip ML inference + auto-actuation; reading insert still proceeds below.
               } else {
-                const mlRes = await runMLInference({
-                  grain_type: batch?.grain_type || "wheat",
-                  temperature: temp,
-                  humidity: hum,
-                  moisture: moist ?? 12,
-                  voc,
-                  co2,
-                  storage_days: storageDays,
-                }, {
-                  supabase: supabaseAdmin,
-                  adminId: dev.admin_id,
-                  siloId: dev.silo_id,
-                  deviceId: dev.id,
-                  triggeredBy: "cron",
-                });
+                const mlRes = await runMLInference(
+                  {
+                    grain_type: batch?.grain_type || "wheat",
+                    temperature: temp,
+                    humidity: hum,
+                    moisture: moist ?? 12,
+                    voc,
+                    co2,
+                    storage_days: storageDays,
+                  },
+                  {
+                    supabase: supabaseAdmin,
+                    adminId: dev.admin_id,
+                    siloId: dev.silo_id,
+                    deviceId: dev.id,
+                    triggeredBy: "cron",
+                  },
+                );
 
                 if (mlRes) {
                   mlRiskClass = mlRes.risk_class;
@@ -213,7 +226,10 @@ export const Route = createFileRoute("/api/public/cron/sync-firebase")({
                   const fumigationActive = !!(siloRow as any)?.fumigation_active;
 
                   const cls = mlRes.risk_class;
-                  if ((cls === "high" || cls === "critical" || cls === "moderate") && !fumigationActive) {
+                  if (
+                    (cls === "high" || cls === "critical" || cls === "moderate") &&
+                    !fumigationActive
+                  ) {
                     const fanSpeed = cls === "critical" ? 100 : cls === "high" ? 80 : 60;
                     await writeFirebaseControl(dev.device_id, {
                       ml_requested_fan: true,
@@ -221,7 +237,7 @@ export const Route = createFileRoute("/api/public/cron/sync-firebase")({
                       ml_decision: cls,
                       led2: false,
                       led3: cls === "moderate" || cls === "high",
-                      led4: cls === "critical"
+                      led4: cls === "critical",
                     });
                   } else if (cls === "low" || fumigationActive) {
                     await writeFirebaseControl(dev.device_id, {
@@ -230,7 +246,7 @@ export const Route = createFileRoute("/api/public/cron/sync-firebase")({
                       ml_decision: fumigationActive ? "fumigation_lock" : "safe",
                       led2: !fumigationActive,
                       led3: false,
-                      led4: false
+                      led4: false,
                     });
                   }
                 }
@@ -291,35 +307,42 @@ export const Route = createFileRoute("/api/public/cron/sync-firebase")({
               last_error?: unknown;
             };
 
-            await supabaseAdmin.from("sensor_devices").update({
-              last_heartbeat: now.toISOString(),
-              connection_status: "online",
-              status: "active",
-              health_metrics: {
-                uptime_percentage: health.uptime_percentage ?? 100,
-                error_count: health.error_count ?? 0,
-                ...(health.last_error ? { last_error: health.last_error } : {}),
+            await supabaseAdmin
+              .from("sensor_devices")
+              .update({
                 last_heartbeat: now.toISOString(),
-              } as never,
-              data_stats: {
-                total_readings: (stats.total_readings ?? 0) + 1,
-                readings_today: (stats.readings_today ?? 0) + 1,
-                last_reading_date: now.toISOString(),
-              } as never,
-            }).eq("id", dev.id);
+                connection_status: "online",
+                status: "active",
+                health_metrics: {
+                  uptime_percentage: health.uptime_percentage ?? 100,
+                  error_count: health.error_count ?? 0,
+                  ...(health.last_error ? { last_error: health.last_error } : {}),
+                  last_heartbeat: now.toISOString(),
+                } as never,
+                data_stats: {
+                  total_readings: (stats.total_readings ?? 0) + 1,
+                  readings_today: (stats.readings_today ?? 0) + 1,
+                  last_reading_date: now.toISOString(),
+                } as never,
+              })
+              .eq("id", dev.id);
 
             // CSV Storage (GH1 Parity)
             if (temp != null && hum != null && batch) {
-               appendToMLDataset({
-                  temperature: temp,
-                  humidity: hum,
-                  moisture: moist ?? 14,
-                  storageDays: batch.intake_date ? Math.floor((now.getTime() - new Date(batch.intake_date).getTime()) / (1000 * 3600 * 24)) : 0,
-                  airflow: airflowVal,
-                  light: ambientLight ?? 0,
-                  pestScore: pestScore,
-                  grainType: batch.grain_type || "rice"
-               });
+              appendToMLDataset({
+                temperature: temp,
+                humidity: hum,
+                moisture: moist ?? 14,
+                storageDays: batch.intake_date
+                  ? Math.floor(
+                      (now.getTime() - new Date(batch.intake_date).getTime()) / (1000 * 3600 * 24),
+                    )
+                  : 0,
+                airflow: airflowVal,
+                light: ambientLight ?? 0,
+                pestScore: pestScore,
+                grainType: batch.grain_type || "rice",
+              });
             }
 
             // 2. Threshold Alerts (GH1 Parity)
@@ -394,8 +417,9 @@ export const Route = createFileRoute("/api/public/cron/sync-firebase")({
               const pwmVal = typeof live.pwm === "number" ? live.pwm : 0;
               const fanOn = live.fan_status === "running" || live.fan_state === 1 || pwmVal > 0;
               const pwm = pwmVal > 0 ? pwmVal : fanOn ? 100 : 0;
-              
-              await supabaseAdmin.from("actuators")
+
+              await supabaseAdmin
+                .from("actuators")
                 .update({ is_on: !!fanOn, power_level: pwm })
                 .eq("silo_id", dev.silo_id)
                 .eq("actuator_type", "fan");
@@ -405,7 +429,8 @@ export const Route = createFileRoute("/api/public/cron/sync-firebase")({
 
         // Offline Detection — mark devices that have not pinged in 15 minutes.
         const offlineThreshold = new Date(now.getTime() - 15 * 60 * 1000).toISOString();
-        await supabaseAdmin.from("sensor_devices")
+        await supabaseAdmin
+          .from("sensor_devices")
           .update({ status: "offline", connection_status: "offline" })
           .lt("last_ping_at", offlineThreshold)
           .eq("status", "active");

@@ -20,7 +20,7 @@ export async function resolvePageScope(
   userId: string,
 ): Promise<PageScope> {
   const role = await getEffectiveRole(supabase, userId);
-  
+
   // Platform pages (/platform/*) always show platform scope for super_admins
   // regardless of impersonation - impersonation only affects tenant pages
   if (role === "super_admin") {
@@ -40,7 +40,7 @@ export async function resolvePageScope(
     // Not impersonating, return platform scope
     return { scope: "platform", adminId: null, role };
   }
-  
+
   // For non-super-admins, resolve their tenant scope
   const { data, error } = await supabase
     .from("profiles")

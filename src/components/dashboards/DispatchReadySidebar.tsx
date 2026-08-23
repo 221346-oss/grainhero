@@ -1,7 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getDispatchReadyBatches } from "@/lib/dispatch-ready-batches.functions";
-import { X, Clock, User, Beaker, Droplets, Package, Truck, CheckCircle, DollarSign } from "lucide-react";
+import {
+  X,
+  Clock,
+  User,
+  Beaker,
+  Droplets,
+  Package,
+  Truck,
+  CheckCircle,
+  DollarSign,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface DispatchReadySidebarProps {
@@ -22,12 +32,12 @@ export function DispatchReadySidebar({ isOpen, onClose }: DispatchReadySidebarPr
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", { 
+    return date.toLocaleDateString("en-US", {
       year: "numeric",
-      month: "short", 
+      month: "short",
       day: "numeric",
       hour: "2-digit",
-      minute: "2-digit"
+      minute: "2-digit",
     });
   };
 
@@ -35,31 +45,35 @@ export function DispatchReadySidebar({ isOpen, onClose }: DispatchReadySidebarPr
     const colors: Record<string, string> = {
       ready: "bg-green-100 text-green-800",
       stored: "bg-blue-100 text-blue-800",
-      qc_passed: "bg-emerald-100 text-emerald-800"
+      qc_passed: "bg-emerald-100 text-emerald-800",
     };
     return colors[status] || "bg-gray-100 text-gray-800";
   };
 
   const formatStatus = (status: string) => {
-    return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    return status.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
   };
 
   const getDispatchStatusIcon = (status: string) => {
     switch (status) {
-      case 'ready': return <Truck className="h-4 w-4 text-green-500" />;
-      case 'stored': return <Package className="h-4 w-4 text-blue-500" />;
-      case 'qc_passed': return <CheckCircle className="h-4 w-4 text-emerald-500" />;
-      default: return <Truck className="h-4 w-4 text-gray-400" />;
+      case "ready":
+        return <Truck className="h-4 w-4 text-green-500" />;
+      case "stored":
+        return <Package className="h-4 w-4 text-blue-500" />;
+      case "qc_passed":
+        return <CheckCircle className="h-4 w-4 text-emerald-500" />;
+      default:
+        return <Truck className="h-4 w-4 text-gray-400" />;
     }
   };
 
   const formatCurrency = (pricePerKg: number, quantityKg: number) => {
     const totalValue = pricePerKg * quantityKg;
-    return totalValue.toLocaleString("en-US", { 
-      style: "currency", 
+    return totalValue.toLocaleString("en-US", {
+      style: "currency",
       currency: "USD",
       minimumFractionDigits: 0,
-      maximumFractionDigits: 0 
+      maximumFractionDigits: 0,
     });
   };
 
@@ -67,26 +81,27 @@ export function DispatchReadySidebar({ isOpen, onClose }: DispatchReadySidebarPr
     <>
       {/* Backdrop - only render when open (no shadow) */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-40 transition-opacity duration-300 ease-in-out"
           onClick={onClose}
           style={{
-            opacity: isOpen ? 1 : 0
+            opacity: isOpen ? 1 : 0,
           }}
         />
       )}
-      
+
       {/* Sliding Container - always render for smooth animation */}
-      <div className={`
+      <div
+        className={`
         fixed top-0 right-0 h-full w-[500px] bg-white dark:bg-gray-900 z-50 
         transform transition-all duration-300 ease-in-out border-l
         border-gray-200 dark:border-gray-700
-        ${isOpen ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}
+        ${isOpen ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"}
       `}
-      style={{
-        visibility: isOpen ? 'visible' : 'hidden',
-        transitionDelay: isOpen ? '0ms' : '300ms'
-      }}
+        style={{
+          visibility: isOpen ? "visible" : "hidden",
+          transitionDelay: isOpen ? "0ms" : "300ms",
+        }}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b bg-green-50 dark:bg-green-900/20">
@@ -99,12 +114,7 @@ export function DispatchReadySidebar({ isOpen, onClose }: DispatchReadySidebarPr
               {batches.length} batches ready for shipment
             </p>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            className="h-8 w-8 p-0"
-          >
+          <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0">
             <X className="h-4 w-4" />
           </Button>
         </div>
@@ -137,7 +147,9 @@ export function DispatchReadySidebar({ isOpen, onClose }: DispatchReadySidebarPr
                         {getDispatchStatusIcon(batch.status)}
                         {batch.batch_id}
                       </h3>
-                      <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(batch.status)}`}>
+                      <span
+                        className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(batch.status)}`}
+                      >
                         {formatStatus(batch.status)}
                       </span>
                     </div>
@@ -159,9 +171,7 @@ export function DispatchReadySidebar({ isOpen, onClose }: DispatchReadySidebarPr
                         <p className="font-medium text-gray-900 dark:text-gray-100">
                           {batch.grain_type}
                         </p>
-                        {batch.variety && (
-                          <p className="text-xs text-gray-500">{batch.variety}</p>
-                        )}
+                        {batch.variety && <p className="text-xs text-gray-500">{batch.variety}</p>}
                       </div>
                     </div>
 
@@ -193,9 +203,9 @@ export function DispatchReadySidebar({ isOpen, onClose }: DispatchReadySidebarPr
                       <div>
                         <p className="text-gray-600 dark:text-gray-400">Technician</p>
                         <p className="font-medium text-gray-900 dark:text-gray-100">
-                          {batch.assigned_technician?.name || 
-                           batch.assigned_technician?.email || 
-                           'Unassigned'}
+                          {batch.assigned_technician?.name ||
+                            batch.assigned_technician?.email ||
+                            "Unassigned"}
                         </p>
                       </div>
                     </div>
@@ -227,7 +237,9 @@ export function DispatchReadySidebar({ isOpen, onClose }: DispatchReadySidebarPr
                           <DollarSign className="h-3 w-3 text-yellow-500" />
                           <div>
                             <p className="text-xs text-gray-600 dark:text-gray-400">Price/kg</p>
-                            <p className="text-xs font-medium">${batch.purchase_price_per_kg.toFixed(2)}</p>
+                            <p className="text-xs font-medium">
+                              ${batch.purchase_price_per_kg.toFixed(2)}
+                            </p>
                           </div>
                         </div>
                       )}
@@ -235,7 +247,10 @@ export function DispatchReadySidebar({ isOpen, onClose }: DispatchReadySidebarPr
                     <div className="flex items-center justify-between text-sm">
                       {batch.silos && (
                         <span className="text-gray-600 dark:text-gray-400">
-                          Silo: <span className="font-medium text-gray-900 dark:text-gray-100">{batch.silos.name}</span>
+                          Silo:{" "}
+                          <span className="font-medium text-gray-900 dark:text-gray-100">
+                            {batch.silos.name}
+                          </span>
                         </span>
                       )}
                       {batch.intake_date && (
@@ -245,9 +260,7 @@ export function DispatchReadySidebar({ isOpen, onClose }: DispatchReadySidebarPr
                       )}
                     </div>
                     {batch.farmer_name && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        Farmer: {batch.farmer_name}
-                      </p>
+                      <p className="text-xs text-gray-500 mt-1">Farmer: {batch.farmer_name}</p>
                     )}
                   </div>
                 </div>

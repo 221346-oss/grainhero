@@ -12,9 +12,16 @@ export const Route = createFileRoute("/_authenticated/platform/intelligence")({
   head: () => ({
     meta: [
       { title: "Platform · Intelligence — Grain Hero" },
-      { name: "description", content: "Platform · Intelligence workspace in the Grain Hero platform — private, sign-in required." },
+      {
+        name: "description",
+        content:
+          "Platform · Intelligence workspace in the Grain Hero platform — private, sign-in required.",
+      },
       { property: "og:title", content: "Platform · Intelligence — Grain Hero" },
-      { property: "og:description", content: "Platform · Intelligence workspace in the Grain Hero platform." },
+      {
+        property: "og:description",
+        content: "Platform · Intelligence workspace in the Grain Hero platform.",
+      },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
@@ -32,13 +39,23 @@ function PlatformIntelligencePage() {
   const totals = data?.totals;
   const bySource = data?.bySource;
   const tenants = data?.tenants ?? [];
-  const successRate = totals && totals.total > 0 ? Math.round((totals.succeeded / totals.total) * 100) : null;
+  const successRate =
+    totals && totals.total > 0 ? Math.round((totals.succeeded / totals.total) * 100) : null;
 
   const tiles = [
-    { key: "total", label: "Total requests", value: totals?.total ?? "—", hint: "Last 2,000 logged" },
+    {
+      key: "total",
+      label: "Total requests",
+      value: totals?.total ?? "—",
+      hint: "Last 2,000 logged",
+    },
     { key: "success", label: "Success rate", value: successRate != null ? `${successRate}%` : "—" },
     { key: "failed", label: "Failed", value: totals?.failed ?? "—" },
-    { key: "latency", label: "Avg latency", value: totals?.avgLatencyMs != null ? `${totals.avgLatencyMs}ms` : "—" },
+    {
+      key: "latency",
+      label: "Avg latency",
+      value: totals?.avgLatencyMs != null ? `${totals.avgLatencyMs}ms` : "—",
+    },
   ];
 
   return (
@@ -51,12 +68,20 @@ function PlatformIntelligencePage() {
       <AdminDataCard title="Deployed model">
         <div className="p-4 grid gap-3 sm:grid-cols-2">
           <div>
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Primary</div>
-            <div className="text-sm font-medium text-foreground mt-0.5">{data?.model.primary ?? "—"}</div>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+              Primary
+            </div>
+            <div className="text-sm font-medium text-foreground mt-0.5">
+              {data?.model.primary ?? "—"}
+            </div>
           </div>
           <div>
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Fallback</div>
-            <div className="text-sm font-medium text-foreground mt-0.5">{data?.model.fallback ?? "—"}</div>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+              Fallback
+            </div>
+            <div className="text-sm font-medium text-foreground mt-0.5">
+              {data?.model.fallback ?? "—"}
+            </div>
           </div>
         </div>
       </AdminDataCard>
@@ -99,10 +124,20 @@ function PlatformIntelligencePage() {
           <tbody>
             {tenants.map((t) => (
               <tr key={t.adminId} className="border-t hover:bg-muted/20 align-top">
-                <td className="px-4 py-2 font-medium text-foreground truncate max-w-[200px]">{t.tenantName}</td>
-                <td className="px-2 py-2 text-right tabular-nums text-muted-foreground">{t.total}</td>
+                <td className="px-4 py-2 font-medium text-foreground truncate max-w-[200px]">
+                  {t.tenantName}
+                </td>
+                <td className="px-2 py-2 text-right tabular-nums text-muted-foreground">
+                  {t.total}
+                </td>
                 <td className="px-2 py-2 text-right tabular-nums">
-                  {t.failed > 0 ? <Badge variant="destructive" className="font-mono">{t.failed}</Badge> : <span className="text-muted-foreground">0</span>}
+                  {t.failed > 0 ? (
+                    <Badge variant="destructive" className="font-mono">
+                      {t.failed}
+                    </Badge>
+                  ) : (
+                    <span className="text-muted-foreground">0</span>
+                  )}
                 </td>
                 <td className="px-4 py-2 text-right text-muted-foreground whitespace-nowrap">
                   {t.lastRequestAt ? new Date(t.lastRequestAt).toLocaleString() : "—"}
@@ -110,29 +145,47 @@ function PlatformIntelligencePage() {
               </tr>
             ))}
             {tenants.length === 0 && !isLoading && (
-              <tr><td colSpan={4} className="text-center text-muted-foreground py-8">No inference requests logged yet.</td></tr>
+              <tr>
+                <td colSpan={4} className="text-center text-muted-foreground py-8">
+                  No inference requests logged yet.
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
       </AdminDataCard>
 
       {tenants.some((t) => t.recentFailures.length > 0) && (
-        <AdminDataCard title="Recent failure detail" description="Latest errors per tenant with failures">
+        <AdminDataCard
+          title="Recent failure detail"
+          description="Latest errors per tenant with failures"
+        >
           <div className="divide-y">
-            {tenants.filter((t) => t.recentFailures.length > 0).map((t) => (
-              <div key={t.adminId} className="p-4">
-                <div className="text-sm font-medium text-foreground">{t.tenantName}</div>
-                <ul className="mt-2 space-y-1.5">
-                  {t.recentFailures.map((f, i) => (
-                    <li key={i} className="text-xs text-muted-foreground flex flex-wrap items-center gap-2">
-                      <Badge variant="outline" className="text-[10px]">{f.triggeredBy}</Badge>
-                      <span className="text-muted-foreground">{new Date(f.at).toLocaleString()}</span>
-                      <span className="text-red-600 truncate max-w-[400px]">{f.error ?? "Unknown error"}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+            {tenants
+              .filter((t) => t.recentFailures.length > 0)
+              .map((t) => (
+                <div key={t.adminId} className="p-4">
+                  <div className="text-sm font-medium text-foreground">{t.tenantName}</div>
+                  <ul className="mt-2 space-y-1.5">
+                    {t.recentFailures.map((f, i) => (
+                      <li
+                        key={i}
+                        className="text-xs text-muted-foreground flex flex-wrap items-center gap-2"
+                      >
+                        <Badge variant="outline" className="text-[10px]">
+                          {f.triggeredBy}
+                        </Badge>
+                        <span className="text-muted-foreground">
+                          {new Date(f.at).toLocaleString()}
+                        </span>
+                        <span className="text-red-600 truncate max-w-[400px]">
+                          {f.error ?? "Unknown error"}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
           </div>
         </AdminDataCard>
       )}

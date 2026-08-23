@@ -54,7 +54,11 @@ export function WarehouseAssignmentSidebar({
   }, [warehouse, isOpen]);
 
   // Fetch available team members
-  const { data: team, isLoading: isLoadingTeam, isError: isErrorTeam } = useQuery({
+  const {
+    data: team,
+    isLoading: isLoadingTeam,
+    isError: isErrorTeam,
+  } = useQuery({
     queryKey: ["available-team"],
     queryFn: () => fetchTeam(),
     enabled: isOpen && !!warehouse,
@@ -111,11 +115,7 @@ export function WarehouseAssignmentSidebar({
     <>
       {/* Backdrop overlay */}
       {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40"
-          onClick={onClose}
-          aria-hidden="true"
-        />
+        <div className="fixed inset-0 bg-black/50 z-40" onClick={onClose} aria-hidden="true" />
       )}
 
       {/* Sidebar drawer */}

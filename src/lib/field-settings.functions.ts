@@ -20,7 +20,10 @@ export const getFieldSettings = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
-      .from("mobile_field_settings").select("*").eq("id", true).maybeSingle();
+      .from("mobile_field_settings")
+      .select("*")
+      .eq("id", true)
+      .maybeSingle();
     if (error) throw new Error(error.message);
     return data;
   });
@@ -31,10 +34,15 @@ export const updateFieldSettings = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { isSuperAdmin } = await import("./rbac.server");
     if (!(await isSuperAdmin(context.supabase, context.userId))) throw new Error("Forbidden");
-    const { data: before } = await context.supabase.from("mobile_field_settings")
-      .select("*").eq("id", true).maybeSingle();
-    const { error } = await context.supabase.from("mobile_field_settings")
-      .update({ ...data, updated_by: context.userId } as never).eq("id", true);
+    const { data: before } = await context.supabase
+      .from("mobile_field_settings")
+      .select("*")
+      .eq("id", true)
+      .maybeSingle();
+    const { error } = await context.supabase
+      .from("mobile_field_settings")
+      .update({ ...data, updated_by: context.userId } as never)
+      .eq("id", true);
     if (error) throw new Error(error.message);
     await recordSettingsAudit({
       actorUserId: context.userId,
@@ -49,20 +57,25 @@ export const listFieldIncidents = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
-      .from("field_incidents").select("*")
-      .order("created_at", { ascending: false }).limit(200);
+      .from("field_incidents")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(200);
     if (error) throw new Error(error.message);
     return data ?? [];
   });
 
 export const assignFieldIncident = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((v) => z.object({
-    id: z.string().uuid(),
-    assigned_to: z.string().uuid(),
-  }).parse(v))
+  .inputValidator((v) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        assigned_to: z.string().uuid(),
+      })
+      .parse(v),
+  )
   .handler(async ({ data, context }) => {
-
     const { requireRole } = await import("./rbac.server");
     await requireRole(context.supabase, context.userId, ["admin", "manager", "super_admin"]);
 
@@ -75,7 +88,9 @@ export const assignFieldIncident = createServerFn({ method: "POST" })
       .neq("id", data.id);
 
     if (activeIncidents && activeIncidents.length > 0) {
-      throw new Error(`Technician is already working on an active incident (${activeIncidents[0].category}). Each technician can only handle 1 incident at a time.`);
+      throw new Error(
+        `Technician is already working on an active incident (${activeIncidents[0].category}). Each technician can only handle 1 incident at a time.`,
+      );
     }
 
     const { data: activeQCBatches } = await context.supabase
@@ -85,10 +100,13 @@ export const assignFieldIncident = createServerFn({ method: "POST" })
       .in("status", ["pending_qc", "qc_submitted", "qc_failed", "qc_passed"] as never);
 
     if (activeQCBatches && activeQCBatches.length > 0) {
-      throw new Error(`Technician is already busy with active QC batch ${activeQCBatches[0].batch_id}.`);
+      throw new Error(
+        `Technician is already busy with active QC batch ${activeQCBatches[0].batch_id}.`,
+      );
     }
 
-    const { error } = await context.supabase.from("field_incidents")
+    const { error } = await context.supabase
+      .from("field_incidents")
       .update({
         assigned_to: data.assigned_to,
         assigned_at: new Date().toISOString(),
@@ -104,7 +122,9 @@ export const getMyAssignedIncidents = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("field_incidents")
-      .select("id, category, severity, status, notes, silo_id, created_at, assigned_at, reporter_user_id")
+      .select(
+        "id, category, severity, status, notes, silo_id, created_at, assigned_at, reporter_user_id",
+      )
       .eq("assigned_to", context.userId)
       .in("status", ["investigating", "open"] as never)
       .order("created_at", { ascending: false })
@@ -115,11 +135,15 @@ export const getMyAssignedIncidents = createServerFn({ method: "GET" })
 
 export const resolveFieldIncident = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((v) => z.object({
-    id: z.string().uuid(),
-    status: z.enum(["open","investigating","resolved","dismissed"]),
-    resolution_notes: z.string().max(2000).optional(),
-  }).parse(v))
+  .inputValidator((v) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        status: z.enum(["open", "investigating", "resolved", "dismissed"]),
+        resolution_notes: z.string().max(2000).optional(),
+      })
+      .parse(v),
+  )
   .handler(async ({ data, context }) => {
     const patch: Record<string, unknown> = { status: data.status };
     if (data.status === "resolved" || data.status === "dismissed") {
@@ -127,18 +151,24 @@ export const resolveFieldIncident = createServerFn({ method: "POST" })
       patch.resolved_by = context.userId;
       patch.resolution_notes = data.resolution_notes ?? null;
     }
-    const { error } = await context.supabase.from("field_incidents")
-      .update(patch as never).eq("id", data.id);
+    const { error } = await context.supabase
+      .from("field_incidents")
+      .update(patch as never)
+      .eq("id", data.id);
     if (error) throw new Error(error.message);
 
     // Clear discussion history when incident is closed
     if (data.status === "resolved" || data.status === "dismissed") {
-      const { error: deleteErr } = await (context.supabase
-        .from("field_incident_comments" as any) as any)
+      const { error: deleteErr } = await (
+        context.supabase.from("field_incident_comments" as any) as any
+      )
         .delete()
         .eq("incident_id", data.id);
       if (deleteErr) {
-        console.warn("[resolveFieldIncident] Failed to clear discussion comments:", deleteErr.message);
+        console.warn(
+          "[resolveFieldIncident] Failed to clear discussion comments:",
+          deleteErr.message,
+        );
       }
     }
 
@@ -159,24 +189,36 @@ export const resolveFieldIncident = createServerFn({ method: "POST" })
  */
 export const reportMobileFieldIncident = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((v) => z.object({
-    title: z.string().min(1).max(200).optional(),
-    category: z.string().min(1).max(100).optional(),
-    severity: z.enum(["low", "medium", "high", "critical"]),
-    reporter_name: z.string().max(100).optional(),
-    reporter_role: z.string().max(50).optional(),
-    target_role: z.enum(["admin", "manager", "technician"]).optional(),
-    description: z.string().max(2000).optional(),
-    notes: z.string().max(2000).optional(),
-    silo_id: z.string().uuid().nullable().optional(),
-  }).parse(v))
+  .inputValidator((v) =>
+    z
+      .object({
+        title: z.string().min(1).max(200).optional(),
+        category: z.string().min(1).max(100).optional(),
+        severity: z.enum(["low", "medium", "high", "critical"]),
+        reporter_name: z.string().max(100).optional(),
+        reporter_role: z.string().max(50).optional(),
+        target_role: z.enum(["admin", "manager", "technician"]).optional(),
+        description: z.string().max(2000).optional(),
+        notes: z.string().max(2000).optional(),
+        silo_id: z.string().uuid().nullable().optional(),
+      })
+      .parse(v),
+  )
   .handler(async ({ data, context }) => {
     const { requireRole, getEffectiveRole } = await import("./rbac.server");
-    await requireRole(context.supabase, context.userId, ["admin", "manager", "technician", "super_admin"]);
+    await requireRole(context.supabase, context.userId, [
+      "admin",
+      "manager",
+      "technician",
+      "super_admin",
+    ]);
 
     // Resolve tenant id via existing helper
     const { data: profile } = await context.supabase
-      .from("profiles").select("admin_id, id, name, email").eq("id", context.userId).maybeSingle();
+      .from("profiles")
+      .select("admin_id, id, name, email")
+      .eq("id", context.userId)
+      .maybeSingle();
     const tenantId = (profile?.admin_id as string) ?? profile?.id ?? context.userId;
 
     const targetRole = data.target_role ?? "admin";
@@ -194,7 +236,7 @@ export const reportMobileFieldIncident = createServerFn({ method: "POST" })
         .select("id")
         .or(`admin_id.eq.${tenantId},id.eq.${tenantId}`)
         .limit(10);
-      
+
       // Check each user's role via RPC until we find a match
       if (tenantUsers && tenantUsers.length > 0) {
         for (const user of tenantUsers) {
@@ -212,32 +254,37 @@ export const reportMobileFieldIncident = createServerFn({ method: "POST" })
     }
 
     // Insert into grain_alerts with source='field_incident' to be visible in monitoring page
-    const { error, data: inserted } = await context.supabase.from("grain_alerts").insert({
-      alert_id: `field-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      admin_id: tenantId, // Required for RLS policy
-      title: cat,
-      message: description || null,
-      priority: data.severity === "high" ? "critical" : data.severity, // Map high to critical
-      status: "open",
-      alert_type: "in-app", // Must be one of: SMS, voice, in-app, email, push
-      source: "field_incident",
-      created_by: context.userId,
-      recipient_id: recipientId,
-      triggered_at: new Date().toISOString(),
-      custom_fields: {
-        silo_id: data.silo_id ?? null,
-        reporter_name: reporterName,
-        reporter_role: data.reporter_role?.trim() || null,
-        target_role: targetRole,
-      } as never,
-    } as never).select("id").maybeSingle();
+    const { error, data: inserted } = await context.supabase
+      .from("grain_alerts")
+      .insert({
+        alert_id: `field-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        admin_id: tenantId, // Required for RLS policy
+        title: cat,
+        message: description || null,
+        priority: data.severity === "high" ? "critical" : data.severity, // Map high to critical
+        status: "open",
+        alert_type: "in-app", // Must be one of: SMS, voice, in-app, email, push
+        source: "field_incident",
+        created_by: context.userId,
+        recipient_id: recipientId,
+        triggered_at: new Date().toISOString(),
+        custom_fields: {
+          silo_id: data.silo_id ?? null,
+          reporter_name: reporterName,
+          reporter_role: data.reporter_role?.trim() || null,
+          target_role: targetRole,
+        } as never,
+      } as never)
+      .select("id")
+      .maybeSingle();
 
     if (error) throw new Error(error.message);
 
     // Notify users of the selected target role
     try {
       const { emitToRole } = await import("./notify");
-      const notifSeverity = data.severity === "critical" || data.severity === "high" ? "warning" : "info";
+      const notifSeverity =
+        data.severity === "critical" || data.severity === "high" ? "warning" : "info";
       const notifLink = targetRole === "manager" ? "/manager/monitoring" : "/platform/monitoring";
       await emitToRole(context.supabase, tenantId, targetRole, {
         category: "ops",
@@ -263,13 +310,15 @@ export const listOpenFieldIncidents = createServerFn({ method: "GET" })
     // This ensures consistency with other field incident queries across the app
     const { data, error } = await context.supabase
       .from("grain_alerts")
-      .select("id, title, message, status, priority, created_at, resolved_at, created_by, recipient_id, custom_fields, source")
+      .select(
+        "id, title, message, status, priority, created_at, resolved_at, created_by, recipient_id, custom_fields, source",
+      )
       .eq("source", "field_incident")
       .in("status", ["open", "pending", "investigating"] as never)
       .order("created_at", { ascending: false })
       .limit(50);
     if (error) throw new Error(error.message);
-    
+
     // Map grain_alerts structure to match expected field_incidents structure for backward compatibility
     const incidents = (data ?? []).map((incident: any) => ({
       id: incident.id,
@@ -282,7 +331,7 @@ export const listOpenFieldIncidents = createServerFn({ method: "GET" })
       assigned_to: incident.recipient_id,
       silo_id: incident.custom_fields?.silo_id ?? null,
     }));
-    
+
     return incidents;
   });
 
@@ -298,18 +347,22 @@ export const listIncidentComments = createServerFn({ method: "GET" })
       .eq("id", data.incident_id)
       .maybeSingle();
 
-    const inc = incident as { reporter_user_id: string | null; assigned_to: string | null; status: string } | null;
+    const inc = incident as {
+      reporter_user_id: string | null;
+      assigned_to: string | null;
+      status: string;
+    } | null;
     const isParticipant =
-      inc?.reporter_user_id === context.userId ||
-      inc?.assigned_to === context.userId;
+      inc?.reporter_user_id === context.userId || inc?.assigned_to === context.userId;
 
     if (!isParticipant) {
       // Non-participants receive empty list with participation flag
       return { comments: [], isParticipant: false };
     }
 
-    const { data: comments, error } = await (context.supabase
-      .from("field_incident_comments" as any) as any)
+    const { data: comments, error } = await (
+      context.supabase.from("field_incident_comments" as any) as any
+    )
       .select("id, incident_id, user_id, author_name, author_role, message, created_at")
       .eq("incident_id", data.incident_id)
       .order("created_at", { ascending: true });
@@ -335,10 +388,14 @@ export const listIncidentComments = createServerFn({ method: "GET" })
 // ─── Add Comment / Discussion Message to an Incident Ticket ─────────────────
 export const addIncidentComment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((v) => z.object({
-    incident_id: z.string().uuid(),
-    message: z.string().min(1).max(2000),
-  }).parse(v))
+  .inputValidator((v) =>
+    z
+      .object({
+        incident_id: z.string().uuid(),
+        message: z.string().min(1).max(2000),
+      })
+      .parse(v),
+  )
   .handler(async ({ data, context }) => {
     // Participant gate: only the reporter or assignee may post
     const { data: incidentCheck } = await context.supabase
@@ -347,10 +404,13 @@ export const addIncidentComment = createServerFn({ method: "POST" })
       .eq("id", data.incident_id)
       .maybeSingle();
 
-    const inc = incidentCheck as { reporter_user_id: string | null; assigned_to: string | null; status: string } | null;
+    const inc = incidentCheck as {
+      reporter_user_id: string | null;
+      assigned_to: string | null;
+      status: string;
+    } | null;
     const isParticipant =
-      inc?.reporter_user_id === context.userId ||
-      inc?.assigned_to === context.userId;
+      inc?.reporter_user_id === context.userId || inc?.assigned_to === context.userId;
 
     if (!isParticipant) {
       throw new Error("Not authorised to discuss this incident.");
@@ -372,13 +432,15 @@ export const addIncidentComment = createServerFn({ method: "POST" })
     const authorName = profile?.name || profile?.email || "User";
     const tenantId = (profile?.admin_id as string) ?? profile?.id ?? context.userId;
 
-    const { error } = await (context.supabase.from("field_incident_comments" as any) as any).insert({
-      incident_id: data.incident_id,
-      user_id: context.userId,
-      author_name: authorName,
-      author_role: role,
-      message: data.message.trim(),
-    });
+    const { error } = await (context.supabase.from("field_incident_comments" as any) as any).insert(
+      {
+        incident_id: data.incident_id,
+        user_id: context.userId,
+        author_name: authorName,
+        author_role: role,
+        message: data.message.trim(),
+      },
+    );
 
     if (error) throw new Error(error.message);
 
@@ -393,9 +455,10 @@ export const addIncidentComment = createServerFn({ method: "POST" })
       if (incident) {
         const { emitNotification } = await import("./notify");
         // Target recipient: if caller is reporter, notify assigned or managers; else notify reporter
-        const recipientId = context.userId === incident.reporter_user_id
-          ? (incident.assigned_to ?? null)
-          : incident.reporter_user_id;
+        const recipientId =
+          context.userId === incident.reporter_user_id
+            ? (incident.assigned_to ?? null)
+            : incident.reporter_user_id;
 
         if (recipientId && recipientId !== context.userId) {
           await emitNotification(context.supabase, {

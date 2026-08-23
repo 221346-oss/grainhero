@@ -7,6 +7,7 @@
 ## Problem
 
 Incidents created from the monitoring page's "New Ticket" dialog were showing an error:
+
 ```
 invalid input value for enum alert_status: "open"
 ```
@@ -24,14 +25,17 @@ invalid input value for enum alert_status: "open"
 ## Solution
 
 ### Part 1: Data Source Unification (✅ Completed)
+
 Updated `reportMobileFieldIncident` function to insert into `grain_alerts` table instead of `field_incidents` table.
 
 ### Part 2: Database Schema Update (⚠️ Requires Migration)
+
 Created migration to add missing enum values to `alert_status` type.
 
 ## Changes Made
 
 ### 1. **Database Migration** (`supabase/migrations/20260807000000_add_field_incident_statuses.sql`)
+
 ```sql
 -- Add missing status values for field incidents
 ALTER TYPE public.alert_status ADD VALUE IF NOT EXISTS 'open';
@@ -42,7 +46,9 @@ ALTER TYPE public.alert_status ADD VALUE IF NOT EXISTS 'dismissed';
 **⚠️ IMPORTANT:** This migration must be applied to the database before the code changes will work.
 
 ### 2. **Updated Insert Target** (`src/lib/field-settings.functions.ts`)
+
 Changed from:
+
 ```typescript
 await context.supabase.from("field_incidents").insert({
   tenant_id: tenantId,
@@ -53,17 +59,18 @@ await context.supabase.from("field_incidents").insert({
   silo_id: data.silo_id ?? null,
   status: "open",
   source: "web",
-})
+});
 ```
 
 To:
+
 ```typescript
 await context.supabase.from("grain_alerts").insert({
   alert_id: `field-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
   title: cat,
   message: formattedNotes || null,
   priority: data.severity === "high" ? "critical" : data.severity,
-  status: "open",  // Now valid after migration
+  status: "open", // Now valid after migration
   alert_type: "field_incident",
   source: "field_incident",
   created_by: context.userId,
@@ -75,11 +82,13 @@ await context.supabase.from("grain_alerts").insert({
     reporter_role: data.reporter_role?.trim() || null,
     target_role: targetRole,
   },
-})
+});
 ```
 
 ### 3. **Added Recipient Resolution**
+
 Added logic to find the appropriate recipient based on target_role:
+
 ```typescript
 let recipientId: string | null = null;
 if (targetRole !== "admin") {
@@ -95,7 +104,9 @@ if (targetRole !== "admin") {
 ```
 
 ### 4. **Updated Notification Links**
+
 Changed notification links to route to monitoring page:
+
 ```typescript
 const notifLink = targetRole === "manager" ? "/manager/monitoring" : "/platform/monitoring";
 ```
@@ -103,6 +114,7 @@ const notifLink = targetRole === "manager" ? "/manager/monitoring" : "/platform/
 ## Deployment Steps
 
 ### Option 1: Supabase CLI (Recommended)
+
 ```bash
 # If you have Supabase CLI installed
 cd /path/to/grainhero
@@ -110,6 +122,7 @@ supabase db push
 ```
 
 ### Option 2: Supabase Dashboard
+
 1. Go to Supabase Dashboard → SQL Editor
 2. Copy the contents of `supabase/migrations/20260807000000_add_field_incident_statuses.sql`
 3. Paste and execute the SQL
@@ -120,36 +133,37 @@ supabase db push
    Should return: `{pending,acknowledged,resolved,escalated,closed,open,investigating,dismissed}`
 
 ### Option 3: Lovable Auto-Deploy
+
 If this is a Lovable-connected project, the migration should be applied automatically when you push changes to the connected branch.
 
 ## Data Structure Mapping
 
-| Old (field_incidents) | New (grain_alerts) | Notes |
-|-----------------------|-------------------|-------|
-| `category` | `title` | Incident title/category |
-| `severity` | `priority` | Severity level (high→critical) |
-| `notes` | `message` | Incident description |
-| `reporter_user_id` | `created_by` | Reporter user ID |
-| `silo_id` | `custom_fields.silo_id` | Affected silo (optional) |
-| `tenant_id` | (implicit) | Derived from user profile |
-| `status` | `status` | Now uses full enum set |
-| N/A | `source` | Always "field_incident" |
-| N/A | `alert_type` | Always "field_incident" |
-| N/A | `recipient_id` | Target role recipient |
-| N/A | `triggered_at` | Timestamp |
+| Old (field_incidents) | New (grain_alerts)      | Notes                          |
+| --------------------- | ----------------------- | ------------------------------ |
+| `category`            | `title`                 | Incident title/category        |
+| `severity`            | `priority`              | Severity level (high→critical) |
+| `notes`               | `message`               | Incident description           |
+| `reporter_user_id`    | `created_by`            | Reporter user ID               |
+| `silo_id`             | `custom_fields.silo_id` | Affected silo (optional)       |
+| `tenant_id`           | (implicit)              | Derived from user profile      |
+| `status`              | `status`                | Now uses full enum set         |
+| N/A                   | `source`                | Always "field_incident"        |
+| N/A                   | `alert_type`            | Always "field_incident"        |
+| N/A                   | `recipient_id`          | Target role recipient          |
+| N/A                   | `triggered_at`          | Timestamp                      |
 
 ## Status Values After Migration
 
-| Status | Meaning | Use Case |
-|--------|---------|----------|
-| `open` | Newly created | Initial state for field incidents |
-| `pending` | Awaiting action | System alerts |
-| `investigating` | Being looked into | Manager/tech working on incident |
-| `acknowledged` | Seen but not resolved | System alerts acknowledged |
-| `escalated` | Escalated to higher level | System incidents only |
-| `resolved` | Fixed and completed | Both field and system incidents |
-| `closed` | Closed without action or completed | Field incidents |
-| `dismissed` | Closed without action | Field incidents |
+| Status          | Meaning                            | Use Case                          |
+| --------------- | ---------------------------------- | --------------------------------- |
+| `open`          | Newly created                      | Initial state for field incidents |
+| `pending`       | Awaiting action                    | System alerts                     |
+| `investigating` | Being looked into                  | Manager/tech working on incident  |
+| `acknowledged`  | Seen but not resolved              | System alerts acknowledged        |
+| `escalated`     | Escalated to higher level          | System incidents only             |
+| `resolved`      | Fixed and completed                | Both field and system incidents   |
+| `closed`        | Closed without action or completed | Field incidents                   |
+| `dismissed`     | Closed without action              | Field incidents                   |
 
 ## Benefits
 
@@ -163,6 +177,7 @@ If this is a Lovable-connected project, the migration should be applied automati
 ## Testing Checklist
 
 **After applying migration:**
+
 - [ ] Verify migration was applied successfully
 - [ ] Create incident from monitoring page → manager recipient
 - [ ] Verify incident appears in monitoring page incidents section (All tab)
@@ -194,6 +209,7 @@ If this is a Lovable-connected project, the migration should be applied automati
 ## Follow-up Actions
 
 Consider:
+
 1. ✅ Migrating historical data from `field_incidents` to `grain_alerts` with `source='field_incident'`
 2. ✅ Deprecating `field_incidents` table entirely
 3. Adding database triggers to maintain backward compatibility if needed

@@ -10,11 +10,21 @@ const getAudit = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { data: roles } = await context.supabase
-      .from("user_roles").select("role").eq("user_id", context.userId);
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId);
     if (!roles?.some((r) => r.role === "super_admin")) throw new Error("Forbidden");
     const [{ data: activity }, { data: security }] = await Promise.all([
-      context.supabase.from("activity_logs").select("*").order("created_at", { ascending: false }).limit(100),
-      context.supabase.from("security_events").select("*").order("created_at", { ascending: false }).limit(100),
+      context.supabase
+        .from("activity_logs")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(100),
+      context.supabase
+        .from("security_events")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(100),
     ]);
     return { activity: activity ?? [], security: security ?? [] };
   });
@@ -23,9 +33,16 @@ export const Route = createFileRoute("/_authenticated/platform/audit-logs")({
   head: () => ({
     meta: [
       { title: "Platform · Audit Logs — Grain Hero" },
-      { name: "description", content: "Platform · Audit Logs workspace in the Grain Hero platform — private, sign-in required." },
+      {
+        name: "description",
+        content:
+          "Platform · Audit Logs workspace in the Grain Hero platform — private, sign-in required.",
+      },
       { property: "og:title", content: "Platform · Audit Logs — Grain Hero" },
-      { property: "og:description", content: "Platform · Audit Logs workspace in the Grain Hero platform." },
+      {
+        property: "og:description",
+        content: "Platform · Audit Logs workspace in the Grain Hero platform.",
+      },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
@@ -34,10 +51,16 @@ export const Route = createFileRoute("/_authenticated/platform/audit-logs")({
 
 function AuditLogsPage() {
   const fetchAudit = useServerFn(getAudit);
-  const { data, isLoading } = useQuery({ queryKey: ["platform-audit-logs"], queryFn: () => fetchAudit() });
+  const { data, isLoading } = useQuery({
+    queryKey: ["platform-audit-logs"],
+    queryFn: () => fetchAudit(),
+  });
 
   return (
-    <AdminPageShell title="Audit logs" subtitle="Configuration changes, access events, and security events">
+    <AdminPageShell
+      title="Audit logs"
+      subtitle="Configuration changes, access events, and security events"
+    >
       <div className="grid gap-5 md:grid-cols-2">
         <AdminDataCard
           title="Activity"
@@ -53,8 +76,12 @@ function AuditLogsPage() {
                 const r = row as Record<string, unknown>;
                 return (
                   <li key={String(r.id)} className="px-4 py-3 hover:bg-muted/20">
-                    <div className="text-sm font-medium text-foreground">{String(r.action ?? r.event ?? "activity")}</div>
-                    <div className="text-xs text-muted-foreground mt-0.5">{new Date(String(r.created_at)).toLocaleString()}</div>
+                    <div className="text-sm font-medium text-foreground">
+                      {String(r.action ?? r.event ?? "activity")}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      {new Date(String(r.created_at)).toLocaleString()}
+                    </div>
                   </li>
                 );
               })}
@@ -76,7 +103,9 @@ function AuditLogsPage() {
                 return (
                   <li key={String(r.id)} className="px-4 py-3 hover:bg-red-50/40">
                     <div className="text-sm font-medium text-foreground">{String(r.event)}</div>
-                    <div className="text-xs text-muted-foreground mt-0.5">{new Date(String(r.created_at)).toLocaleString()}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      {new Date(String(r.created_at)).toLocaleString()}
+                    </div>
                   </li>
                 );
               })}

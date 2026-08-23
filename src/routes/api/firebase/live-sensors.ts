@@ -19,19 +19,22 @@ export const Route = createFileRoute("/api/firebase/live-sensors")({
         const token = authHeader.replace(/^Bearer\s+/i, "");
 
         if (!token) {
-          return new Response(
-            JSON.stringify({ success: false, error: "Unauthorized" }),
-            { status: 401, headers: { "content-type": "application/json" } },
-          );
+          return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), {
+            status: 401,
+            headers: { "content-type": "application/json" },
+          });
         }
 
         // Verify the token is a valid Supabase JWT
-        const { data: { user }, error: authErr } = await supabaseAdmin.auth.getUser(token);
+        const {
+          data: { user },
+          error: authErr,
+        } = await supabaseAdmin.auth.getUser(token);
         if (authErr || !user) {
-          return new Response(
-            JSON.stringify({ success: false, error: "Unauthorized" }),
-            { status: 401, headers: { "content-type": "application/json" } },
-          );
+          return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), {
+            status: 401,
+            headers: { "content-type": "application/json" },
+          });
         }
 
         try {
@@ -53,24 +56,26 @@ export const Route = createFileRoute("/api/firebase/live-sensors")({
             const p = payload as Record<string, unknown>;
 
             // Resolve timestamp — GH1 Arduino may write seconds, GH2 writes ms
-            let ts = (p.ts ?? p.timestamp ?? p.timestamp_unix) as number | null ?? null;
+            let ts = ((p.ts ?? p.timestamp ?? p.timestamp_unix) as number | null) ?? null;
             if (typeof ts === "number" && ts < 2_000_000_000) ts = ts * 1000;
 
             devices[deviceId] = {
               temperature: typeof p.temperature === "number" ? p.temperature : null,
-              humidity:    typeof p.humidity    === "number" ? p.humidity    : null,
+              humidity: typeof p.humidity === "number" ? p.humidity : null,
               // Handle both GH1 legacy field name tvoc_ppb and GH2 field name voc
-              tvoc_ppb:    typeof p.tvoc_ppb === "number" ? p.tvoc_ppb
-                         : typeof p.voc     === "number" ? p.voc
-                         : null,
+              tvoc_ppb:
+                typeof p.tvoc_ppb === "number"
+                  ? p.tvoc_ppb
+                  : typeof p.voc === "number"
+                    ? p.voc
+                    : null,
               timestamp: ts !== null ? new Date(ts as number).toISOString() : null,
             };
           }
 
-          return new Response(
-            JSON.stringify({ success: true, devices }),
-            { headers: { "content-type": "application/json" } },
-          );
+          return new Response(JSON.stringify({ success: true, devices }), {
+            headers: { "content-type": "application/json" },
+          });
         } catch (err) {
           console.error("[live-sensors] Firebase read error:", err);
           return new Response(

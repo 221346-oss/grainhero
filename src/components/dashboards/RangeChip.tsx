@@ -1,5 +1,10 @@
 import { ChevronDown } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export const RANGE_OPTIONS = [
   { key: "today", label: "Today" },
@@ -8,9 +13,15 @@ export const RANGE_OPTIONS = [
   { key: "mtd", label: "This month" },
   { key: "ytd", label: "This year" },
 ] as const;
-export type RangeKey = typeof RANGE_OPTIONS[number]["key"];
+export type RangeKey = (typeof RANGE_OPTIONS)[number]["key"];
 
-export function RangeChip({ value, onChange }: { value: RangeKey; onChange: (v: RangeKey) => void }) {
+export function RangeChip({
+  value,
+  onChange,
+}: {
+  value: RangeKey;
+  onChange: (v: RangeKey) => void;
+}) {
   const label = RANGE_OPTIONS.find((r) => r.key === value)?.label ?? "This month";
   return (
     <DropdownMenu>

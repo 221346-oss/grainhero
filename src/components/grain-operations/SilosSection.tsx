@@ -5,7 +5,16 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
-import { Warehouse, Search, Edit2, Trash2, Loader2, ShoppingCart, ChevronDown, MapPin } from "lucide-react";
+import {
+  Warehouse,
+  Search,
+  Edit2,
+  Trash2,
+  Loader2,
+  ShoppingCart,
+  ChevronDown,
+  MapPin,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -170,7 +179,8 @@ export function SilosSection() {
   const toggleWarehouse = (id: string) =>
     setExpandedWarehouses((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
 
@@ -201,7 +211,10 @@ export function SilosSection() {
     if (desc) return desc;
     const addr = (wh.location?.address ?? "").trim();
     if (addr) {
-      const parts = addr.split(",").map((s) => s.trim()).filter(Boolean);
+      const parts = addr
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
       const city = parts.length >= 2 ? parts[parts.length - 2] : parts[0];
       if (city) return cap(city);
     }
@@ -225,11 +238,16 @@ export function SilosSection() {
       byWarehouse.get(whId)!.silos.push(s);
     }
 
-    const byRegion = new Map<string, Array<{ warehouse: Warehouse | null; warehouseId: string; silos: Silo[] }>>();
+    const byRegion = new Map<
+      string,
+      Array<{ warehouse: Warehouse | null; warehouseId: string; silos: Silo[] }>
+    >();
     for (const [whId, entry] of byWarehouse.entries()) {
       const region = extractRegion(entry.warehouse ?? undefined);
       if (!byRegion.has(region)) byRegion.set(region, []);
-      byRegion.get(region)!.push({ warehouse: entry.warehouse, warehouseId: whId, silos: entry.silos });
+      byRegion
+        .get(region)!
+        .push({ warehouse: entry.warehouse, warehouseId: whId, silos: entry.silos });
     }
 
     return [...byRegion.entries()]
@@ -261,7 +279,7 @@ export function SilosSection() {
       }),
     onSuccess: (result) => {
       console.log("[SiloSection] Silo saved successfully:", result);
-      toast.success(`Silo "${result?.name || 'saved'}" updated successfully`);
+      toast.success(`Silo "${result?.name || "saved"}" updated successfully`);
       qc.invalidateQueries({ queryKey: ["silos"] });
       qc.invalidateQueries({ queryKey: ["warehouses"] });
       qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
@@ -315,71 +333,80 @@ export function SilosSection() {
   return (
     <div className="space-y-3">
       <div className="flex flex-col sm:flex-row gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search silo name…" className="pl-9 h-9" />
-          </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full sm:w-40 h-9"><SelectValue placeholder="Status" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All statuses</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="offline">Offline</SelectItem>
-              <SelectItem value="error">Error</SelectItem>
-              <SelectItem value="maintenance">Maintenance</SelectItem>
-            </SelectContent>
-          </Select>
-          {isAdmin && (
-            siloGate.data && !siloGate.data.allowed && me?.role !== "super_admin" ? (
-              <Button
-                variant="outline"
-                onClick={() => navigate({ to: "/plan-management" })}
-                className="gap-2 h-9 whitespace-nowrap border-emerald-400 text-emerald-700 hover:bg-emerald-50"
-              >
-                <ShoppingCart className="w-4 h-4" /> Upgrade Plan
-              </Button>
-            ) : (
-              <Button
-                variant="outline"
-                onClick={handleRequestSilo}
-                disabled={siloGate.isLoading}
-                className="gap-2 h-9 whitespace-nowrap border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-400 dark:hover:bg-amber-950/30"
-                title="Silo provisioning is handled by Super Admin — this requests a new one."
-              >
-                <ShoppingCart className="w-4 h-4" /> Request Silo
-              </Button>
-            )
-          )}
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search silo name…"
+            className="pl-9 h-9"
+          />
         </div>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-full sm:w-40 h-9">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All statuses</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="offline">Offline</SelectItem>
+            <SelectItem value="error">Error</SelectItem>
+            <SelectItem value="maintenance">Maintenance</SelectItem>
+          </SelectContent>
+        </Select>
+        {isAdmin &&
+          (siloGate.data && !siloGate.data.allowed && me?.role !== "super_admin" ? (
+            <Button
+              variant="outline"
+              onClick={() => navigate({ to: "/plan-management" })}
+              className="gap-2 h-9 whitespace-nowrap border-emerald-400 text-emerald-700 hover:bg-emerald-50"
+            >
+              <ShoppingCart className="w-4 h-4" /> Upgrade Plan
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              onClick={handleRequestSilo}
+              disabled={siloGate.isLoading}
+              className="gap-2 h-9 whitespace-nowrap border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-400 dark:hover:bg-amber-950/30"
+              title="Silo provisioning is handled by Super Admin — this requests a new one."
+            >
+              <ShoppingCart className="w-4 h-4" /> Request Silo
+            </Button>
+          ))}
+      </div>
 
-        {isLoading ? (
-          <div className="flex items-center justify-center py-8 text-muted-foreground">
-            <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading…
+      {isLoading ? (
+        <div className="flex items-center justify-center py-8 text-muted-foreground">
+          <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading…
+        </div>
+      ) : rows.length === 0 ? (
+        <div className="py-8 text-center text-muted-foreground">
+          <p className="text-sm">No silos yet.</p>
+        </div>
+      ) : (
+        // Fixed height container for 4 entries (4 columns x 1 row) with vertical scroll
+        <div className="h-[320px] overflow-y-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            {rows.map((s) => (
+              <SiloOperationsCard
+                key={s.id}
+                silo={s}
+                batches={batches}
+                isAdmin={isAdmin}
+                onView={(silo) => {
+                  setSelected(silo as Silo);
+                  setViewOpen(true);
+                }}
+                onEdit={(silo) => openEdit(silo as Silo)}
+                onDelete={(id) => setDeleteId(id)}
+                onSell={(silo) => setSellSilo(silo as Silo)}
+                onRequestMore={handleRequestSilo}
+              />
+            ))}
           </div>
-        ) : rows.length === 0 ? (
-          <div className="py-8 text-center text-muted-foreground">
-            <p className="text-sm">No silos yet.</p>
-          </div>
-        ) : (
-          // Fixed height container for 4 entries (4 columns x 1 row) with vertical scroll
-          <div className="h-[320px] overflow-y-auto">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-              {rows.map((s) => (
-                <SiloOperationsCard
-                  key={s.id}
-                  silo={s}
-                  batches={batches}
-                  isAdmin={isAdmin}
-                  onView={(silo) => { setSelected(silo as Silo); setViewOpen(true); }}
-                  onEdit={(silo) => openEdit(silo as Silo)}
-                  onDelete={(id) => setDeleteId(id)}
-                  onSell={(silo) => setSellSilo(silo as Silo)}
-                  onRequestMore={handleRequestSilo}
-                />
-              ))}
-            </div>
-          </div>
-        )}
+        </div>
+      )}
       {/* Edit Dialog */}
       <Dialog
         open={editOpen}
@@ -588,19 +615,30 @@ export function SilosSection() {
             <DialogTitle>Silo limit reached</DialogTitle>
             <DialogDescription>
               Your current plan allows up to{" "}
-              <strong>{typeof siloGate.data?.limit === "number" ? siloGate.data.limit : "—"}</strong> silos
-              and you are already using{" "}
-              <strong>{typeof siloGate.data?.used === "number" ? siloGate.data.used : "all"}</strong> of them.
+              <strong>
+                {typeof siloGate.data?.limit === "number" ? siloGate.data.limit : "—"}
+              </strong>{" "}
+              silos and you are already using{" "}
+              <strong>
+                {typeof siloGate.data?.used === "number" ? siloGate.data.used : "all"}
+              </strong>{" "}
+              of them.
             </DialogDescription>
           </DialogHeader>
           <p className="text-sm text-muted-foreground px-1">
-            To add more silos, upgrade to a higher plan. Visit the plan management page to request an upgrade.
+            To add more silos, upgrade to a higher plan. Visit the plan management page to request
+            an upgrade.
           </p>
           <DialogFooter className="mt-2 flex gap-2">
-            <Button variant="outline" onClick={() => setLimitOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setLimitOpen(false)}>
+              Cancel
+            </Button>
             <Button
               className="bg-emerald-600 hover:bg-emerald-700 text-white"
-              onClick={() => { setLimitOpen(false); navigate({ to: "/plan-management" }); }}
+              onClick={() => {
+                setLimitOpen(false);
+                navigate({ to: "/plan-management" });
+              }}
             >
               Upgrade plan
             </Button>

@@ -24,7 +24,9 @@ export const listAlerts = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     let q = context.supabase
       .from("grain_alerts")
-      .select("id, alert_id, title, message, priority, status, source, alert_type, triggered_at, acknowledged_at, resolved_at, silo_id, warehouse_id, silos(id, silo_id, name)")
+      .select(
+        "id, alert_id, title, message, priority, status, source, alert_type, triggered_at, acknowledged_at, resolved_at, silo_id, warehouse_id, silos(id, silo_id, name)",
+      )
       .order("triggered_at", { ascending: false })
       .limit(data.limit);
     if (data.siloId) q = q.eq("silo_id", data.siloId);

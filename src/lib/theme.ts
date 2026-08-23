@@ -152,7 +152,9 @@ const STORAGE_KEY = "gh-theme";
 
 function buildCss(t: ThemeDef): string {
   const toBlock = (sel: string, vars: ThemeVars) =>
-    `${sel}{${Object.entries(vars).map(([k, v]) => `${k}:${v};`).join("")}}`;
+    `${sel}{${Object.entries(vars)
+      .map(([k, v]) => `${k}:${v};`)
+      .join("")}}`;
   return `${toBlock(":root", t.light)}${toBlock(".dark", t.dark)}`;
 }
 
@@ -166,7 +168,11 @@ export function applyTheme(id: ThemeId) {
     document.head.appendChild(tag);
   }
   tag.textContent = buildCss(t);
-  try { localStorage.setItem(STORAGE_KEY, id); } catch {}
+  try {
+    localStorage.setItem(STORAGE_KEY, id);
+  } catch {
+    // storage can be unavailable (private mode); fall through to defaults
+  }
   document.documentElement.dataset.theme = id;
 }
 
@@ -200,7 +206,9 @@ export function applyThemeMode(mode: ThemeMode) {
   }
   try {
     localStorage.setItem(MODE_STORAGE_KEY, mode);
-  } catch {}
+  } catch {
+    // storage can be unavailable (private mode); fall through to defaults
+  }
 }
 
 export function toggleThemeMode(): ThemeMode {
@@ -208,4 +216,4 @@ export function toggleThemeMode(): ThemeMode {
   const next = current === "dark" ? "light" : "dark";
   applyThemeMode(next);
   return next;
-}
+}

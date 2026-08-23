@@ -9,7 +9,10 @@ export const Route = createFileRoute("/_authenticated/plans")({
   head: () => ({
     meta: [
       { title: "Plans — Grain Hero" },
-      { name: "description", content: "Plans workspace in the Grain Hero platform — private, sign-in required." },
+      {
+        name: "description",
+        content: "Plans workspace in the Grain Hero platform — private, sign-in required.",
+      },
       { property: "og:title", content: "Plans — Grain Hero" },
       { property: "og:description", content: "Plans workspace in the Grain Hero platform." },
       { name: "robots", content: "noindex, nofollow" },
@@ -23,33 +26,38 @@ function PlansPage() {
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Plans &amp; Pricing</h1>
-        <p className="text-sm text-muted-foreground mt-1">Choose the plan that fits your grain operation.</p>
+        <p className="text-sm text-muted-foreground mt-1">
+          Choose the plan that fits your grain operation.
+        </p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {pricingData.map((p: any) => (
           <Card key={p.id} className={p.popular ? "border-emerald-500 shadow-lg relative" : ""}>
-            {p.popular && (
-              <Badge className="absolute -top-2 right-4 bg-emerald-600">Popular</Badge>
-            )}
+            {p.popular && <Badge className="absolute -top-2 right-4 bg-emerald-600">Popular</Badge>}
             <CardHeader>
               <CardTitle className="text-lg">{p.name}</CardTitle>
               <CardDescription className="text-xs">{p.description}</CardDescription>
               <div className="pt-2">
                 <div className="text-3xl font-bold text-foreground">{p.priceFrontend}</div>
-                {p.iotChargeLabel && <div className="text-[10px] text-muted-foreground mt-1">+ {p.iotChargeLabel}</div>}
+                {p.iotChargeLabel && (
+                  <div className="text-[10px] text-muted-foreground mt-1">+ {p.iotChargeLabel}</div>
+                )}
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
               <ul className="space-y-1.5">
                 {p.features.map((f: string) => (
                   <li key={f} className="text-sm text-foreground flex items-start gap-2">
-                    <Check className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />{f}
+                    <Check className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+                    {f}
                   </li>
                 ))}
               </ul>
               <Button asChild className="w-full" variant={p.popular ? "default" : "outline"}>
-                <Link to="/checkout" search={{ plan: p.id } as never}>Subscribe</Link>
+                <Link to="/checkout" search={{ plan: p.id } as never}>
+                  Subscribe
+                </Link>
               </Button>
             </CardContent>
           </Card>

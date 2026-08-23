@@ -32,29 +32,19 @@ export function usePlanLimits() {
 
   // Prefer subscription table columns (set by webhook), fall back to pricing-data.
   const maxSilos: number =
-    (sub as { max_silos?: number } | null)?.max_silos ??
-    planLimits?.silos ??
-    -1; // -1 = unlimited
+    (sub as { max_silos?: number } | null)?.max_silos ?? planLimits?.silos ?? -1; // -1 = unlimited
 
   const maxWarehouses: number =
-    (sub as { max_warehouses?: number } | null)?.max_warehouses ??
-    planLimits?.warehouses ??
-    -1;
+    (sub as { max_warehouses?: number } | null)?.max_warehouses ?? planLimits?.warehouses ?? -1;
 
   const maxUsers: number =
-    (Number((sub as { max_users?: number } | null)?.max_users ?? 0) ||
-    planLimits?.users) ??
-    -1;
+    (Number((sub as { max_users?: number } | null)?.max_users ?? 0) || planLimits?.users) ?? -1;
 
-  const canAddSilo =
-    !sub // no subscription at all — don't block (super_admin / no billing)
-      ? true
-      : maxSilos === -1 || usage.silos < maxSilos;
+  const canAddSilo = !sub // no subscription at all — don't block (super_admin / no billing)
+    ? true
+    : maxSilos === -1 || usage.silos < maxSilos;
 
-  const canAddWarehouse =
-    !sub
-      ? true
-      : maxWarehouses === -1 || usage.warehouses < maxWarehouses;
+  const canAddWarehouse = !sub ? true : maxWarehouses === -1 || usage.warehouses < maxWarehouses;
 
   const siloLimitMessage =
     maxSilos > 0 && !canAddSilo

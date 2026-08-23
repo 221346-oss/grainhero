@@ -5,18 +5,18 @@
 grainhero.app has no organic data yet — the domain is new to Google's index, so
 every ranking has to be earned from scratch. The good news: this niche is wide open.
 
-| Keyword | Volume/mo | Difficulty |
-|---|---|---|
-| grain silo | 5,400 | 28 — easy |
-| grain storage | 880 | 25 — easy |
-| rice storage | 720 | 25 — easy |
-| grain management software | 110 | 8 — very easy |
-| grain bin monitoring | 70 | 0 — very easy |
-| grain inventory management | 70 | 2 — very easy |
-| grain moisture sensor | 30 | 8 — very easy |
-| grain storage monitoring | 20 | 0 — very easy |
-| smart silo | 20 | 0 — very easy |
-| post harvest loss prevention | 20 | 0 — very easy |
+| Keyword                      | Volume/mo | Difficulty    |
+| ---------------------------- | --------- | ------------- |
+| grain silo                   | 5,400     | 28 — easy     |
+| grain storage                | 880       | 25 — easy     |
+| rice storage                 | 720       | 25 — easy     |
+| grain management software    | 110       | 8 — very easy |
+| grain bin monitoring         | 70        | 0 — very easy |
+| grain inventory management   | 70        | 2 — very easy |
+| grain moisture sensor        | 30        | 8 — very easy |
+| grain storage monitoring     | 20        | 0 — very easy |
+| smart silo                   | 20        | 0 — very easy |
+| post harvest loss prevention | 20        | 0 — very easy |
 
 Source: Semrush (US database). Volumes are small but the difficulty scores are
 near zero — a new site can realistically reach page 1 on the software and

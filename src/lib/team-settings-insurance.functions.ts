@@ -67,7 +67,7 @@ export const listTeamMembers = createServerFn({ method: "GET" })
         .select("technician_ids")
         .eq("manager_id", context.userId)
         .is("deleted_at", null);
-      
+
       const techIds = new Set<string>();
       for (const w of warehouses ?? []) {
         for (const t of w.technician_ids ?? []) techIds.add(t);
@@ -150,7 +150,7 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
     try {
       const createRes = await supabaseAdmin.auth.admin.createUser({
         email,
-        email_confirm: true,   // confirm immediately — invitation code is the gate
+        email_confirm: true, // confirm immediately — invitation code is the gate
         user_metadata: { name: data.name ?? "", invited_role: data.role, admin_id },
       });
       if (createRes.error) {
@@ -160,7 +160,10 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
       console.log("[inviteTeamMember] Auth user created successfully, uid:", uid);
     } catch (createErr: any) {
       const msg = createErr?.message || createErr?.code || String(createErr ?? "");
-      console.warn("[inviteTeamMember] createUser failed, attempting listUsers fallback. Error:", msg);
+      console.warn(
+        "[inviteTeamMember] createUser failed, attempting listUsers fallback. Error:",
+        msg,
+      );
       // Always fall back to listUsers — covers "already exists", 500s, and network blips.
       const { data: existing, error: listErr } = await supabaseAdmin.auth.admin.listUsers({
         page: 1,
@@ -231,7 +234,7 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
       await supabaseAdmin.from("profiles").update({ blocked: false }).eq("id", uid);
       // Unban in auth just in case they were previously removed
       await supabaseAdmin.auth.admin.updateUserById(uid, { ban_duration: "none" });
-      
+
       console.log("[inviteTeamMember] Profile upserted successfully");
 
       await supabaseAdmin.from("user_roles").delete().eq("user_id", uid);
@@ -299,7 +302,9 @@ export const updateTeamMember = createServerFn({ method: "POST" })
       if (error) throw error;
     }
     if (data.email !== undefined) {
-      await supabaseAdmin.auth.admin.updateUserById(data.id, { email: data.email.trim().toLowerCase() });
+      await supabaseAdmin.auth.admin.updateUserById(data.id, {
+        email: data.email.trim().toLowerCase(),
+      });
     }
     if (data.role) {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -330,13 +335,18 @@ export const removeTeamMember = createServerFn({ method: "POST" })
     }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    
+
     // Ban the user to prevent them from logging in
-    const { error: banErr } = await supabaseAdmin.auth.admin.updateUserById(data.id, { ban_duration: '876000h' });
+    const { error: banErr } = await supabaseAdmin.auth.admin.updateUserById(data.id, {
+      ban_duration: "876000h",
+    });
     if (banErr) throw new Error(banErr.message);
 
     // Mark as blocked and status=deleted in profiles so they appear in the Deleted section/card
-    const { error: pErr } = await supabaseAdmin.from("profiles").update({ blocked: true, status: "deleted" }).eq("id", data.id);
+    const { error: pErr } = await supabaseAdmin
+      .from("profiles")
+      .update({ blocked: true, status: "deleted" })
+      .eq("id", data.id);
     if (pErr) throw new Error(pErr.message);
 
     return { ok: true };
@@ -354,7 +364,9 @@ export const getTeamMemberDetail = createServerFn({ method: "GET" })
     // Fetch full profile
     const { data: profile } = await supabaseAdmin
       .from("profiles")
-      .select("id, name, email, phone, avatar, created_at, status, blocked, email_verified, warehouse_id")
+      .select(
+        "id, name, email, phone, avatar, created_at, status, blocked, email_verified, warehouse_id",
+      )
       .eq("id", data.memberId)
       .maybeSingle();
 
@@ -366,11 +378,13 @@ export const getTeamMemberDetail = createServerFn({ method: "GET" })
       .maybeSingle();
 
     // Fetch assigned batches (via assigned_technician_id on grain_batches)
-    const { data: batches } = await supabaseAdmin
+    const { data: batches } = (await supabaseAdmin
       .from("grain_batches" as never)
-      .select("id, batch_id, status, grain_type, silo_id, silos:silo_id(id, name, silo_id)" as never)
+      .select(
+        "id, batch_id, status, grain_type, silo_id, silos:silo_id(id, name, silo_id)" as never,
+      )
       .eq("assigned_technician_id" as never, data.memberId)
-      .not("status", "in", "(dispatched,sold,rejected)") as any;
+      .not("status", "in", "(dispatched,sold,rejected)")) as any;
 
     return {
       ...profile,

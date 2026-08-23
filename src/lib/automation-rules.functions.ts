@@ -44,7 +44,11 @@ export const saveAutomationRule = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d) => RULE_INPUT.parse(d))
   .handler(async ({ data, context }) => {
-    const { data: silo } = await context.supabase.from("silos").select("admin_id").eq("id", data.siloId).single();
+    const { data: silo } = await context.supabase
+      .from("silos")
+      .select("admin_id")
+      .eq("id", data.siloId)
+      .single();
     const adminId = (silo as Row | null)?.admin_id as string | undefined;
     if (!adminId) throw new Error("Silo not found");
 
@@ -61,16 +65,27 @@ export const saveAutomationRule = createServerFn({ method: "POST" })
       enabled: data.enabled,
     };
     const q = data.id
-      ? context.supabase.from("automation_rules").update(patch as never).eq("id", data.id).select("id").single()
-      : context.supabase.from("automation_rules").insert(patch as never).select("id").single();
+      ? context.supabase
+          .from("automation_rules")
+          .update(patch as never)
+          .eq("id", data.id)
+          .select("id")
+          .single()
+      : context.supabase
+          .from("automation_rules")
+          .insert(patch as never)
+          .select("id")
+          .single();
     const { data: saved, error } = await q;
     if (error) throw error;
 
     const { logActivity } = await import("@/lib/activity");
     await logActivity({
-      actorId: context.userId, tenantAdminId: adminId,
+      actorId: context.userId,
+      tenantAdminId: adminId,
       action: data.id ? "automation_rule.updated" : "automation_rule.created",
-      targetType: "automation_rule", targetId: (saved as Row).id as string,
+      targetType: "automation_rule",
+      targetId: (saved as Row).id as string,
       meta: { metric: data.triggerMetric, op: data.triggerOp, value: data.triggerValue },
     });
     return { id: (saved as Row).id as string };
@@ -90,7 +105,9 @@ export const toggleAutomationRule = createServerFn({ method: "POST" })
   .validator((d) => z.object({ id: z.string().uuid(), enabled: z.boolean() }).parse(d))
   .handler(async ({ context, data }) => {
     const { error } = await context.supabase
-      .from("automation_rules").update({ enabled: data.enabled } as never).eq("id", data.id);
+      .from("automation_rules")
+      .update({ enabled: data.enabled } as never)
+      .eq("id", data.id);
     if (error) throw error;
     return { ok: true };
   });
@@ -147,7 +164,10 @@ export async function evaluateAutomationForReading(
       source: "automation",
     } as never);
 
-    await sb.from("automation_rules").update({ last_fired_at: new Date().toISOString() } as never).eq("id", r.id);
+    await sb
+      .from("automation_rules")
+      .update({ last_fired_at: new Date().toISOString() } as never)
+      .eq("id", r.id);
     fired += 1;
   }
   return { fired };

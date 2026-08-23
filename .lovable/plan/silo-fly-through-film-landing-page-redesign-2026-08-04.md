@@ -7,6 +7,7 @@ Two deliverables: a new 24-second looping hero film (drone-style cave-exploratio
 A single continuous shot, no cuts, built to loop seamlessly (last frame matches first).
 
 Flight path:
+
 1. **0-4s — Approach.** Low sun over a wheat field, camera races toward a silo cluster at speed, climbing.
 2. **4-6s — Entry.** Camera pitches over the roof and drops through the top hatch. Light collapses to the interior beam of the hatch opening.
 3. **6-18s — Interior sweep.** Camera descends past the grain column and passes the real hardware, each named on-screen as it flies by:
@@ -26,12 +27,14 @@ Production: hybrid. AI-generated photoreal plates for the approach, hatch entry,
 ## Part 2 — Landing page redesign
 
 Full redesign: every section gets a new layout. Process:
+
 1. Capture the current page.
 2. Lock the brand theme — the existing GrainHero palette (deep bark `#252d26`, leaf `#2FAC0C`, lime `#8FE04B`, bone `#EDE9D4`) and current type scale become hard constraints.
 3. Generate three rendered design directions that vary only in composition, density, hierarchy and motion register.
 4. You pick one; I build it exactly — same alignment, section count and density as the chosen prototype.
 
 Content changes regardless of direction:
+
 - **Pricing block removed** from the landing page entirely. Plans stay reachable via Get Started and `/checkout`.
 - **Pricing link removed from the nav.** Nav becomes Home / Features / Hardware / About / Contact + Get Started.
 - **Resequenced and merged** into a shorter, denser page: hero film -> problem -> how it works -> hardware + stats folded into one section -> brand film -> partners -> FAQ + contact CTA tightened together.

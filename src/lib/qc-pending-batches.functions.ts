@@ -6,13 +6,17 @@ export const getQcPendingBatches = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     // Resolve tenant admin id
     const { data: profile } = await context.supabase
-      .from("profiles").select("id, admin_id").eq("id", context.userId).maybeSingle();
+      .from("profiles")
+      .select("id, admin_id")
+      .eq("id", context.userId)
+      .maybeSingle();
     const adminId = (profile?.admin_id as string) ?? profile?.id ?? context.userId;
 
     // Get QC pending batches with technician details
     const { data: qcPendingBatches } = await context.supabase
       .from("grain_batches")
-      .select(`
+      .select(
+        `
         id,
         batch_id,
         grain_type,
@@ -36,13 +40,14 @@ export const getQcPendingBatches = createServerFn({ method: "GET" })
           name,
           email
         )
-      `)
+      `,
+      )
       .eq("admin_id", adminId)
       .in("status", ["pending_qc", "qc_submitted", "qc_failed"] as never)
       .order("created_at", { ascending: false });
 
     return {
-      batches: qcPendingBatches || []
+      batches: qcPendingBatches || [],
     };
   });
 

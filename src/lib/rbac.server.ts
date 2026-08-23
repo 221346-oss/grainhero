@@ -6,13 +6,10 @@ import type { AppRole } from "./roles.functions";
  * Backed by public.get_my_role() which returns the highest-priority role
  * in one round-trip. Replaces scattered has_role() loops.
  */
-export async function getEffectiveRole(
-  supabase: SupabaseClient,
-  userId: string,
-): Promise<AppRole> {
+export async function getEffectiveRole(supabase: SupabaseClient, userId: string): Promise<AppRole> {
   const { data, error } = await supabase.rpc("get_my_role", { _user_id: userId });
   if (error) throw error;
-  return ((data as AppRole | null) ?? "admin");
+  return (data as AppRole | null) ?? "admin";
 }
 
 /** Throws Forbidden if the user's effective role is not in `allowed`. */
@@ -27,10 +24,7 @@ export async function requireRole(
 }
 
 /** True when the user is a platform super admin. */
-export async function isSuperAdmin(
-  supabase: SupabaseClient,
-  userId: string,
-): Promise<boolean> {
+export async function isSuperAdmin(supabase: SupabaseClient, userId: string): Promise<boolean> {
   const role = await getEffectiveRole(supabase, userId);
   return role === "super_admin";
 }

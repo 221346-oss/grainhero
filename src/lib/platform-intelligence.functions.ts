@@ -20,7 +20,9 @@ export const getPlatformIntelligenceOverview = createServerFn({ method: "GET" })
 
     const { data, error } = await context.supabase
       .from("ml_inference_requests" as never)
-      .select("id, admin_id, model_name, source, success, latency_ms, error_message, triggered_by, created_at")
+      .select(
+        "id, admin_id, model_name, source, success, latency_ms, error_message, triggered_by, created_at",
+      )
       .order("created_at", { ascending: false })
       .limit(2000);
     if (error) throw error;
@@ -42,10 +44,27 @@ export const getPlatformIntelligenceOverview = createServerFn({ method: "GET" })
     }
 
     // Per-admin breakdown.
-    const byAdmin = new Map<string, { adminId: string; total: number; success: number; failed: number; lastRequestAt: string | null; recentFailures: Row[] }>();
+    const byAdmin = new Map<
+      string,
+      {
+        adminId: string;
+        total: number;
+        success: number;
+        failed: number;
+        lastRequestAt: string | null;
+        recentFailures: Row[];
+      }
+    >();
     for (const r of list) {
       const key = r.admin_id ?? "unknown";
-      const b = byAdmin.get(key) ?? { adminId: key, total: 0, success: 0, failed: 0, lastRequestAt: null, recentFailures: [] as Row[] };
+      const b = byAdmin.get(key) ?? {
+        adminId: key,
+        total: 0,
+        success: 0,
+        failed: 0,
+        lastRequestAt: null,
+        recentFailures: [] as Row[],
+      };
       b.total += 1;
       if (r.success) b.success += 1;
       else {
@@ -59,7 +78,10 @@ export const getPlatformIntelligenceOverview = createServerFn({ method: "GET" })
     const ids = Array.from(byAdmin.keys()).filter((k) => k !== "unknown");
     let profiles: Row[] = [];
     if (ids.length > 0) {
-      const { data: profs } = await context.supabase.from("profiles").select("id, name, email").in("id", ids);
+      const { data: profs } = await context.supabase
+        .from("profiles")
+        .select("id, name, email")
+        .in("id", ids);
       profiles = profs ?? [];
     }
     const nameOf = new Map(profiles.map((p) => [p.id, p.name ?? p.email ?? p.id]));
@@ -83,7 +105,9 @@ export const getPlatformIntelligenceOverview = createServerFn({ method: "GET" })
         // No formal model registry exists yet — this reflects the actual
         // cascade config (ai-inference.functions.ts): remote API is tried
         // first when configured, local Python is the fallback.
-        primary: process.env.GRAINHERO_ML_API_URL ? "HuggingFace remote API (spoilage-classifier)" : "Not configured — local Python fallback only",
+        primary: process.env.GRAINHERO_ML_API_URL
+          ? "HuggingFace remote API (spoilage-classifier)"
+          : "Not configured — local Python fallback only",
         fallback: "Local Python subprocess (src/ml/smartbin_predict.py)",
         apiConfigured: !!process.env.GRAINHERO_ML_API_URL,
       },

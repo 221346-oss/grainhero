@@ -9,14 +9,14 @@ you do not run a separate backend.
 
 ## 1. Environment
 
-| Name | Value |
-|---|---|
-| Supabase project ref | `frfgmbgzildtfchtmchr` |
-| Supabase URL | `https://frfgmbgzildtfchtmchr.supabase.co` |
+| Name                            | Value                                                                                                                                                                                                              |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Supabase project ref            | `frfgmbgzildtfchtmchr`                                                                                                                                                                                             |
+| Supabase URL                    | `https://frfgmbgzildtfchtmchr.supabase.co`                                                                                                                                                                         |
 | Supabase anon (publishable) key | `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZyZmdtYmd6aWxkdGZjaHRtY2hyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2Nzg4NzEsImV4cCI6MjA5MzI1NDg3MX0.NosVCB74WEpoOLcioOWO731wcxAuZf7Dkv3Eyj9O5bY` |
-| API base (production) | `https://grainheroo.lovable.app/api/public/v1` |
-| API base (preview) | `https://project--08a93ae3-e513-4d21-8fb9-bf6979e71541-dev.lovable.app/api/public/v1` |
-| Health probe | `GET /api/public/v1/status` (no auth) |
+| API base (production)           | `https://grainheroo.lovable.app/api/public/v1`                                                                                                                                                                     |
+| API base (preview)              | `https://project--08a93ae3-e513-4d21-8fb9-bf6979e71541-dev.lovable.app/api/public/v1`                                                                                                                              |
+| Health probe                    | `GET /api/public/v1/status` (no auth)                                                                                                                                                                              |
 
 The anon key is safe to embed in the mobile binary. **Never ship the
 service-role key** — it is server-only.
@@ -41,13 +41,13 @@ await Supabase.instance.client.auth.signInWithPassword(
 
 Every request to `/api/public/v1/*` MUST include:
 
-| Header | Value |
-|---|---|
-| `Authorization` | `Bearer <session.accessToken>` |
-| `x-app-build` | integer build number, e.g. `42` |
-| `x-app-platform` | `ios` or `android` |
-| `Content-Type` | `application/json` (POST/PUT) |
-| `Idempotency-Key` | UUID v4, required on mutations |
+| Header            | Value                           |
+| ----------------- | ------------------------------- |
+| `Authorization`   | `Bearer <session.accessToken>`  |
+| `x-app-build`     | integer build number, e.g. `42` |
+| `x-app-platform`  | `ios` or `android`              |
+| `Content-Type`    | `application/json` (POST/PUT)   |
+| `Idempotency-Key` | UUID v4, required on mutations  |
 
 If `x-app-build < min_build` the server returns HTTP **426** with the
 minimum + latest build; force an update screen.
@@ -78,40 +78,40 @@ All endpoints live under `/api/public/v1`. Responses are always
 
 ### Meta & lifecycle
 
-| Method | Path | Purpose |
-|---|---|---|
-| GET | `/status` | Public health probe (no auth). |
-| GET | `/meta` | Server time, min/latest build, feature flags, deep-link config. |
-| POST | `/devices/register` | Register FCM push token. |
-| POST | `/devices/heartbeat` | Keep-alive + battery/network telemetry. |
-| POST | `/devices/revoke` | On sign-out. |
-| GET | `/deeplink/:key` | Resolve a deep-link key to a route + payload. |
+| Method | Path                 | Purpose                                                         |
+| ------ | -------------------- | --------------------------------------------------------------- |
+| GET    | `/status`            | Public health probe (no auth).                                  |
+| GET    | `/meta`              | Server time, min/latest build, feature flags, deep-link config. |
+| POST   | `/devices/register`  | Register FCM push token.                                        |
+| POST   | `/devices/heartbeat` | Keep-alive + battery/network telemetry.                         |
+| POST   | `/devices/revoke`    | On sign-out.                                                    |
+| GET    | `/deeplink/:key`     | Resolve a deep-link key to a route + payload.                   |
 
 ### Delta sync (cursor-based)
 
 Call with `?since=<ISO>&cursor=<opaque>&limit=200`. Persist
 `meta.cursor`; next call sends it back.
 
-| Path | Returns |
-|---|---|
-| `/sync/silos` | Silos for the tenant. |
-| `/sync/silos-cockpit` | Silo + latest reading + open alerts. |
-| `/sync/sensors` | Sensor devices + latest reading. |
-| `/sync/alerts` | Grain alerts. |
-| `/sync/notifications` | In-app notifications. |
-| `/sync/hardware-orders` | Install orders + status. |
-| `/sync/field-tasks` | Technician tasks. |
-| `/sync/field-incidents` | Field incidents. |
-| `/sync/marketplace` | Public listings, filtered by mobile settings. |
-| `/sync/buyer-orders` | Buyer's own orders. |
-| `/sync/buyer-summary` | Buyer dashboard KPIs. |
+| Path                    | Returns                                       |
+| ----------------------- | --------------------------------------------- |
+| `/sync/silos`           | Silos for the tenant.                         |
+| `/sync/silos-cockpit`   | Silo + latest reading + open alerts.          |
+| `/sync/sensors`         | Sensor devices + latest reading.              |
+| `/sync/alerts`          | Grain alerts.                                 |
+| `/sync/notifications`   | In-app notifications.                         |
+| `/sync/hardware-orders` | Install orders + status.                      |
+| `/sync/field-tasks`     | Technician tasks.                             |
+| `/sync/field-incidents` | Field incidents.                              |
+| `/sync/marketplace`     | Public listings, filtered by mobile settings. |
+| `/sync/buyer-orders`    | Buyer's own orders.                           |
+| `/sync/buyer-summary`   | Buyer dashboard KPIs.                         |
 
 ### Field ops (offline-first)
 
-| Method | Path | Notes |
-|---|---|---|
-| GET | `/field/bundle` | Offline bundle for a technician; supports `If-None-Match` -> 304. |
-| POST | `/field/mutations` | Batched, idempotent mutations queued while offline. |
+| Method | Path               | Notes                                                             |
+| ------ | ------------------ | ----------------------------------------------------------------- |
+| GET    | `/field/bundle`    | Offline bundle for a technician; supports `If-None-Match` -> 304. |
+| POST   | `/field/mutations` | Batched, idempotent mutations queued while offline.               |
 
 `/field/mutations` body:
 
@@ -119,7 +119,11 @@ Call with `?since=<ISO>&cursor=<opaque>&limit=200`. Persist
 {
   "mutations": [
     { "id": "<uuid>", "type": "alerts-ack", "payload": { "alert_id": "..." } },
-    { "id": "<uuid>", "type": "install-step", "payload": { "order_id": "...", "step": "delivered" } },
+    {
+      "id": "<uuid>",
+      "type": "install-step",
+      "payload": { "order_id": "...", "step": "delivered" }
+    },
     { "id": "<uuid>", "type": "notifications-read", "payload": { "ids": ["..."] } }
   ]
 }
@@ -130,15 +134,15 @@ same `id`.
 
 ### Commerce (buyer app)
 
-| Method | Path | Notes |
-|---|---|---|
-| GET | `/commerce/config` | Currency, tax rules, `cod_max_cents`, `quote_ttl_seconds`. |
-| GET/POST/DELETE | `/commerce/addresses` | Buyer shipping addresses. |
-| GET/PUT/DELETE | `/commerce/cart` | Persistent server cart. |
-| POST | `/commerce/quote` | Totals, taxes, shipping estimate. TTL from config. |
-| POST | `/commerce/checkout` | Idempotent — returns Stripe `client_secret` or COD confirmation. |
-| GET | `/commerce/orders` | Paged order history for the buyer. |
-| GET | `/commerce/orders/:id` | Full order + timeline. |
+| Method          | Path                   | Notes                                                            |
+| --------------- | ---------------------- | ---------------------------------------------------------------- |
+| GET             | `/commerce/config`     | Currency, tax rules, `cod_max_cents`, `quote_ttl_seconds`.       |
+| GET/POST/DELETE | `/commerce/addresses`  | Buyer shipping addresses.                                        |
+| GET/PUT/DELETE  | `/commerce/cart`       | Persistent server cart.                                          |
+| POST            | `/commerce/quote`      | Totals, taxes, shipping estimate. TTL from config.               |
+| POST            | `/commerce/checkout`   | Idempotent — returns Stripe `client_secret` or COD confirmation. |
+| GET             | `/commerce/orders`     | Paged order history for the buyer.                               |
+| GET             | `/commerce/orders/:id` | Full order + timeline.                                           |
 
 Stripe: use `stripe_flutter` with the `client_secret` from
 `/commerce/checkout`. The backend handles `payment_intent.succeeded` /
@@ -147,10 +151,10 @@ app just polls `/commerce/orders/:id`.
 
 ### Notifications
 
-| Method | Path |
-|---|---|
-| GET | `/notifications` |
-| POST | `/notifications/read` |
+| Method  | Path                         |
+| ------- | ---------------------------- |
+| GET     | `/notifications`             |
+| POST    | `/notifications/read`        |
 | GET/PUT | `/notifications/preferences` |
 
 ### Uploads
@@ -186,16 +190,16 @@ RLS enforces that a user only receives rows they can SELECT.
 { "data": <payload>, "meta": { "server_time": "...", "cursor": "...", "version": "v1" } }
 ```
 
-| HTTP | `error` | Meaning |
-|---|---|---|
-| 401 | `missing_bearer` / `invalid_token` | Refresh session then retry. |
-| 403 | `forbidden` | Role/tenant mismatch — do not retry. |
-| 409 | `conflict` / `already_processed` | Idempotency replay; treat as success. |
-| 422 | `validation_failed` | Body validation. `details` lists fields. |
-| 423 | `sync_in_progress` | Another sync holds the lock; back off. |
-| 426 | `upgrade_required` | Force in-app update. |
-| 429 | `rate_limited` | Retry with `Retry-After`. |
-| 5xx | `internal_error` | Exponential backoff (max 5 attempts). |
+| HTTP | `error`                            | Meaning                                  |
+| ---- | ---------------------------------- | ---------------------------------------- |
+| 401  | `missing_bearer` / `invalid_token` | Refresh session then retry.              |
+| 403  | `forbidden`                        | Role/tenant mismatch — do not retry.     |
+| 409  | `conflict` / `already_processed`   | Idempotency replay; treat as success.    |
+| 422  | `validation_failed`                | Body validation. `details` lists fields. |
+| 423  | `sync_in_progress`                 | Another sync holds the lock; back off.   |
+| 426  | `upgrade_required`                 | Force in-app update.                     |
+| 429  | `rate_limited`                     | Retry with `Retry-After`.                |
+| 5xx  | `internal_error`                   | Exponential backoff (max 5 attempts).    |
 
 ---
 
@@ -245,6 +249,7 @@ Flutter project. Resolve unknown keys with `/deeplink/:key`.
 ## 9. Do / Don't
 
 Do:
+
 - Use the anon key + Supabase Auth for sign-in.
 - Send `Authorization`, `x-app-build`, `x-app-platform`, `Idempotency-Key`.
 - Use `/sync/*` cursors — don't full-refresh every open.
@@ -253,6 +258,7 @@ Do:
   business flows.
 
 Don't:
+
 - Don't call Supabase Edge Functions — this backend uses TanStack server
   routes under `/api/public/v1`.
 - Don't ship the service-role key.

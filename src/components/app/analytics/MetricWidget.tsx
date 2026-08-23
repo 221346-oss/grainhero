@@ -14,7 +14,11 @@ function formatValue(v: unknown, format: Format = "number", unit?: string | null
   if (!Number.isFinite(n)) return String(v);
   switch (format) {
     case "currency":
-      return new Intl.NumberFormat(undefined, { style: "currency", currency: unit || "USD", maximumFractionDigits: 2 }).format(n);
+      return new Intl.NumberFormat(undefined, {
+        style: "currency",
+        currency: unit || "USD",
+        maximumFractionDigits: 2,
+      }).format(n);
     case "percent":
       return `${(n * 100).toFixed(1)}%`;
     case "ratio":
@@ -66,19 +70,35 @@ export function MetricWidget({
 
   const sizeClass = size === "lg" ? "col-span-2" : size === "md" ? "" : "";
   return (
-    <Card className={cn("border-emerald-100/60 hover:border-emerald-300 transition-colors", sizeClass, className)}>
+    <Card
+      className={cn(
+        "border-emerald-100/60 hover:border-emerald-300 transition-colors",
+        sizeClass,
+        className,
+      )}
+    >
       <CardHeader className="pb-2">
-        <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{label}</CardTitle>
+        <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          {label}
+        </CardTitle>
       </CardHeader>
       <CardContent>
         {query.isPending ? (
-          <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /><span className="text-xs">Loading…</span></div>
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span className="text-xs">Loading…</span>
+          </div>
         ) : query.data && !query.data.ok ? (
-          <div className="flex items-center gap-2 text-rose-600"><AlertCircle className="h-4 w-4" /><span className="text-xs truncate">{query.data.error}</span></div>
+          <div className="flex items-center gap-2 text-rose-600">
+            <AlertCircle className="h-4 w-4" />
+            <span className="text-xs truncate">{query.data.error}</span>
+          </div>
         ) : (
           <>
             <div className="text-2xl font-black text-foreground tabular-nums">{display.value}</div>
-            {display.extra && <div className="text-xs text-muted-foreground mt-1">{display.extra}</div>}
+            {display.extra && (
+              <div className="text-xs text-muted-foreground mt-1">{display.extra}</div>
+            )}
           </>
         )}
       </CardContent>

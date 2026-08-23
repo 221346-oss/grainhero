@@ -15,11 +15,17 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { 
-  getAdminWarehouses, 
+import {
+  getAdminWarehouses,
   getTechniciansForWarehouse,
   assignTechnicianToOrder,
 } from "@/lib/warehouse-assignment.functions";
@@ -206,7 +212,9 @@ export function TechnicianAssignmentDialog({
             ) : (
               <div className="space-y-2 max-h-[300px] overflow-y-auto rounded-lg p-2">
                 {technicians.map((tech: any) => {
-                  const statusConfig = TECH_STATUS_CONFIG[tech.technician_status as keyof typeof TECH_STATUS_CONFIG] || TECH_STATUS_CONFIG.available;
+                  const statusConfig =
+                    TECH_STATUS_CONFIG[tech.technician_status as keyof typeof TECH_STATUS_CONFIG] ||
+                    TECH_STATUS_CONFIG.available;
                   const StatusIcon = statusConfig.icon;
 
                   return (
@@ -240,11 +248,12 @@ export function TechnicianAssignmentDialog({
                               Primary
                             </Badge>
                           )}
-                          {(tech.current_job_count !== undefined && tech.max_concurrent_jobs !== undefined) && (
-                            <span className="text-xs text-muted-foreground">
-                              {tech.current_job_count}/{tech.max_concurrent_jobs} jobs
-                            </span>
-                          )}
+                          {tech.current_job_count !== undefined &&
+                            tech.max_concurrent_jobs !== undefined && (
+                              <span className="text-xs text-muted-foreground">
+                                {tech.current_job_count}/{tech.max_concurrent_jobs} jobs
+                              </span>
+                            )}
                         </div>
                       </div>
                     </div>
@@ -259,8 +268,16 @@ export function TechnicianAssignmentDialog({
             <div className="p-3 bg-muted/50 rounded-lg">
               <div className="text-sm font-medium mb-2">Selected: {selectedTech.name}</div>
               <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                <span>Status: {TECH_STATUS_CONFIG[selectedTech.technician_status as keyof typeof TECH_STATUS_CONFIG]?.label || "Unknown"}</span>
-                <span>Current jobs: {selectedTech.current_job_count ?? 0}/{selectedTech.max_concurrent_jobs ?? 3}</span>
+                <span>
+                  Status:{" "}
+                  {TECH_STATUS_CONFIG[
+                    selectedTech.technician_status as keyof typeof TECH_STATUS_CONFIG
+                  ]?.label || "Unknown"}
+                </span>
+                <span>
+                  Current jobs: {selectedTech.current_job_count ?? 0}/
+                  {selectedTech.max_concurrent_jobs ?? 3}
+                </span>
                 {!selectedTech.is_available && (
                   <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-300">
                     At capacity
@@ -289,10 +306,7 @@ export function TechnicianAssignmentDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button
-            onClick={handleAssign}
-            disabled={!selectedTechnician || assignMutation.isPending}
-          >
+          <Button onClick={handleAssign} disabled={!selectedTechnician || assignMutation.isPending}>
             {assignMutation.isPending ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />

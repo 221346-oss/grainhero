@@ -48,7 +48,6 @@ Written for the Community-builders angle, and honest about the count (written so
 
 Every claim cross-checked against the repo — no invented stars, downloads, users or partnerships.
 
-
 ## Technical notes
 
 - No application code or product behaviour changes; this is docs, CI, templates and file removal only.

@@ -6,7 +6,10 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { listOpenFieldIncidents } from "@/lib/field-settings.functions";
 import { ReportTicketDialog } from "@/components/app/ReportTicketDialog";
-import { MonitoringDiscussionDialog, type MonitoringIncidentItem } from "@/components/app/MonitoringDiscussionDialog";
+import {
+  MonitoringDiscussionDialog,
+  type MonitoringIncidentItem,
+} from "@/components/app/MonitoringDiscussionDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { attachTicketForUser } from "@/lib/ticketMessages";
 import { useTicketUnread } from "@/hooks/useTicketUnread";
@@ -16,7 +19,7 @@ function formatRelativeTime(iso: string) {
   const now = new Date();
   const then = new Date(iso);
   const seconds = Math.floor((now.getTime() - then.getTime()) / 1000);
-  
+
   if (seconds < 60) return "just now";
   const minutes = Math.floor(seconds / 60);
   if (minutes < 60) return `${minutes}m ago`;
@@ -184,7 +187,8 @@ export function ManagerBento({
 }) {
   const [ticketDialogOpen, setTicketDialogOpen] = useState(false);
   const [discussionOpen, setDiscussionOpen] = useState(false);
-  const [activeDiscussionTicket, setActiveDiscussionTicket] = useState<MonitoringIncidentItem | null>(null);
+  const [activeDiscussionTicket, setActiveDiscussionTicket] =
+    useState<MonitoringIncidentItem | null>(null);
   const [currentUserId, setCurrentUserId] = useState("");
 
   // Get current user ID

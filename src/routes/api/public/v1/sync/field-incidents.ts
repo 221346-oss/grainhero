@@ -11,12 +11,19 @@ export const Route = createFileRoute("/api/public/v1/sync/field-incidents")({
         if (ctx instanceof Response) return ctx;
         const url = new URL(request.url);
         return withSyncLogging(
-          { endpoint: "field-incidents", actorUserId: ctx.userId, requestMeta: { since: url.searchParams.get("since") } },
+          {
+            endpoint: "field-incidents",
+            actorUserId: ctx.userId,
+            requestMeta: { since: url.searchParams.get("since") },
+          },
           async () => {
-            const result = await runSync(ctx.supabase, ctx.settings,
+            const result = await runSync(
+              ctx.supabase,
+              ctx.settings,
               url.searchParams.get("since"),
               Number(url.searchParams.get("limit")) || null,
-              { table: "field_incidents", cursorColumn: "updated_at" });
+              { table: "field_incidents", cursorColumn: "updated_at" },
+            );
             return { response: Response.json(result), rowCount: result.data.length };
           },
         );

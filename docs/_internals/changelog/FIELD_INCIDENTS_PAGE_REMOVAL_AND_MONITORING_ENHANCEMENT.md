@@ -13,6 +13,7 @@ Removed the standalone field incidents page and consolidated all incident manage
 ### 1. Deleted Field Incidents Page ✅
 
 **Removed Files:**
+
 - `src/routes/_authenticated/manager.field-incidents.index.tsx`
 - `src/routes/_authenticated/manager.field-incidents.all.tsx`
 - `src/routes/_authenticated/manager.field-incidents.dismissed.tsx`
@@ -31,6 +32,7 @@ Removed the standalone field incidents page and consolidated all incident manage
 **File:** `src/components/dashboards/ManagerBento.tsx`
 
 Changed the "View all" link in the Open Field Incidents card:
+
 - **From:** `/platform/field-incidents`
 - **To:** `/manager/monitoring`
 
@@ -47,15 +49,15 @@ Now clicking on the card directs managers to the monitoring page incidents secti
 3. **Description** - Full incident description/message
 4. **Reported Date & Time** - Formatted as: "Month Day, Year, HH:MM:SS AM/PM"
    ```typescript
-   new Date(row.triggered_at).toLocaleString('en-US', {
-     year: 'numeric',
-     month: 'long',
-     day: 'numeric',
-     hour: '2-digit',
-     minute: '2-digit',
-     second: '2-digit',
-     hour12: true
-   })
+   new Date(row.triggered_at).toLocaleString("en-US", {
+     year: "numeric",
+     month: "long",
+     day: "numeric",
+     hour: "2-digit",
+     minute: "2-digit",
+     second: "2-digit",
+     hour12: true,
+   });
    ```
 5. **Sent By** (for incoming incidents)
    - Shows reporter name
@@ -66,6 +68,7 @@ Now clicking on the card directs managers to the monitoring page incidents secti
    - Shows target role from custom_fields (for field incidents)
 
 **Updated IncidentRow type:**
+
 ```typescript
 type IncidentRow = {
   // ... existing fields
@@ -80,9 +83,11 @@ type IncidentRow = {
 ### 4. Added Resolve & Dismiss Actions ✅
 
 #### Backend Function
+
 **File:** `src/lib/monitoring.functions.ts`
 
 Created `updateIncidentStatus` function:
+
 ```typescript
 export const updateIncidentStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -98,9 +103,11 @@ export const updateIncidentStatus = createServerFn({ method: "POST" })
 **Permissions:** Manager, Admin, Super Admin only
 
 #### Frontend Implementation
+
 **File:** `src/components/monitoring/IncidentsSection.tsx`
 
 **Added Mutations:**
+
 1. **resolveMut** - Marks incident as resolved
    - Success message: "Incident marked as resolved"
    - Invalidates incidents query
@@ -112,15 +119,16 @@ export const updateIncidentStatus = createServerFn({ method: "POST" })
    - Closes detail panel
 
 **Added Action Buttons:**
+
 - **Mark Resolved** button (green)
   - Icon: CheckCircle2
   - Shows loading spinner when pending
-  
 - **Mark Dismissed** button (outline)
   - Icon: Ban
   - Shows loading spinner when pending
 
 **Visibility Rules:**
+
 - Only shown to managers/admins
 - Hidden if incident status is already "resolved" or "dismissed"
 - Works for both field incidents and system incidents
@@ -130,16 +138,19 @@ export const updateIncidentStatus = createServerFn({ method: "POST" })
 When manager marks an incident:
 
 **Mark Resolved:**
+
 - Incident removed from **Active** tab
 - Incident moves to **Resolved** tab
 - Status updated to `"resolved"` in database
 
 **Mark Dismissed:**
+
 - Incident removed from **Active** tab
 - Incident moves to **Dismissed** tab
 - Status updated to `"dismissed"` in database
 
 Tab filtering logic (unchanged):
+
 - **All**: Shows all incidents
 - **Active**: status in [open, pending, investigating, acknowledged]
 - **Resolved**: status in [resolved, closed]
@@ -149,11 +160,13 @@ Tab filtering logic (unchanged):
 ## User Flow
 
 ### Before
+
 1. Manager sees incident in dashboard card
 2. Clicks "View all" → Goes to separate field incidents page
 3. Must use field incidents page UI to manage incidents
 
 ### After
+
 1. Manager sees incident in dashboard card
 2. Clicks "View all" → Goes to monitoring page incidents section
 3. Clicks on incident → Detail panel opens on the right
@@ -172,6 +185,7 @@ Tab filtering logic (unchanged):
 **Table:** `grain_alerts`
 
 **Fields Updated:**
+
 - `status` - Set to "resolved" or "dismissed"
 - `resolved_at` - Set to current timestamp
 - `resolved_by` - Set to current user ID
@@ -224,17 +238,20 @@ Tab filtering logic (unchanged):
 ## Technical Notes
 
 **Why this consolidation?**
+
 - Field incidents are now stored in `grain_alerts` table with `source='field_incident'`
 - Monitoring page already shows all incidents (system + field)
 - Duplicate pages caused confusion and maintenance overhead
 - Single source of truth improves consistency
 
 **For system incidents:**
+
 - Still have assign technician dropdown
 - Still have escalate button
 - Now also have resolve/dismiss buttons
 
 **For field incidents:**
+
 - Removed old "Mark Closed" button
 - Now have resolve/dismiss buttons (same as system incidents)
 - Consistent behavior across all incident types
@@ -242,6 +259,7 @@ Tab filtering logic (unchanged):
 ## Future Enhancements
 
 Consider:
+
 1. Add resolution notes textarea before resolving
 2. Add confirmation dialog before dismissing
 3. Add incident history/timeline view

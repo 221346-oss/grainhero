@@ -38,7 +38,9 @@ export function RowActions({
   const overflow = shown.slice(visible);
 
   return (
-    <div className={cn("flex items-center gap-0.5", align === "end" ? "justify-end" : "justify-start")}>
+    <div
+      className={cn("flex items-center gap-0.5", align === "end" ? "justify-end" : "justify-start")}
+    >
       {inline.map((a, i) => {
         const Icon = a.icon;
         return (
@@ -52,7 +54,8 @@ export function RowActions({
             onClick={a.onClick}
             className={cn(
               "h-8 w-8",
-              a.destructive && "text-rose-600 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300",
+              a.destructive &&
+                "text-rose-600 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300",
               a.className,
             )}
           >

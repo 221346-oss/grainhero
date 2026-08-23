@@ -47,7 +47,8 @@ function EnvHealthPage() {
         </NeonPanel>
       ) : (
         <>
-          <NeonPanel index="02"
+          <NeonPanel
+            index="02"
             title="Service role key"
             subtitle={`Last checked ${new Date(data!.checkedAt).toLocaleString()}`}
           >
@@ -59,19 +60,28 @@ function EnvHealthPage() {
               )}
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-foreground">
-                  {serviceRoleOk ? "SUPABASE_SERVICE_ROLE_KEY is working" : "SUPABASE_SERVICE_ROLE_KEY problem"}
+                  {serviceRoleOk
+                    ? "SUPABASE_SERVICE_ROLE_KEY is working"
+                    : "SUPABASE_SERVICE_ROLE_KEY problem"}
                 </p>
-                <p className="mt-1 text-sm text-muted-foreground break-words">{data!.serviceRole.message}</p>
+                <p className="mt-1 text-sm text-muted-foreground break-words">
+                  {data!.serviceRole.message}
+                </p>
               </div>
             </div>
           </NeonPanel>
 
           <div className="grid gap-px bg-border rounded-md overflow-hidden">
             {data!.checks.map((c) => (
-              <div key={c.name} className="bg-background px-4 py-3 flex items-start justify-between gap-4">
+              <div
+                key={c.name}
+                className="bg-background px-4 py-3 flex items-start justify-between gap-4"
+              >
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-sm font-semibold text-foreground">{c.name}</span>
+                    <span className="font-mono text-sm font-semibold text-foreground">
+                      {c.name}
+                    </span>
                     <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                       {c.required ? "required" : "optional"}
                     </span>
@@ -80,7 +90,11 @@ function EnvHealthPage() {
                 </div>
                 <span
                   className={`shrink-0 text-xs font-bold uppercase ${
-                    c.present ? "text-success" : c.required ? "text-severity-critical" : "text-warning"
+                    c.present
+                      ? "text-success"
+                      : c.required
+                        ? "text-severity-critical"
+                        : "text-warning"
                   }`}
                 >
                   {c.present ? "Set" : "Missing"}
@@ -94,29 +108,32 @@ function EnvHealthPage() {
               <ol className="list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
                 <li>
                   Open the project in the Lovable editor and go to{" "}
-                  <span className="font-semibold text-foreground">Project Settings → Supabase</span>.
+                  <span className="font-semibold text-foreground">Project Settings → Supabase</span>
+                  .
                 </li>
                 <li>
                   Refresh / re-bind the Supabase connection. This re-derives{" "}
                   <span className="font-mono">SUPABASE_URL</span>,{" "}
                   <span className="font-mono">SUPABASE_PUBLISHABLE_KEY</span> and{" "}
-                  <span className="font-mono">SUPABASE_SERVICE_ROLE_KEY</span> for the server runtime.
+                  <span className="font-mono">SUPABASE_SERVICE_ROLE_KEY</span> for the server
+                  runtime.
                 </li>
                 <li>
-                  Do not paste the service-role key into code or the <span className="font-mono">.env</span> file
-                  manually — <span className="font-mono">SUPABASE_*</span> is a reserved, managed prefix.
+                  Do not paste the service-role key into code or the{" "}
+                  <span className="font-mono">.env</span> file manually —{" "}
+                  <span className="font-mono">SUPABASE_*</span> is a reserved, managed prefix.
                 </li>
                 <li>Redeploy / restart the app, then press “Re-check” above.</li>
                 <li>
-                  If the key is present but rejected, it was rotated in the Supabase dashboard — re-bind the
-                  connection again so the app picks up the current key.
+                  If the key is present but rejected, it was rotated in the Supabase dashboard —
+                  re-bind the connection again so the app picks up the current key.
                 </li>
               </ol>
               <div className="mt-4 flex items-start gap-2 rounded-md p-3">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
                 <p className="text-xs text-muted-foreground">
-                  While this key is missing, admin-only server functions (checkout claims, billing sync, platform
-                  jobs) will fail with a 500 error.
+                  While this key is missing, admin-only server functions (checkout claims, billing
+                  sync, platform jobs) will fail with a 500 error.
                 </p>
               </div>
             </NeonPanel>

@@ -25,7 +25,9 @@ export function WarehouseRail({
   return (
     <aside className="rounded-2xl bg-card/60 backdrop-blur-sm overflow-hidden">
       <div className="px-3 py-2 border-b border-border/60 flex items-center justify-between">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Warehouses</span>
+        <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+          Warehouses
+        </span>
         <span className="text-[10px] text-muted-foreground tabular-nums">{warehouses.length}</span>
       </div>
       <ul className="max-h-[70vh] overflow-auto py-1">
@@ -45,7 +47,9 @@ export function WarehouseRail({
         </li>
         {warehouses.length === 0 && (
           <li className="px-3 py-6 text-center text-[11px] text-muted-foreground">
-            No warehouses yet.<br />Complete an install to provision one.
+            No warehouses yet.
+            <br />
+            Complete an install to provision one.
           </li>
         )}
         {warehouses.map((w) => (
@@ -83,7 +87,9 @@ export function WarehouseRail({
                 {w.total_capacity_kg ? (
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">Capacity</span>
-                    <span className="tabular-nums font-medium">{(w.total_capacity_kg / 1000).toFixed(1)}t</span>
+                    <span className="tabular-nums font-medium">
+                      {(w.total_capacity_kg / 1000).toFixed(1)}t
+                    </span>
                   </div>
                 ) : null}
               </PopoverContent>

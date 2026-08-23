@@ -34,7 +34,10 @@ export function InlineRename({
   if (editing) {
     async function commit() {
       const next = draft.trim();
-      if (!next || next === value) { setEditing(false); return; }
+      if (!next || next === value) {
+        setEditing(false);
+        return;
+      }
       setSaving(true);
       try {
         await onSave(next);
@@ -44,23 +47,48 @@ export function InlineRename({
       }
     }
     return (
-      <span className={cn("inline-flex items-center gap-1", className)} onClick={(e) => e.stopPropagation()}>
+      <span
+        className={cn("inline-flex items-center gap-1", className)}
+        onClick={(e) => e.stopPropagation()}
+      >
         <Input
           autoFocus
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onBlur={commit}
           onKeyDown={(e) => {
-            if (e.key === "Enter") { e.preventDefault(); commit(); }
-            if (e.key === "Escape") { e.preventDefault(); setEditing(false); }
+            if (e.key === "Enter") {
+              e.preventDefault();
+              commit();
+            }
+            if (e.key === "Escape") {
+              e.preventDefault();
+              setEditing(false);
+            }
           }}
           disabled={saving}
           className="h-6 w-36 px-1.5 py-0 text-sm"
         />
-        <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={commit} disabled={saving} className="text-emerald-600 hover:text-emerald-700 shrink-0">
-          {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+        <button
+          type="button"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={commit}
+          disabled={saving}
+          className="text-emerald-600 hover:text-emerald-700 shrink-0"
+        >
+          {saving ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Check className="h-3.5 w-3.5" />
+          )}
         </button>
-        <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => setEditing(false)} disabled={saving} className="text-muted-foreground hover:text-foreground shrink-0">
+        <button
+          type="button"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => setEditing(false)}
+          disabled={saving}
+          className="text-muted-foreground hover:text-foreground shrink-0"
+        >
           <X className="h-3.5 w-3.5" />
         </button>
       </span>
@@ -73,7 +101,12 @@ export function InlineRename({
       <button
         type="button"
         aria-label={`Rename ${value}`}
-        onClick={(e) => { e.stopPropagation(); e.preventDefault(); setDraft(value); setEditing(true); }}
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          setDraft(value);
+          setEditing(true);
+        }}
         className="text-muted-foreground/40 hover:text-emerald-600 group-hover:text-muted-foreground transition shrink-0"
       >
         <Pencil className="h-3 w-3" />

@@ -18,12 +18,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { TicketCardForm } from "./TicketCardForm";
 import { TicketDetailSheet } from "./TicketDetailSheet";
 import { TicketDiscussion } from "./TicketDiscussion";
@@ -78,7 +73,11 @@ export function TicketSidePanel({
 
   const listFn = useServerFn(listTickets);
 
-  const { data, isLoading, error: ticketsError } = useQuery({
+  const {
+    data,
+    isLoading,
+    error: ticketsError,
+  } = useQuery({
     queryKey: ["field-tickets", "open"],
     queryFn: () => listFn({ data: { status: "open" } }),
     staleTime: 30_000,
@@ -184,10 +183,7 @@ export function TicketSidePanel({
             {/* Inline form (admin only) */}
             {showForm && !isSuperAdmin && (
               <div className="px-4 pt-4 pb-2 border-b border-border/40 shrink-0">
-                <TicketCardForm
-                  onSuccess={handleFormSuccess}
-                  onCancel={() => setShowForm(false)}
-                />
+                <TicketCardForm onSuccess={handleFormSuccess} onCancel={() => setShowForm(false)} />
               </div>
             )}
 
@@ -198,13 +194,20 @@ export function TicketSidePanel({
                 ) : ticketsError ? (
                   <div className="py-6 text-center space-y-1">
                     <p className="text-sm font-medium text-red-600">Failed to load tickets</p>
-                    <p className="text-xs text-muted-foreground px-4">{(ticketsError as Error).message}</p>
+                    <p className="text-xs text-muted-foreground px-4">
+                      {(ticketsError as Error).message}
+                    </p>
                   </div>
                 ) : tickets.length === 0 ? (
                   <div className="py-10 text-center space-y-2">
                     <p className="text-sm text-muted-foreground">No open tickets</p>
                     {!isSuperAdmin && (
-                      <Button size="sm" variant="outline" onClick={() => setShowForm(true)} className="text-xs">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setShowForm(true)}
+                        className="text-xs"
+                      >
                         <Plus className="h-3.5 w-3.5 mr-1" />
                         Report an incident
                       </Button>
@@ -239,11 +242,7 @@ export function TicketSidePanel({
         </SheetContent>
       </Sheet>
 
-      <TicketDetailSheet
-        ticket={selected}
-        open={!!selected}
-        onClose={handleDetailClose}
-      />
+      <TicketDetailSheet ticket={selected} open={!!selected} onClose={handleDetailClose} />
 
       {/* Discussion popup from panel */}
       {discuss && (

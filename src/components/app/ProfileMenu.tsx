@@ -48,7 +48,9 @@ export function ProfileMenu() {
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel className="flex flex-col gap-0.5">
           <span className="text-sm font-semibold truncate">{name ?? "Signed in"}</span>
-          {email ? <span className="text-xs font-normal text-muted-foreground truncate">{email}</span> : null}
+          {email ? (
+            <span className="text-xs font-normal text-muted-foreground truncate">{email}</span>
+          ) : null}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
@@ -57,7 +59,10 @@ export function ProfileMenu() {
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-red-600 focus:text-red-600">
+        <DropdownMenuItem
+          onClick={handleSignOut}
+          className="cursor-pointer text-red-600 focus:text-red-600"
+        >
           <LogOut className="mr-2 h-4 w-4" /> Sign out
         </DropdownMenuItem>
       </DropdownMenuContent>

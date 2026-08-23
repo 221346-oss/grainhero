@@ -14,17 +14,17 @@ graph TB
         C[Super Admin] --> |approves claim| INS
         D[Technician] --> |logs spoilage| INS
     end
-    
+
     subgraph "Core Systems"
         INS["Insurance Engine"]
         LOG["Activity Log Engine"]
         ALR["Alert Engine"]
     end
-    
+
     INS --> |every action logged| LOG
     LOG --> |triggers| ALR
     ALR --> |notifies| NOTIF["Notification Service"]
-    
+
     subgraph "Outputs"
         NOTIF --> EMAIL["Email"]
         NOTIF --> INAPP["In-App Bell"]
@@ -59,23 +59,23 @@ graph TB
 
 ## Role Matrix — Who Does What
 
-| Action | Super Admin | Admin | Manager | Technician |
-|--------|:-----------:|:-----:|:-------:|:----------:|
-| **Create Insurance Policy** | ✅ | ❌ (request only) | ❌ | ❌ |
-| **Edit/Renew Policy** | ✅ | ❌ | ❌ | ❌ |
-| **File Insurance Claim** | ✅ | ✅ | ✅ | ❌ |
-| **Upload Claim Documents** | ✅ | ✅ | ✅ | ✅ |
-| **Review/Investigate Claim** | ✅ | ❌ | ❌ | ❌ |
-| **Approve/Reject Claim** | ✅ | ❌ | ❌ | ❌ |
-| **Process Claim Payment** | ✅ | ❌ | ❌ | ❌ |
-| **Log Spoilage Event** | ✅ | ✅ | ✅ | ✅ |
-| **View Activity Logs** | ✅ (all tenants) | ✅ (own tenant) | ✅ (own tenant) | ✅ (batch/spoilage only) |
-| **Export Logs (CSV/PDF)** | ✅ | ✅ | ✅ | ❌ |
-| **View All Alerts** | ✅ (all tenants) | ✅ (own tenant) | ✅ (own tenant) | ✅ (assigned only) |
-| **Acknowledge Alert** | ✅ | ✅ | ✅ | ✅ |
-| **Resolve Alert** | ✅ | ✅ | ✅ | ✅ |
-| **Escalate Alert** | ✅ | ✅ | ✅ | ❌ |
-| **Configure Alert Rules** | ✅ | ✅ | ❌ | ❌ |
+| Action                       |   Super Admin    |       Admin       |     Manager     |        Technician        |
+| ---------------------------- | :--------------: | :---------------: | :-------------: | :----------------------: |
+| **Create Insurance Policy**  |        ✅        | ❌ (request only) |       ❌        |            ❌            |
+| **Edit/Renew Policy**        |        ✅        |        ❌         |       ❌        |            ❌            |
+| **File Insurance Claim**     |        ✅        |        ✅         |       ✅        |            ❌            |
+| **Upload Claim Documents**   |        ✅        |        ✅         |       ✅        |            ✅            |
+| **Review/Investigate Claim** |        ✅        |        ❌         |       ❌        |            ❌            |
+| **Approve/Reject Claim**     |        ✅        |        ❌         |       ❌        |            ❌            |
+| **Process Claim Payment**    |        ✅        |        ❌         |       ❌        |            ❌            |
+| **Log Spoilage Event**       |        ✅        |        ✅         |       ✅        |            ✅            |
+| **View Activity Logs**       | ✅ (all tenants) |  ✅ (own tenant)  | ✅ (own tenant) | ✅ (batch/spoilage only) |
+| **Export Logs (CSV/PDF)**    |        ✅        |        ✅         |       ✅        |            ❌            |
+| **View All Alerts**          | ✅ (all tenants) |  ✅ (own tenant)  | ✅ (own tenant) |    ✅ (assigned only)    |
+| **Acknowledge Alert**        |        ✅        |        ✅         |       ✅        |            ✅            |
+| **Resolve Alert**            |        ✅        |        ✅         |       ✅        |            ✅            |
+| **Escalate Alert**           |        ✅        |        ✅         |       ✅        |            ❌            |
+| **Configure Alert Rules**    |        ✅        |        ✅         |       ❌        |            ❌            |
 
 ---
 
@@ -104,6 +104,7 @@ PUT    /policies/:id/renew         — Renew an expired policy
 ```
 
 Each endpoint will:
+
 1. Validate role permissions
 2. Execute the operation
 3. Call `LoggingService` to create an activity log
@@ -118,27 +119,48 @@ Add missing action enums to cover **every tiny detail**:
 
 ```js
 // New actions to add:
-'insurance_policy_renewed', 'insurance_policy_cancelled', 'insurance_policy_deleted',
-'insurance_claim_reviewed', 'insurance_claim_approved', 'insurance_claim_rejected',
-'insurance_claim_payment_processed', 'insurance_claim_document_uploaded',
-'insurance_claim_escalated', 'insurance_claim_closed',
-'silo_created', 'silo_updated', 'silo_deleted',
-'sensor_configured', 'sensor_calibrated',
-'user_created', 'user_updated', 'user_deleted', 'user_role_changed',
-'subscription_created', 'subscription_renewed', 'subscription_expired', 'subscription_cancelled',
-'threshold_updated', 'actuator_triggered',
-'alert_acknowledged', 'alert_resolved', 'alert_escalated',
-'report_exported', 'data_exported'
+("insurance_policy_renewed",
+  "insurance_policy_cancelled",
+  "insurance_policy_deleted",
+  "insurance_claim_reviewed",
+  "insurance_claim_approved",
+  "insurance_claim_rejected",
+  "insurance_claim_payment_processed",
+  "insurance_claim_document_uploaded",
+  "insurance_claim_escalated",
+  "insurance_claim_closed",
+  "silo_created",
+  "silo_updated",
+  "silo_deleted",
+  "sensor_configured",
+  "sensor_calibrated",
+  "user_created",
+  "user_updated",
+  "user_deleted",
+  "user_role_changed",
+  "subscription_created",
+  "subscription_renewed",
+  "subscription_expired",
+  "subscription_cancelled",
+  "threshold_updated",
+  "actuator_triggered",
+  "alert_acknowledged",
+  "alert_resolved",
+  "alert_escalated",
+  "report_exported",
+  "data_exported");
 ```
 
 Add new categories:
+
 ```js
-'silo', 'sensor', 'user', 'subscription', 'threshold', 'actuator', 'alert', 'export'
+("silo", "sensor", "user", "subscription", "threshold", "actuator", "alert", "export");
 ```
 
 Add new entity types:
+
 ```js
-'Silo', 'SensorDevice', 'Tenant', 'Subscription', 'Threshold', 'Actuator', 'GrainAlert'
+("Silo", "SensorDevice", "Tenant", "Subscription", "Threshold", "Actuator", "GrainAlert");
 ```
 
 ---
@@ -149,21 +171,21 @@ Add **insurance lifecycle logging helpers** + alert auto-generation:
 
 ```js
 // New helpers:
-logInsurancePolicyCreated(user, policy, ip)
-logInsurancePolicyUpdated(user, policy, changes, ip)
-logInsurancePolicyRenewed(user, policy, ip)
-logInsurancePolicyCancelled(user, policy, reason, ip)
-logInsuranceClaimReviewed(user, claim, ip)
-logInsuranceClaimApproved(user, claim, amount, ip)
-logInsuranceClaimRejected(user, claim, reason, ip)
-logInsuranceClaimPaymentProcessed(user, claim, payment, ip)
-logInsuranceClaimDocumentUploaded(user, claim, document, ip)
-logAlertAcknowledged(user, alert, ip)
-logAlertResolved(user, alert, ip)
-logAlertEscalated(user, alert, escalatedTo, ip)
-logSubscriptionEvent(user, event, tenantId, ip)
-logUserManagement(user, action, targetUser, ip)
-logSettingsUpdated(user, settingType, changes, ip)
+logInsurancePolicyCreated(user, policy, ip);
+logInsurancePolicyUpdated(user, policy, changes, ip);
+logInsurancePolicyRenewed(user, policy, ip);
+logInsurancePolicyCancelled(user, policy, reason, ip);
+logInsuranceClaimReviewed(user, claim, ip);
+logInsuranceClaimApproved(user, claim, amount, ip);
+logInsuranceClaimRejected(user, claim, reason, ip);
+logInsuranceClaimPaymentProcessed(user, claim, payment, ip);
+logInsuranceClaimDocumentUploaded(user, claim, document, ip);
+logAlertAcknowledged(user, alert, ip);
+logAlertResolved(user, alert, ip);
+logAlertEscalated(user, alert, escalatedTo, ip);
+logSubscriptionEvent(user, event, tenantId, ip);
+logUserManagement(user, action, targetUser, ip);
+logSettingsUpdated(user, settingType, changes, ip);
 ```
 
 ---
@@ -176,14 +198,14 @@ Central alert generation engine that creates `GrainAlert` records from system ev
 class AlertEngine {
   // Auto-generate alerts from activity logs
   static async processLogEntry(logEntry) { ... }
-  
+
   // Scheduled checks (called by cron)
   static async checkSubscriptionExpirations() { ... }
   static async checkInsuranceRenewals() { ... }
   static async checkBatchQualityDegradation() { ... }
   static async checkOverduePayments() { ... }
   static async checkSensorOffline() { ... }
-  
+
   // Alert creation with auto-notification
   static async createAlert({ tenant_id, title, message, priority, source, ... }) { ... }
 }
@@ -242,7 +264,7 @@ silo_id: {
 GET    /grain-alerts              — List alerts (role-filtered, paginated)
 GET    /grain-alerts/:id          — Get alert detail
 POST   /grain-alerts/:id/acknowledge  — Acknowledge alert
-POST   /grain-alerts/:id/resolve      — Resolve alert  
+POST   /grain-alerts/:id/resolve      — Resolve alert
 POST   /grain-alerts/:id/escalate     — Escalate to higher role
 GET    /grain-alerts/statistics        — Alert stats (counts by priority, avg response time)
 GET    /grain-alerts/unread-count      — Quick count for bell icon badge
@@ -268,13 +290,13 @@ GET    /activity-logs/timeline/:batchId — Full batch lifecycle timeline
 
 Add `LoggingService` calls to these existing route files that currently **don't log anything**:
 
-| Route File | Actions to Log |
-|-----------|----------------|
-| [insurance.js](file:///c:/Users/shahe/GrainHero%20Startup/Grainhero/farmHomeBackend-main/routes/insurance.js) | Policy CRUD, claim CRUD, all status changes |
-| [silos.js](file:///c:/Users/shahe/GrainHero%20Startup/Grainhero/farmHomeBackend-main/routes/silos.js) | Silo create/update/delete |
-| [sensors.js](file:///c:/Users/shahe/GrainHero%20Startup/Grainhero/farmHomeBackend-main/routes/sensors.js) | Sensor configure/calibrate |
-| [userManagement.js](file:///c:/Users/shahe/GrainHero%20Startup/Grainhero/farmHomeBackend-main/routes/userManagement.js) | User CRUD, role changes |
-| [tenantSettings.js](file:///c:/Users/shahe/GrainHero%20Startup/Grainhero/farmHomeBackend-main/routes/tenantSettings.js) | Settings updates |
+| Route File                                                                                                              | Actions to Log                              |
+| ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| [insurance.js](file:///c:/Users/shahe/GrainHero%20Startup/Grainhero/farmHomeBackend-main/routes/insurance.js)           | Policy CRUD, claim CRUD, all status changes |
+| [silos.js](file:///c:/Users/shahe/GrainHero%20Startup/Grainhero/farmHomeBackend-main/routes/silos.js)                   | Silo create/update/delete                   |
+| [sensors.js](file:///c:/Users/shahe/GrainHero%20Startup/Grainhero/farmHomeBackend-main/routes/sensors.js)               | Sensor configure/calibrate                  |
+| [userManagement.js](file:///c:/Users/shahe/GrainHero%20Startup/Grainhero/farmHomeBackend-main/routes/userManagement.js) | User CRUD, role changes                     |
+| [tenantSettings.js](file:///c:/Users/shahe/GrainHero%20Startup/Grainhero/farmHomeBackend-main/routes/tenantSettings.js) | Settings updates                            |
 
 ---
 
@@ -287,6 +309,7 @@ Add `LoggingService` calls to these existing route files that currently **don't 
 **Major upgrade** — Transform from a single-view page to a role-aware insurance command center:
 
 **For Admin/Manager (claim filers):**
+
 - Keep existing: Overview, Spoilage Events, Claims & Exports, Batch Reports, Timeline, Policies tabs
 - **NEW**: Claim detail drawer/modal with status stepper showing:
   ```
@@ -297,6 +320,7 @@ Add `LoggingService` calls to these existing route files that currently **don't 
 - **ENHANCE**: Real-time claim status updates
 
 **For Super Admin (claim reviewer):**
+
 - **NEW Tab**: "Review Queue" — all pending claims across tenants with:
   - Claim cards with priority indicators
   - Quick approve/reject actions
@@ -416,7 +440,7 @@ gantt
     title Implementation Phases
     dateFormat  X
     axisFormat %s
-    
+
     section Phase 1 - Backend
     ActivityLog model enums      :a1, 0, 1
     LoggingService helpers       :a2, 1, 2
@@ -426,23 +450,23 @@ gantt
     Alerts routes rewrite        :a6, 5, 7
     Activity log routes (new)    :a7, 5, 6
     Integrate logging into routes:a8, 7, 9
-    
+
     section Phase 2 - Frontend Insurance
     Super Admin review queue     :b1, 9, 12
     Claim detail with stepper    :b2, 9, 11
     Policy management CRUD       :b3, 11, 13
-    
+
     section Phase 3 - Frontend Logs
     Enhanced log timeline        :c1, 13, 15
     Entity deep-dive             :c2, 13, 14
     Export CSV/PDF               :c3, 14, 15
-    
+
     section Phase 4 - Frontend Alerts
     Alert dashboard              :d1, 15, 17
     Real-time alert feed         :d2, 15, 17
     Alert detail + escalation    :d3, 17, 18
     Alert preferences            :d4, 18, 19
-    
+
     section Phase 5 - Polish
     Sidebar badge counts         :e1, 19, 20
     Cross-system integration test:e2, 20, 21
@@ -453,22 +477,22 @@ gantt
 ## Verification Plan
 
 ### Automated Tests
+
 - `npm run build` — Ensure no TypeScript/compilation errors
 - Test each new API endpoint via curl/Postman
 - Verify role-based access: each endpoint tested with super_admin, admin, manager, technician tokens
 
 ### Manual Verification
+
 1. **Insurance E2E Flow**:
    - Super admin creates a policy → log created → admin notified
    - Manager files a claim with photos → log created → super admin alerted
    - Super admin reviews → adds investigation → approves → processes payment
    - Each step verified in activity logs and alerts
-   
 2. **Logs Transparency**:
    - Create a batch → verify log entry appears with metadata
    - Delete a batch → verify CRITICAL severity log + alert generated
    - Check that technician can only see batch/spoilage logs
-   
 3. **Alerts**:
    - Trigger a sensor threshold breach → verify alert appears in real-time
    - File an insurance claim → verify alert appears for super admin
@@ -476,6 +500,7 @@ gantt
    - Acknowledge and resolve alerts → verify log trail
 
 ### Browser Testing
+
 - Test insurance page at each role (login as super_admin, admin, manager, technician)
 - Test mobile responsiveness on all three pages
 - Verify alert badge updates in sidebar
@@ -484,14 +509,14 @@ gantt
 
 ## File Summary
 
-| Category | New Files | Modified Files |
-|----------|:---------:|:--------------:|
-| Backend Models | 0 | 2 (ActivityLog, GrainAlert) |
-| Backend Routes | 0 | 4 (insurance, alerts, activityLogs, + integration into 5 existing routes) |
-| Backend Services | 1 (alertEngine) | 1 (loggingService) |
-| Frontend Pages | 0 | 3 (insurance, activity-logs, grain-alerts) |
-| Frontend Components | 0 | 1 (sidebar) |
-| **Total** | **1** | **11+** |
+| Category            |    New Files    |                              Modified Files                               |
+| ------------------- | :-------------: | :-----------------------------------------------------------------------: |
+| Backend Models      |        0        |                        2 (ActivityLog, GrainAlert)                        |
+| Backend Routes      |        0        | 4 (insurance, alerts, activityLogs, + integration into 5 existing routes) |
+| Backend Services    | 1 (alertEngine) |                            1 (loggingService)                             |
+| Frontend Pages      |        0        |                3 (insurance, activity-logs, grain-alerts)                 |
+| Frontend Components |        0        |                                1 (sidebar)                                |
+| **Total**           |      **1**      |                                  **11+**                                  |
 
 > [!TIP]
 > This plan is designed to be **incremental** — each phase builds on the previous one and the system remains functional between phases. We can ship Phase 1+2 (insurance) independently of Phase 3+4 (logs+alerts).

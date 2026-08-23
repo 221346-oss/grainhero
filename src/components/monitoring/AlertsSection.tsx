@@ -1,5 +1,4 @@
 import type { ComponentType } from "react";
-'use client';
 
 import { Loader2, AlertTriangle, AlertCircle, Bell, Activity } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -36,15 +35,21 @@ export function AlertsSection() {
         <div className="space-y-2">
           {alerts.map((a: any) => {
             const Icon = PRIO_ICON[a.priority] || Activity;
-            const prioColor = ({
-              critical: "bg-rose-500/20 text-rose-400",
-              high: "bg-orange-500/20 text-orange-400",
-              medium: "bg-amber-500/20 text-amber-400",
-              low: "bg-blue-500/20 text-blue-400",
-            } as Record<string, string>)[a.priority] || "bg-gray-500/20 text-gray-400";
+            const prioColor =
+              (
+                {
+                  critical: "bg-rose-500/20 text-rose-400",
+                  high: "bg-orange-500/20 text-orange-400",
+                  medium: "bg-amber-500/20 text-amber-400",
+                  low: "bg-blue-500/20 text-blue-400",
+                } as Record<string, string>
+              )[a.priority] || "bg-gray-500/20 text-gray-400";
 
             return (
-              <div key={a.id} className="bg-muted/30 border-border rounded-lg p-4 hover:bg-muted/50 transition-colors">
+              <div
+                key={a.id}
+                className="bg-muted/30 border-border rounded-lg p-4 hover:bg-muted/50 transition-colors"
+              >
                 <div className="flex items-start gap-3">
                   <Icon className={`w-5 h-5 mt-0.5 shrink-0 ${prioColor}`} />
                   <div className="flex-1 min-w-0">

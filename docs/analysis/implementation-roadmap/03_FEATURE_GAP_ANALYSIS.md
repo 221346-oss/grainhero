@@ -1,4 +1,5 @@
 # GrainHero — Feature Gap Analysis
+
 ## Every Missing Feature · Exact File Locations · Exact SQL/Code to Write
 
 > **Status**: Discovery only — no code modified  
@@ -69,26 +70,27 @@ Nothing. `supabase/functions/` directory has zero IoT-related functions.
 
 ```typescript
 // supabase/functions/ingest/index.ts  [CREATE NEW]
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 serve(async (req: Request) => {
-  const body = await req.json()
+  const body = await req.json();
 
   // 1. Validate device_id, auth header
   // 2. Compute derived features
-  const dew_point = body.temperature - ((100 - body.humidity) / 5)
-  const airflow = body.fan_speed / 100
+  const dew_point = body.temperature - (100 - body.humidity) / 5;
+  const airflow = body.fan_speed / 100;
 
   // 3. INSERT into sensor_readings
   // 4. POST to ml_service → get prediction
   // 5. UPDATE sensor_readings with ML result
   // 6. UPDATE grain_batches.risk_score
   // 7. Return actuator_command in response
-})
+});
 ```
 
 **Original code to port from:**
+
 - [models/SensorReading.js](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBackend-main/models/SensorReading.js) — pre-save hook (dew point, VOC, airflow computation)
 - [services/iotDeviceService.js](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBackend-main/services/iotDeviceService.js) — MQTT subscriber → save flow
 
@@ -103,27 +105,29 @@ serve(async (req: Request) => {
 
 ```javascript
 // mqtt_bridge.js  [CREATE NEW — root or separate service]
-const mqtt = require('mqtt')
-const fetch = require('node-fetch')
+const mqtt = require("mqtt");
+const fetch = require("node-fetch");
 
-const mqttClient = mqtt.connect('mqtt://192.168.100.229:1883')
-const EDGE_FN_URL = process.env.SUPABASE_URL + '/functions/v1/ingest'
+const mqttClient = mqtt.connect("mqtt://192.168.100.229:1883");
+const EDGE_FN_URL = process.env.SUPABASE_URL + "/functions/v1/ingest";
 
-mqttClient.on('message', async (topic, message) => {
+mqttClient.on("message", async (topic, message) => {
   // POST to /ingest Edge Function
   const response = await fetch(EDGE_FN_URL, {
-    method: 'POST',
+    method: "POST",
     body: message.toString(),
-    headers: { 'Authorization': 'Bearer ' + process.env.DEVICE_API_KEY }
-  })
-  const { actuator_command } = await response.json()
+    headers: { Authorization: "Bearer " + process.env.DEVICE_API_KEY },
+  });
+  const { actuator_command } = await response.json();
 
   // Publish actuator command back to ESP32
   if (actuator_command) {
-    mqttClient.publish(`grainhero/actuators/${device_id}/control`,
-      JSON.stringify(actuator_command))
+    mqttClient.publish(
+      `grainhero/actuators/${device_id}/control`,
+      JSON.stringify(actuator_command),
+    );
   }
-})
+});
 ```
 
 **Depends on**: GAP-P0-01 (Edge Function URL)
@@ -132,7 +136,7 @@ mqttClient.on('message', async (topic, message) => {
 
 ### GAP-P0-03: Schema Bug — `current_stock_kg`
 
-**File**: [analytics.functions.ts](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero-main%20(Supabase)/grainhero-main/src/lib/analytics.functions.ts)  
+**File**: [analytics.functions.ts](<file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero-main%20(Supabase)/grainhero-main/src/lib/analytics.functions.ts>)  
 **Line**: **209**  
 **Exact fix**:
 
@@ -298,31 +302,31 @@ SELECT cron.schedule(
 ```typescript
 // supabase/functions/notify/index.ts  [CREATE NEW]
 // Triggered by grain_alerts INSERT via Supabase webhook or Realtime
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 serve(async (req) => {
-  const { record } = await req.json()  // grain_alerts INSERT record
+  const { record } = await req.json(); // grain_alerts INSERT record
 
   // Get FCM tokens for organization members
   // POST to https://fcm.googleapis.com/fcm/send
-  const fcmResponse = await fetch('https://fcm.googleapis.com/fcm/send', {
-    method: 'POST',
+  const fcmResponse = await fetch("https://fcm.googleapis.com/fcm/send", {
+    method: "POST",
     headers: {
-      'Authorization': `key=${Deno.env.get('FCM_SERVER_KEY')}`,
-      'Content-Type': 'application/json'
+      Authorization: `key=${Deno.env.get("FCM_SERVER_KEY")}`,
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
       registration_ids: fcmTokens,
       notification: {
         title: `GrainHero Alert: ${record.alert_type}`,
-        body: `Silo ${record.silo_id}: ${record.severity} alert detected`
-      }
-    })
-  })
-})
+        body: `Silo ${record.silo_id}: ${record.severity} alert detected`,
+      },
+    }),
+  });
+});
 ```
 
-**Existing skeleton**: [firebase-admin.server.ts](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero-main%20(Supabase)/grainhero-main/src/lib/firebase-admin.server.ts) — FCM tokens stored but never sent to.
+**Existing skeleton**: [firebase-admin.server.ts](<file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero-main%20(Supabase)/grainhero-main/src/lib/firebase-admin.server.ts>) — FCM tokens stored but never sent to.
 
 ---
 
@@ -358,7 +362,7 @@ $$ LANGUAGE sql STABLE;
 
 ```typescript
 // supabase/functions/generate-pdf/index.ts  [CREATE NEW]
-import { PDFDocument, StandardFonts, rgb } from "https://cdn.skypack.dev/pdf-lib"
+import { PDFDocument, StandardFonts, rgb } from "https://cdn.skypack.dev/pdf-lib";
 
 // Generate batch report: intake date, readings history, ML predictions, alerts
 ```
@@ -381,7 +385,7 @@ ALTER TABLE grain_batches ADD CONSTRAINT moisture_at_intake_safe
 -- Add similar constraints for Rice (13.5%), Maize (13.5%), Sorghum (13%), Barley (14.5%)
 ```
 
-**And in [operations.functions.ts](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero-main%20(Supabase)/grainhero-main/src/lib/operations.functions.ts):** Validate before INSERT and return clear user-facing error if exceeded.
+**And in [operations.functions.ts](<file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero-main%20(Supabase)/grainhero-main/src/lib/operations.functions.ts>):** Validate before INSERT and return clear user-facing error if exceeded.
 
 ---
 
@@ -465,46 +469,46 @@ CREATE TABLE training_samples (
 
 ## 5. P2 Gaps — Enhancement Features
 
-| Gap | Original File | Supabase Action | Sprint |
-|---|---|---|---|
-| SHAP explainability | [ml/shap_explain.py](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBackend-main/ml/shap_explain.py) | Call from `ml_service/main.py`, return SHAP values | 4 |
-| QR code generation | [routes/grainBatches.js](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBackend-main/routes/grainBatches.js) | Edge Function using `qrcode` Deno package | 4 |
-| Offline SD card replay | [routes/iot.js](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBackend-main/routes/iot.js) | MQTT bridge detects `offline_buffer` topic → replays to Edge Fn | 4 |
-| Aeration decision display | [routes/aiSpoilage.js](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBackend-main/routes/aiSpoilage.js) | Compute from weather_readings in Edge Fn; display in dashboard | 4 |
-| Bulk batch import (CSV) | Not in original | New Edge Fn for CSV parse + batch INSERT | Backlog |
-| Manual fan override UI | [routes/iot.js](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBackend-main/routes/iot.js) | Button in TanStack UI → MQTT bridge → publish control topic | 3 |
-| 2FA TOTP | Not in original | Supabase GoTrue has built-in TOTP | Backlog |
-| Order management | [routes/orders.js](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBackend-main/routes/) | New `orders` table migration + CRUD | Backlog |
-| Maintenance records | [routes/maintenance.js](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBackend-main/routes/) | New `maintenance_records` table + UI | Backlog |
-| Training data export | [services/trainingDataService.js](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBackend-main/services/) | Edge Fn: SELECT training_samples → CSV download | Backlog |
+| Gap                       | Original File                                                                                                         | Supabase Action                                                 | Sprint  |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- | ------- |
+| SHAP explainability       | [ml/shap_explain.py](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBackend-main/ml/shap_explain.py)         | Call from `ml_service/main.py`, return SHAP values              | 4       |
+| QR code generation        | [routes/grainBatches.js](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBackend-main/routes/grainBatches.js) | Edge Function using `qrcode` Deno package                       | 4       |
+| Offline SD card replay    | [routes/iot.js](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBackend-main/routes/iot.js)                   | MQTT bridge detects `offline_buffer` topic → replays to Edge Fn | 4       |
+| Aeration decision display | [routes/aiSpoilage.js](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBackend-main/routes/aiSpoilage.js)     | Compute from weather_readings in Edge Fn; display in dashboard  | 4       |
+| Bulk batch import (CSV)   | Not in original                                                                                                       | New Edge Fn for CSV parse + batch INSERT                        | Backlog |
+| Manual fan override UI    | [routes/iot.js](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBackend-main/routes/iot.js)                   | Button in TanStack UI → MQTT bridge → publish control topic     | 3       |
+| 2FA TOTP                  | Not in original                                                                                                       | Supabase GoTrue has built-in TOTP                               | Backlog |
+| Order management          | [routes/orders.js](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBackend-main/routes/)                      | New `orders` table migration + CRUD                             | Backlog |
+| Maintenance records       | [routes/maintenance.js](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBackend-main/routes/)                 | New `maintenance_records` table + UI                            | Backlog |
+| Training data export      | [services/trainingDataService.js](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBackend-main/services/)     | Edge Fn: SELECT training_samples → CSV download                 | Backlog |
 
 ---
 
 ## 6. Firmware Gaps (Arduino)
 
-| Gap | Current State | File | Fix |
-|---|---|---|---|
-| No direct Supabase write | Writes only to Firebase | [grainhero_main_final.ino](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero_main_final.ino) | Add HTTP POST to `/ingest` Edge Fn alongside Firebase |
-| `humanOverrideActive` lost on reboot | Stored in RAM only | [grainhero_main_final.ino ~L70](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero_main_final.ino) | Use `Preferences` library (NVS) |
-| MQTT broker IP hardcoded | `192.168.100.229` in source | [grainhero_main_final.ino L36](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero_main_final.ino) | Store in SPIFFS `config.json` |
-| WiFi credentials in source | `ssid`, `password` hardcoded | [grainhero_main_final.ino](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero_main_final.ino) | Store in SPIFFS `config.json` |
-| No MEMS microphone | `pest_presence` always 0 | Hardware | Add SPH0645 on I2S GPIO 32/33/25 in v2 |
-| SD card circular buffer | Overwrites when full — no notification | [grainhero_main_final.ino ~L750](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero_main_final.ino) | Publish `storage_full` MQTT alert |
-| `fumigation_active` not blocked | Fan can run during fumigation | Both firmware + backend | Add MQTT message `{fumigation: true}` → firmware skips all actuation |
+| Gap                                  | Current State                          | File                                                                                                       | Fix                                                                  |
+| ------------------------------------ | -------------------------------------- | ---------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| No direct Supabase write             | Writes only to Firebase                | [grainhero_main_final.ino](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero_main_final.ino)       | Add HTTP POST to `/ingest` Edge Fn alongside Firebase                |
+| `humanOverrideActive` lost on reboot | Stored in RAM only                     | [grainhero_main_final.ino ~L70](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero_main_final.ino)  | Use `Preferences` library (NVS)                                      |
+| MQTT broker IP hardcoded             | `192.168.100.229` in source            | [grainhero_main_final.ino L36](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero_main_final.ino)   | Store in SPIFFS `config.json`                                        |
+| WiFi credentials in source           | `ssid`, `password` hardcoded           | [grainhero_main_final.ino](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero_main_final.ino)       | Store in SPIFFS `config.json`                                        |
+| No MEMS microphone                   | `pest_presence` always 0               | Hardware                                                                                                   | Add SPH0645 on I2S GPIO 32/33/25 in v2                               |
+| SD card circular buffer              | Overwrites when full — no notification | [grainhero_main_final.ino ~L750](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero_main_final.ino) | Publish `storage_full` MQTT alert                                    |
+| `fumigation_active` not blocked      | Fan can run during fumigation          | Both firmware + backend                                                                                    | Add MQTT message `{fumigation: true}` → firmware skips all actuation |
 
 ---
 
 ## 7. Complete Gap Count Summary
 
-| Priority | Count | Status |
-|---|---|---|
-| P0 — System broken | **4** | Fix before any demo |
-| P1 — Core missing | **12** | Fix before commercial launch |
-| P2 — Enhancements | **10** | Post-parity enhancements |
-| Firmware gaps | **7** | Mix of P0–P2 |
-| **Total gaps** | **33** | — |
+| Priority           | Count  | Status                       |
+| ------------------ | ------ | ---------------------------- |
+| P0 — System broken | **4**  | Fix before any demo          |
+| P1 — Core missing  | **12** | Fix before commercial launch |
+| P2 — Enhancements  | **10** | Post-parity enhancements     |
+| Firmware gaps      | **7**  | Mix of P0–P2                 |
+| **Total gaps**     | **33** | —                            |
 
 ---
 
-*Generated 2026-07-10. All file links are clickable in VS Code.*  
-*No code modified during this analysis — this is a discovery document.*
+_Generated 2026-07-10. All file links are clickable in VS Code._  
+_No code modified during this analysis — this is a discovery document._

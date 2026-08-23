@@ -6,14 +6,18 @@ export const getActiveBatches = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     // Resolve tenant admin id
     const { data: profile } = await context.supabase
-      .from("profiles").select("id, admin_id").eq("id", context.userId).maybeSingle();
+      .from("profiles")
+      .select("id, admin_id")
+      .eq("id", context.userId)
+      .maybeSingle();
     const adminId = (profile?.admin_id as string) ?? profile?.id ?? context.userId;
 
     // Get all stored batches from grain batches section that are currently in observation
     // This includes all batches that have been stored and are being monitored
     const { data: activeBatches } = await context.supabase
       .from("grain_batches")
-      .select(`
+      .select(
+        `
         id,
         batch_id,
         grain_type,
@@ -38,14 +42,24 @@ export const getActiveBatches = createServerFn({ method: "GET" })
           name,
           email
         )
-      `)
+      `,
+      )
       .eq("admin_id", adminId)
       // Include stored batches and all batches under observation
-      .in("status", ["stored", "intake", "processing", "treatment", "pending_qc", "qc_submitted", "qc_passed", "ready"] as never)
+      .in("status", [
+        "stored",
+        "intake",
+        "processing",
+        "treatment",
+        "pending_qc",
+        "qc_submitted",
+        "qc_passed",
+        "ready",
+      ] as never)
       .order("created_at", { ascending: false });
 
     return {
-      batches: activeBatches || []
+      batches: activeBatches || [],
     };
   });
 

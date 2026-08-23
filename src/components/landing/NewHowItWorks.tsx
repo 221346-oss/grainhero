@@ -1,39 +1,52 @@
-import { motion } from 'framer-motion'
-import { Wrench, Wifi, LineChart, CheckCircle } from 'lucide-react'
+import { motion } from "framer-motion";
+import { Wrench, Wifi, LineChart, CheckCircle } from "lucide-react";
 
 const steps = [
   {
-    number: '01',
+    number: "01",
     icon: Wrench,
-    title: 'Install IoT Sensors',
+    title: "Install IoT Sensors",
     description:
-      'Quick and easy setup in your storage facility. Our weatherproof sensors mount in minutes and connect wirelessly to your network.',
-    details: ['Temperature sensors', 'Humidity monitors', 'Moisture detectors', 'CO₂ level sensors'],
-    image: '/images/how-it-works/Step-01.jpg',
+      "Quick and easy setup in your storage facility. Our weatherproof sensors mount in minutes and connect wirelessly to your network.",
+    details: [
+      "Temperature sensors",
+      "Humidity monitors",
+      "Moisture detectors",
+      "CO₂ level sensors",
+    ],
+    image: "/images/how-it-works/Step-01.jpg",
   },
   {
-    number: '02',
+    number: "02",
     icon: Wifi,
-    title: 'Connect to Platform',
+    title: "Connect to Platform",
     description:
-      'Sensors automatically sync with our cloud platform via Wi-Fi or cellular connection. Real-time data streams to your dashboard instantly.',
-    details: ['Automatic cloud sync', 'Secure encryption', 'Mobile & web access', 'Instant notifications'],
-    image: '/images/how-it-works/Step-02.jpg',
+      "Sensors automatically sync with our cloud platform via Wi-Fi or cellular connection. Real-time data streams to your dashboard instantly.",
+    details: [
+      "Automatic cloud sync",
+      "Secure encryption",
+      "Mobile & web access",
+      "Instant notifications",
+    ],
+    image: "/images/how-it-works/Step-02.jpg",
   },
   {
-    number: '03',
+    number: "03",
     icon: LineChart,
-    title: 'Monitor & Optimize',
+    title: "Monitor & Optimize",
     description:
-      'AI analyzes your data 24/7, predicting issues before they occur. Get actionable insights and automated alerts to protect your grain.',
-    details: ['AI predictions', 'Real-time alerts', 'Historical analytics', 'Automated reports'],
-    image: '/images/features/Analytics_Dashboard.png',
+      "AI analyzes your data 24/7, predicting issues before they occur. Get actionable insights and automated alerts to protect your grain.",
+    details: ["AI predictions", "Real-time alerts", "Historical analytics", "Automated reports"],
+    image: "/images/features/Analytics_Dashboard.png",
   },
-]
+];
 
 export function NewHowItWorks() {
   return (
-    <section id="how-it-works" className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-white relative overflow-hidden">
+    <section
+      id="how-it-works"
+      className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-white relative overflow-hidden"
+    >
       {/* Decorative Elements */}
       <div className="absolute top-20 right-20 w-72 h-72 bg-[#2FA84F]/5 rounded-full blur-3xl" />
       <div className="absolute bottom-20 left-20 w-96 h-96 bg-[#2FA84F]/5 rounded-full blur-3xl" />
@@ -70,7 +83,7 @@ export function NewHowItWorks() {
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: index * 0.2 }}
               className={`flex flex-col ${
-                index % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'
+                index % 2 === 0 ? "lg:flex-row" : "lg:flex-row-reverse"
               } items-center gap-8 lg:gap-12`}
             >
               {/* Content */}
@@ -83,12 +96,8 @@ export function NewHowItWorks() {
                     <step.icon className="w-8 h-8 text-[#2FA84F]" />
                   </div>
                 </div>
-                <h3 className="text-2xl sm:text-3xl font-black text-[#111512]">
-                  {step.title}
-                </h3>
-                <p className="text-[#4A554C] text-lg leading-relaxed">
-                  {step.description}
-                </p>
+                <h3 className="text-2xl sm:text-3xl font-black text-[#111512]">{step.title}</h3>
+                <p className="text-[#4A554C] text-lg leading-relaxed">{step.description}</p>
                 <ul className="space-y-2 pt-2">
                   {step.details.map((detail, idx) => (
                     <li key={idx} className="flex items-center gap-2 text-[#4A554C]">
@@ -102,17 +111,25 @@ export function NewHowItWorks() {
               {/* Visual Placeholder */}
               <div className="flex-1 w-full max-w-md">
                 <div className="aspect-square bg-white rounded-2xl flex items-center justify-center border-2 border-[#2FA84F]/20 shadow-lg overflow-hidden">
-                  <img 
+                  <img
                     src={step.image}
                     alt={step.title}
                     className="w-full h-full object-cover"
-                    style={step.number === '01' ? { width: '85%', height: '85%', objectFit: 'contain' } : {}}
+                    style={
+                      step.number === "01"
+                        ? { width: "85%", height: "85%", objectFit: "contain" }
+                        : {}
+                    }
                     onError={(e) => {
                       // Fallback to icon if image not found
-                      e.currentTarget.style.display = 'none'
-                      const parent = e.currentTarget.parentElement
+                      e.currentTarget.style.display = "none";
+                      const parent = e.currentTarget.parentElement;
                       if (parent) {
-                        parent.classList.add('bg-gradient-to-br', 'from-[#2FA84F]/10', 'to-[#2FA84F]/5')
+                        parent.classList.add(
+                          "bg-gradient-to-br",
+                          "from-[#2FA84F]/10",
+                          "to-[#2FA84F]/5",
+                        );
                       }
                     }}
                   />
@@ -132,7 +149,7 @@ export function NewHowItWorks() {
         >
           <button
             onClick={() => {
-              window.location.href = '/checkout'
+              window.location.href = "/checkout";
             }}
             className="bg-[#2FA84F] text-white font-bold px-10 py-4 rounded-full hover:bg-[#2FA84F]/90 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
           >
@@ -141,5 +158,5 @@ export function NewHowItWorks() {
         </motion.div>
       </div>
     </section>
-  )
+  );
 }

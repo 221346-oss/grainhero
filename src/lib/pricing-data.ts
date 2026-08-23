@@ -34,8 +34,7 @@ const pricingData = [
     id: "intermediate",
     name: "Professional",
     priceFrontend: "Rs. 3,899/mo",
-    description:
-      "Advanced features for growing grain operations with multiple warehouses.",
+    description: "Advanced features for growing grain operations with multiple warehouses.",
     features: [
       "2 Warehouses",
       "6 Silos",
@@ -66,8 +65,7 @@ const pricingData = [
     id: "pro",
     name: "Enterprise",
     priceFrontend: "Rs. 5,999/mo",
-    description:
-      "Complete solution for large grain operations with unlimited staff.",
+    description: "Complete solution for large grain operations with unlimited staff.",
     features: [
       "5 Warehouses",
       "15 Silos",
@@ -118,7 +116,14 @@ export function getCheckoutTotals(planId: string, iotQuantity: number) {
   const qty = Math.max(1, Math.min(50, iotQuantity));
   const iotTotal = qty * iotUnit;
   const monthlyPrice = Number(plan.price ?? 0);
-  return { plan, iotQuantity: qty, iotUnit, iotTotal, monthlyPrice, dueToday: monthlyPrice + iotTotal };
+  return {
+    plan,
+    iotQuantity: qty,
+    iotUnit,
+    iotTotal,
+    monthlyPrice,
+    dueToday: monthlyPrice + iotTotal,
+  };
 }
 
 export default pricingData;

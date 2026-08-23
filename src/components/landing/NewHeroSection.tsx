@@ -1,23 +1,23 @@
-import { useRef, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { Wheat, ArrowRight } from 'lucide-react'
-import { Link } from '@tanstack/react-router'
+import { useRef, useEffect } from "react";
+import { motion } from "framer-motion";
+import { Wheat, ArrowRight } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 
 export function NewHeroSection() {
-  const videoRef = useRef<HTMLVideoElement>(null)
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     if (videoRef.current) {
-      videoRef.current.volume = 0
-      videoRef.current.muted = true
-      videoRef.current.defaultMuted = true
+      videoRef.current.volume = 0;
+      videoRef.current.muted = true;
+      videoRef.current.defaultMuted = true;
 
-      const playPromise = videoRef.current.play()
+      const playPromise = videoRef.current.play();
       if (playPromise !== undefined) {
-        playPromise.catch(() => {})
+        playPromise.catch(() => {});
       }
     }
-  }, [])
+  }, []);
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-[#111512]">
@@ -39,7 +39,7 @@ export function NewHeroSection() {
 
       {/* Enhanced Overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#111512] via-[#111512]/95 to-[#111512]/90" />
-      
+
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-20 right-20 w-96 h-96 bg-[#2FA84F]/5 rounded-full blur-3xl animate-pulse" />
@@ -62,15 +62,9 @@ export function NewHeroSection() {
               transition={{ delay: 0.4 }}
               className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black leading-[1.1] mb-6"
             >
-              <span className="text-[#FAFAF7] block">
-                SMART GRAIN
-              </span>
-              <span className="text-[#FAFAF7] block">
-                STORAGE
-              </span>
-              <span className="text-[#2FA84F] block mt-2">
-                Powered by AI
-              </span>
+              <span className="text-[#FAFAF7] block">SMART GRAIN</span>
+              <span className="text-[#FAFAF7] block">STORAGE</span>
+              <span className="text-[#2FA84F] block mt-2">Powered by AI</span>
             </motion.h1>
 
             {/* Description */}
@@ -80,8 +74,8 @@ export function NewHeroSection() {
               transition={{ delay: 0.6 }}
               className="text-[#FAFAF7]/80 text-xl sm:text-2xl leading-relaxed mb-10 max-w-3xl mx-auto"
             >
-              Real-time IoT monitoring and predictive AI analytics that prevent spoilage,
-              reduce losses, and maximize your profits.
+              Real-time IoT monitoring and predictive AI analytics that prevent spoilage, reduce
+              losses, and maximize your profits.
             </motion.p>
 
             {/* CTA Buttons */}
@@ -100,8 +94,8 @@ export function NewHeroSection() {
               </Link>
               <button
                 onClick={() => {
-                  const el = document.querySelector('#how-it-works')
-                  el?.scrollIntoView({ behavior: 'smooth' })
+                  const el = document.querySelector("#how-it-works");
+                  el?.scrollIntoView({ behavior: "smooth" });
                 }}
                 className="bg-transparent border-2 border-[#FAFAF7] text-[#FAFAF7] font-semibold px-10 py-4 rounded-full hover:bg-[#FAFAF7] hover:text-[#111512] transition-all duration-300 text-lg hover:scale-105"
               >
@@ -112,5 +106,5 @@ export function NewHeroSection() {
         </div>
       </div>
     </div>
-  )
+  );
 }
