@@ -185,7 +185,7 @@ export const neonAnim = {
 
 /* ── layout primitives ───────────────────────────────────────────────────── */
 
-/** Hairline grid wrapper: children sit on `bg-background`, separated by 1px of border. */
+/** Hairline grid: tiles sit on the card surface, separated by 1px of border. No outer edge. */
 export function HairlineGrid({
   cols = "grid-cols-1 lg:grid-cols-2",
   className,
@@ -196,7 +196,7 @@ export function HairlineGrid({
   children: ReactNode;
 }) {
   return (
-    <div className={cn("grid gap-px bg-border rounded-md overflow-hidden border border-border", cols, className)}>
+    <div className={cn("grid gap-px bg-border/60 rounded-2xl overflow-hidden", cols, className)}>
       {children}
     </div>
   );
@@ -222,7 +222,7 @@ export function NeonPanel({
   children: ReactNode;
 }) {
   return (
-    <div className={cn("bg-background p-4 transition-colors hover:bg-muted/20", className)}>
+    <div className={cn("bg-card/50 p-4 transition-colors hover:bg-muted/20", className)}>
       {(title || action) && (
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="min-w-0">
