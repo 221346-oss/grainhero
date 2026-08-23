@@ -130,46 +130,51 @@ function PlanCard({ plan, onEdit }: { plan: Plan; onEdit: () => void }) {
   const price = Math.round(plan.price_cents / 100);
 
   return (
-    <div className="rounded-2xl bg-card/50 overflow-hidden flex flex-col">
+    <div className="flex flex-col border-b border-border/40 last:border-0 lg:border-b-0 lg:border-r lg:last:border-r-0">
       {/* Coloured top stripe */}
       <div className="h-0.5 w-full" style={{ background: t.accent }} />
 
-      <div className="p-3 flex flex-col flex-1">
-        {/* Header */}
-        <div className="flex items-start justify-between mb-0.5">
-          <div>
-            <div className="flex items-center gap-1.5 mb-0.5">
-              <span className="text-xs font-bold text-foreground">{plan.name}</span>
-              {plan.is_popular && (
-                <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1 py-0.5 rounded-full bg-amber-100 text-amber-700">
-                  <Star className="w-2 h-2" /> Popular
-                </span>
-              )}
-            </div>
-            <p className="text-[10px] text-muted-foreground">{t.tagline}</p>
+      <div className="flex flex-1 flex-col gap-5 p-5">
+        {/* Title & subtitle */}
+        <div className="space-y-0.5">
+          <div className="flex items-center gap-2">
+            <span className="text-lg font-semibold text-foreground">{plan.name}</span>
+            {plan.is_popular && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-[11px] font-medium text-warning">
+                <Star className="h-3 w-3" /> Popular
+              </span>
+            )}
           </div>
-          {plan.is_active ? (
-            <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
-              style={{ background: GL, color: G }}>
-              <CheckCircle className="w-2.5 h-2.5" /> Active
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
-              <XCircle className="w-2.5 h-2.5" /> Inactive
-            </span>
-          )}
+          <p className="text-sm text-muted-foreground">{t.tagline}</p>
         </div>
 
-        {/* Price */}
-        <div className="mt-1.5 mb-2">
-          <span className="text-lg font-bold text-foreground tabular-nums">
-            PKR {fmt(price)}
-          </span>
-          <span className="text-[10px] text-muted-foreground ml-1">/ month</span>
+        {/* Price & status */}
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2">
+            <span className="text-3xl font-bold tracking-tight tabular-nums text-foreground">
+              PKR {fmt(price)}
+            </span>
+            {plan.is_active ? (
+              <span className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-sm font-medium"
+                style={{ background: GL, color: G }}>
+                <CheckCircle className="h-3 w-3" /> Active
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-1 text-sm font-medium text-muted-foreground">
+                <XCircle className="h-3 w-3" /> Inactive
+              </span>
+            )}
+          </div>
+          <p className="text-sm">
+            <span className="font-medium" style={{ color: t.accent }}>
+              {Number((plan as any).max_users ?? 0)} users
+            </span>{" "}
+            <span className="text-muted-foreground">included per month</span>
+          </p>
         </div>
 
         {/* Feature limit meters */}
-        <div className="space-y-1.5 flex-1">
+        <div className="flex-1 space-y-1.5">
           {LIMITS.map(({ key, icon: Icon, label, max }) => {
             const val = Number((plan as any)[key] ?? 0);
             const pct = Math.min(100, Math.round((val / max) * 100));
@@ -196,7 +201,7 @@ function PlanCard({ plan, onEdit }: { plan: Plan; onEdit: () => void }) {
         {/* Edit button */}
         <button
           onClick={onEdit}
-          className="mt-2.5 w-full flex items-center justify-center gap-1 rounded-lg py-1 text-[11px] font-medium transition-colors"
+          className="mt-1 w-full flex items-center justify-center gap-1.5 rounded-lg py-2 text-[13px] font-medium transition-colors"
           style={{ background: t.accentLight, color: t.accent }}
           onMouseEnter={(e) => (e.currentTarget.style.background = t.accentBorder)}
           onMouseLeave={(e) => (e.currentTarget.style.background = t.accentLight)}
@@ -545,7 +550,7 @@ function PlatformPlansPage() {
           {activeView === "active" ? "Active plan tiers" : "Plan tiers"}
         </SectionLabel>
         {plansQ.isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 px-1">
+          <div className="grid grid-cols-1 overflow-hidden rounded-2xl bg-card/50 lg:grid-cols-3">
             {[1, 2, 3].map((i) => <PlanCardSkeleton key={i} />)}
           </div>
         ) : (
@@ -554,7 +559,7 @@ function PlatformPlansPage() {
               <PlanCard key={p.plan_id} plan={p} onEdit={() => setEditPlanId(p.plan_id)} />
             ))}
             {plans.length === 0 && (
-              <div className="col-span-3 rounded-2xl border-dashed p-12 text-center text-sm text-muted-foreground">
+              <div className="col-span-3 p-12 text-center text-sm text-muted-foreground">
                 No plans configured yet.
               </div>
             )}
