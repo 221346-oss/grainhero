@@ -190,7 +190,7 @@ function SettingsPage() {
           </div>
         </div>
 
-        <TabsContent value="profile">
+        <TabsContent className="max-w-md" value="profile">
           <Card>
             <CardHeader><CardTitle>Profile</CardTitle><CardDescription>Basic information about you.</CardDescription></CardHeader>
             <CardContent className="space-y-4">
@@ -232,7 +232,7 @@ function SettingsPage() {
                   onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleFile(f); e.currentTarget.value = ""; }}
                 />
               </div>
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid gap-4">
                 <div><Label>Full name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Your name" /></div>
                 <div>
                   <Label>Email</Label>
@@ -244,7 +244,7 @@ function SettingsPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="location">
+        <TabsContent className="max-w-md" value="location">
           <Card>
             <CardHeader><CardTitle>Location</CardTitle><CardDescription>Where your operation is based.</CardDescription></CardHeader>
             <CardContent className="grid md:grid-cols-2 gap-4">
@@ -275,7 +275,7 @@ function SettingsPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="appearance">
+        <TabsContent className="max-w-md" value="appearance">
           <Card>
             <CardHeader>
               <CardTitle>Theme</CardTitle>
@@ -321,7 +321,7 @@ function SettingsPage() {
         </TabsContent>
 
         {isSuperAdmin && (
-          <TabsContent value="platform">
+          <TabsContent className="max-w-md" value="platform">
             <PlatformSettingsSection />
           </TabsContent>
         )}
