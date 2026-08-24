@@ -15,8 +15,11 @@ interface Message {
   content: string;
 }
 
+const ML_SERVICE_URL = (import.meta.env.VITE_ML_SERVICE_URL as string) ?? 'http://localhost:8001';
+
 const AIAssistantBase = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([
     { role: "assistant", content: "Hello! I am the GrainHero AI Assistant. I have access to your live sensor data and equipment manuals. How can I help you today?" }
   ]);
@@ -40,16 +43,13 @@ const AIAssistantBase = () => {
     setIsLoading(true);
 
     try {
-      // We call the new FastAPI endpoint we created in Step 1!
-      const response = await fetch("http://localhost:8001/query", {
+      const response = await fetch(`${ML_SERVICE_URL}/chat`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          query: userMessage,
-          // In a real app, you'd pull this from the logged-in user's session
-          tenant_id: "00000000-0000-0000-0000-000000000000", 
+          message: userMessage,
+          session_id: sessionId,           // null on first message, then reused
+          tenant_id: "8f58c2d3-e610-4540-bc99-c946b3659b51",
         }),
       });
 
@@ -58,6 +58,7 @@ const AIAssistantBase = () => {
       }
 
       const data = await response.json();
+      setSessionId(data.session_id);       // persist session for follow-up messages
       setMessages((prev) => [...prev, { role: "assistant", content: data.answer }]);
     } catch (error) {
       console.error(error);
