@@ -250,12 +250,11 @@ function AuthenticatedLayout() {
               <nav className="hidden md:flex items-center gap-1 shrink-0">
                 <Link
                   to="/dashboard"
-                  className={({ isActive }) =>
-                    `h-8 inline-flex items-center gap-1.5 rounded-full px-3 text-xs font-medium transition ${
-                      isActive
-                        ? "text-emerald-600 dark:text-emerald-400"
-                        : "text-muted-foreground hover:text-emerald-600"
-                    }`
+                  className={
+                    "h-8 inline-flex items-center gap-1.5 rounded-full px-3 text-xs font-medium transition " +
+                    (pathname === "/dashboard"
+                      ? "text-emerald-600 dark:text-emerald-400"
+                      : "text-muted-foreground hover:text-emerald-600")
                   }
                 >
                   <LayoutDashboard className="h-3.5 w-3.5" />
@@ -263,12 +262,11 @@ function AuthenticatedLayout() {
                 </Link>
                 <Link
                   to="/technician/installs"
-                  className={({ isActive }) =>
-                    `h-8 inline-flex items-center gap-1.5 rounded-full px-3 text-xs font-medium transition ${
-                      isActive
-                        ? "text-emerald-600 dark:text-emerald-400"
-                        : "text-muted-foreground hover:text-emerald-600"
-                    }`
+                  className={
+                    "h-8 inline-flex items-center gap-1.5 rounded-full px-3 text-xs font-medium transition " +
+                    (pathname.startsWith("/technician/installs")
+                      ? "text-emerald-600 dark:text-emerald-400"
+                      : "text-muted-foreground hover:text-emerald-600")
                   }
                 >
                   <Package className="h-3.5 w-3.5" />

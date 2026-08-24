@@ -232,6 +232,8 @@ export function NeonPanel({
   className,
   bodyClassName,
   children,
+  onClick,
+  ...props
 }: {
   title?: ReactNode;
   subtitle?: ReactNode;
@@ -239,9 +241,13 @@ export function NeonPanel({
   className?: string;
   bodyClassName?: string;
   children: ReactNode;
-}) {
+} & React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn("bg-background p-4 transition-colors hover:bg-muted/20", className)}>
+    <div
+      className={cn("bg-background p-4 transition-colors hover:bg-muted/20", className)}
+      onClick={onClick}
+      {...props}
+    >
       {(title || action) && (
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="min-w-0">
