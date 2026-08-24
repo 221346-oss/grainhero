@@ -241,7 +241,7 @@ export function NeonPanel({
   className?: string;
   bodyClassName?: string;
   children: ReactNode;
-} & React.HTMLAttributes<HTMLDivElement>) {
+} & Omit<React.HTMLAttributes<HTMLDivElement>, "title">) {
   return (
     <div
       className={cn("bg-background p-4 transition-colors hover:bg-muted/20", className)}
