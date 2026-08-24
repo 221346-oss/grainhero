@@ -207,7 +207,7 @@ function AuthenticatedLayout() {
                 transition: { duration: 0.25, ease: [0.55, 0.085, 0.68, 0.53] },
               },
             }}
-            className="h-14 flex items-center gap-2 sm:gap-3 bg-background/90 backdrop-blur-md px-3 sm:px-6 border-b border-border/40 sticky top-0 z-30 w-full"
+            className="h-14 flex items-center gap-2 sm:gap-3 bg-transparent backdrop-blur-xl px-3 sm:px-6 border-b border-border/50 sticky top-0 z-30 w-full"
           >
             {/* Mobile menu button + logo */}
             <div className="flex md:hidden items-center gap-2 shrink-0">

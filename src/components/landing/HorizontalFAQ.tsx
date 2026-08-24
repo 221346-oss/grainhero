@@ -20,6 +20,7 @@ export function HorizontalFAQ() {
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
   const x = useTransform(scrollYProgress, [0, 1], ["2%", "-68%"]);
   const bar = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
+  const hint = useTransform(scrollYProgress, [0, 0.12], [1, 0]);
 
   return (
     <section id="faq" ref={ref} className="relative h-[240vh] bg-[#111512]">
@@ -50,6 +51,30 @@ export function HorizontalFAQ() {
         <div className="mx-auto mt-10 h-1 w-full max-w-7xl overflow-hidden rounded-full bg-[#FAFAF7]/10 px-5">
           <motion.div style={{ width: bar }} className="h-full rounded-full bg-[#A8E6A1]" />
         </div>
+
+        <motion.div
+          style={{ opacity: hint }}
+          aria-hidden="true"
+          className="mx-auto mt-5 flex w-full max-w-7xl items-center gap-2 px-5 sm:px-8"
+        >
+          <motion.svg
+            animate={{ y: [0, 4, 0] }}
+            transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#A8E6A1"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M12 5v14M19 12l-7 7-7-7" />
+          </motion.svg>
+          <span className="text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-[#FAFAF7]/45">
+            Swipe down to explore
+          </span>
+        </motion.div>
       </div>
     </section>
   );

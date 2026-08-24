@@ -246,7 +246,6 @@ function SettingsPage() {
             {(
               [
                 { value: "profile", label: "Profile" },
-                { value: "location", label: "Location" },
                 { value: "appearance", label: "Appearance" },
                 ...(isSuperAdmin ? [{ value: "platform", label: "Platform" }] : []),
               ] as { value: string; label: string }[]
@@ -281,7 +280,7 @@ function SettingsPage() {
           </div>
         </div>
 
-        <TabsContent className="max-w-md" value="profile">
+        <TabsContent className="max-w-2xl" value="profile">
           <Card>
             <CardHeader>
               <CardTitle>Profile</CardTitle>
@@ -374,10 +373,8 @@ function SettingsPage() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
 
-        <TabsContent className="max-w-md" value="location">
-          <Card>
+          <Card className="mt-6">
             <CardHeader>
               <CardTitle>Location</CardTitle>
               <CardDescription>Where your operation is based.</CardDescription>
