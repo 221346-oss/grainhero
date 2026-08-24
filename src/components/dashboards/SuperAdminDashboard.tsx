@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,6 +7,7 @@ import { WelcomeBanner } from "./WelcomeBanner";
 import { SuperKpiSummary } from "./SuperKpiSummary";
 import { SuperInsightsStrip } from "./SuperInsightsStrip";
 import { SuperBento } from "./SuperBento";
+import { CriticalAlertDetailSheet } from "./CriticalAlertDetailSheet";
 import { getPlatformMetrics, getPlatformOverviewWidgets } from "@/lib/platform-no-admin.functions";
 import { getSaasRevenueAnalytics } from "@/lib/revenue-analytics.functions";
 
@@ -14,6 +15,7 @@ export function SuperAdminDashboard({ name }: { name?: string }) {
   const metricsFn = useServerFn(getPlatformMetrics);
   const widgetsFn = useServerFn(getPlatformOverviewWidgets);
   const revenueFn = useServerFn(getSaasRevenueAnalytics);
+  const [alertsSheetOpen, setAlertsSheetOpen] = useState(false);
   const qc = useQueryClient();
 
   // Realtime invalidation
@@ -90,6 +92,7 @@ export function SuperAdminDashboard({ name }: { name?: string }) {
             totalUsers={m?.totalUsers ?? 0}
             ordersOpen={w?.ordersTotal ?? 0}
             criticalAlerts={m?.criticalAlerts ?? 0}
+            onCriticalAlertsClick={() => setAlertsSheetOpen(true)}
           />
         </div>
 
@@ -101,6 +104,7 @@ export function SuperAdminDashboard({ name }: { name?: string }) {
             ticketsTotal={reporting.totalTickets ?? 0}
             pipelineTotal={w?.pipelineTotal ?? 0}
             criticalAlerts={m?.criticalAlerts ?? 0}
+            onCriticalAlertsClick={() => setAlertsSheetOpen(true)}
           />
         </div>
 
@@ -113,6 +117,7 @@ export function SuperAdminDashboard({ name }: { name?: string }) {
           {/* Right: Would add pie charts or additional metrics here */}
         </div>
       </div>
+        <CriticalAlertDetailSheet open={alertsSheetOpen} onOpenChange={setAlertsSheetOpen} />
     </TooltipProvider>
   );
 }

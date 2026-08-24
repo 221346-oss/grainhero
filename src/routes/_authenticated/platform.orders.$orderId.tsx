@@ -160,22 +160,22 @@ function OrderDetailPage() {
             <CardHeader className="pb-2">
               <CardTitle className="text-sm">Buyer</CardTitle>
             </CardHeader>
-            <CardContent className="text-sm space-y-1">
-              <div className="font-medium">{buyer?.name ?? order.customer_name ?? "—"}</div>
-              <div className="text-muted-foreground">{buyer?.email ?? order.customer_email}</div>
-              <div className="text-muted-foreground">{buyer?.phone ?? "—"}</div>
+            <CardContent className="text-sm space-y-1 min-w-0 overflow-hidden">
+              <div className="font-medium truncate">{buyer?.name ?? order.customer_name ?? "—"}</div>
+              <div className="text-muted-foreground truncate">{buyer?.email ?? order.customer_email}</div>
+              <div className="text-muted-foreground truncate">{buyer?.phone ?? "—"}</div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm">Technician</CardTitle>
             </CardHeader>
-            <CardContent className="text-sm space-y-1">
+            <CardContent className="text-sm space-y-1 min-w-0 overflow-hidden">
               {technician ? (
                 <>
-                  <div className="font-medium">{technician.name}</div>
-                  <div className="text-muted-foreground">{technician.email}</div>
-                  <div className="text-muted-foreground">{technician.phone ?? "—"}</div>
+                  <div className="font-medium truncate">{technician.name}</div>
+                  <div className="text-muted-foreground truncate">{technician.email}</div>
+                  <div className="text-muted-foreground truncate">{technician.phone ?? "—"}</div>
                 </>
               ) : (
                 <div className="text-muted-foreground">Not assigned yet</div>
@@ -186,7 +186,7 @@ function OrderDetailPage() {
             <CardHeader className="pb-2">
               <CardTitle className="text-sm">Shipping</CardTitle>
             </CardHeader>
-            <CardContent className="text-sm space-y-1">
+            <CardContent className="text-sm space-y-1 min-w-0 overflow-hidden">
               {order.tracking_carrier ? (
                 <>
                   <div className="font-medium">{order.tracking_carrier}</div>

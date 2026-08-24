@@ -38,6 +38,7 @@ import {
 import { HairlineGrid, NeonPanel, neonFill, neonGrid, neonAxis } from "@/components/charts/neon";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import React from "react";
+import { CriticalAlertDetailSheet } from "@/components/dashboards/CriticalAlertDetailSheet";
 import { useTicketCount } from "@/hooks/useTicketCount";
 
 export const Route = createFileRoute("/_authenticated/platform/")({
@@ -230,6 +231,7 @@ function PlatformOverviewPage() {
     refetchInterval: 60_000,
   });
 
+  const [alertsSheetOpen, setAlertsSheetOpen] = useState(false);
   const navigate = useNavigate();
   const m = metricsQ.data;
   const w = widgetsQ.data;
@@ -328,13 +330,24 @@ function PlatformOverviewPage() {
                 <div className="text-[11px] text-muted-foreground">HubSpot syncs</div>
               </div>
             </NeonPanel>
-            <NeonPanel>
+            <NeonPanel
+              className="cursor-pointer hover:bg-muted/30 transition-colors"
+              onClick={() => setAlertsSheetOpen(true)}
+            >
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
                     Critical alerts
                   </span>
-                  <AlertTriangle className="w-3.5 h-3.5 text-muted-foreground/60" />
+                  <div className="flex items-center gap-1.5">
+                    {m && m.criticalAlerts > 0 && (
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-severity-critical opacity-75" />
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-severity-critical" />
+                      </span>
+                    )}
+                    <AlertTriangle className="w-3.5 h-3.5 text-muted-foreground/60" />
+                  </div>
                 </div>
                 <div
                   className={`text-2xl font-bold tabular-nums ${m && m.criticalAlerts > 0 ? "text-severity-critical" : "text-foreground"}`}
@@ -956,7 +969,12 @@ function PlatformOverviewPage() {
             {/* System alerts */}
             <div className="rounded-lg border border-border bg-card overflow-hidden">
               <div className="px-3 h-9 border-b border-border flex items-center justify-between">
-                <span className="text-[12px] font-medium">System alerts</span>
+                <span
+                  className="text-[12px] font-medium cursor-pointer hover:text-foreground transition-colors"
+                  onClick={() => setAlertsSheetOpen(true)}
+                >
+                  System alerts
+                </span>
                 {m && (
                   <span className="text-[11px] text-muted-foreground">
                     {m.criticalAlerts} critical of {m.totalAlerts} total
@@ -1021,6 +1039,7 @@ function PlatformOverviewPage() {
           </div>
         </div>
       )}
+        <CriticalAlertDetailSheet open={alertsSheetOpen} onOpenChange={setAlertsSheetOpen} />
     </AdminPageShell>
   );
 }

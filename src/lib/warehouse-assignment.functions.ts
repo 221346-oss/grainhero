@@ -213,6 +213,16 @@ export const assignTechnicianToOrder = createServerFn({ method: "POST" })
       orderUpdate.warehouse_id = data.warehouseId;
     }
 
+    // Always persist the scheduled date on the order (including same-tech
+    // reassignment) so the orders page shows it.
+    if (data.scheduledFor) {
+      orderUpdate.scheduled_install_date = data.scheduledFor;
+    } else if (data.scheduledFor === null && prevTechnicianId === data.technicianId) {
+      // Don't clear the schedule on same-tech reassignment if no new date given
+    } else {
+      orderUpdate.scheduled_install_date = null;
+    }
+
     await supabaseAdmin
       .from("hardware_orders" as never)
       .update(orderUpdate as never)

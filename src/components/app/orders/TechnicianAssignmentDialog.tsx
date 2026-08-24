@@ -39,6 +39,8 @@ interface TechnicianAssignmentDialogProps {
     id: string;
     admin_id: string;
     warehouse_id?: string | null;
+    assigned_technician_id?: string | null;
+    scheduled_install_date?: string | null;
     install_city?: string | null;
     plan_name?: string | null;
   };
@@ -74,8 +76,21 @@ export function TechnicianAssignmentDialog({
 }: TechnicianAssignmentDialogProps) {
   const qc = useQueryClient();
   const [selectedWarehouse, setSelectedWarehouse] = useState<string>(order.warehouse_id || "");
-  const [selectedTechnician, setSelectedTechnician] = useState<string>("");
-  const [scheduledFor, setScheduledFor] = useState<string>("");
+  const [selectedTechnician, setSelectedTechnician] = useState<string>(order.assigned_technician_id || "");
+  // Pre-fill date/time from existing scheduled_install_date
+  const [scheduleDate, setScheduleDate] = useState<string>(() => {
+    if (order.scheduled_install_date) {
+      return new Date(order.scheduled_install_date).toISOString().slice(0, 10);
+    }
+    return "";
+  });
+  const [scheduleTime, setScheduleTime] = useState<string>(() => {
+    if (order.scheduled_install_date) {
+      const d = new Date(order.scheduled_install_date);
+      return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+    }
+    return "09:00";
+  });
 
   const getWarehouses = useServerFn(getAdminWarehouses);
   const getTechnicians = useServerFn(getTechniciansForWarehouse);
@@ -143,14 +158,28 @@ export function TechnicianAssignmentDialog({
       return;
     }
 
+    // Build ISO datetime from separate date + time fields
+    let isoScheduled: string | null = null;
+    if (scheduleDate) {
+      const time = scheduleTime || "09:00";
+      isoScheduled = new Date(`${scheduleDate}T${time}:00`).toISOString();
+    }
+
+    // Warn if re-assigning same technician
+    if (
+      order.assigned_technician_id &&
+      order.assigned_technician_id === selectedTechnician &&
+      !isoScheduled
+    ) {
+      toast.warning("This technician is already assigned. Add a schedule date or pick a different technician.");
+      return;
+    }
+
     assignMutation.mutate({
       orderId: order.id,
       technicianId: selectedTechnician,
       warehouseId: selectedWarehouse || null,
-      // datetime-local gives "2026-08-31T12:43" (no seconds, no offset) which
-      // fails the server's strict ISO validation — normalize to a real ISO
-      // string so picking a date+time doesn't throw "Invalid datetime".
-      scheduledFor: scheduledFor ? new Date(scheduledFor).toISOString() : null,
+      scheduledFor: isoScheduled,
     });
   };
 
@@ -332,18 +361,42 @@ export function TechnicianAssignmentDialog({
             </div>
           )}
 
-          {/* Schedule Date/Time */}
+          {/* Same-technician reassignment warning */}
+          {order.assigned_technician_id &&
+            order.assigned_technician_id === selectedTechnician && (
+              <div className="p-2 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800">
+                ⚠️ This technician is already assigned to this order. Updating will change the
+                schedule.
+              </div>
+            )}
+
+          {/* Schedule Date + Time (separate inputs for reliable UX) */}
           <div className="space-y-2">
             <Label>Scheduled Installation (Optional)</Label>
-            <Input
-              type="datetime-local"
-              value={scheduledFor}
-              onChange={(e) => setScheduledFor(e.target.value)}
-              min={new Date().toISOString().slice(0, 16)}
-              className="h-9"
-            />
+            <div className="flex gap-2">
+              <Input
+                type="date"
+                value={scheduleDate}
+                onChange={(e) => {
+                  setScheduleDate(e.target.value);
+                  if (!scheduleTime) setScheduleTime("09:00");
+                }}
+                min={new Date().toISOString().slice(0, 10)}
+                className="h-9 flex-1"
+                placeholder="Select date"
+              />
+              <Input
+                type="time"
+                value={scheduleTime}
+                onChange={(e) => setScheduleTime(e.target.value)}
+                className="h-9 w-28"
+                placeholder="09:00"
+              />
+            </div>
             <p className="text-xs text-muted-foreground">
-              Leave empty to schedule later. Customer will be notified once scheduled.
+              {scheduleDate
+                ? `Scheduled for ${new Date(scheduleDate + "T" + (scheduleTime || "09:00")).toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })} at ${scheduleTime || "09:00"}`
+                : "Leave empty to schedule later. Customer will be notified once scheduled."}
             </p>
           </div>
         </div>
@@ -355,7 +408,10 @@ export function TechnicianAssignmentDialog({
           <Button
             onClick={handleAssign}
             disabled={
-              !selectedTechnician || !selectedTech?.is_available || assignMutation.isPending
+              !selectedTechnician ||
+              (!selectedTech?.is_available &&
+                selectedTechnician !== order.assigned_technician_id) ||
+              assignMutation.isPending
             }
           >
             {assignMutation.isPending ? (
@@ -364,7 +420,9 @@ export function TechnicianAssignmentDialog({
                 Assigning...
               </>
             ) : (
-              "Assign Technician"
+              order.assigned_technician_id === selectedTechnician
+                ? "Update Schedule"
+                : "Assign Technician"
             )}
           </Button>
         </SheetFooter>

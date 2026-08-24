@@ -198,19 +198,19 @@ function TechnicianInstallDetailPage() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">Buyer</CardTitle>
           </CardHeader>
-          <CardContent className="text-sm">
-            <div className="font-medium">{buyer?.name ?? "—"}</div>
-            <div className="text-muted-foreground">{buyer?.email ?? "—"}</div>
-            <div className="text-muted-foreground">{buyer?.phone ?? "—"}</div>
+          <CardContent className="text-sm min-w-0 overflow-hidden">
+            <div className="font-medium truncate">{buyer?.name ?? "—"}</div>
+            <div className="text-muted-foreground truncate">{buyer?.email ?? "—"}</div>
+            <div className="text-muted-foreground truncate">{buyer?.phone ?? "—"}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">Address</CardTitle>
           </CardHeader>
-          <CardContent className="text-sm">
-            <div>{install.hardware_orders?.install_address ?? "—"}</div>
-            <div className="text-muted-foreground">
+          <CardContent className="text-sm min-w-0 overflow-hidden">
+            <div className="truncate">{install.hardware_orders?.install_address ?? "—"}</div>
+            <div className="text-muted-foreground truncate">
               {install.hardware_orders?.install_city ?? ""}
             </div>
           </CardContent>

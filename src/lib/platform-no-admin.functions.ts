@@ -686,3 +686,56 @@ export const sendExpiryReminder = createServerFn({ method: "POST" })
     if (error) throw error;
     return { ok: true };
   });
+
+// ── Super admin: critical alerts with tenant + silo details ────────────────
+export const getCriticalAlertsForSuperAdmin = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: isSuperAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "super_admin",
+    });
+    if (!isSuperAdmin) throw new Error("Forbidden: super_admin only");
+
+    const { data: alerts, error } = await context.supabase
+      .from("grain_alerts")
+      .select(
+        "id, alert_id, title, message, priority, status, source, alert_type, triggered_at, acknowledged_at, resolved_at, admin_id, silo_id, silos(id, silo_id, name)",
+      )
+      .eq("priority", "critical")
+      .order("triggered_at", { ascending: false })
+      .limit(50);
+    if (error) throw error;
+
+    // Resolve tenant names from admin_id
+    const adminIds = [...new Set((alerts ?? []).map((a: any) => a.admin_id).filter(Boolean))];
+    let profileMap = new Map<string, { name: string | null; email: string | null }>();
+    if (adminIds.length > 0) {
+      const { data: profiles } = await context.supabase
+        .from("profiles")
+        .select("id, name, email")
+        .in("id", adminIds);
+      for (const p of profiles ?? []) {
+        profileMap.set(p.id, { name: p.name, email: p.email });
+      }
+    }
+
+    return {
+      alerts: (alerts ?? []).map((a: any) => ({
+        id: a.id,
+        alert_id: a.alert_id,
+        title: a.title,
+        message: a.message,
+        priority: a.priority,
+        status: a.status,
+        source: a.source,
+        alert_type: a.alert_type,
+        triggered_at: a.triggered_at,
+        acknowledged_at: a.acknowledged_at,
+        resolved_at: a.resolved_at,
+        tenant_name: profileMap.get(a.admin_id)?.name ?? profileMap.get(a.admin_id)?.email ?? "Unknown",
+        silo_name: a.silos?.name ?? null,
+        silo_id: a.silo_id,
+      })),
+    };
+  });

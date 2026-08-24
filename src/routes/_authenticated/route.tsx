@@ -7,7 +7,7 @@ import { AppSearch } from "@/components/app/AppSearch";
 import { AppSidebar, type SidebarMode } from "@/components/app/AppSidebar";
 import { DashboardQuickTabs } from "@/components/app/DashboardQuickTabs";
 import { ProfileMenu } from "@/components/app/ProfileMenu";
-import { Sun, Moon, Menu } from "lucide-react";
+import { Sun, Moon, Menu, LayoutDashboard, Package } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { SessionGuard } from "@/components/app/SessionGuard";
 import { OnboardingTour } from "@/components/app/OnboardingTour";
@@ -22,6 +22,7 @@ import { getStoredThemeMode, toggleThemeMode, type ThemeMode } from "@/lib/theme
 import TextShimmer from "@/components/ui/text-shimmer";
 import { AppShellSkeleton } from "@/components/app/AppShellSkeleton";
 import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
+import { useIsGlobalTechnician } from "@/hooks/useIsGlobalTechnician";
 import { logSecurityEvent } from "@/lib/security-events.functions";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -144,6 +145,7 @@ function AuthenticatedLayout() {
     }
   };
   const [headerVisible, setHeaderVisible] = useState(true);
+  const { isTechnician } = useIsGlobalTechnician();
 
   useEffect(() => {
     const stored = getStoredThemeMode();
@@ -198,10 +200,12 @@ function AuthenticatedLayout() {
       <OnboardingTour />
       <BugReportButton />
       <div className="app-scope min-h-screen flex w-full bg-white">
-        <div data-tour="sidebar" className="contents">
-          <AppSidebar mode={sidebarMode} onModeChange={setSidebarMode} />
-          <MobileAdminNav isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        </div>
+        {!isTechnician && (
+          <div data-tour="sidebar" className="contents">
+            <AppSidebar mode={sidebarMode} onModeChange={setSidebarMode} />
+            <MobileAdminNav isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+          </div>
+        )}
         <div className="flex-1 flex flex-col min-w-0">
           <ImpersonationBanner />
           <PlanExpiryBanner />
@@ -242,7 +246,38 @@ function AuthenticatedLayout() {
             <div className="flex-1 max-w-2xl mx-auto w-full min-w-0">
               <AppSearch />
             </div>
-            <DashboardQuickTabs />
+            {isTechnician ? (
+              <nav className="hidden md:flex items-center gap-1 shrink-0">
+                <Link
+                  to="/dashboard"
+                  className={({ isActive }) =>
+                    `h-8 inline-flex items-center gap-1.5 rounded-full px-3 text-xs font-medium transition ${
+                      isActive
+                        ? "text-emerald-600 dark:text-emerald-400"
+                        : "text-muted-foreground hover:text-emerald-600"
+                    }`
+                  }
+                >
+                  <LayoutDashboard className="h-3.5 w-3.5" />
+                  Overview
+                </Link>
+                <Link
+                  to="/technician/installs"
+                  className={({ isActive }) =>
+                    `h-8 inline-flex items-center gap-1.5 rounded-full px-3 text-xs font-medium transition ${
+                      isActive
+                        ? "text-emerald-600 dark:text-emerald-400"
+                        : "text-muted-foreground hover:text-emerald-600"
+                    }`
+                  }
+                >
+                  <Package className="h-3.5 w-3.5" />
+                  My Installs
+                </Link>
+              </nav>
+            ) : (
+              <DashboardQuickTabs />
+            )}
             <AdminUpgradeLink />
             <TicketSidePanel />
             {/* Dark / Light toggle */}

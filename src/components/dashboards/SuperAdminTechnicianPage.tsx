@@ -717,21 +717,21 @@ function InstallDetailDrawer({
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm">Buyer</CardTitle>
               </CardHeader>
-              <CardContent className="text-sm">
-                <div className="font-medium">{buyer?.name ?? order.customer_name ?? "—"}</div>
-                <div className="text-muted-foreground text-xs">
+              <CardContent className="text-sm min-w-0 overflow-hidden">
+                <div className="font-medium truncate">{buyer?.name ?? order.customer_name ?? "—"}</div>
+                <div className="text-muted-foreground text-xs truncate">
                   {buyer?.email ?? order.customer_email ?? "—"}
                 </div>
-                <div className="text-muted-foreground text-xs">{buyer?.phone ?? "—"}</div>
+                <div className="text-muted-foreground text-xs truncate">{buyer?.phone ?? "—"}</div>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm">Address</CardTitle>
               </CardHeader>
-              <CardContent className="text-sm">
-                <div>{order.install_address ?? order.shipping_address ?? "—"}</div>
-                <div className="text-muted-foreground text-xs">
+              <CardContent className="text-sm min-w-0 overflow-hidden">
+                <div className="truncate">{order.install_address ?? order.shipping_address ?? "—"}</div>
+                <div className="text-muted-foreground text-xs truncate">
                   {order.install_city ?? order.shipping_city ?? ""}
                 </div>
               </CardContent>

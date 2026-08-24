@@ -10,7 +10,7 @@ const fmtPKR = new Intl.NumberFormat("en-PK", {
   maximumFractionDigits: 0,
 });
 
-type Row = { label: string; value: number | string; to: string; danger?: boolean };
+type Row = { label: string; value: number | string; to: string; danger?: boolean; onClick?: () => void; showPulse?: boolean };
 
 export function SuperKpiSummary({
   mrr,
@@ -21,6 +21,7 @@ export function SuperKpiSummary({
   totalUsers,
   ordersOpen,
   criticalAlerts,
+  onCriticalAlertsClick,
 }: {
   mrr: number;
   mrrDeltaPct?: number;
@@ -30,6 +31,7 @@ export function SuperKpiSummary({
   totalUsers: number;
   ordersOpen: number;
   criticalAlerts: number;
+  onCriticalAlertsClick?: () => void;
 }) {
   // Calculate platform health score
   const calculateHealthScore = () => {
@@ -67,6 +69,8 @@ export function SuperKpiSummary({
       value: criticalAlerts,
       to: "/platform/health",
       danger: criticalAlerts > 0,
+      onClick: onCriticalAlertsClick,
+      showPulse: criticalAlerts > 0,
     },
   ];
   const positive = (mrrDeltaPct ?? 0) >= 0;
@@ -193,18 +197,36 @@ export function SuperKpiSummary({
         {/* Platform Metrics - Compact Hairline Grid (No Icons) */}
         <HairlineGrid cols="grid-cols-1">
           {rows.map((r) => {
-            return (
-              <Link key={r.label} to={r.to}>
+            const content = (
                 <NeonPanel className="hover:bg-muted/30 cursor-pointer transition-colors py-1.5 px-2">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-medium text-muted-foreground">{r.label}</span>
-                    <span
-                      className={`text-lg font-bold tabular-nums ${r.danger ? "text-severity-critical" : "text-foreground"}`}
-                    >
-                      {r.value}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      {r.showPulse && (
+                        <span className="relative flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-severity-critical opacity-75" />
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-severity-critical" />
+                        </span>
+                      )}
+                      <span
+                        className={`text-lg font-bold tabular-nums ${r.danger ? "text-severity-critical" : "text-foreground"}`}
+                      >
+                        {r.value}
+                      </span>
+                    </div>
                   </div>
                 </NeonPanel>
+            );
+            if (r.onClick) {
+              return (
+                <div key={r.label} onClick={r.onClick}>
+                  {content}
+                </div>
+              );
+            }
+            return (
+              <Link key={r.label} to={r.to}>
+                {content}
               </Link>
             );
           })}
