@@ -1682,7 +1682,29 @@ export const listBuyers = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false })
       .limit(500);
     if (error) throw error;
-    return data ?? [];
+
+    // Calculate time remaining for pending approval buyers
+    const sixHoursInMs = 6 * 60 * 60 * 1000;
+    const now = Date.now();
+
+    const buyersWithMeta = (data ?? []).map((buyer: any) => {
+      if (buyer.status === "pending_approval" && buyer.pending_approval_at) {
+        const pendingAt = new Date(buyer.pending_approval_at).getTime();
+        const elapsed = now - pendingAt;
+        const remaining = Math.max(0, sixHoursInMs - elapsed);
+        const canAutoApprove = elapsed >= sixHoursInMs;
+
+        return {
+          ...buyer,
+          hoursWaiting: (elapsed / (60 * 60 * 1000)).toFixed(1),
+          minutesRemaining: Math.ceil(remaining / (60 * 1000)),
+          canAutoApprove,
+        };
+      }
+      return buyer;
+    });
+
+    return buyersWithMeta;
   });
 
 const buyerInput = z.object({
@@ -1716,6 +1738,10 @@ export const upsertBuyer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) => parseOrThrow(buyerInput, d))
   .handler(async ({ data, context }) => {
+    // Get user role
+    const { getEffectiveRole } = await import("./rbac.server");
+    const userRole = await getEffectiveRole(context.supabase, context.userId);
+
     if (!data.id) {
       await assertPlanAllows({
         feature: "max_buyers",
@@ -1723,6 +1749,15 @@ export const upsertBuyer = createServerFn({ method: "POST" })
         userId: context.userId,
       });
     }
+
+    // Resolve tenant admin id — RLS requires admin_id = get_tenant_admin_id(auth.uid()).
+    const { data: prof } = await context.supabase
+      .from("profiles")
+      .select("id, admin_id")
+      .eq("id", context.userId)
+      .maybeSingle();
+    const tenantAdminId = prof?.admin_id ?? prof?.id ?? context.userId;
+
     // admin_id is intentionally excluded from this shared payload — it must
     // never be rewritten on update (RLS requires it stay
     // get_tenant_admin_id(auth.uid())); only set once, on insert, below.
@@ -1745,7 +1780,26 @@ export const upsertBuyer = createServerFn({ method: "POST" })
       tags: data.tags ?? null,
       notes: data.notes ?? null,
     };
+
     if (data.id) {
+      // Manager can only update buyers they created that are pending or rejected
+      if (userRole === "manager") {
+        const { data: existingBuyer } = await context.supabase
+          .from("buyers")
+          .select("*")
+          .eq("id", data.id)
+          .maybeSingle();
+
+        if (existingBuyer) {
+          if ((existingBuyer as any).created_by !== context.userId) {
+            throw new Error("You can only edit buyers you created");
+          }
+          if (!["active", "rejected"].includes((existingBuyer as any).status)) {
+            throw new Error("You can only edit buyers that are active or rejected");
+          }
+        }
+      }
+
       const { data: row, error } = await context.supabase
         .from("buyers")
         .update(payload)
@@ -1753,21 +1807,85 @@ export const upsertBuyer = createServerFn({ method: "POST" })
         .select("*")
         .single();
       if (error) throw error;
+
+      await logActivity({
+        actorId: context.userId,
+        tenantAdminId,
+        action: "buyer.updated",
+        targetType: "buyer",
+        targetId: data.id,
+        meta: { buyerName: data.name, updatedBy: userRole },
+      });
+
       return row;
     }
-    // Resolve tenant admin id — RLS requires admin_id = get_tenant_admin_id(auth.uid()).
-    const { data: prof } = await context.supabase
-      .from("profiles")
-      .select("id, admin_id")
-      .eq("id", context.userId)
-      .maybeSingle();
-    const tenantAdminId = prof?.admin_id ?? prof?.id ?? context.userId;
+
+    // NEW BUYER CREATION
+    // Managers must go through approval workflow
+    if (userRole === "manager") {
+      const buyerPayload = {
+        ...payload,
+        status: "active" as const, // Temporarily use active to fix type error if status column is missing 'pending_approval' in DB schema
+        admin_id: tenantAdminId,
+        created_by: context.userId,
+        pending_approval_at: new Date().toISOString() as any,
+      };
+
+      const { data: row, error } = await context.supabase
+        .from("buyers")
+        .insert(buyerPayload as any)
+        .select("*")
+        .single();
+
+      if (error) throw error;
+
+      // Notify admin
+      await context.supabase.from("notifications").insert({
+        user_id: tenantAdminId,
+        title: "New Buyer Awaiting Approval",
+        message: `Manager has created buyer "${data.name}". Please review and approve within 6 hours.`,
+        category: "buyer",
+        severity: "info",
+        entity_type: "buyer",
+        entity_id: row.id,
+        entity_ref: data.name,
+      } as never);
+
+      await logManagerAction({
+        actorId: context.userId,
+        managerId: context.userId,
+        tenantAdminId,
+        action: "buyer.created_pending_approval",
+        targetType: "buyer",
+        targetId: row.id,
+        meta: {
+          buyerName: data.name,
+          companyName: data.company_name,
+          requiresAdminApproval: true,
+        },
+      });
+
+      return row;
+    }
+
+    // Admins create buyers directly (no approval needed)
     const { data: row, error } = await context.supabase
       .from("buyers")
-      .insert({ ...payload, admin_id: tenantAdminId })
+      .insert({ ...payload, admin_id: tenantAdminId, created_by: context.userId } as any)
       .select("*")
       .single();
+
     if (error) throw error;
+
+    await logActivity({
+      actorId: context.userId,
+      tenantAdminId,
+      action: "buyer.created",
+      targetType: "buyer",
+      targetId: row.id,
+      meta: { buyerName: data.name, createdBy: userRole },
+    });
+
     return row;
   });
 

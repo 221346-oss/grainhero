@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
 import { z } from "zod";
 import { useServerFn } from "@tanstack/react-start";
@@ -13,11 +13,14 @@ import { claimPaidCheckoutForUser } from "@/lib/stripe-checkout.functions";
 const PENDING_SESSION_KEY = "grainhero.pendingCheckoutSession";
 
 const search = z.object({
-  email: z.string().email(),
+  email: z.string().email().optional(),
 });
 
 export const Route = createFileRoute("/auth/verify-otp")({
   validateSearch: (s) => search.parse(s),
+  beforeLoad: ({ search: s }) => {
+    if (!s.email) throw redirect({ to: "/auth/login" });
+  },
   head: () => ({
     meta: [
       { title: "Enter your code — GrainHero" },
@@ -33,6 +36,7 @@ export const Route = createFileRoute("/auth/verify-otp")({
 function VerifyOtpPage() {
   const navigate = useNavigate();
   const { email } = Route.useSearch();
+  if (!email) return null;
   const claimFn = useServerFn(claimPaidCheckoutForUser);
 
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
@@ -149,7 +153,7 @@ function VerifyOtpPage() {
 
     // Supabase signInWithOtp sends type "email" OTP
     const { error } = await supabase.auth.verifyOtp({
-      email,
+      email: email!,
       token,
       type: "email",
     });
@@ -165,7 +169,7 @@ function VerifyOtpPage() {
       }
 
       const isExpiredOrInvalid = error.message.toLowerCase().includes("expired") || error.message.toLowerCase().includes("invalid");
-      void logFailedSignIn({ data: { email, reason: error.message } }).catch(() => {});
+      void logFailedSignIn({ data: { email: email!, reason: error.message } }).catch(() => {});
       setMsg({
         type: "error",
         text: isExpiredOrInvalid
@@ -186,7 +190,7 @@ function VerifyOtpPage() {
     setMsg(null);
 
     const { error } = await supabase.auth.signInWithOtp({
-      email,
+      email: email!,
       options: { shouldCreateUser: false },
     });
 

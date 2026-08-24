@@ -84,7 +84,7 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
       items: [
         { id: "health", label: "Health", icon: Activity, link: "/platform/health" },
         { id: "monitoring", label: "Monitoring", icon: Activity, link: "/platform/monitoring" },
-        { id: "field-incidents", label: "Field Incidents", icon: AlertTriangle, link: "/platform/field-incidents" },
+        { id: "field-incidents", label: "Field Incidents", icon: AlertTriangle, link: "/monitoring" },
       ],
     },
     {

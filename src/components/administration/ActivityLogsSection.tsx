@@ -101,7 +101,6 @@ export function ActivityLogsSection() {
       : "Your own actions.";
 
   const tiles = [
-    { key: "all", label: "All events", value: total },
     { key: "managers", label: "Manager Actions", value: managerActions, isSpecial: true },
     { key: "batch", label: "Batch", value: catCounts.batch ?? 0 },
     { key: "spoilage", label: "Spoilage", value: catCounts.spoilage ?? 0 },
@@ -123,14 +122,10 @@ export function ActivityLogsSection() {
 
       <AdminSummaryTiles
         tiles={tiles}
-        active={showManagerOnly ? "managers" : category === "all" ? "all" : category}
+        active={showManagerOnly ? "managers" : category === "all" ? "" : category}
         onSelect={(k) => {
           if (k === "managers") {
             setShowManagerOnly(!showManagerOnly);
-            setPage(1);
-          } else if (k === "all") {
-            setShowManagerOnly(false);
-            setCategory("all");
             setPage(1);
           } else {
             setShowManagerOnly(false);
@@ -138,7 +133,7 @@ export function ActivityLogsSection() {
             setPage(1);
           }
         }}
-        columns={6}
+        columns={5}
       />
 
       <AdminFilterBar onSubmit={applySearch}>

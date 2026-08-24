@@ -131,12 +131,12 @@ export function RecentAlertsCard() {
   const rows = data?.recentAlerts ?? [];
   return (
     <Card className="border-border/60 shadow-sm">
-      <CardHeaderLink to="/grain-alerts" title="Alerts" count={rows.length} />
+      <CardHeaderLink to="/dashboard" title="Alerts" count={rows.length} />
       <CardContent className="p-2 pt-0">
         {rows.length === 0 && <p className="text-xs text-muted-foreground p-2">All clear</p>}
         <div className="divide-y divide-border/40">
           {rows.slice(0, 5).map((a) => (
-            <Link key={a.id} to="/grain-alerts" search={{ priority: "all" }} className="flex items-center gap-2 px-2 py-1.5 text-xs hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5 transition rounded">
+            <Link key={a.id} to="/dashboard" className="flex items-center gap-2 px-2 py-1.5 text-xs hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5 transition rounded">
               <span className={`h-2 w-2 rounded-full shrink-0 ${priorityDot(String(a.priority))}`} />
               <span className="truncate flex-1">{a.title}</span>
             </Link>

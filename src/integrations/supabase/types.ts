@@ -2926,6 +2926,61 @@ export type Database = {
           },
         ]
       }
+      grain_alert_comments: {
+        Row: {
+          author_name: string
+          author_role: string
+          created_at: string
+          id: string
+          incident_id: string
+          message: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          author_name: string
+          author_role: string
+          created_at?: string
+          id?: string
+          incident_id: string
+          message: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          author_name?: string
+          author_role?: string
+          created_at?: string
+          id?: string
+          incident_id?: string
+          message?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grain_alert_comments_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "grain_alerts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grain_alert_comments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grain_alert_comments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "technician_performance_v"
+            referencedColumns: ["technician_id"]
+          },
+        ]
+      }
       grain_alerts: {
         Row: {
           acknowledged_at: string | null
@@ -2934,6 +2989,7 @@ export type Database = {
           actuator_id: string | null
           admin_id: string
           ai_context: Json | null
+          ai_recommendation: string | null
           alert_id: string
           alert_type: string | null
           assigned_to: string | null
@@ -2950,6 +3006,7 @@ export type Database = {
           escalation_level: number | null
           id: string
           message: string
+          notification_sent: boolean | null
           notifications_sent: Json | null
           priority: Database["public"]["Enums"]["alert_priority"]
           recipient_id: string | null
@@ -2977,6 +3034,7 @@ export type Database = {
           actuator_id?: string | null
           admin_id: string
           ai_context?: Json | null
+          ai_recommendation?: string | null
           alert_id: string
           alert_type?: string | null
           assigned_to?: string | null
@@ -2993,6 +3051,7 @@ export type Database = {
           escalation_level?: number | null
           id?: string
           message: string
+          notification_sent?: boolean | null
           notifications_sent?: Json | null
           priority: Database["public"]["Enums"]["alert_priority"]
           recipient_id?: string | null
@@ -3020,6 +3079,7 @@ export type Database = {
           actuator_id?: string | null
           admin_id?: string
           ai_context?: Json | null
+          ai_recommendation?: string | null
           alert_id?: string
           alert_type?: string | null
           assigned_to?: string | null
@@ -3036,6 +3096,7 @@ export type Database = {
           escalation_level?: number | null
           id?: string
           message?: string
+          notification_sent?: boolean | null
           notifications_sent?: Json | null
           priority?: Database["public"]["Enums"]["alert_priority"]
           recipient_id?: string | null
@@ -9157,6 +9218,9 @@ export type Database = {
         | "resolved"
         | "escalated"
         | "closed"
+        | "open"
+        | "investigating"
+        | "dismissed"
       app_role:
         | "super_admin"
         | "admin"
@@ -9202,6 +9266,16 @@ export type Database = {
       device_status: "active" | "offline" | "error" | "maintenance"
       dispute_status: "open" | "under_review" | "resolved" | "rejected"
       grain_type: "Wheat" | "Rice" | "Maize" | "Corn" | "Barley" | "Sorghum"
+      hardware_order_status:
+        | "pending_payment"
+        | "new"
+        | "approved"
+        | "tech_assigned"
+        | "installed"
+        | "live"
+        | "cancelled"
+        | "completed"
+        | "paid"
       invitation_status: "pending" | "accepted" | "declined"
       listing_status: "draft" | "active" | "paused" | "sold_out" | "archived"
       listing_visibility: "private" | "buyer_network" | "public"
@@ -9384,6 +9458,9 @@ export const Constants = {
         "resolved",
         "escalated",
         "closed",
+        "open",
+        "investigating",
+        "dismissed",
       ],
       app_role: [
         "super_admin",
@@ -9434,6 +9511,17 @@ export const Constants = {
       device_status: ["active", "offline", "error", "maintenance"],
       dispute_status: ["open", "under_review", "resolved", "rejected"],
       grain_type: ["Wheat", "Rice", "Maize", "Corn", "Barley", "Sorghum"],
+      hardware_order_status: [
+        "pending_payment",
+        "new",
+        "approved",
+        "tech_assigned",
+        "installed",
+        "live",
+        "cancelled",
+        "completed",
+        "paid",
+      ],
       invitation_status: ["pending", "accepted", "declined"],
       listing_status: ["draft", "active", "paused", "sold_out", "archived"],
       listing_visibility: ["private", "buyer_network", "public"],

@@ -729,6 +729,7 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
           </CardContent>
         </Card>
       ) : (
+<<<<<<< HEAD
         <>
           {/* Desktop / tablet: full table, unchanged */}
           <div className="hidden md:block rounded-xl border bg-card/60 overflow-hidden">
@@ -792,6 +793,124 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
                 tab
               </span>
             </div>
+=======
+        <div className="rounded-xl border bg-card/60 overflow-hidden">
+          {/* Fixed height container for 4 entries with vertical scroll */}
+          <div className="h-[280px] overflow-y-auto">
+            <Table className="text-xs">
+              <TableHeader className="sticky top-0 bg-card/95 backdrop-blur z-10">
+                <TableRow className="[&_th]:h-9 [&_th]:text-[10px] [&_th]:uppercase [&_th]:tracking-wider [&_th]:text-muted-foreground [&_th]:font-medium">
+                  <TableHead>Batch</TableHead>
+                  <TableHead>Grain</TableHead>
+                  <TableHead>Supplier</TableHead>
+                  <TableHead>Silo</TableHead>
+                  <TableHead className="text-right">Intake (kg)</TableHead>
+                  <TableHead className="text-right">Remaining (kg)</TableHead>
+                  <TableHead>Intake date</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rows.map((b) => {
+                  const supplier = b.farmer_name ?? "—";
+                  const intake = Number(b.quantity_kg ?? 0);
+                  const remaining = Math.max(0, intake - Number(b.dispatched_quantity_kg ?? 0));
+                  const intakeDate = b.intake_date ?? null;
+                  return (
+                    <TableRow
+                      key={b.id}
+                      className="[&_td]:py-2 hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5 transition cursor-pointer"
+                      onClick={() => { setSelected(b); setViewOpen(true); }}
+                    >
+                      <TableCell className="font-medium">{b.batch_id}</TableCell>
+                      <TableCell className="text-muted-foreground">{b.grain_type}</TableCell>
+                      <TableCell className="text-muted-foreground truncate max-w-[140px]">{supplier}</TableCell>
+                      <TableCell className="text-muted-foreground truncate max-w-[140px]">{b.silos?.name ?? "—"}</TableCell>
+                      <TableCell className="text-right tabular-nums">{intake.toLocaleString()}</TableCell>
+                      <TableCell className="text-right tabular-nums font-medium">{remaining.toLocaleString()}</TableCell>
+                      <TableCell className="text-muted-foreground whitespace-nowrap">{intakeDate ? new Date(intakeDate).toLocaleDateString() : "—"}</TableCell>
+                      <TableCell><StatusBadge value={b.status} qcPassedAt={(b as any).qc_passed_at} /></TableCell>
+                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                        <RowActions
+                          actions={[
+                            ...(myRole === "technician" &&
+                            b.assigned_technician_id === myId &&
+                            ["pending_qc", "qc_failed"].includes(b.status)
+                              ? [
+                                  {
+                                    label: b.status === "qc_failed" ? "Resubmit QC" : "Submit QC",
+                                    icon: FlaskConical,
+                                    onClick: () => openQC(b, "submit" as QCMode),
+                                  },
+                                ]
+                              : []),
+                            ...(["manager", "admin"].includes(myRole) && b.status === "qc_submitted"
+                              ? [
+                                  {
+                                    label: "Review QC",
+                                    icon: FlaskConical,
+                                    onClick: () => openQC(b, "review" as QCMode),
+                                  },
+                                ]
+                              : []),
+                            ...(myRole === "admin" && b.status === "qc_passed"
+                              ? [
+                                  {
+                                    label: "Final review",
+                                    icon: ShieldCheck,
+                                    onClick: () => openQC(b, "admin" as QCMode),
+                                  },
+                                ]
+                              : []),
+                            ...(myRole === "admin" && b.status === "admin_rejected"
+                              ? [
+                                  {
+                                    label: "Resolve rejection",
+                                    icon: Undo2,
+                                    onClick: () => openQC(b, "resolve" as QCMode),
+                                  },
+                                ]
+                              : []),
+                            {
+                              label: "View",
+                              icon: Eye,
+                              onClick: () => {
+                                setSelected(b);
+                                setViewOpen(true);
+                              },
+                            },
+                            ...(isManager && b.status !== "pending_approval"
+                              ? []
+                              : [{ label: "Edit", icon: Edit2, onClick: () => openEdit(b) }]),
+                            {
+                              label: "QR code",
+                              icon: QrCode,
+                              onClick: () => {
+                                setSelected(b);
+                                setQrOpen(true);
+                              },
+                            },
+                            {
+                              label: "Log spoilage",
+                              icon: AlertTriangle,
+                              onClick: () => openSpoilage(b),
+                            },
+                            {
+                              label: "Delete",
+                              icon: Trash2,
+                              destructive: true,
+                              onClick: () => setDeleteId(b.id),
+                            },
+                          ]}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+>>>>>>> origin/main
           </div>
 
           {/* Mobile: stacked cards — same rows, same tap-through to the View dialog */}

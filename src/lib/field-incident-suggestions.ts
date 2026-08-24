@@ -7,7 +7,7 @@
  *   - platform.field-incidents page (search bar suggestions)
  */
 
-export const INCIDENT_SUGGESTIONS: Record<"technician" | "admin", string[]> = {
+export const INCIDENT_SUGGESTIONS: Record<"technician" | "admin" | "manager", string[]> = {
   technician: [
     "Conveyor Motor Overheating",
     "Silo Temperature Sensor Malfunction",
@@ -40,9 +40,28 @@ export const INCIDENT_SUGGESTIONS: Record<"technician" | "admin", string[]> = {
     "IT / System Access Issue for Field Staff",
     "Policy Violation — Requires HR Escalation",
   ],
+  manager: [
+    "Operational Inefficiency — Process Review Needed",
+    "Team Performance Issue — Staff Evaluation",
+    "Quality Control Failure — Batch Rejection",
+    "Schedule Conflict — Resource Allocation",
+    "Training Gap — Staff Development Needed",
+    "Equipment Maintenance Schedule Overdue",
+    "Production Target Shortfall",
+    "Health & Safety Protocol Violation",
+    "Cost Overrun — Budget Review Required",
+    "Customer Service Escalation",
+    "Workflow Bottleneck Identification",
+    "Technology Upgrade Recommendation",
+    "Cross-Department Coordination Issue",
+  ],
 };
 
-/** Flat deduplicated list of all suggestions (both roles). */
+/** Flat deduplicated list of all suggestions (all roles). */
 export const ALL_SUGGESTIONS: string[] = Array.from(
-  new Set([...INCIDENT_SUGGESTIONS.technician, ...INCIDENT_SUGGESTIONS.admin]),
+  new Set([
+    ...INCIDENT_SUGGESTIONS.technician, 
+    ...INCIDENT_SUGGESTIONS.admin, 
+    ...INCIDENT_SUGGESTIONS.manager
+  ]),
 );

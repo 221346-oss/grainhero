@@ -52,7 +52,7 @@ function TitleCombobox({
 }: {
   value: string;
   onChange: (v: string) => void;
-  targetRole: "admin" | "technician";
+  targetRole: "admin" | "manager" | "technician";
   error?: boolean;
 }) {
   const [open, setOpen]     = useState(false);
@@ -178,7 +178,7 @@ export function ReportTicketDialog({
 
   const [title,        setTitle]        = useState("");
   const [severity,     setSeverity]     = useState<"low" | "medium" | "critical">("medium");
-  const [targetRole,   setTargetRole]   = useState<"admin" | "technician">("technician");
+  const [targetRole,   setTargetRole]   = useState<"admin" | "manager" | "technician">("technician");
   const [reporterName, setReporterName] = useState("");
   const [role,         setRole]         = useState("manager");
   const [description,  setDescription]  = useState("");
@@ -295,7 +295,7 @@ export function ReportTicketDialog({
             <Select
               value={targetRole}
               onValueChange={(v) => {
-                setTargetRole(v as "admin" | "technician");
+                setTargetRole(v as "admin" | "manager" | "technician");
                 setErrors((e) => ({ ...e, targetRole: "" }));
               }}
             >

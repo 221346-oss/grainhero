@@ -331,7 +331,7 @@ function SensorsPage() {
               <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
               <div>
                 <div className="font-medium">You have no warehouses yet.</div>
-                <Link to="/grain-operations" search={{ tab: "warehouses" }} className="underline">Create a warehouse first</Link> — sensors must be attached to a silo inside a warehouse.
+                <Link to="/grain-operations" search={{ tab: "silos" }} className="underline">Create a warehouse first</Link> — sensors must be attached to a silo inside a warehouse.
               </div>
             </div>
           )}

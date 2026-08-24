@@ -36,7 +36,9 @@ const NAV_TARGETS: NavTarget[] = [
   { label: "Buyers", to: "/grain-operations", search: { tab: "buyers" }, group: "Operations", keywords: "customers dispatch", operationalOnly: true },
   { label: "Sensors", to: "/sensors", group: "Operations", keywords: "iot devices" },
   { label: "Actuators", to: "/actuators", group: "Operations", keywords: "iot control" },
-  { label: "Alerts", to: "/grain-alerts", group: "Operations" },
+  { label: "Incidents", to: "/incidents", group: "Operations" },
+  { label: "Maintenance", to: "/maintenance", group: "Operations" },
+  { label: "Environmental", to: "/environmental", group: "Operations", keywords: "climate weather" },
   // Insights
   { label: "Intelligence", to: "/intelligence", group: "Insights", keywords: "ai predictions analytics ml models reports charts graphs data visualization" },
   { label: "Administration", to: "/administration", group: "Admin", keywords: "team members users security activity logs audit history" },

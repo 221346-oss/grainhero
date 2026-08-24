@@ -5,12 +5,23 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState, type ComponentType } from "react";
 import { motion } from "framer-motion";
 import { RevenueSection } from "@/components/business/RevenueSection";
-import { SubscriptionSection } from "@/components/business/SubscriptionSection";
-import { InsuranceSection } from "@/components/business/InsuranceSection";
-import { Wallet, CreditCard, Shield, TrendingUp, TrendingDown } from "lucide-react";
+import { Wallet, Download, FileSpreadsheet, FileText, MoreHorizontal } from "lucide-react";
 import { getRevenueOverview, getMySubscription } from "@/lib/billing.functions";
 import { RevenueChart } from "@/components/business/RevenueChart";
 import { getMyRole } from "@/lib/roles.functions";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+} from "@/components/ui/dropdown-menu";
+import { downloadCsv, downloadPdf, type ExportColumn } from "@/lib/csv-pdf-export";
 
 export const Route = createFileRoute("/_authenticated/business")({
   head: () => ({
@@ -32,8 +43,6 @@ const TABS: { key: Tab; label: string; icon: ComponentType<{ className?: string 
   { key: "subscription", label: "Subscription", icon: CreditCard },
 ];
 
-const BAR_COLORS = Array.from({ length: 12 }, () => "from-primary/70 to-primary");
-
 function money(n: number) {
   return `PKR ${Number(n ?? 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 }
@@ -50,24 +59,143 @@ function BusinessWorkspace() {
   const { data: roleData } = useQuery({ queryKey: ["my-role"], queryFn: () => fetchRole() });
   const role = roleData?.role ?? "pending";
 
+<<<<<<< HEAD
   const totals = revenue?.totals ?? { invoiced: 0, paid: 0, collected: 0, outstanding: 0, overdue: 0, countInvoices: 0 };
 
   const counts = {
     revenue: totals.countInvoices ?? 0,
     subscription: mySub?.invoices?.length ?? 0,
   } satisfies Record<Tab, number>;
+=======
+  const totals = revenue?.totals ?? { invoiced: 0, paid: 0, collected: 0, outstanding: 0, overdue: 0, countInvoices: 0, countPayments: 0, due: 0 };
+  const invoices = revenue?.invoices ?? [];
+  const payments = revenue?.payments ?? [];
+  const outstandingDispatches = revenue?.outstandingDispatches ?? [];
 
-  const maxCount = Math.max(...Object.values(counts), 1);
+  const collectedPct = totals.invoiced > 0 ? Math.min(100, (totals.collected / totals.invoiced) * 100) : 0;
+  const outstandingPct = totals.invoiced > 0 ? Math.min(100, (totals.outstanding / totals.invoiced) * 100) : 0;
+  const overduePct = totals.countInvoices > 0 ? Math.min(100, (totals.overdue / totals.countInvoices) * 100) : 0;
+>>>>>>> origin/main
 
-  // Insurance tab is hidden (see TABS above), so the overview no longer pulls
-  // Coverage/Open Claims — these four now match the tabs actually on this
-  // page: the first three are Revenue-tab metrics already fetched above,
-  // the last reflects the Subscription tab.
+  // Datasets for export
+  const invoicedExportColumns: ExportColumn<any>[] = [
+    { header: "Invoice #", value: (i) => i.invoice_number ?? "—" },
+    { header: "Buyer", value: (i) => i.buyer_name ?? i.buyer_company ?? "—" },
+    { header: "Batch / Dispatch", value: (i) => i.batch_ref ?? i.grain_dispatches?.dispatch_number ?? "—" },
+    { header: "Total Amount (PKR)", value: (i) => Number(i.total_amount || 0).toLocaleString() },
+    { header: "Amount Paid (PKR)", value: (i) => Number(i.amount_paid || 0).toLocaleString() },
+    { header: "Status", value: (i) => i.payment_status ?? "pending" },
+    { header: "Due Date", value: (i) => i.due_date ? new Date(i.due_date).toLocaleDateString() : "—" },
+    { header: "Issued Date", value: (i) => new Date(i.created_at).toLocaleDateString() },
+  ];
+
+  const collectedPayments = payments.filter((p: any) => (p.status ?? "completed") === "completed");
+  const collectedExportColumns: ExportColumn<any>[] = [
+    { header: "Payment Ref", value: (p) => p.payment_reference ?? "—" },
+    { header: "Method", value: (p) => p.payment_method ?? "—" },
+    { header: "Amount (PKR)", value: (p) => Number(p.amount || 0).toLocaleString() },
+    { header: "Status", value: (p) => p.status ?? "completed" },
+    { header: "Payment Date", value: (p) => p.payment_date ? new Date(p.payment_date).toLocaleDateString() : "—" },
+    { header: "Dispatch #", value: (p) => p.grain_dispatches?.dispatch_number ?? "—" },
+  ];
+
+  const outstandingInvoices = invoices.filter((i: any) => Math.max(0, Number(i.total_amount || 0) - Number(i.amount_paid || 0)) > 0);
+  const outstandingExportRows = [
+    ...outstandingInvoices.map((i: any) => ({
+      ref: i.invoice_number ?? "—",
+      buyer: i.buyer_name ?? i.buyer_company ?? "—",
+      total: Number(i.total_amount || 0),
+      paid: Number(i.amount_paid || 0),
+      outstanding: Math.max(0, Number(i.total_amount || 0) - Number(i.amount_paid || 0)),
+      dueDate: i.due_date ? new Date(i.due_date).toLocaleDateString() : "—",
+      status: i.payment_status ?? "unpaid",
+    })),
+    ...outstandingDispatches.map((d: any) => ({
+      ref: d.dispatch_number ?? "—",
+      buyer: d.buyers?.name ?? d.buyers?.company_name ?? "—",
+      total: Number(d.total_amount || 0),
+      paid: Number(d.paid || 0),
+      outstanding: Number(d.remaining || 0),
+      dueDate: d.dispatched_at ? new Date(d.dispatched_at).toLocaleDateString() : "—",
+      status: "pending payment",
+    })),
+  ];
+  const outstandingExportColumns: ExportColumn<any>[] = [
+    { header: "Reference", value: (r) => r.ref },
+    { header: "Buyer", value: (r) => r.buyer },
+    { header: "Total Amount (PKR)", value: (r) => r.total.toLocaleString() },
+    { header: "Amount Paid (PKR)", value: (r) => r.paid.toLocaleString() },
+    { header: "Outstanding Due (PKR)", value: (r) => r.outstanding.toLocaleString() },
+    { header: "Due / Dispatched Date", value: (r) => r.dueDate },
+    { header: "Status", value: (r) => r.status },
+  ];
+
+  const overdueInvoices = invoices.filter((i: any) => (i.due_date && new Date(i.due_date) < new Date() && i.payment_status !== "paid") || i.payment_status === "overdue");
+  const dueExportColumns: ExportColumn<any>[] = [
+    { header: "Invoice #", value: (i) => i.invoice_number ?? "—" },
+    { header: "Buyer", value: (i) => i.buyer_name ?? i.buyer_company ?? "—" },
+    { header: "Total Amount (PKR)", value: (i) => Number(i.total_amount || 0).toLocaleString() },
+    { header: "Amount Due (PKR)", value: (i) => Math.max(0, Number(i.total_amount || 0) - Number(i.amount_paid || 0)).toLocaleString() },
+    { header: "Due Date", value: (i) => i.due_date ? new Date(i.due_date).toLocaleDateString() : "—" },
+    { header: "Overdue Days", value: (i) => i.due_date ? `${Math.max(0, Math.floor((Date.now() - new Date(i.due_date).getTime()) / (1000 * 60 * 60 * 24)))} days` : "—" },
+    { header: "Status", value: (i) => i.payment_status ?? "overdue" },
+  ];
+
+  const summaryExportRows = [
+    { metric: "Invoiced", amount: totals.invoiced, count: `${totals.countInvoices} invoices`, pct: "100%", description: "Total billed revenue across all buyer invoices" },
+    { metric: "Collected", amount: totals.collected, count: `${totals.countPayments} payments`, pct: `${collectedPct.toFixed(1)}%`, description: "Total completed payments collected" },
+    { metric: "Outstanding", amount: totals.outstanding, count: `${outstandingExportRows.length} items`, pct: `${outstandingPct.toFixed(1)}%`, description: "Total invoiced revenue awaiting payment" },
+    { metric: "Due / Overdue", amount: totals.due, count: `${totals.overdue} overdue`, pct: `${overduePct.toFixed(1)}%`, description: "Past due invoices requiring follow-up" },
+  ];
+  const summaryExportColumns: ExportColumn<any>[] = [
+    { header: "Key Metric", value: (r) => r.metric },
+    { header: "Total Amount", value: (r) => money(r.amount) },
+    { header: "Count / Records", value: (r) => r.count },
+    { header: "Share / Status", value: (r) => r.pct },
+    { header: "Description", value: (r) => r.description },
+  ];
+
   const stats = [
-    { label: "Invoiced", value: money(totals.invoiced), up: true },
-    { label: "Collected", value: money(totals.collected), up: true },
-    { label: "Outstanding", value: money(totals.outstanding), up: false },
-    { label: "Overdue", value: totals.overdue, up: totals.overdue === 0 },
+    {
+      label: "Invoiced",
+      value: money(totals.invoiced),
+      pct: totals.invoiced > 0 ? "100%" : "0.0%",
+      width: totals.invoiced > 0 ? 100 : 0,
+      up: true,
+      color: "bg-emerald-500",
+      exportCsv: () => downloadCsv("invoiced-revenue", invoices, invoicedExportColumns),
+      exportPdf: () => downloadPdf("invoiced-revenue", "Invoiced Revenue Report", invoices, invoicedExportColumns),
+    },
+    {
+      label: "Collected",
+      value: money(totals.collected),
+      pct: `${collectedPct.toFixed(1)}%`,
+      width: collectedPct,
+      up: true,
+      color: "bg-emerald-500",
+      exportCsv: () => downloadCsv("collected-payments", collectedPayments, collectedExportColumns),
+      exportPdf: () => downloadPdf("collected-payments", "Collected Payments Report", collectedPayments, collectedExportColumns),
+    },
+    {
+      label: "Outstanding",
+      value: money(totals.outstanding),
+      pct: `${outstandingPct.toFixed(1)}%`,
+      width: outstandingPct,
+      up: false,
+      color: "bg-amber-500",
+      exportCsv: () => downloadCsv("outstanding-balances", outstandingExportRows, outstandingExportColumns),
+      exportPdf: () => downloadPdf("outstanding-balances", "Outstanding Balances Report", outstandingExportRows, outstandingExportColumns),
+    },
+    {
+      label: "Due",
+      value: `${totals.overdue}`,
+      pct: `${overduePct.toFixed(1)}%`,
+      width: overduePct,
+      up: totals.overdue === 0,
+      color: totals.overdue === 0 ? "bg-emerald-500" : "bg-rose-500",
+      exportCsv: () => downloadCsv("due-overdue-invoices", overdueInvoices, dueExportColumns),
+      exportPdf: () => downloadPdf("due-overdue-invoices", "Due & Overdue Invoices Report", overdueInvoices, dueExportColumns),
+    },
   ];
 
   return (
@@ -80,60 +208,220 @@ function BusinessWorkspace() {
       }}
     >
       <div className="max-w-7xl mx-auto space-y-8">
-
-        {/* Header */}
         <div>
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-foreground">
             <VariableFontText text="Business" base={650} hover={900} staggerMs={20} />
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Revenue and financial overview
-          </p>
+          <p className="mt-1 text-sm text-muted-foreground">Revenue and financial overview</p>
         </div>
 
-        {/* Top layout: chart + stats */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-
-          {/* Revenue Tracking Graph - Business Overview */}
           <div className="lg:col-span-2 bg-card border border-border rounded-2xl p-6">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-5">
-              Business Overview
-            </p>
-            <RevenueChart 
-              invoices={revenue?.invoices ?? []} 
-              payments={revenue?.payments ?? []} 
-            />
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-5">Business Overview</p>
+            <RevenueChart invoices={invoices} payments={payments} />
           </div>
 
-          {/* Stats Panel */}
-          <div className="bg-card border border-border rounded-2xl p-6 flex flex-col justify-between">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-4">
-              Key Metrics
-            </p>
-            <div className="space-y-0 divide-y divide-border flex-1">
-              {stats.map((s) => (
-                <div key={s.label} className="flex items-center justify-between py-3">
-                  <div className="flex items-center gap-2 text-muted-foreground text-sm font-mono">
-                    <span className="text-muted-foreground/60">◇</span>
-                    <span className="truncate max-w-[120px]">{s.label}</span>
+          <div className="bg-card border border-border rounded-[2rem] p-6 lg:p-8 flex flex-col justify-between relative h-full">
+            <div className="flex justify-between items-center mb-6 gap-2">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Key Metrics</p>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5 border-border shadow-xs">
+                    <Download className="h-3 w-3" />
+                    <span>Export</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 text-xs p-1.5">
+                  <DropdownMenuLabel className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-2 py-1">
+                    Export All Together
+                  </DropdownMenuLabel>
+                  
+                  {/* All Metrics Summary */}
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger className="flex items-center justify-between gap-2 cursor-pointer text-xs px-2 py-1.5 rounded-sm">
+                      <div className="flex items-center gap-2">
+                        <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />
+                        <span className="font-medium">All Metrics Summary</span>
+                      </div>
+                      <MoreHorizontal className="h-3.5 w-3.5 text-muted-foreground mr-1" />
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent className="text-xs min-w-[130px] p-1">
+                      <DropdownMenuItem
+                        onClick={() => downloadCsv("financial-summary-all-metrics", summaryExportRows, summaryExportColumns)}
+                        className="gap-2 cursor-pointer"
+                      >
+                        <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />
+                        Export CSV
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => downloadPdf("financial-summary-all-metrics", "Key Financial Metrics Summary", summaryExportRows, summaryExportColumns)}
+                        className="gap-2 cursor-pointer"
+                      >
+                        <FileText className="h-3.5 w-3.5 text-rose-500" />
+                        Export PDF
+                      </DropdownMenuItem>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuSub>
+
+                  <DropdownMenuSeparator className="my-1.5" />
+
+                  <DropdownMenuLabel className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-2 py-1">
+                    Export Datasets
+                  </DropdownMenuLabel>
+
+                  {/* Invoiced */}
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger className="flex items-center justify-between gap-2 cursor-pointer text-xs px-2 py-1.5 rounded-sm">
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
+                        <span className="font-medium">Invoiced</span>
+                      </div>
+                      <MoreHorizontal className="h-3.5 w-3.5 text-muted-foreground mr-1" />
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent className="text-xs min-w-[130px] p-1">
+                      <DropdownMenuItem
+                        onClick={() => downloadCsv("invoiced-revenue", invoices, invoicedExportColumns)}
+                        className="gap-2 cursor-pointer"
+                      >
+                        <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />
+                        Export CSV
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => downloadPdf("invoiced-revenue", "Invoiced Revenue Report", invoices, invoicedExportColumns)}
+                        className="gap-2 cursor-pointer"
+                      >
+                        <FileText className="h-3.5 w-3.5 text-rose-500" />
+                        Export PDF
+                      </DropdownMenuItem>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuSub>
+
+                  {/* Collected */}
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger className="flex items-center justify-between gap-2 cursor-pointer text-xs px-2 py-1.5 rounded-sm">
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-3.5 w-3.5 text-emerald-600" />
+                        <span className="font-medium">Collected</span>
+                      </div>
+                      <MoreHorizontal className="h-3.5 w-3.5 text-muted-foreground mr-1" />
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent className="text-xs min-w-[130px] p-1">
+                      <DropdownMenuItem
+                        onClick={() => downloadCsv("collected-payments", collectedPayments, collectedExportColumns)}
+                        className="gap-2 cursor-pointer"
+                      >
+                        <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />
+                        Export CSV
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => downloadPdf("collected-payments", "Collected Payments Report", collectedPayments, collectedExportColumns)}
+                        className="gap-2 cursor-pointer"
+                      >
+                        <FileText className="h-3.5 w-3.5 text-rose-500" />
+                        Export PDF
+                      </DropdownMenuItem>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuSub>
+
+                  {/* Outstanding */}
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger className="flex items-center justify-between gap-2 cursor-pointer text-xs px-2 py-1.5 rounded-sm">
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-3.5 w-3.5 text-amber-600" />
+                        <span className="font-medium">Outstanding</span>
+                      </div>
+                      <MoreHorizontal className="h-3.5 w-3.5 text-muted-foreground mr-1" />
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent className="text-xs min-w-[130px] p-1">
+                      <DropdownMenuItem
+                        onClick={() => downloadCsv("outstanding-balances", outstandingExportRows, outstandingExportColumns)}
+                        className="gap-2 cursor-pointer"
+                      >
+                        <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />
+                        Export CSV
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => downloadPdf("outstanding-balances", "Outstanding Balances Report", outstandingExportRows, outstandingExportColumns)}
+                        className="gap-2 cursor-pointer"
+                      >
+                        <FileText className="h-3.5 w-3.5 text-rose-500" />
+                        Export PDF
+                      </DropdownMenuItem>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuSub>
+
+                  {/* Due / Overdue */}
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger className="flex items-center justify-between gap-2 cursor-pointer text-xs px-2 py-1.5 rounded-sm">
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-3.5 w-3.5 text-red-600" />
+                        <span className="font-medium">Due / Overdue</span>
+                      </div>
+                      <MoreHorizontal className="h-3.5 w-3.5 text-muted-foreground mr-1" />
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent className="text-xs min-w-[130px] p-1">
+                      <DropdownMenuItem
+                        onClick={() => downloadCsv("due-overdue-invoices", overdueInvoices, dueExportColumns)}
+                        className="gap-2 cursor-pointer"
+                      >
+                        <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />
+                        Export CSV
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => downloadPdf("due-overdue-invoices", "Due & Overdue Invoices Report", overdueInvoices, dueExportColumns)}
+                        className="gap-2 cursor-pointer"
+                      >
+                        <FileText className="h-3.5 w-3.5 text-rose-500" />
+                        Export PDF
+                      </DropdownMenuItem>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuSub>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            <div className="space-y-6 flex-1 flex flex-col justify-center mt-2">
+              {stats.map((s, idx) => (
+                <div key={s.label} className="w-full">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center w-[38%] min-w-[110px]">
+                      <div className="truncate">
+                        <p className="text-xs font-medium text-muted-foreground">{s.label}</p>
+                        <p className="text-base font-black text-foreground truncate">{s.value}</p>
+                      </div>
+                    </div>
+                    <div className="flex-1 flex items-center justify-center px-2">
+                      <div className="w-full h-1 bg-muted rounded-full relative overflow-hidden">
+                        <div className={`absolute left-0 top-0 bottom-0 rounded-full transition-all duration-500 ${s.color}`} style={{ width: `${s.width}%` }} />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-xs font-bold text-muted-foreground font-mono w-10 text-right">{s.pct}</span>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-foreground hover:bg-muted/80 rounded-md">
+                            <Download className="h-3 w-3" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="text-xs min-w-[140px]">
+                          <DropdownMenuItem onClick={() => s.exportCsv()} className="gap-2 cursor-pointer">
+                            <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" /> Export CSV
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => s.exportPdf()} className="gap-2 cursor-pointer">
+                            <FileText className="h-3.5 w-3.5 text-rose-500" /> Export PDF
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-foreground font-black text-sm font-mono">{s.value}</span>
-                    {s.up
-                      ? <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
-                      : <TrendingDown className="w-3.5 h-3.5 text-rose-400" />
-                    }
-                  </div>
+                  {idx < stats.length - 1 && <div className="h-px w-full bg-border mt-6" />}
                 </div>
               ))}
             </div>
           </div>
         </div>
 
-        {/* Revenue Section */}
         <div className="bg-card border border-border rounded-2xl overflow-hidden">
-
-          {/* Tab Bar */}
           <div className="border-b border-border px-4 md:px-6 overflow-x-auto no-scrollbar">
             <div className="flex items-center gap-8">
               {TABS.map((tab) => {
@@ -147,12 +435,8 @@ function BusinessWorkspace() {
                     }`}
                   >
                     <VariableFontText text={tab.label} base={isActive ? 850 : 350} hover={850} staggerMs={30} />
-                    <span
-                      className={`text-xs px-1.5 py-0.5 rounded-full font-mono transition-colors ${
-                        isActive ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground/60"
-                      }`}
-                    >
-                      {counts[tab.key]}
+                    <span className={`text-xs px-1.5 py-0.5 rounded-full font-mono transition-colors ${isActive ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground/60"}`}>
+                      {totals.countInvoices}
                     </span>
                     {isActive && (
                       <motion.div
@@ -167,13 +451,15 @@ function BusinessWorkspace() {
             </div>
           </div>
 
-          {/* Content */}
           <div className="p-4 md:p-6">
+<<<<<<< HEAD
             {activeTab === "revenue" && <RevenueSection role={role} />}
             {activeTab === "subscription" && <SubscriptionSection />}
+=======
+            {activeTab === "revenue" && <RevenueSection role={role as any} />}
+>>>>>>> origin/main
           </div>
         </div>
-
       </div>
     </div>
   );
