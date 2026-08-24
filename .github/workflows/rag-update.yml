@@ -1,0 +1,27 @@
+name: Weekly RAG Knowledge Base Refresh
+on:
+  schedule:
+    - cron: '0 3 * * 0'   # Every Sunday at 3 AM UTC = 8 AM Pakistan time
+  workflow_dispatch:        # Also allows manual trigger from GitHub Actions tab
+
+jobs:
+  refresh-rag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install httpx supabase pymupdf python-dotenv
+
+      - name: Run RAG Harvester
+        run: python ml-deploy/rag/rag_harvester.py --ingest --limit 3
+        env:
+          GEMINI_API_KEY:            ${{ secrets.GOOGLE_API_KEY }}
+          SUPABASE_URL:              ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DEFAULT_TENANT_ID:         ${{ secrets.DEFAULT_TENANT_ID }}
