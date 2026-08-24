@@ -8,12 +8,14 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sparkles, Send, Loader2, Bot, User } from "lucide-react";
 import { toast } from "sonner";
 
+import { ErrorBoundary } from 'react-error-boundary';
+
 interface Message {
   role: "user" | "assistant";
   content: string;
 }
 
-export function AIAssistant() {
+const AIAssistantBase = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     { role: "assistant", content: "Hello! I am the GrainHero AI Assistant. I have access to your live sensor data and equipment manuals. How can I help you today?" }
@@ -145,3 +147,9 @@ export function AIAssistant() {
     </Sheet>
   );
 }
+
+export const AIAssistant = () => (
+  <ErrorBoundary fallback={<div className="p-4 text-red-500 bg-red-50 rounded-xl">AI Currently Unavailable</div>}>
+    <AIAssistantBase />
+  </ErrorBoundary>
+);
