@@ -15,15 +15,23 @@ import {
 } from "./DashboardBlocks";
 import type { RangeKey } from "./RangeChip";
 import { getDashboardExtras } from "@/lib/dashboard-extras.functions";
+import { useLocationScopeKey } from "@/components/app/location/LocationScope";
 
 export function AdminDashboard({ name }: { name?: string }) {
   const [range, setRange] = useState<RangeKey>("mtd");
   const [ticketPanelOpen, setTicketPanelOpen] = useState(false);
 
+  // The active location is part of the cache key, not just the request. Without
+  // it React Query would serve one city's rows for another on switch — the same
+  // cross-location bleed the server filter exists to prevent, but with no
+  // server-side bug to find. Keying by it also lets each location's results
+  // coexist, which is what makes switching back instant.
+  const loc = useLocationScopeKey();
+
   const fn = useServerFn(getDashboardExtras);
   const { data: extras } = useQuery({
-    queryKey: ["dashboard-extras", range],
-    queryFn: () => fn({ data: { range } }),
+    queryKey: ["dashboard-extras", range, loc],
+    queryFn: () => fn({ data: { range, loc: loc ?? undefined } }),
     refetchInterval: 30_000,
   });
 

@@ -2,6 +2,35 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { fetchDispatchTotals } from "./operations.functions";
+import { resolveLocationScope, type LocationScope } from "./page-scope.server";
+
+/**
+ * Narrow a query to the active location.
+ *
+ * `warehouseIds: null` leaves the query untouched — that is the tenant-wide
+ * behaviour every caller had before locations existed, and is still correct for
+ * managers, technicians and the "all locations" view.
+ *
+ * Applied to a table keyed on `warehouse_id`. Rows with a null warehouse are
+ * excluded once a location is active: unattributed data belongs to no city, and
+ * showing it under one would be exactly the mixing this feature forbids.
+ */
+function byWarehouse<Q extends { in: (col: string, vals: string[]) => Q }>(
+  q: Q,
+  scope: LocationScope,
+): Q {
+  if (!scope.warehouseIds) return q;
+  return q.in("warehouse_id", scope.warehouseIds);
+}
+
+/** As {@link byWarehouse}, for tables that key only on `silo_id`. */
+function bySilo<Q extends { in: (col: string, vals: string[]) => Q }>(
+  q: Q,
+  scope: LocationScope,
+): Q {
+  if (!scope.siloIds) return q;
+  return q.in("silo_id", scope.siloIds);
+}
 
 type Range = "today" | "7d" | "30d" | "mtd" | "ytd";
 function rangeToWindow(range: Range) {
@@ -41,12 +70,20 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) =>
     z
-      .object({ range: z.enum(["today", "7d", "30d", "mtd", "ytd"]).default("30d") })
+      .object({
+        range: z.enum(["today", "7d", "30d", "mtd", "ytd"]).default("30d"),
+        // Normalised city key from the active location scope. Absent means the
+        // tenant-wide view.
+        loc: z.string().trim().min(1).optional(),
+      })
       .parse(data ?? {}),
   )
   .handler(async ({ context, data }) => {
     const tenantId = context.userId;
     const range = (data?.range ?? "30d") as Range;
+    // Resolved server-side from the caller's own warehouses — see
+    // resolveLocationScope for why the client's list is not trusted.
+    const scope = await resolveLocationScope(context.supabase, data?.loc);
     const { startISO, priorStartISO, priorEndISO } = rangeToWindow(range);
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
     const now0 = new Date();
@@ -76,38 +113,58 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
       revRowsRes,
       siloDispatchesRes,
     ] = await Promise.all([
-      context.supabase
-        .from("grain_batches")
-        .select(
-          "id, batch_id, grain_type, quantity_kg, status, risk_score, created_at, purchase_price_per_kg, revenue, profit",
-        )
+      byWarehouse(
+        context.supabase
+          .from("grain_batches")
+          .select(
+            "id, batch_id, grain_type, quantity_kg, status, risk_score, created_at, purchase_price_per_kg, revenue, profit",
+          ),
+        scope,
+      )
         .order("created_at", { ascending: false })
         .limit(5),
-      context.supabase
-        .from("grain_alerts")
-        .select("id, alert_id, title, message, priority, status, alert_type, silo_id, triggered_at")
+      byWarehouse(
+        context.supabase
+          .from("grain_alerts")
+          .select(
+            "id, alert_id, title, message, priority, status, alert_type, silo_id, triggered_at",
+          ),
+        scope,
+      )
         .order("triggered_at", { ascending: false, nullsFirst: false })
         .limit(5),
+      // INTENTIONALLY ACCOUNT-WIDE: team members belong to the tenant, not to
+      // a city. An admin viewing Karachi still manages the same people.
       context.supabase
         .from("profiles")
         .select("id, name, email, updated_at")
         .order("updated_at", { ascending: false, nullsFirst: false })
         .limit(5),
-      context.supabase
-        .from("actuators")
-        .select("id, name, actuator_type, status, is_on, power_level, silo_id, silos:silo_id(name)")
-        .limit(6),
-      context.supabase
-        .from("silos")
-        .select(
-          "id, silo_id, name, capacity_kg, current_occupancy_kg, status, current_batch:grain_batches!fk_silos_current_batch(id, grain_type)",
-        )
+      bySilo(
+        context.supabase
+          .from("actuators")
+          .select(
+            "id, name, actuator_type, status, is_on, power_level, silo_id, silos:silo_id(name)",
+          ),
+        scope,
+      ).limit(6),
+      byWarehouse(
+        context.supabase
+          .from("silos")
+          .select(
+            "id, silo_id, name, capacity_kg, current_occupancy_kg, status, current_batch:grain_batches!fk_silos_current_batch(id, grain_type)",
+          ),
+        scope,
+      )
         .order("created_at", { ascending: false })
         .limit(8),
-      context.supabase
-        .from("hardware_orders")
-        .select("id, status", { count: "exact" })
-        .eq("admin_id", tenantId),
+      byWarehouse(
+        context.supabase.from("hardware_orders").select("id, status", { count: "exact" }),
+        scope,
+      ).eq("admin_id", tenantId),
+      // INTENTIONALLY ACCOUNT-WIDE: a plan is bought per tenant, not per site.
+      // Filtering this by location would misreport the plan and break the
+      // limits derived from it.
       context.supabase
         .from("subscriptions")
         .select("id, plan_name, price_per_month, status, next_payment_date")
@@ -115,41 +172,47 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
         .in("status", ["active", "trial"])
         .order("created_at", { ascending: false })
         .limit(1),
-      context.supabase
-        .from("grain_batches")
-        .select("id", { count: "exact", head: true })
-        .gte("created_at", sevenDaysAgo),
-      context.supabase
-        .from("sensor_devices")
-        .select("id", { count: "exact", head: true })
-        .gte("created_at", sevenDaysAgo),
+      byWarehouse(
+        context.supabase.from("grain_batches").select("id", { count: "exact", head: true }),
+        scope,
+      ).gte("created_at", sevenDaysAgo),
+      byWarehouse(
+        context.supabase.from("sensor_devices").select("id", { count: "exact", head: true }),
+        scope,
+      ).gte("created_at", sevenDaysAgo),
       // Full list for the dashboard table (dense)
-      context.supabase
-        .from("grain_batches")
-        .select(
-          "id, batch_id, grain_type, quantity_kg, status, risk_score, created_at, silo_id, silos:silo_id(name)",
-        )
+      byWarehouse(
+        context.supabase
+          .from("grain_batches")
+          .select(
+            "id, batch_id, grain_type, quantity_kg, status, risk_score, created_at, silo_id, silos:silo_id(name)",
+          ),
+        scope,
+      )
         .order("created_at", { ascending: false })
         .limit(50),
-      context.supabase
-        .from("grain_batches")
-        .select("id", { count: "exact", head: true })
-        .gte("created_at", startISO),
-      context.supabase
-        .from("grain_batches")
-        .select("id", { count: "exact", head: true })
+      byWarehouse(
+        context.supabase.from("grain_batches").select("id", { count: "exact", head: true }),
+        scope,
+      ).gte("created_at", startISO),
+      byWarehouse(
+        context.supabase.from("grain_batches").select("id", { count: "exact", head: true }),
+        scope,
+      )
         .gte("created_at", priorStartISO)
         .lt("created_at", priorEndISO),
       // "Open alerts" — status enum is pending|acknowledged|resolved|escalated,
       // so "open" means not yet resolved (see InsightsStrip's "X open alerts").
-      context.supabase
-        .from("grain_alerts")
-        .select("id", { count: "exact", head: true })
+      byWarehouse(
+        context.supabase.from("grain_alerts").select("id", { count: "exact", head: true }),
+        scope,
+      )
         .neq("status", "resolved")
         .gte("triggered_at", startISO),
-      context.supabase
-        .from("grain_alerts")
-        .select("id", { count: "exact", head: true })
+      byWarehouse(
+        context.supabase.from("grain_alerts").select("id", { count: "exact", head: true }),
+        scope,
+      )
         .neq("status", "resolved")
         .gte("triggered_at", priorStartISO)
         .lt("triggered_at", priorEndISO),
@@ -157,19 +220,26 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
       // combined silo-occupancy + alerts widget — not capped to the most
       // recent 5 like `recentAlerts`, since a silo with an older open alert
       // still needs to show it.
-      context.supabase
-        .from("grain_alerts")
-        .select("id, silo_id, title, priority, status")
+      byWarehouse(
+        context.supabase.from("grain_alerts").select("id, silo_id, title, priority, status"),
+        scope,
+      )
         .not("silo_id", "is", null)
         .neq("status", "resolved")
         .limit(200),
-      fetchDispatchTotals(context.supabase),
-      context.supabase
-        .from("grain_batches")
-        .select("created_at, revenue, purchase_price_per_kg, quantity_kg, status")
+      fetchDispatchTotals(context.supabase, scope.warehouseIds),
+      byWarehouse(
+        context.supabase
+          .from("grain_batches")
+          .select("created_at, revenue, purchase_price_per_kg, quantity_kg, status"),
+        scope,
+      )
         .eq("status", "dispatched")
         .gte("created_at", twelveMoAgo),
-      context.supabase.from("grain_dispatches").select("silo_id, total_qty_kg").limit(5000),
+      byWarehouse(
+        context.supabase.from("grain_dispatches").select("silo_id, total_qty_kg"),
+        scope,
+      ).limit(5000),
     ]);
 
     const batches = batchesRes.data ?? [];

@@ -1080,14 +1080,19 @@ export const dispatchGrainBatch = createServerFn({ method: "POST" })
 // platform-overviews.functions.ts.
 export async function fetchDispatchTotals(
   supabase: any,
+  /**
+   * Restrict to these warehouses. Omit (or pass null) for the tenant-wide
+   * totals every caller wanted before locations existed — the platform
+   * overview and analytics both still do.
+   */
+  warehouseIds?: string[] | null,
 ): Promise<Array<{ admin_id: string; revenue: number; profit: number }>> {
   // grain_dispatches is the live table (written by createDispatchFromSilo in
   // dispatches.functions.ts) — its revenue column is `total_amount`, not
   // `revenue` (that was the now-dead `dispatches` table's naming).
-  const { data, error } = await supabase
-    .from("grain_dispatches")
-    .select("admin_id, total_amount, profit")
-    .limit(10000);
+  let query = supabase.from("grain_dispatches").select("admin_id, total_amount, profit");
+  if (warehouseIds) query = query.in("warehouse_id", warehouseIds);
+  const { data, error } = await query.limit(10000);
   if (error) throw error;
   const map = new Map<string, { admin_id: string; revenue: number; profit: number }>();
   for (const d of (data ?? []) as Array<{

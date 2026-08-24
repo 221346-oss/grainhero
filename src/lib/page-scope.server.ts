@@ -51,3 +51,79 @@ export async function resolvePageScope(
   const adminId = (data?.admin_id ?? data?.id ?? userId) as string;
   return { scope: "tenant", adminId, role };
 }
+
+/**
+ * Location scope — which of the tenant's warehouses a request may read.
+ *
+ * `warehouseIds: null` means "every warehouse in the tenant" and is the
+ * behaviour every caller had before locations existed. A non-null list narrows
+ * the request to one city.
+ *
+ * `siloIds` is carried alongside because a few tables (`actuators`) key only on
+ * `silo_id` and cannot be filtered by warehouse directly.
+ */
+export type LocationScope = {
+  cityKey: string | null;
+  warehouseIds: string[] | null;
+  siloIds: string[] | null;
+};
+
+/** The unscoped default — the whole tenant, as before locations existed. */
+export const ALL_LOCATIONS: LocationScope = {
+  cityKey: null,
+  warehouseIds: null,
+  siloIds: null,
+};
+
+/**
+ * Resolve a city key into the warehouses and silos it contains.
+ *
+ * The city is resolved **server-side from the caller's own warehouses** rather
+ * than trusting a list of ids from the client. RLS already stops one tenant
+ * reading another's rows, but an admin owns every warehouse in their account —
+ * so nothing at the database level would stop a hand-edited `?loc=` widening the
+ * view. Deriving here is what makes the scope trustworthy.
+ *
+ * An unknown or empty city yields {@link ALL_LOCATIONS}: a stale link degrades
+ * to the tenant-wide view the user is already entitled to, never to an error
+ * and never to another tenant's data.
+ */
+export async function resolveLocationScope(
+  supabase: SupabaseClient,
+  cityKey: string | null | undefined,
+): Promise<LocationScope> {
+  const key = typeof cityKey === "string" ? cityKey.trim() : "";
+  if (!key) return ALL_LOCATIONS;
+
+  const { data, error } = await supabase
+    .from("warehouses")
+    .select("id, name, location, location_city, location_address")
+    .is("deleted_at", null)
+    .limit(500);
+  if (error) throw error;
+
+  const { cityKey: normalise, deriveCity } = await import("./location-scope");
+  const warehouseIds = (data ?? [])
+    .filter((w) => normalise(deriveCity(w)) === key)
+    .map((w) => w.id);
+
+  // An unrecognised key must not silently widen the scope to the whole tenant —
+  // that is the cross-location bleed this exists to prevent. Return an empty
+  // list so the caller shows nothing rather than everything.
+  if (warehouseIds.length === 0) {
+    return { cityKey: key, warehouseIds: [], siloIds: [] };
+  }
+
+  const { data: silos } = await supabase
+    .from("silos")
+    .select("id")
+    .in("warehouse_id", warehouseIds)
+    .is("deleted_at", null)
+    .limit(2000);
+
+  return {
+    cityKey: key,
+    warehouseIds,
+    siloIds: (silos ?? []).map((s) => s.id),
+  };
+}
