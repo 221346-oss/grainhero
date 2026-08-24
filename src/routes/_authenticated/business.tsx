@@ -59,23 +59,19 @@ function BusinessWorkspace() {
   const { data: roleData } = useQuery({ queryKey: ["my-role"], queryFn: () => fetchRole() });
   const role = roleData?.role ?? "pending";
 
-<<<<<<< HEAD
-  const totals = revenue?.totals ?? { invoiced: 0, paid: 0, collected: 0, outstanding: 0, overdue: 0, countInvoices: 0 };
-
-  const counts = {
-    revenue: totals.countInvoices ?? 0,
-    subscription: mySub?.invoices?.length ?? 0,
-  } satisfies Record<Tab, number>;
-=======
   const totals = revenue?.totals ?? { invoiced: 0, paid: 0, collected: 0, outstanding: 0, overdue: 0, countInvoices: 0, countPayments: 0, due: 0 };
   const invoices = revenue?.invoices ?? [];
   const payments = revenue?.payments ?? [];
   const outstandingDispatches = revenue?.outstandingDispatches ?? [];
 
+  const counts = {
+    revenue: totals.countInvoices ?? 0,
+    subscription: mySub?.invoices?.length ?? 0,
+  } satisfies Record<Tab, number>;
+
   const collectedPct = totals.invoiced > 0 ? Math.min(100, (totals.collected / totals.invoiced) * 100) : 0;
   const outstandingPct = totals.invoiced > 0 ? Math.min(100, (totals.outstanding / totals.invoiced) * 100) : 0;
   const overduePct = totals.countInvoices > 0 ? Math.min(100, (totals.overdue / totals.countInvoices) * 100) : 0;
->>>>>>> origin/main
 
   // Datasets for export
   const invoicedExportColumns: ExportColumn<any>[] = [
@@ -452,12 +448,7 @@ function BusinessWorkspace() {
           </div>
 
           <div className="p-4 md:p-6">
-<<<<<<< HEAD
-            {activeTab === "revenue" && <RevenueSection role={role} />}
-            {activeTab === "subscription" && <SubscriptionSection />}
-=======
             {activeTab === "revenue" && <RevenueSection role={role as any} />}
->>>>>>> origin/main
           </div>
         </div>
       </div>

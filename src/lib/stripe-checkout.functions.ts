@@ -830,11 +830,7 @@ export const checkAndUpdatePaymentStatus = createServerFn({ method: "POST" })
     }
 
     // Check session status on Stripe
-<<<<<<< HEAD
-    const session = await stripeFetch(`/checkout/sessions/${order.stripe_session_id}`, null, "GET");
-=======
     const session = await stripeFetch(`/checkout/sessions/${orderRow.stripe_session_id}`, null, "GET");
->>>>>>> origin/main
     const sessionData = session as {
       id: string;
       payment_status: string;

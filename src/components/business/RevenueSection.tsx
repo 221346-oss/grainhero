@@ -224,27 +224,12 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
 
   return (
     <div className="space-y-6">
-<<<<<<< HEAD
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Invoiced</div><div className="text-2xl font-bold">{money(totals.invoiced, "PKR")}</div><div className="text-xs text-slate-500 mt-1">{totals.countInvoices} invoices</div></div><FileText className="h-6 w-6 text-emerald-600" /></CardContent></Card>
         <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Collected</div><div className="text-2xl font-bold text-emerald-600">{money(totals.collected, "PKR")}</div><div className="text-xs text-slate-500 mt-1">{totals.countPayments} payments</div></div><CheckCircle2 className="h-6 w-6 text-emerald-600" /></CardContent></Card>
         <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Outstanding</div><div className="text-2xl font-bold text-amber-600">{money(totals.outstanding, "PKR")}</div><div className="text-xs text-slate-500 mt-1">invoiced − collected</div></div><TrendingUp className="h-6 w-6 text-amber-600" /></CardContent></Card>
         <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Due</div><div className="text-2xl font-bold text-red-600">{money(totals.due, "PKR")}</div><div className="text-xs text-slate-500 mt-1">{totals.overdue} past due invoice{totals.overdue === 1 ? "" : "s"}</div></div><AlertCircle className="h-6 w-6 text-red-600" /></CardContent></Card>
       </div>
-=======
-      {canWrite && (
-        <div className="flex justify-end">
-          <Button onClick={openNewSale} className="gap-1.5">
-            <Plus className="h-4 w-4" /> New sale (Invoice → Dispatch → Payment)
-          </Button>
-        </div>
-      )}
-      {!canWrite && (
-        <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 border border-border rounded-lg px-4 py-2">
-          <span className="text-amber-500">●</span> Read-only — outgoing invoice creation is restricted to admin.
-        </div>
-      )}
->>>>>>> origin/main
 
       <DispatchSaleWizard
         open={wizardOpen}
@@ -295,7 +280,6 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
         </Card>
       )}
 
-<<<<<<< HEAD
       <AlertDialog open={!!cancelTarget} onOpenChange={(o) => !o && setCancelTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -328,9 +312,6 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
           {Object.keys(byStatus).length === 0 && <span className="text-sm text-slate-500">No invoices yet.</span>}
         </CardContent>
       </Card>
-
-=======
->>>>>>> origin/main
       <Tabs defaultValue="invoices">
         <TabsList>
           <TabsTrigger value="invoices">Invoices</TabsTrigger>

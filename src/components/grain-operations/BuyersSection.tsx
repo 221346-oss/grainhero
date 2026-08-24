@@ -206,9 +206,8 @@ export function BuyersSection() {
             <p className="text-sm">No buyers yet.</p>
           </div>
         ) : (
-<<<<<<< HEAD
           <>
-            {/* Desktop / tablet: full table, unchanged */}
+            {/* Desktop / tablet: full table */}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-muted/50 border-b border-border">
@@ -219,36 +218,6 @@ export function BuyersSection() {
                     <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Type</th>
                     <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Status</th>
                     <th className="px-3 py-2 text-center font-semibold text-muted-foreground text-xs uppercase tracking-wider">Actions</th>
-=======
-          // Fixed height container for 4 entries with vertical scroll
-          <div className="h-[280px] overflow-y-auto overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/50 border-b border-border">
-                <tr>
-                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Buyer</th>
-                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Contact</th>
-                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Company</th>
-                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Type</th>
-                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Status</th>
-                  <th className="px-3 py-2 text-center font-semibold text-muted-foreground text-xs uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {rows.map((b) => (
-                  <tr key={b.id} className="hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5 transition-colors">
-                    <td className="px-3 py-2 text-foreground font-medium">{b.name}</td>
-                    <td className="px-3 py-2 text-muted-foreground text-xs">{b.contact_phone ?? b.contact_email ?? "—"}</td>
-                    <td className="px-3 py-2 text-muted-foreground text-xs">{b.company_name ?? "—"}</td>
-                    <td className="px-3 py-2 text-muted-foreground text-xs">{b.buyer_type?.replace("_", " ") ?? "—"}</td>
-                    <td className="px-3 py-2"><StatusBadgeCustom value={b.status} /></td>
-                    <td className="px-3 py-2">
-                      <div className="flex items-center justify-center gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => { setSelected(b); setViewOpen(true); }} className="h-7 w-7 p-0"><Eye className="w-3.5 h-3.5" /></Button>
-                        <Button variant="ghost" size="sm" onClick={() => openEdit(b)} className="h-7 w-7 p-0"><Edit2 className="w-3.5 h-3.5" /></Button>
-                        <Button variant="ghost" size="sm" onClick={() => setDeleteId(b.id)} className="h-7 w-7 p-0 text-rose-600 hover:text-rose-700"><Trash2 className="w-3.5 h-3.5" /></Button>
-                      </div>
-                    </td>
->>>>>>> origin/main
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -272,7 +241,7 @@ export function BuyersSection() {
               </table>
             </div>
 
-            {/* Mobile: stacked cards — same rows, tap through to the View dialog */}
+            {/* Mobile: stacked cards */}
             <div className="md:hidden space-y-2">
               {rows.map((b) => (
                 <Card
