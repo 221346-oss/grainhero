@@ -709,7 +709,7 @@ export const getCriticalAlertsForSuperAdmin = createServerFn({ method: "GET" })
 
     // Resolve tenant names from admin_id
     const adminIds = [...new Set((alerts ?? []).map((a: any) => a.admin_id).filter(Boolean))];
-    let profileMap = new Map<string, { name: string | null; email: string | null }>();
+    const profileMap = new Map<string, { name: string | null; email: string | null }>();
     if (adminIds.length > 0) {
       const { data: profiles } = await context.supabase
         .from("profiles")
