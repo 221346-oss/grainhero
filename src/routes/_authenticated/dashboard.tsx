@@ -10,6 +10,10 @@ import { ManagerDashboard } from "@/components/dashboards/ManagerDashboard";
 import { TechnicianDashboard } from "@/components/dashboards/TechnicianDashboard";
 import { getImpersonationSession } from "@/components/app/ImpersonationBanner";
 import { useState, useEffect } from "react";
+import { listAdminLocations } from "@/lib/locations.functions";
+import { LocationScopeProvider, useLocationScope } from "@/components/app/location/LocationScope";
+import { LocationPicker } from "@/components/app/location/LocationPicker";
+import { LocationSwitcher } from "@/components/app/location/LocationSwitcher";
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
@@ -23,6 +27,12 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
+  // `?loc=` carries the admin's active location. Registered here so the router
+  // preserves it across navigations instead of stripping it as unknown.
+  validateSearch: (search: Record<string, unknown>): { loc?: string } => {
+    const loc = search.loc;
+    return typeof loc === "string" && loc.trim() ? { loc } : {};
+  },
   component: DashboardPage,
 });
 
@@ -72,6 +82,69 @@ function DashboardPage() {
       return <TechnicianDashboard name={name} />;
     // "admin" and any legacy/pending role → admin dashboard by default
     default:
-      return <AdminDashboard name={name} />;
+      return <AdminDashboardWithLocations name={name} />;
   }
+}
+
+/**
+ * Admins pick a location before the dashboard opens.
+ *
+ * The picker is shown even when there is only one location — that decision was
+ * taken deliberately, so an admin always sees where their data is coming from
+ * rather than the app quietly choosing for them.
+ */
+function AdminDashboardWithLocations({ name }: { name?: string }) {
+  const fetchLocations = useServerFn(listAdminLocations);
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["admin-locations"],
+    queryFn: () => fetchLocations(),
+    staleTime: 60_000,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="p-6">
+        <DashboardSkeleton />
+      </div>
+    );
+  }
+
+  // A failure here must not lock the admin out of their dashboard — fall back
+  // to the unscoped view rather than stranding them on an error page.
+  if (error) return <AdminDashboard name={name} />;
+
+  return (
+    <LocationScopeProvider locations={data?.locations ?? []}>
+      <ScopedAdminDashboard name={name} />
+    </LocationScopeProvider>
+  );
+}
+
+function ScopedAdminDashboard({ name }: { name?: string }) {
+  const scope = useLocationScope();
+
+  if (scope && !scope.active) {
+    return (
+      <LocationPicker
+        locations={scope.locations}
+        name={name}
+        onSelect={(key) => scope.select(key)}
+      />
+    );
+  }
+
+  return (
+    <>
+      {scope?.active && (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 pt-4 sm:px-6">
+          <LocationSwitcher />
+          <span className="text-[11px] text-muted-foreground">
+            Showing {scope.active.warehouseCount}{" "}
+            {scope.active.warehouseCount === 1 ? "warehouse" : "warehouses"} in {scope.active.city}
+          </span>
+        </div>
+      )}
+      <AdminDashboard name={name} />
+    </>
+  );
 }
