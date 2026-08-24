@@ -1,9 +1,14 @@
 # Multi-Location Admin Dashboard — Requirement Report
 
-**Status:** Feasibility study — awaiting go/no-go
+**Status:** Reviewed — clarifications received, Q3 outstanding
 **Owner:** Abdullah
 **Target branch:** `abdullah_dev` (standing PR #55 → `main`)
-**Date:** 2026-08-25
+**Date:** 2026-08-25 (rev. 2)
+
+> **Revision 2.** The specification below has been reviewed and a round of
+> clarifications returned. Q1, Q4 and Q6 are resolved, Q2 is delegated, Q5 is
+> deferred, and Q7/Q8 are partially answered — see §5. Q3 remains the one
+> material unknown. Suggestion S3 has been withdrawn, having been overruled.
 
 ---
 
@@ -52,6 +57,9 @@ represents a **city**, and scopes to the set of warehouses within it.
 ### 2.4 Switching location
 
 The Admin can return from a location dashboard and select a different card.
+Switching must be **immediate**, and loaded data must **remain available rather
+than being discarded** — an Admin who enters one city and then wants to check
+another should not pay a full reload, nor lose what was already fetched.
 
 ### 2.5 Data segregation
 
@@ -69,7 +77,18 @@ The AI/ML models **and their reported performance metrics** should be
 per-location. The rationale is that each site has its own dataset, so predictions
 and accuracy will legitimately differ between locations.
 
-### 2.7 Rationale
+### 2.7 Team structure
+
+Confirmed as a platform-wide rule, applying to existing work as well as this
+feature:
+
+- One **Admin** per account — the buyer who owns the warehouses.
+- An Admin may hold **many warehouses**.
+- Each warehouse has **exactly one Manager**. Two warehouses means two managers.
+  Multiple managers on the same warehouse is not a valid state.
+- Each warehouse may have **multiple Technicians** assigned.
+
+### 2.8 Rationale
 
 The goal is operational manageability. An owner running sites in three cities
 should not have to mentally separate them out of a single merged view.
@@ -82,8 +101,8 @@ should not have to mentally separate them out of a single merged view.
 |---|---|---|
 | **Admin** | **Yes** | The entire feature. Owns multiple warehouses across cities. |
 | **Super Admin** | **No** | Explicitly out of scope — the platform-level dashboard is a separate concern. |
-| **Manager** | **No** | Logs in under their Admin and is already bound to one city and one warehouse → goes straight to their designated dashboard. |
-| **Technician** | **Presumed no** | Expected to behave as Manager does — **but this must be confirmed, not assumed.** |
+| **Manager** | **No** | Logs in under their Admin, bound to exactly one warehouse → goes straight to their designated dashboard. One manager per warehouse; never more. |
+| **Technician** | **No — deferred** | Multiple technicians may be assigned per warehouse. The wider designation-role work is **deferred** by the lead as a separate, larger piece; treat as Manager for now. |
 
 ---
 
@@ -102,51 +121,78 @@ should not have to mentally separate them out of a single merged view.
 | R9 | AI models and their performance metrics are per-location |
 | R10 | Feature applies to Admin only — not Super Admin, not Manager |
 | R11 | Manager and Technician go straight to their designated single-location dashboard |
-| R12 | Technician behaviour to be **confirmed**, not assumed |
+| R12 | Technician follows Manager behaviour for now; designation-role work deferred |
+| R13 | Each warehouse has **exactly one Manager**; multiple managers per warehouse is invalid |
+| R14 | Each warehouse may have **multiple Technicians** |
+| R15 | A single-location Admin **still sees the selector**, showing their one card |
+| R16 | Switching between locations must be fast and must **not lose loaded state** |
+| R17 | Card presentation must reflect the account's **plan** |
 
 ---
 
-## 5. Open questions
+## 5. Question status
 
-These are unresolved in the specification as agreed and need answers before
-implementation.
+The questions raised against the first revision have been reviewed. Their
+current status is below.
 
-**Q1 — What if an Admin has only one location?**
-The requirement only describes the multi-city case. It is unclear whether a
-single-warehouse Admin should still be shown a one-card screen, or be taken
-straight to the dashboard.
+### 5.1 Resolved
 
-**Q2 — Is a card a city, or a warehouse?**
-The requirement describes one card per city, with all of that city's warehouses
-shown together (R6). But segregation is also described as applying "by each city,
-by each warehouse" — both levels. Whether the warehouse level is a further
-drill-down inside a city, or simply loose phrasing, is unresolved. This changes
-whether a selection is a single id or a list.
+**Q1 — What if an Admin has only one location? → RESOLVED.**
+The selector is **still shown**, displaying that Admin's single card. It is not
+skipped. *(→ R15. This overrules suggestion S3, now withdrawn.)*
+
+**Q4 — Should the location choice persist? → RESOLVED.**
+The Admin must be able to move between locations freely and immediately — enter
+one card, then switch straight to another city if they want to check it. Loaded
+data **must remain available rather than being discarded** on switch. The
+priority is switching speed and state retention, not a remembered preference
+across logins. *(→ R16.)*
+
+**Q6 — Managers assigned to more than one warehouse? → RESOLVED.**
+Each warehouse has **exactly one manager**; there are never multiple managers on
+the same warehouse. Technicians may be multiple per warehouse. An Admin with two
+warehouses therefore has two managers. This was given as a **platform-wide rule
+to apply to existing code as well as new work**, not a decision local to this
+feature. *(→ R13, R14, §2.7.)*
+
+### 5.2 Delegated
+
+**Q2 — Is a card a city, or a warehouse? → OUR CALL.**
+Explicitly delegated: either a separate card per warehouse grouped within a city,
+or one card per city with its warehouses inside, whichever works better. The
+decision sits with the implementer, so it should be made deliberately and
+recorded here once settled rather than left to emerge from the code.
+
+### 5.3 Deferred
+
+**Q5 — Technician role. → DEFERRED.**
+The broader designation-role work is a substantial piece in its own right and has
+been set aside for a separate discussion. Technicians follow Manager behaviour
+for the purposes of this feature.
+
+### 5.4 Partially answered
+
+**Q7 — Is anything excluded from segregation? → PARTIAL.**
+Direction given: card presentation should reflect the account's plan (→ R17), and
+a gap was noted around the plan/meter view not being available at billing time.
+What this does **not** yet settle is whether billing, subscription, and
+plan-limit views remain account-wide rather than per-location. **Still needs an
+explicit answer** before the query audit (S9) can classify those endpoints.
+
+**Q8 — Plan user count. → PARTIAL.**
+To be established from the actual plan definitions rather than assumed. Owner:
+this side.
+
+### 5.5 Still open
 
 **Q3 — Per-location models: separate models, or a shared model with separate
-metrics?**
-R9 supports either reading, and the difference in effort is substantial —
-per-location metrics on a shared model is a modest change; separately trained
-models per site is a pipeline project. This is the largest unknown.
-
-**Q4 — Should the location choice persist?**
-A switch path exists (R8), but it is not specified whether the selection is
-remembered between sessions or re-prompted on every login.
-
-**Q5 — Technician role.**
-Flagged for confirmation (R12).
-
-**Q6 — Managers assigned to more than one warehouse?**
-R11 assumes one manager belongs to exactly one city and one warehouse. A manager
-covering several sites is not addressed.
-
-**Q7 — Is anything excluded from segregation?**
-A plan is purchased at the account level, not per site. Whether billing,
-subscription, and plan-limit views remain account-wide is not specified.
-
-**Q8 — Plan user count.**
-The number of users included in the example plan tier is not established here and
-should be confirmed against the actual plan definitions.
+metrics? → OPEN.**
+Not yet addressed, and it remains the largest unknown in the specification. The
+two readings differ by roughly an order of magnitude in effort — per-location
+metrics on a shared model is a reporting change; separately trained per-site
+models is a pipeline project. **This should be resolved before Phase 3 is
+scoped.** The recommended path in the interim is S16: ship per-location metrics
+first and scope per-site training separately, on evidence.
 
 ---
 
@@ -176,14 +222,16 @@ signal — silo count, total capacity and current occupancy, open alerts, a
 triage screen. Without this, an Admin who logs in three times a day pays a click
 each time for no information gain.
 
-**S3 — Auto-skip the selector for single-location Admins.**
-*Recommend adopting, pending Q1.* Showing a one-card chooser on every login is
-friction with no purpose. Suggest: exactly one location → go straight to the
-dashboard, with the switcher (S4) still available if a second site is added
-later.
+**S3 — ~~Auto-skip the selector for single-location Admins.~~ WITHDRAWN.**
+*Overruled — see Q1.* This proposed skipping the chooser when an Admin has only
+one location. The decision is that the selector is **always shown**, displaying
+the single card (R15). Recorded rather than deleted so the question is not raised
+a second time. The related work is now S2 — if a single-location Admin sees that
+card on every login, the card must carry enough live signal to be worth the
+click.
 
 **S4 — Put a location switcher in the app header.**
-*Recommend adopting.* R8 requires the Admin to go back to change location.
+*Recommend adopting — now supported by the Q4 clarification.* R8 requires the Admin to go back to change location.
 Forcing a return to a full-screen chooser on every switch is slow. A compact
 switcher in the header — showing the active location at all times — both speeds
 this up and keeps the current scope permanently visible, which materially
@@ -246,7 +294,11 @@ treating this as a hardening pass, with S10 recorded as an accepted risk in the
 interim.
 
 **S12 — Include the location scope in all client cache keys.**
-*Recommend adopting.* If React Query keys do not include the active location,
+*Strongly recommend — now load-bearing.* R16 requires that switching locations
+does not discard loaded data, which means per-location results must coexist in
+the cache rather than overwrite each other. Scoped keys are what make that
+possible; they are simultaneously what prevents one location's cached rows being
+served for another. Getting this wrong breaks R16 and R7 at once. If React Query keys do not include the active location,
 switching sites will serve the previous site's cached data — producing exactly
 the cross-contamination R7 forbids, with no server-side bug to find. This is an
 easy defect to introduce and an unpleasant one to diagnose.
@@ -275,7 +327,7 @@ other work lands.
 ### 6.3 AI/ML suggestions
 
 **S16 — Start with per-location metrics on the shared model.**
-*Recommend adopting, pending Q3.* Predictions are already written with a
+*Recommend adopting — Q3 remains open, making this the safe default.* Predictions are already written with a
 warehouse reference, so aggregating performance by location is a reporting change
 rather than a modelling one. This delivers the visible half of R9 quickly and
 lets the far larger question of per-site training be scoped separately on
@@ -321,16 +373,35 @@ shipped screen.
 
 ## 7. Actions
 
-| # | Action | Owner |
-|---|---|---|
-| 1 | Study the requirement and determine whether it is implementable | Abdullah |
-| 2 | Give an explicit go / no-go on taking the task | Abdullah |
-| 3 | Confirm Technician role behaviour (R12 / Q5) | Abdullah → lead |
-| 4 | Resolve open questions Q1–Q4, Q6–Q8 | Abdullah → lead |
-| 5 | Confirm no further decisions were taken in the planning meeting beyond those recorded here | Abdullah → lead |
-| 6 | **Agree a merge order against PR #52 before starting** (S19) — largest schedule risk | Abdullah → lead |
-| 7 | Decide on the "All locations" roll-up (S1) — changes the shape of the feature | Abdullah → lead |
-| 8 | Confirm the accepted position that segregation is application-layer, not database-enforced (S10) | Abdullah → lead |
+Carried forward from revision 1, with resolved items closed.
 
-Suggestions S2–S9, S11–S18, and S20–S21 are implementation-level and do not need
-sign-off; they are recorded so the decisions behind them are visible.
+| # | Action | Owner | Status |
+|---|---|---|---|
+| 1 | Study the requirement and determine whether it is implementable | Abdullah | Done — see §6 |
+| 2 | Give an explicit go / no-go on taking the task | Abdullah | **Open** |
+| 3 | Confirm Technician role behaviour | — | Closed — deferred (Q5) |
+| 4 | Resolve Q1, Q4, Q6 | — | Closed |
+| 5 | Confirm nothing further was decided in the planning meeting | Abdullah → lead | **Open** |
+| 6 | Agree a merge order against PR #52 (S19) | Abdullah → lead | **Open** — see note below |
+| 7 | Decide on the "All locations" roll-up (S1) | Abdullah → lead | **Open** |
+| 8 | Confirm segregation is application-layer, not database-enforced (S10) | Abdullah → lead | **Open** |
+| 9 | **Resolve Q3 — per-location models vs. per-location metrics** | Abdullah → lead | **Open — blocks Phase 3 scoping** |
+| 10 | Settle Q7 — do billing/subscription views stay account-wide? | Abdullah → lead | **Open — blocks the query audit** |
+| 11 | Establish the plan user count from the plan definitions (Q8) | Abdullah | **Open** |
+| 12 | Decide and record the Q2 card model (city vs. warehouse) | Abdullah | **Open — delegated** |
+| 13 | Apply the one-manager-per-warehouse rule (R13) to existing code, not just this feature | Abdullah | **Open** |
+| 14 | Review outstanding intern work and agree how it continues | Abdullah → lead | **Open** |
+
+**On action 6.** The merge-order risk against PR #52 was raised and came back as
+not a particular concern. That response should be treated with care: both
+branches remain green, unreviewed, and touching the same six dashboard files, so
+the conflict itself has not gone away — only the concern about it. Recommend
+confirming explicitly rather than assuming the risk was assessed and dismissed.
+
+**On action 13.** R13 was given as a platform-wide rule covering existing work,
+which makes it wider than this feature. Worth scoping separately before it is
+absorbed silently into this task.
+
+Suggestions S2, S4–S9, S11–S18, and S20–S21 are implementation-level and do not
+need sign-off; they are recorded so the decisions behind them are visible. S3 has
+been withdrawn.
