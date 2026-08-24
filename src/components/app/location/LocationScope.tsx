@@ -21,6 +21,14 @@ import { useNavigate, useSearch } from "@tanstack/react-router";
 import type { LocationCard } from "@/lib/locations.functions";
 
 export type LocationScopeValue = {
+  /**
+   * False while the location list is still loading.
+   *
+   * Callers must not treat an empty list as "this admin has no locations"
+   * until this is true — doing so renders the unscoped view for a moment on
+   * every page load, showing every city's data merged.
+   */
+  ready: boolean;
   /** Normalised key of the active city, or null when none is chosen yet. */
   scopeKey: string | null;
   /** The active location, or null while unresolved. */
@@ -37,9 +45,11 @@ const Ctx = createContext<LocationScopeValue | null>(null);
 
 export function LocationScopeProvider({
   locations,
+  ready = true,
   children,
 }: {
   locations: LocationCard[];
+  ready?: boolean;
   children: ReactNode;
 }) {
   const navigate = useNavigate();
@@ -68,6 +78,7 @@ export function LocationScopeProvider({
 
   const value = useMemo<LocationScopeValue>(
     () => ({
+      ready,
       scopeKey: active?.key ?? null,
       active,
       warehouseIds: active ? active.warehouses.map((w) => w.id) : [],
@@ -75,7 +86,7 @@ export function LocationScopeProvider({
       select,
       clear,
     }),
-    [active, locations, select, clear],
+    [ready, active, locations, select, clear],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

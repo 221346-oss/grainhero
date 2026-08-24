@@ -96,10 +96,20 @@ function DashboardPage() {
 function AdminDashboardWithLocations({ name }: { name?: string }) {
   const scope = useLocationScope();
 
-  // No scope, or none resolved yet — fall back to the unscoped dashboard rather
-  // than stranding the admin on a chooser that may never populate.
-  if (!scope || scope.locations.length === 0) return <AdminDashboard name={name} />;
+  // No provider at all (non-admin roles) — unscoped dashboard, as before.
+  if (!scope) return <AdminDashboard name={name} />;
 
+  // Still loading. An empty list here is indistinguishable from "no warehouses",
+  // and rendering the unscoped dashboard would flash every city's data merged.
+  if (!scope.ready) {
+    return (
+      <div className="p-6">
+        <DashboardSkeleton />
+      </div>
+    );
+  }
+
+  // Settled and genuinely empty — the picker owns that state.
   if (!scope.active) {
     return (
       <LocationPicker

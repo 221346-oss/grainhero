@@ -22,15 +22,20 @@ export function LocationScopeGate({ children }: { children: ReactNode }) {
   const isAdmin = role === "admin";
 
   const fetchLocations = useServerFn(listAdminLocations);
-  const { data } = useQuery({
+  const { data, isPending } = useQuery({
     queryKey: ["admin-locations"],
     queryFn: () => fetchLocations(),
     enabled: isAdmin,
     staleTime: 60_000,
   });
 
+  // Non-admins never load anything, so they are ready immediately. For an admin
+  // the list is not trustworthy until the query settles — an empty list mid-flight
+  // is indistinguishable from "no warehouses" and would flash the unscoped view.
+  const ready = !isAdmin || !isPending;
+
   return (
-    <LocationScopeProvider locations={isAdmin ? (data?.locations ?? []) : []}>
+    <LocationScopeProvider locations={isAdmin ? (data?.locations ?? []) : []} ready={ready}>
       {children}
     </LocationScopeProvider>
   );
