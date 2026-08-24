@@ -10,46 +10,6 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsRouteImport } from './routes/terms'
-<<<<<<< HEAD
-import { Route as AuthenticatedActivityLogsRouteImport } from './routes/_authenticated/activity-logs'
-import { Route as AuthenticatedActuatorsRouteImport } from './routes/_authenticated/actuators'
-import { Route as AuthenticatedAdministrationRouteImport } from './routes/_authenticated/administration'
-import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
-import { Route as AuthenticatedBusinessRouteImport } from './routes/_authenticated/business'
-import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedEarningsRouteImport } from './routes/_authenticated/earnings'
-import { Route as AuthenticatedGrainAlertsRouteImport } from './routes/_authenticated/grain-alerts'
-import { Route as AuthenticatedGrainOperationsRouteImport } from './routes/_authenticated/grain-operations'
-import { Route as AuthenticatedInsuranceRouteImport } from './routes/_authenticated/insurance'
-import { Route as AuthenticatedIntelligenceRouteImport } from './routes/_authenticated/intelligence'
-import { Route as AuthenticatedListingsRouteImport } from './routes/_authenticated/listings'
-import { Route as AuthenticatedMonitoringRouteImport } from './routes/_authenticated/monitoring'
-import { Route as AuthenticatedNotAllowedRouteImport } from './routes/_authenticated/not-allowed'
-import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
-import { Route as AuthenticatedOrdersRouteImport } from './routes/_authenticated/orders'
-import { Route as AuthenticatedPlanManagementRouteImport } from './routes/_authenticated/plan-management'
-import { Route as AuthenticatedPlansRouteImport } from './routes/_authenticated/plans'
-import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
-import { Route as AuthenticatedReturnsRouteImport } from './routes/_authenticated/returns'
-import { Route as AuthenticatedRevenueRouteImport } from './routes/_authenticated/revenue'
-import { Route as AuthenticatedSalesRouteImport } from './routes/_authenticated/sales'
-import { Route as AuthenticatedSecurityCenterRouteImport } from './routes/_authenticated/security-center'
-import { Route as AuthenticatedSensorsRouteImport } from './routes/_authenticated/sensors'
-import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
-import { Route as AuthenticatedSiloRequestRouteImport } from './routes/_authenticated/silo-request'
-import { Route as AuthenticatedSubscriptionRouteImport } from './routes/_authenticated/subscription'
-import { Route as AuthenticatedSuppliersRouteImport } from './routes/_authenticated/suppliers'
-import { Route as AuthenticatedTeamManagementRouteImport } from './routes/_authenticated/team-management'
-import { Route as AuthAcceptInviteRouteImport } from './routes/auth.accept-invite'
-import { Route as AuthForgotPasswordRouteImport } from './routes/auth.forgot-password'
-import { Route as AuthLoginRouteImport } from './routes/auth.login'
-import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
-import { Route as AuthSignupRouteImport } from './routes/auth.signup'
-import { Route as AuthVerifyOtpRouteImport } from './routes/auth.verify-otp'
-import { Route as CheckoutIndexRouteImport } from './routes/checkout.index'
-import { Route as CheckoutSuccessRouteImport } from './routes/checkout.success'
-import { Route as GuidesGrainStorageRouteImport } from './routes/guides.grain-storage'
-=======
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -64,7 +24,6 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
->>>>>>> origin/main
 import { Route as MarketplaceIndexRouteImport } from './routes/marketplace.index'
 import { Route as CheckoutIndexRouteImport } from './routes/checkout.index'
 import { Route as SolutionsSiloMonitoringSystemRouteImport } from './routes/solutions.silo-monitoring-system'
@@ -260,12 +219,6 @@ const MarketplaceRoute = MarketplaceRouteImport.update({
   path: '/marketplace',
   getParentRoute: () => rootRouteImport,
 } as any)
-<<<<<<< HEAD
-const AuthenticatedBusinessRoute = AuthenticatedBusinessRouteImport.update({
-  id: '/business',
-  path: '/business',
-  getParentRoute: () => AuthenticatedRouteRoute,
-=======
 const HelpRoute = HelpRouteImport.update({
   id: '/help',
   path: '/help',
@@ -275,7 +228,6 @@ const DocsRoute = DocsRouteImport.update({
   id: '/docs',
   path: '/docs',
   getParentRoute: () => rootRouteImport,
->>>>>>> origin/main
 } as any)
 const CookiesRoute = CookiesRouteImport.update({
   id: '/cookies',
@@ -287,24 +239,6 @@ const ContactRoute = ContactRouteImport.update({
   path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
-<<<<<<< HEAD
-const AuthenticatedGrainAlertsRoute =
-  AuthenticatedGrainAlertsRouteImport.update({
-    id: '/grain-alerts',
-    path: '/grain-alerts',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedGrainOperationsRoute =
-  AuthenticatedGrainOperationsRouteImport.update({
-    id: '/grain-operations',
-    path: '/grain-operations',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedInsuranceRoute = AuthenticatedInsuranceRouteImport.update({
-  id: '/insurance',
-  path: '/insurance',
-  getParentRoute: () => AuthenticatedRouteRoute,
-=======
 const CheckoutRoute = CheckoutRouteImport.update({
   id: '/checkout',
   path: '/checkout',
@@ -314,145 +248,22 @@ const BlogRoute = BlogRouteImport.update({
   id: '/blog',
   path: '/blog',
   getParentRoute: () => rootRouteImport,
->>>>>>> origin/main
 } as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-<<<<<<< HEAD
-const AuthenticatedMonitoringRoute = AuthenticatedMonitoringRouteImport.update({
-  id: '/monitoring',
-  path: '/monitoring',
-  getParentRoute: () => AuthenticatedRouteRoute,
-=======
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
   getParentRoute: () => rootRouteImport,
->>>>>>> origin/main
 } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
-<<<<<<< HEAD
-const AuthenticatedNotificationsRoute =
-  AuthenticatedNotificationsRouteImport.update({
-    id: '/notifications',
-    path: '/notifications',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedOrdersRoute = AuthenticatedOrdersRouteImport.update({
-  id: '/orders',
-  path: '/orders',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedPlanManagementRoute =
-  AuthenticatedPlanManagementRouteImport.update({
-    id: '/plan-management',
-    path: '/plan-management',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlansRoute = AuthenticatedPlansRouteImport.update({
-  id: '/plans',
-  path: '/plans',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
-  id: '/reports',
-  path: '/reports',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedReturnsRoute = AuthenticatedReturnsRouteImport.update({
-  id: '/returns',
-  path: '/returns',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedRevenueRoute = AuthenticatedRevenueRouteImport.update({
-  id: '/revenue',
-  path: '/revenue',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedSalesRoute = AuthenticatedSalesRouteImport.update({
-  id: '/sales',
-  path: '/sales',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedSecurityCenterRoute =
-  AuthenticatedSecurityCenterRouteImport.update({
-    id: '/security-center',
-    path: '/security-center',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSensorsRoute = AuthenticatedSensorsRouteImport.update({
-  id: '/sensors',
-  path: '/sensors',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedSiloRequestRoute =
-  AuthenticatedSiloRequestRouteImport.update({
-    id: '/silo-request',
-    path: '/silo-request',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSubscriptionRoute =
-  AuthenticatedSubscriptionRouteImport.update({
-    id: '/subscription',
-    path: '/subscription',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSuppliersRoute = AuthenticatedSuppliersRouteImport.update({
-  id: '/suppliers',
-  path: '/suppliers',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedTeamManagementRoute =
-  AuthenticatedTeamManagementRouteImport.update({
-    id: '/team-management',
-    path: '/team-management',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthAcceptInviteRoute = AuthAcceptInviteRouteImport.update({
-  id: '/accept-invite',
-  path: '/accept-invite',
-  getParentRoute: () => AuthRoute,
-} as any)
-const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
-  id: '/forgot-password',
-  path: '/forgot-password',
-  getParentRoute: () => AuthRoute,
-} as any)
-const AuthLoginRoute = AuthLoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => AuthRoute,
-} as any)
-const AuthResetPasswordRoute = AuthResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => AuthRoute,
-} as any)
-const AuthSignupRoute = AuthSignupRouteImport.update({
-  id: '/signup',
-  path: '/signup',
-  getParentRoute: () => AuthRoute,
-} as any)
-const AuthVerifyOtpRoute = AuthVerifyOtpRouteImport.update({
-  id: '/verify-otp',
-  path: '/verify-otp',
-  getParentRoute: () => AuthRoute,
-} as any)
-const CheckoutIndexRoute = CheckoutIndexRouteImport.update({
-=======
 const IndexRoute = IndexRouteImport.update({
->>>>>>> origin/main
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
@@ -1446,18 +1257,17 @@ export interface FileRoutesByFullPath {
   '/actuators': typeof AuthenticatedActuatorsRoute
   '/administration': typeof AuthenticatedAdministrationRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
+  '/attention': typeof AuthenticatedAttentionRoute
   '/business': typeof AuthenticatedBusinessRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/earnings': typeof AuthenticatedEarningsRoute
-<<<<<<< HEAD
-  '/grain-alerts': typeof AuthenticatedGrainAlertsRoute
-=======
   '/environmental': typeof AuthenticatedEnvironmentalRoute
->>>>>>> origin/main
   '/grain-operations': typeof AuthenticatedGrainOperationsRoute
+  '/incidents': typeof AuthenticatedIncidentsRoute
   '/insurance': typeof AuthenticatedInsuranceRoute
   '/intelligence': typeof AuthenticatedIntelligenceRoute
   '/listings': typeof AuthenticatedListingsRoute
+  '/maintenance': typeof AuthenticatedMaintenanceRoute
   '/monitoring': typeof AuthenticatedMonitoringRoute
   '/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
@@ -1470,11 +1280,13 @@ export interface FileRoutesByFullPath {
   '/sales': typeof AuthenticatedSalesRoute
   '/security-center': typeof AuthenticatedSecurityCenterRoute
   '/sensors': typeof AuthenticatedSensorsRoute
+  '/server-monitoring': typeof AuthenticatedServerMonitoringRoute
   '/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/silo-request': typeof AuthenticatedSiloRequestRoute
   '/subscription': typeof AuthenticatedSubscriptionRoute
   '/suppliers': typeof AuthenticatedSuppliersRouteWithChildren
   '/team-management': typeof AuthenticatedTeamManagementRoute
+  '/traceability': typeof AuthenticatedTraceabilityRoute
   '/auth/accept-invite': typeof AuthAcceptInviteRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
@@ -1628,18 +1440,17 @@ export interface FileRoutesByTo {
   '/actuators': typeof AuthenticatedActuatorsRoute
   '/administration': typeof AuthenticatedAdministrationRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
+  '/attention': typeof AuthenticatedAttentionRoute
   '/business': typeof AuthenticatedBusinessRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/earnings': typeof AuthenticatedEarningsRoute
-<<<<<<< HEAD
-  '/grain-alerts': typeof AuthenticatedGrainAlertsRoute
-=======
   '/environmental': typeof AuthenticatedEnvironmentalRoute
->>>>>>> origin/main
   '/grain-operations': typeof AuthenticatedGrainOperationsRoute
+  '/incidents': typeof AuthenticatedIncidentsRoute
   '/insurance': typeof AuthenticatedInsuranceRoute
   '/intelligence': typeof AuthenticatedIntelligenceRoute
   '/listings': typeof AuthenticatedListingsRoute
+  '/maintenance': typeof AuthenticatedMaintenanceRoute
   '/monitoring': typeof AuthenticatedMonitoringRoute
   '/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
@@ -1652,11 +1463,13 @@ export interface FileRoutesByTo {
   '/sales': typeof AuthenticatedSalesRoute
   '/security-center': typeof AuthenticatedSecurityCenterRoute
   '/sensors': typeof AuthenticatedSensorsRoute
+  '/server-monitoring': typeof AuthenticatedServerMonitoringRoute
   '/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/silo-request': typeof AuthenticatedSiloRequestRoute
   '/subscription': typeof AuthenticatedSubscriptionRoute
   '/suppliers': typeof AuthenticatedSuppliersRouteWithChildren
   '/team-management': typeof AuthenticatedTeamManagementRoute
+  '/traceability': typeof AuthenticatedTraceabilityRoute
   '/auth/accept-invite': typeof AuthAcceptInviteRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
@@ -1814,18 +1627,17 @@ export interface FileRoutesById {
   '/_authenticated/actuators': typeof AuthenticatedActuatorsRoute
   '/_authenticated/administration': typeof AuthenticatedAdministrationRoute
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
+  '/_authenticated/attention': typeof AuthenticatedAttentionRoute
   '/_authenticated/business': typeof AuthenticatedBusinessRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/earnings': typeof AuthenticatedEarningsRoute
-<<<<<<< HEAD
-  '/_authenticated/grain-alerts': typeof AuthenticatedGrainAlertsRoute
-=======
   '/_authenticated/environmental': typeof AuthenticatedEnvironmentalRoute
->>>>>>> origin/main
   '/_authenticated/grain-operations': typeof AuthenticatedGrainOperationsRoute
+  '/_authenticated/incidents': typeof AuthenticatedIncidentsRoute
   '/_authenticated/insurance': typeof AuthenticatedInsuranceRoute
   '/_authenticated/intelligence': typeof AuthenticatedIntelligenceRoute
   '/_authenticated/listings': typeof AuthenticatedListingsRoute
+  '/_authenticated/maintenance': typeof AuthenticatedMaintenanceRoute
   '/_authenticated/monitoring': typeof AuthenticatedMonitoringRoute
   '/_authenticated/not-allowed': typeof AuthenticatedNotAllowedRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
@@ -1838,11 +1650,13 @@ export interface FileRoutesById {
   '/_authenticated/sales': typeof AuthenticatedSalesRoute
   '/_authenticated/security-center': typeof AuthenticatedSecurityCenterRoute
   '/_authenticated/sensors': typeof AuthenticatedSensorsRoute
+  '/_authenticated/server-monitoring': typeof AuthenticatedServerMonitoringRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/_authenticated/silo-request': typeof AuthenticatedSiloRequestRoute
   '/_authenticated/subscription': typeof AuthenticatedSubscriptionRoute
   '/_authenticated/suppliers': typeof AuthenticatedSuppliersRouteWithChildren
   '/_authenticated/team-management': typeof AuthenticatedTeamManagementRoute
+  '/_authenticated/traceability': typeof AuthenticatedTraceabilityRoute
   '/auth/accept-invite': typeof AuthAcceptInviteRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
@@ -2000,18 +1814,17 @@ export interface FileRouteTypes {
     | '/actuators'
     | '/administration'
     | '/analytics'
+    | '/attention'
     | '/business'
     | '/dashboard'
     | '/earnings'
-<<<<<<< HEAD
-    | '/grain-alerts'
-=======
     | '/environmental'
->>>>>>> origin/main
     | '/grain-operations'
+    | '/incidents'
     | '/insurance'
     | '/intelligence'
     | '/listings'
+    | '/maintenance'
     | '/monitoring'
     | '/not-allowed'
     | '/notifications'
@@ -2024,11 +1837,13 @@ export interface FileRouteTypes {
     | '/sales'
     | '/security-center'
     | '/sensors'
+    | '/server-monitoring'
     | '/settings'
     | '/silo-request'
     | '/subscription'
     | '/suppliers'
     | '/team-management'
+    | '/traceability'
     | '/auth/accept-invite'
     | '/auth/forgot-password'
     | '/auth/login'
@@ -2182,18 +1997,17 @@ export interface FileRouteTypes {
     | '/actuators'
     | '/administration'
     | '/analytics'
+    | '/attention'
     | '/business'
     | '/dashboard'
     | '/earnings'
-<<<<<<< HEAD
-    | '/grain-alerts'
-=======
     | '/environmental'
->>>>>>> origin/main
     | '/grain-operations'
+    | '/incidents'
     | '/insurance'
     | '/intelligence'
     | '/listings'
+    | '/maintenance'
     | '/monitoring'
     | '/not-allowed'
     | '/notifications'
@@ -2206,11 +2020,13 @@ export interface FileRouteTypes {
     | '/sales'
     | '/security-center'
     | '/sensors'
+    | '/server-monitoring'
     | '/settings'
     | '/silo-request'
     | '/subscription'
     | '/suppliers'
     | '/team-management'
+    | '/traceability'
     | '/auth/accept-invite'
     | '/auth/forgot-password'
     | '/auth/login'
@@ -2367,18 +2183,17 @@ export interface FileRouteTypes {
     | '/_authenticated/actuators'
     | '/_authenticated/administration'
     | '/_authenticated/analytics'
+    | '/_authenticated/attention'
     | '/_authenticated/business'
     | '/_authenticated/dashboard'
     | '/_authenticated/earnings'
-<<<<<<< HEAD
-    | '/_authenticated/grain-alerts'
-=======
     | '/_authenticated/environmental'
->>>>>>> origin/main
     | '/_authenticated/grain-operations'
+    | '/_authenticated/incidents'
     | '/_authenticated/insurance'
     | '/_authenticated/intelligence'
     | '/_authenticated/listings'
+    | '/_authenticated/maintenance'
     | '/_authenticated/monitoring'
     | '/_authenticated/not-allowed'
     | '/_authenticated/notifications'
@@ -2391,11 +2206,13 @@ export interface FileRouteTypes {
     | '/_authenticated/sales'
     | '/_authenticated/security-center'
     | '/_authenticated/sensors'
+    | '/_authenticated/server-monitoring'
     | '/_authenticated/settings'
     | '/_authenticated/silo-request'
     | '/_authenticated/subscription'
     | '/_authenticated/suppliers'
     | '/_authenticated/team-management'
+    | '/_authenticated/traceability'
     | '/auth/accept-invite'
     | '/auth/forgot-password'
     | '/auth/login'
@@ -2661,14 +2478,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DocsRouteImport
       parentRoute: typeof rootRouteImport
     }
-<<<<<<< HEAD
-    '/_authenticated/business': {
-      id: '/_authenticated/business'
-      path: '/business'
-      fullPath: '/business'
-      preLoaderRoute: typeof AuthenticatedBusinessRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-=======
     '/cookies': {
       id: '/cookies'
       path: '/cookies'
@@ -2682,7 +2491,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/contact'
       preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
->>>>>>> origin/main
     }
     '/checkout': {
       id: '/checkout'
@@ -2698,14 +2506,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BlogRouteImport
       parentRoute: typeof rootRouteImport
     }
-<<<<<<< HEAD
-    '/_authenticated/grain-alerts': {
-      id: '/_authenticated/grain-alerts'
-      path: '/grain-alerts'
-      fullPath: '/grain-alerts'
-      preLoaderRoute: typeof AuthenticatedGrainAlertsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-=======
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -2719,7 +2519,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/about'
       preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
->>>>>>> origin/main
     }
     '/_authenticated': {
       id: '/_authenticated'
@@ -2728,195 +2527,8 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-<<<<<<< HEAD
-    '/_authenticated/insurance': {
-      id: '/_authenticated/insurance'
-      path: '/insurance'
-      fullPath: '/insurance'
-      preLoaderRoute: typeof AuthenticatedInsuranceRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/intelligence': {
-      id: '/_authenticated/intelligence'
-      path: '/intelligence'
-      fullPath: '/intelligence'
-      preLoaderRoute: typeof AuthenticatedIntelligenceRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/listings': {
-      id: '/_authenticated/listings'
-      path: '/listings'
-      fullPath: '/listings'
-      preLoaderRoute: typeof AuthenticatedListingsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/monitoring': {
-      id: '/_authenticated/monitoring'
-      path: '/monitoring'
-      fullPath: '/monitoring'
-      preLoaderRoute: typeof AuthenticatedMonitoringRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/not-allowed': {
-      id: '/_authenticated/not-allowed'
-      path: '/not-allowed'
-      fullPath: '/not-allowed'
-      preLoaderRoute: typeof AuthenticatedNotAllowedRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/notifications': {
-      id: '/_authenticated/notifications'
-      path: '/notifications'
-      fullPath: '/notifications'
-      preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/orders': {
-      id: '/_authenticated/orders'
-      path: '/orders'
-      fullPath: '/orders'
-      preLoaderRoute: typeof AuthenticatedOrdersRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/plan-management': {
-      id: '/_authenticated/plan-management'
-      path: '/plan-management'
-      fullPath: '/plan-management'
-      preLoaderRoute: typeof AuthenticatedPlanManagementRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/plans': {
-      id: '/_authenticated/plans'
-      path: '/plans'
-      fullPath: '/plans'
-      preLoaderRoute: typeof AuthenticatedPlansRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/reports': {
-      id: '/_authenticated/reports'
-      path: '/reports'
-      fullPath: '/reports'
-      preLoaderRoute: typeof AuthenticatedReportsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/returns': {
-      id: '/_authenticated/returns'
-      path: '/returns'
-      fullPath: '/returns'
-      preLoaderRoute: typeof AuthenticatedReturnsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/revenue': {
-      id: '/_authenticated/revenue'
-      path: '/revenue'
-      fullPath: '/revenue'
-      preLoaderRoute: typeof AuthenticatedRevenueRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/sales': {
-      id: '/_authenticated/sales'
-      path: '/sales'
-      fullPath: '/sales'
-      preLoaderRoute: typeof AuthenticatedSalesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/security-center': {
-      id: '/_authenticated/security-center'
-      path: '/security-center'
-      fullPath: '/security-center'
-      preLoaderRoute: typeof AuthenticatedSecurityCenterRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/sensors': {
-      id: '/_authenticated/sensors'
-      path: '/sensors'
-      fullPath: '/sensors'
-      preLoaderRoute: typeof AuthenticatedSensorsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings': {
-      id: '/_authenticated/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/silo-request': {
-      id: '/_authenticated/silo-request'
-      path: '/silo-request'
-      fullPath: '/silo-request'
-      preLoaderRoute: typeof AuthenticatedSiloRequestRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/subscription': {
-      id: '/_authenticated/subscription'
-      path: '/subscription'
-      fullPath: '/subscription'
-      preLoaderRoute: typeof AuthenticatedSubscriptionRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/suppliers': {
-      id: '/_authenticated/suppliers'
-      path: '/suppliers'
-      fullPath: '/suppliers'
-      preLoaderRoute: typeof AuthenticatedSuppliersRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/team-management': {
-      id: '/_authenticated/team-management'
-      path: '/team-management'
-      fullPath: '/team-management'
-      preLoaderRoute: typeof AuthenticatedTeamManagementRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/auth/accept-invite': {
-      id: '/auth/accept-invite'
-      path: '/accept-invite'
-      fullPath: '/auth/accept-invite'
-      preLoaderRoute: typeof AuthAcceptInviteRouteImport
-      parentRoute: typeof AuthRoute
-    }
-    '/auth/forgot-password': {
-      id: '/auth/forgot-password'
-      path: '/forgot-password'
-      fullPath: '/auth/forgot-password'
-      preLoaderRoute: typeof AuthForgotPasswordRouteImport
-      parentRoute: typeof AuthRoute
-    }
-    '/auth/login': {
-      id: '/auth/login'
-      path: '/login'
-      fullPath: '/auth/login'
-      preLoaderRoute: typeof AuthLoginRouteImport
-      parentRoute: typeof AuthRoute
-    }
-    '/auth/reset-password': {
-      id: '/auth/reset-password'
-      path: '/reset-password'
-      fullPath: '/auth/reset-password'
-      preLoaderRoute: typeof AuthResetPasswordRouteImport
-      parentRoute: typeof AuthRoute
-    }
-    '/auth/signup': {
-      id: '/auth/signup'
-      path: '/signup'
-      fullPath: '/auth/signup'
-      preLoaderRoute: typeof AuthSignupRouteImport
-      parentRoute: typeof AuthRoute
-    }
-    '/auth/verify-otp': {
-      id: '/auth/verify-otp'
-      path: '/verify-otp'
-      fullPath: '/auth/verify-otp'
-      preLoaderRoute: typeof AuthVerifyOtpRouteImport
-      parentRoute: typeof AuthRoute
-    }
-    '/checkout/': {
-      id: '/checkout/'
-=======
     '/': {
       id: '/'
->>>>>>> origin/main
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
@@ -4258,18 +3870,17 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedActuatorsRoute: typeof AuthenticatedActuatorsRoute
   AuthenticatedAdministrationRoute: typeof AuthenticatedAdministrationRoute
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
+  AuthenticatedAttentionRoute: typeof AuthenticatedAttentionRoute
   AuthenticatedBusinessRoute: typeof AuthenticatedBusinessRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEarningsRoute: typeof AuthenticatedEarningsRoute
-<<<<<<< HEAD
-  AuthenticatedGrainAlertsRoute: typeof AuthenticatedGrainAlertsRoute
-=======
   AuthenticatedEnvironmentalRoute: typeof AuthenticatedEnvironmentalRoute
->>>>>>> origin/main
   AuthenticatedGrainOperationsRoute: typeof AuthenticatedGrainOperationsRoute
+  AuthenticatedIncidentsRoute: typeof AuthenticatedIncidentsRoute
   AuthenticatedInsuranceRoute: typeof AuthenticatedInsuranceRoute
   AuthenticatedIntelligenceRoute: typeof AuthenticatedIntelligenceRoute
   AuthenticatedListingsRoute: typeof AuthenticatedListingsRoute
+  AuthenticatedMaintenanceRoute: typeof AuthenticatedMaintenanceRoute
   AuthenticatedMonitoringRoute: typeof AuthenticatedMonitoringRoute
   AuthenticatedNotAllowedRoute: typeof AuthenticatedNotAllowedRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
@@ -4282,11 +3893,13 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSalesRoute: typeof AuthenticatedSalesRoute
   AuthenticatedSecurityCenterRoute: typeof AuthenticatedSecurityCenterRoute
   AuthenticatedSensorsRoute: typeof AuthenticatedSensorsRoute
+  AuthenticatedServerMonitoringRoute: typeof AuthenticatedServerMonitoringRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRouteWithChildren
   AuthenticatedSiloRequestRoute: typeof AuthenticatedSiloRequestRoute
   AuthenticatedSubscriptionRoute: typeof AuthenticatedSubscriptionRoute
   AuthenticatedSuppliersRoute: typeof AuthenticatedSuppliersRouteWithChildren
   AuthenticatedTeamManagementRoute: typeof AuthenticatedTeamManagementRoute
+  AuthenticatedTraceabilityRoute: typeof AuthenticatedTraceabilityRoute
   AuthenticatedAdminsAdminIdRoute: typeof AuthenticatedAdminsAdminIdRoute
   AuthenticatedBuyerOrdersRoute: typeof AuthenticatedBuyerOrdersRouteWithChildren
   AuthenticatedInsuranceClaimsClaimIdRoute: typeof AuthenticatedInsuranceClaimsClaimIdRoute
@@ -4345,18 +3958,17 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedActuatorsRoute: AuthenticatedActuatorsRoute,
   AuthenticatedAdministrationRoute: AuthenticatedAdministrationRoute,
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
+  AuthenticatedAttentionRoute: AuthenticatedAttentionRoute,
   AuthenticatedBusinessRoute: AuthenticatedBusinessRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEarningsRoute: AuthenticatedEarningsRoute,
-<<<<<<< HEAD
-  AuthenticatedGrainAlertsRoute: AuthenticatedGrainAlertsRoute,
-=======
   AuthenticatedEnvironmentalRoute: AuthenticatedEnvironmentalRoute,
->>>>>>> origin/main
   AuthenticatedGrainOperationsRoute: AuthenticatedGrainOperationsRoute,
+  AuthenticatedIncidentsRoute: AuthenticatedIncidentsRoute,
   AuthenticatedInsuranceRoute: AuthenticatedInsuranceRoute,
   AuthenticatedIntelligenceRoute: AuthenticatedIntelligenceRoute,
   AuthenticatedListingsRoute: AuthenticatedListingsRoute,
+  AuthenticatedMaintenanceRoute: AuthenticatedMaintenanceRoute,
   AuthenticatedMonitoringRoute: AuthenticatedMonitoringRoute,
   AuthenticatedNotAllowedRoute: AuthenticatedNotAllowedRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
@@ -4369,11 +3981,13 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSalesRoute: AuthenticatedSalesRoute,
   AuthenticatedSecurityCenterRoute: AuthenticatedSecurityCenterRoute,
   AuthenticatedSensorsRoute: AuthenticatedSensorsRoute,
+  AuthenticatedServerMonitoringRoute: AuthenticatedServerMonitoringRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRouteWithChildren,
   AuthenticatedSiloRequestRoute: AuthenticatedSiloRequestRoute,
   AuthenticatedSubscriptionRoute: AuthenticatedSubscriptionRoute,
   AuthenticatedSuppliersRoute: AuthenticatedSuppliersRouteWithChildren,
   AuthenticatedTeamManagementRoute: AuthenticatedTeamManagementRoute,
+  AuthenticatedTraceabilityRoute: AuthenticatedTraceabilityRoute,
   AuthenticatedAdminsAdminIdRoute: AuthenticatedAdminsAdminIdRoute,
   AuthenticatedBuyerOrdersRoute: AuthenticatedBuyerOrdersRouteWithChildren,
   AuthenticatedInsuranceClaimsClaimIdRoute:

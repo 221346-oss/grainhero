@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState, type ComponentType } from "react";
 import { motion } from "framer-motion";
 import { RevenueSection } from "@/components/business/RevenueSection";
-import { Wallet, Download, FileSpreadsheet, FileText, MoreHorizontal } from "lucide-react";
+import { Wallet, CreditCard, Download, FileSpreadsheet, FileText, MoreHorizontal } from "lucide-react";
 import { getRevenueOverview, getMySubscription } from "@/lib/billing.functions";
 import { RevenueChart } from "@/components/business/RevenueChart";
 import { getMyRole } from "@/lib/roles.functions";
