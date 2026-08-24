@@ -1,6 +1,7 @@
 "use client";
 
 import QRCodeDisplay from "@/components/QRCodeDisplay";
+import { useLocationScopeKey } from "@/components/app/location/LocationScope";
 import { GrainBatchesSkeleton } from "@/components/app/skeletons";
 import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
@@ -336,6 +337,9 @@ const emptySpoilage: Spoilage = {
 
 export function BatchesSection({ initialStatus }: { initialStatus?: string } = {}) {
   const listFn = useServerFn(listGrainBatches);
+  // Scope every location-dependent query to the active city — in the key as
+  // well as the request, so one city's rows are never served for another.
+  const loc = useLocationScopeKey();
   const listSiloFn = useServerFn(listSilos);
   const listSupFn = useServerFn(listSuppliers);
   const upsertFn = useServerFn(upsertGrainBatch);
@@ -346,12 +350,12 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
   const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({
-    queryKey: ["grain-batches"],
-    queryFn: () => listFn() as unknown as Promise<Batch[]>,
+    queryKey: ["grain-batches", loc],
+    queryFn: () => listFn({ data: { loc: loc ?? undefined } }) as unknown as Promise<Batch[]>,
   });
   const { data: silosData } = useQuery({
-    queryKey: ["silos"],
-    queryFn: () => listSiloFn() as Promise<Silo[]>,
+    queryKey: ["silos", loc],
+    queryFn: () => listSiloFn({ data: { loc: loc ?? undefined } }) as Promise<Silo[]>,
   });
   const silos = silosData ?? [];
   const suppliersQ = useQuery({

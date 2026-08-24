@@ -10,10 +10,8 @@ import { ManagerDashboard } from "@/components/dashboards/ManagerDashboard";
 import { TechnicianDashboard } from "@/components/dashboards/TechnicianDashboard";
 import { getImpersonationSession } from "@/components/app/ImpersonationBanner";
 import { useState, useEffect } from "react";
-import { listAdminLocations } from "@/lib/locations.functions";
-import { LocationScopeProvider, useLocationScope } from "@/components/app/location/LocationScope";
+import { useLocationScope } from "@/components/app/location/LocationScope";
 import { LocationPicker } from "@/components/app/location/LocationPicker";
-import { LocationSwitcher } from "@/components/app/location/LocationSwitcher";
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
@@ -91,39 +89,18 @@ function DashboardPage() {
  *
  * The picker is shown even when there is only one location — that decision was
  * taken deliberately, so an admin always sees where their data is coming from
- * rather than the app quietly choosing for them.
+ * rather than the app quietly choosing for them. The scope itself is provided
+ * by LocationScopeGate in the authenticated layout, so the header switcher and
+ * every other page share it.
  */
 function AdminDashboardWithLocations({ name }: { name?: string }) {
-  const fetchLocations = useServerFn(listAdminLocations);
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["admin-locations"],
-    queryFn: () => fetchLocations(),
-    staleTime: 60_000,
-  });
-
-  if (isLoading) {
-    return (
-      <div className="p-6">
-        <DashboardSkeleton />
-      </div>
-    );
-  }
-
-  // A failure here must not lock the admin out of their dashboard — fall back
-  // to the unscoped view rather than stranding them on an error page.
-  if (error) return <AdminDashboard name={name} />;
-
-  return (
-    <LocationScopeProvider locations={data?.locations ?? []}>
-      <ScopedAdminDashboard name={name} />
-    </LocationScopeProvider>
-  );
-}
-
-function ScopedAdminDashboard({ name }: { name?: string }) {
   const scope = useLocationScope();
 
-  if (scope && !scope.active) {
+  // No scope, or none resolved yet — fall back to the unscoped dashboard rather
+  // than stranding the admin on a chooser that may never populate.
+  if (!scope || scope.locations.length === 0) return <AdminDashboard name={name} />;
+
+  if (!scope.active) {
     return (
       <LocationPicker
         locations={scope.locations}
@@ -133,18 +110,5 @@ function ScopedAdminDashboard({ name }: { name?: string }) {
     );
   }
 
-  return (
-    <>
-      {scope?.active && (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 pt-4 sm:px-6">
-          <LocationSwitcher />
-          <span className="text-[11px] text-muted-foreground">
-            Showing {scope.active.warehouseCount}{" "}
-            {scope.active.warehouseCount === 1 ? "warehouse" : "warehouses"} in {scope.active.city}
-          </span>
-        </div>
-      )}
-      <AdminDashboard name={name} />
-    </>
-  );
+  return <AdminDashboard name={name} />;
 }

@@ -1,13 +1,20 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
+import { useLocationScopeKey } from "@/components/app/location/LocationScope";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { listActuators } from "@/lib/operations.functions";
 
 export function ActuatorsSection() {
   const listFn = useServerFn(listActuators);
-  const { data, isLoading } = useQuery({ queryKey: ["actuators"], queryFn: () => listFn() });
+  // Scope every location-dependent query to the active city — in the key as
+  // well as the request, so one city's rows are never served for another.
+  const loc = useLocationScopeKey();
+  const { data, isLoading } = useQuery({
+    queryKey: ["actuators", loc],
+    queryFn: () => listFn({ data: { loc: loc ?? undefined } }),
+  });
 
   const actuators = data ?? [];
 

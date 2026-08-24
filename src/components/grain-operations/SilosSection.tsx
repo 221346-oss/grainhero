@@ -1,6 +1,7 @@
 "use client";
 
 import { useServerFn } from "@tanstack/react-start";
+import { useLocationScopeKey } from "@/components/app/location/LocationScope";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -118,6 +119,9 @@ const emptyForm: FormState = {
 
 export function SilosSection() {
   const list = useServerFn(listSilos);
+  // Scope every location-dependent query to the active city — in the key as
+  // well as the request, so one city's rows are never served for another.
+  const loc = useLocationScopeKey();
   const listWh = useServerFn(listWarehouses);
   const listBatchesFn = useServerFn(listGrainBatches);
   const upsert = useServerFn(upsertSilo);
@@ -128,8 +132,8 @@ export function SilosSection() {
 
   const navigate = useNavigate();
   const { data, isLoading } = useQuery({
-    queryKey: ["silos"],
-    queryFn: () => list() as Promise<Silo[]>,
+    queryKey: ["silos", loc],
+    queryFn: () => list({ data: { loc: loc ?? undefined } }) as Promise<Silo[]>,
   });
   const { data: warehousesData } = useQuery({
     queryKey: ["warehouses"],
@@ -137,8 +141,8 @@ export function SilosSection() {
   });
   const { data: me } = useQuery({ queryKey: ["my-role"], queryFn: () => fetchRole() });
   const { data: batchesData } = useQuery({
-    queryKey: ["grain-batches"],
-    queryFn: () => listBatchesFn() as Promise<BatchRow[]>,
+    queryKey: ["grain-batches", loc],
+    queryFn: () => listBatchesFn({ data: { loc: loc ?? undefined } }) as Promise<BatchRow[]>,
   });
   const warehouses = warehousesData ?? [];
   const batches = batchesData ?? [];

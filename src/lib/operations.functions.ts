@@ -5,6 +5,19 @@ import type { Database } from "@/integrations/supabase/types";
 import { assertPlanAllows } from "@/lib/plan-gate";
 import { requireRole } from "@/lib/rbac.server";
 import { logActivity, logManagerAction } from "@/lib/activity";
+import { resolveLocationScope, byWarehouse, bySilo } from "./page-scope.server";
+
+/**
+ * Optional location scope accepted by the list endpoints.
+ *
+ * Absent means the tenant-wide view — the behaviour every caller had before
+ * locations existed, and still what managers, technicians and the "all
+ * locations" view want.
+ */
+const locInput = z.object({ loc: z.string().trim().min(1).optional() });
+function parseLoc(data: unknown): { loc?: string } {
+  return locInput.parse(data ?? {});
+}
 
 // Roles allowed to rename a silo/warehouse — same allow-list used for team
 // invite/manage (see inviteTeamMember/updateTeamMember in
@@ -238,18 +251,21 @@ export const deleteWarehouse = createServerFn({ method: "POST" })
 
 export const listSilos = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator(parseLoc)
+  .handler(async ({ context, data: input }) => {
     // Get user's role
     const { getEffectiveRole } = await import("./rbac.server");
     const userRole = await getEffectiveRole(context.supabase, context.userId);
+    const scope = await resolveLocationScope(context.supabase, input?.loc);
 
-    let query = context.supabase
-      .from("silos")
-      .select(
+    let query = byWarehouse(
+      context.supabase.from("silos").select(
         `id, silo_id, name, warehouse_id, capacity_kg, current_occupancy_kg, status, location, 
          batch_loaded_date, batch_dispatched_date, current_conditions, notes, created_at, updated_at,
          warehouses(id, name, warehouse_id, location, manager_id, technician_ids)`,
-      )
+      ),
+      scope,
+    )
       .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .limit(500);
@@ -494,16 +510,21 @@ export const deleteSilo = createServerFn({ method: "POST" })
 
 export const listGrainBatches = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator(parseLoc)
+  .handler(async ({ context, data: input }) => {
     // Get user role to filter visible batches
     const { getEffectiveRole } = await import("./rbac.server");
     const userRole = await getEffectiveRole(context.supabase, context.userId);
+    const scope = await resolveLocationScope(context.supabase, input?.loc);
 
-    let query = context.supabase
-      .from("grain_batches")
-      .select(
-        "*, silos:silo_id(id, silo_id, name, capacity_kg, warehouse_id), warehouses:warehouse_id(id, name, warehouse_id), buyers:buyer_id(id, name, company_name, contact_phone)",
-      )
+    let query = byWarehouse(
+      context.supabase
+        .from("grain_batches")
+        .select(
+          "*, silos:silo_id(id, silo_id, name, capacity_kg, warehouse_id), warehouses:warehouse_id(id, name, warehouse_id), buyers:buyer_id(id, name, company_name, contact_phone)",
+        ),
+      scope,
+    )
       .order("created_at", { ascending: false })
       .limit(500);
 
@@ -1172,12 +1193,17 @@ export const logSpoilageEvent = createServerFn({ method: "POST" })
 
 export const listSensorDevices = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
-      .from("sensor_devices")
-      .select(
-        "*, silos:silo_id(id, silo_id, name), warehouses:warehouse_id(id, name, warehouse_id)",
-      )
+  .inputValidator(parseLoc)
+  .handler(async ({ context, data: input }) => {
+    const scope = await resolveLocationScope(context.supabase, input?.loc);
+    const { data, error } = await byWarehouse(
+      context.supabase
+        .from("sensor_devices")
+        .select(
+          "*, silos:silo_id(id, silo_id, name), warehouses:warehouse_id(id, name, warehouse_id)",
+        ),
+      scope,
+    )
       .order("created_at", { ascending: false })
       .limit(500);
     if (error) throw error;
@@ -1345,10 +1371,17 @@ export const listDeviceReadings = createServerFn({ method: "POST" })
 
 export const listActuators = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
-      .from("actuators")
-      .select("*, silos(id, silo_id, name, warehouse_id, warehouses(id, name, warehouse_id))")
+  .inputValidator(parseLoc)
+  .handler(async ({ context, data: input }) => {
+    const scope = await resolveLocationScope(context.supabase, input?.loc);
+    // actuators carry no warehouse_id — they hang off a silo, so the scope's
+    // resolved silo list is the only way to narrow them.
+    const { data, error } = await bySilo(
+      context.supabase
+        .from("actuators")
+        .select("*, silos(id, silo_id, name, warehouse_id, warehouses(id, name, warehouse_id))"),
+      scope,
+    )
       .order("created_at", { ascending: false })
       .limit(500);
     if (error) throw error;
@@ -1525,12 +1558,17 @@ export const controlActuator = createServerFn({ method: "POST" })
 
 export const listGrainAlerts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
-      .from("grain_alerts")
-      .select(
-        "*, silos(id, silo_id, name), warehouses(id, name, warehouse_id), grain_batches(id, batch_id, grain_type)",
-      )
+  .inputValidator(parseLoc)
+  .handler(async ({ context, data: input }) => {
+    const scope = await resolveLocationScope(context.supabase, input?.loc);
+    const { data, error } = await byWarehouse(
+      context.supabase
+        .from("grain_alerts")
+        .select(
+          "*, silos(id, silo_id, name), warehouses(id, name, warehouse_id), grain_batches(id, batch_id, grain_type)",
+        ),
+      scope,
+    )
       .order("triggered_at", { ascending: false, nullsFirst: false })
       .limit(500);
     if (error) throw error;
@@ -1677,6 +1715,9 @@ export const actionGrainAlert = createServerFn({ method: "POST" })
     return row;
   });
 
+// INTENTIONALLY ACCOUNT-WIDE: a buyer is a customer of the tenant, not a
+// resident of one warehouse. `buyers` carries no warehouse_id, and scoping the
+// list by city would hide legitimate customers from whichever site is open.
 export const listBuyers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {

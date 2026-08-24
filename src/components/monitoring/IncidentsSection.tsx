@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import { useLocationScopeKey } from "@/components/app/location/LocationScope";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -291,6 +292,9 @@ function DetailPanel({
 
 export function IncidentsSection() {
   const getFn = useServerFn(getIncidents);
+  // Scope every location-dependent query to the active city — in the key as
+  // well as the request, so one city's rows are never served for another.
+  const loc = useLocationScopeKey();
   const fetchRole = useServerFn(getMyRole);
   const listTeamFn = useServerFn(listTeamMembers);
   const assignFn = useServerFn(assignIncident);
@@ -315,7 +319,10 @@ export function IncidentsSection() {
     });
   }, []);
 
-  const { data, isLoading } = useQuery({ queryKey: ["incidents"], queryFn: () => getFn() });
+  const { data, isLoading } = useQuery({
+    queryKey: ["incidents", loc],
+    queryFn: () => getFn({ data: { loc: loc ?? undefined } }),
+  });
   const { data: me } = useQuery({ queryKey: ["my-role"], queryFn: () => fetchRole() });
   const canManage = me?.role === "manager" || me?.role === "admin";
   const canReportAsAdmin = me?.role === "admin" || me?.role === "manager";

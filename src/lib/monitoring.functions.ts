@@ -1,4 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
+import { resolveLocationScope, byWarehouse } from "./page-scope.server";
+import { z as _z } from "zod";
+
+/** Optional active-location key; absent means the tenant-wide view. */
+const locSchema = _z.object({ loc: _z.string().trim().min(1).optional() });
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { getEffectiveRole } from "./rbac.server";
@@ -107,18 +112,23 @@ export const getEnvironmentalOverview = createServerFn({ method: "GET" })
 
 export const getIncidents = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((data) => locSchema.parse(data ?? {}))
+  .handler(async ({ context, data: input }) => {
     const r = await role(context.supabase, context.userId);
     requireAny(r, ["super_admin", "admin", "manager", "technician"]);
+    const scope = await resolveLocationScope(context.supabase, input?.loc);
 
     // Fetch both system alerts (high/critical priority) AND field incidents
     // (source = field_incident, priority = medium) in one query so the
     // Incidents tab is never empty when there are field incidents reported.
-    const { data: alerts } = await context.supabase
-      .from("grain_alerts")
-      .select(
-        "id, alert_id, title, message, priority, status, alert_type, sensor_type, silo_id, batch_id, warehouse_id, triggered_at, acknowledged_at, resolved_at, created_at, created_by, assigned_to, escalation_level, source, recipient_id",
-      )
+    const { data: alerts } = await byWarehouse(
+      context.supabase
+        .from("grain_alerts")
+        .select(
+          "id, alert_id, title, message, priority, status, alert_type, sensor_type, silo_id, batch_id, warehouse_id, triggered_at, acknowledged_at, resolved_at, created_at, created_by, assigned_to, escalation_level, source, recipient_id",
+        ),
+      scope,
+    )
       .or("priority.in.(critical,high),source.eq.field_incident")
       .order("triggered_at", { ascending: false })
       .limit(200);

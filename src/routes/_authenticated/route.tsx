@@ -22,6 +22,8 @@ import { getStoredThemeMode, toggleThemeMode, type ThemeMode } from "@/lib/theme
 import TextShimmer from "@/components/ui/text-shimmer";
 import { AppShellSkeleton } from "@/components/app/AppShellSkeleton";
 import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
+import { LocationScopeGate } from "@/components/app/location/LocationScopeGate";
+import { LocationSwitcher } from "@/components/app/location/LocationSwitcher";
 import { logSecurityEvent } from "@/lib/security-events.functions";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -180,77 +182,82 @@ function AuthenticatedLayout() {
   }, [pathname]);
 
   return (
-    <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
-      <SessionGuard />
-      <OnboardingTour />
-      <BugReportButton />
-      <div className="app-scope min-h-screen flex w-full bg-background">
-        <div data-tour="sidebar" className="contents">
-          <AppSidebar mode={sidebarMode} onModeChange={setSidebarMode} />
-          <MobileAdminNav isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        </div>
-        <div className="flex-1 flex flex-col min-w-0">
-          <ImpersonationBanner />
-          <PlanExpiryBanner />
-          <motion.header
-            initial="visible"
-            animate={navHidden ? "hidden" : "visible"}
-            variants={{
-              visible: {
-                opacity: 1,
-                y: 0,
-                transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
-              },
-              hidden: {
-                opacity: 0,
-                y: -20,
-                transition: { duration: 0.25, ease: [0.55, 0.085, 0.68, 0.53] },
-              },
-            }}
-            className="h-14 flex items-center gap-2 sm:gap-3 bg-transparent backdrop-blur-xl px-3 sm:px-6 border-b border-border/50 sticky top-0 z-30 w-full"
-          >
-            {/* Mobile menu button + logo */}
-            <div className="flex md:hidden items-center gap-2 shrink-0">
+    <LocationScopeGate>
+      <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
+        <SessionGuard />
+        <OnboardingTour />
+        <BugReportButton />
+        <div className="app-scope min-h-screen flex w-full bg-background">
+          <div data-tour="sidebar" className="contents">
+            <AppSidebar mode={sidebarMode} onModeChange={setSidebarMode} />
+            <MobileAdminNav isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+          </div>
+          <div className="flex-1 flex flex-col min-w-0">
+            <ImpersonationBanner />
+            <PlanExpiryBanner />
+            <motion.header
+              initial="visible"
+              animate={navHidden ? "hidden" : "visible"}
+              variants={{
+                visible: {
+                  opacity: 1,
+                  y: 0,
+                  transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
+                },
+                hidden: {
+                  opacity: 0,
+                  y: -20,
+                  transition: { duration: 0.25, ease: [0.55, 0.085, 0.68, 0.53] },
+                },
+              }}
+              className="h-14 flex items-center gap-2 sm:gap-3 bg-transparent backdrop-blur-xl px-3 sm:px-6 border-b border-border/50 sticky top-0 z-30 w-full"
+            >
+              {/* Mobile menu button + logo */}
+              <div className="flex md:hidden items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setSidebarOpen((o) => !o)}
+                  className="p-1.5 hover:bg-muted rounded-lg transition-colors text-foreground"
+                  aria-label="Open navigation menu"
+                >
+                  <Menu className="h-5 w-5" />
+                </button>
+                <Link
+                  to="/dashboard"
+                  className="h-7 w-7 rounded-lg bg-[#2FAC0C] flex items-center justify-center font-black text-white text-xs"
+                >
+                  GH
+                </Link>
+              </div>
+              <div className="flex-1 max-w-2xl mx-auto w-full min-w-0">
+                <AppSearch />
+              </div>
+              <DashboardQuickTabs />
+              {/* Keeps the active location on screen at all times — the main
+                  defence against reading one city's numbers as another's. */}
+              <LocationSwitcher />
+              <AdminUpgradeLink />
+              <TicketSidePanel />
+              {/* Dark / Light toggle */}
               <button
                 type="button"
-                onClick={() => setSidebarOpen((o) => !o)}
-                className="p-1.5 hover:bg-muted rounded-lg transition-colors text-foreground"
-                aria-label="Open navigation menu"
+                onClick={handleToggle}
+                aria-label={mode === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                className="shrink-0 h-9 w-9 grid place-items-center rounded-full hover:bg-muted transition text-muted-foreground hover:text-foreground"
               >
-                <Menu className="h-5 w-5" />
+                {mode === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               </button>
-              <Link
-                to="/dashboard"
-                className="h-7 w-7 rounded-lg bg-[#2FAC0C] flex items-center justify-center font-black text-white text-xs"
-              >
-                GH
-              </Link>
-            </div>
-            <div className="flex-1 max-w-2xl mx-auto w-full min-w-0">
-              <AppSearch />
-            </div>
-            <DashboardQuickTabs />
-            <AdminUpgradeLink />
-            <TicketSidePanel />
-            {/* Dark / Light toggle */}
-            <button
-              type="button"
-              onClick={handleToggle}
-              aria-label={mode === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-              className="shrink-0 h-9 w-9 grid place-items-center rounded-full hover:bg-muted transition text-muted-foreground hover:text-foreground"
-            >
-              {mode === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            </button>
-            <NotificationBell />
-            <ProfileMenu />
-          </motion.header>
-          <main className="flex-1 overflow-x-hidden">
-            <TicketChannelKeepAlive />
-            <AnimatedOutlet />
-          </main>
+              <NotificationBell />
+              <ProfileMenu />
+            </motion.header>
+            <main className="flex-1 overflow-x-hidden">
+              <TicketChannelKeepAlive />
+              <AnimatedOutlet />
+            </main>
+          </div>
         </div>
-      </div>
-    </SidebarProvider>
+      </SidebarProvider>
+    </LocationScopeGate>
   );
 }
 

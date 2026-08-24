@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useLocationScopeKey } from "@/components/app/location/LocationScope";
 import { useServerFn } from "@tanstack/react-start";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,9 +18,12 @@ function fmtGap(s: number | null) {
 
 export function DeviceHealthSection() {
   const fn = useServerFn(getDeviceHealth);
+  // Scope every location-dependent query to the active city — in the key as
+  // well as the request, so one city's rows are never served for another.
+  const loc = useLocationScopeKey();
   const { data } = useQuery({
-    queryKey: ["device-health"],
-    queryFn: () => fn(),
+    queryKey: ["device-health", loc],
+    queryFn: () => fn({ data: { loc: loc ?? undefined } }),
     refetchInterval: 15_000,
   });
 

@@ -127,3 +127,31 @@ export async function resolveLocationScope(
     siloIds: (silos ?? []).map((s) => s.id),
   };
 }
+
+/**
+ * Narrow a query to the active location, on a table keyed by `warehouse_id`.
+ *
+ * A null `warehouseIds` leaves the query untouched — the tenant-wide behaviour
+ * every caller had before locations existed, still correct for managers,
+ * technicians, super admins and the "all locations" view.
+ *
+ * Rows with a null warehouse are excluded once a location is active:
+ * unattributed data belongs to no city, and surfacing it under one would be
+ * exactly the mixing this feature forbids.
+ */
+export function byWarehouse<Q extends { in: (col: string, vals: string[]) => Q }>(
+  q: Q,
+  scope: LocationScope,
+): Q {
+  if (!scope.warehouseIds) return q;
+  return q.in("warehouse_id", scope.warehouseIds);
+}
+
+/** As {@link byWarehouse}, for tables that key only on `silo_id`. */
+export function bySilo<Q extends { in: (col: string, vals: string[]) => Q }>(
+  q: Q,
+  scope: LocationScope,
+): Q {
+  if (!scope.siloIds) return q;
+  return q.in("silo_id", scope.siloIds);
+}

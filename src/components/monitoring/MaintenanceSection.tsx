@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useLocationScopeKey } from "@/components/app/location/LocationScope";
 import { Loader2, Wrench } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -44,12 +45,15 @@ function RequestMaintenanceDialog({
 }) {
   const qc = useQueryClient();
   const listDevicesFn = useServerFn(listSensorDevices);
+  // Scope every location-dependent query to the active city — in the key as
+  // well as the request, so one city's rows are never served for another.
+  const loc = useLocationScopeKey();
   const createFn = useServerFn(createMaintenanceRequest);
   const [form, setForm] = useState(emptyForm);
 
   const devicesQ = useQuery({
-    queryKey: ["sensor-devices"],
-    queryFn: () => listDevicesFn(),
+    queryKey: ["sensor-devices", loc],
+    queryFn: () => listDevicesFn({ data: { loc: loc ?? undefined } }),
     enabled: open,
   });
   const devices = (devicesQ.data ?? []) as Array<{
@@ -183,13 +187,16 @@ function statusTone(status: string) {
 
 export function MaintenanceSection() {
   const getFn = useServerFn(getMaintenanceOverview);
+  // Scope every location-dependent query to the active city — in the key as
+  // well as the request, so one city's rows are never served for another.
+  const loc = useLocationScopeKey();
   const listRequestsFn = useServerFn(listMaintenanceRequests);
   const fetchRole = useServerFn(getMyRole);
   const [dlgOpen, setDlgOpen] = useState(false);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["maintenance-overview"],
-    queryFn: () => getFn(),
+    queryKey: ["maintenance-overview", loc],
+    queryFn: () => getFn({ data: { loc: loc ?? undefined } }),
   });
   const { data: me } = useQuery({ queryKey: ["my-role"], queryFn: () => fetchRole() });
   const canRequest = me?.role === "admin";

@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useLocationScopeKey } from "@/components/app/location/LocationScope";
 import React from "react";
 import { VariableFontText } from "@/components/app/VariableFontText";
 import { motion } from "framer-motion";
@@ -75,6 +76,9 @@ function GrainOperationsWorkspace() {
 
   // Fetch user role to determine which tabs to show
   const roleFn = useServerFn(getMyRole);
+  // Scope every location-dependent query to the active city — in the key as
+  // well as the request, so one city's rows are never served for another.
+  const loc = useLocationScopeKey();
   const { data: roleData } = useQuery({
     queryKey: ["my-role"],
     queryFn: () => roleFn(),
@@ -99,10 +103,13 @@ function GrainOperationsWorkspace() {
   const listPendingApprovalsFn = useServerFn(listPendingApprovalBatches);
 
   const { data: batches } = useQuery({
-    queryKey: ["grain-batches"],
-    queryFn: () => listBatchesFn(),
+    queryKey: ["grain-batches", loc],
+    queryFn: () => listBatchesFn({ data: { loc: loc ?? undefined } }),
   });
-  const { data: silos } = useQuery({ queryKey: ["silos"], queryFn: () => listSilosFn() });
+  const { data: silos } = useQuery({
+    queryKey: ["silos", loc],
+    queryFn: () => listSilosFn({ data: { loc: loc ?? undefined } }),
+  });
   const { data: buyers } = useQuery({ queryKey: ["buyers"], queryFn: () => listBuyersFn() });
 
   // Fetch pending approvals for admins

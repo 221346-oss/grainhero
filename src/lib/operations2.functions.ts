@@ -1,4 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
+import { resolveLocationScope, byWarehouse, bySilo } from "./page-scope.server";
+import { z as _z } from "zod";
+
+/** Optional active-location key; absent means the tenant-wide view. */
+const locSchema = _z.object({ loc: _z.string().trim().min(1).optional() });
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { getEffectiveRole } from "./rbac.server";
@@ -14,24 +19,31 @@ function req(r: string, allowed: string[]) {
 
 export const getMaintenanceOverview = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((data) => locSchema.parse(data ?? {}))
+  .handler(async ({ context, data: input }) => {
     const r = await role(context.supabase, context.userId);
     req(r, ["super_admin", "admin", "manager", "technician"]);
+    const scope = await resolveLocationScope(context.supabase, input?.loc);
 
-    const { data: devices } = await context.supabase
-      .from("sensor_devices")
-      .select(
-        "id, device_id, device_name, device_type, status, connection_status, battery_level, last_heartbeat, last_maintenance_date, next_maintenance_date, calibration_due_date, warranty_expiry, silo_id, warehouse_id, manufacturer, model, firmware_version",
-      )
+    const { data: devices } = await byWarehouse(
+      context.supabase
+        .from("sensor_devices")
+        .select(
+          "id, device_id, device_name, device_type, status, connection_status, battery_level, last_heartbeat, last_maintenance_date, next_maintenance_date, calibration_due_date, warranty_expiry, silo_id, warehouse_id, manufacturer, model, firmware_version",
+        ),
+      scope,
+    )
       .is("deleted_at", null)
       .order("next_maintenance_date", { ascending: true, nullsFirst: false })
       .limit(500);
-    const { data: actuators } = await context.supabase
-      .from("actuators")
-      .select(
-        "id, actuator_id, name, actuator_type, status, last_maintenance_date, next_maintenance_date, silo_id",
-      )
-      .limit(500);
+    const { data: actuators } = await bySilo(
+      context.supabase
+        .from("actuators")
+        .select(
+          "id, actuator_id, name, actuator_type, status, last_maintenance_date, next_maintenance_date, silo_id",
+        ),
+      scope,
+    ).limit(500);
 
     const list = (devices ?? []) as any[];
     const now = Date.now();
@@ -168,15 +180,20 @@ export const markMaintenanceDone = createServerFn({ method: "POST" })
 
 export const getDeviceHealth = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((data) => locSchema.parse(data ?? {}))
+  .handler(async ({ context, data: input }) => {
     const r = await role(context.supabase, context.userId);
     req(r, ["super_admin", "admin", "manager", "technician"]);
+    const scope = await resolveLocationScope(context.supabase, input?.loc);
 
-    const { data: devices } = await context.supabase
-      .from("sensor_devices")
-      .select(
-        "id, device_id, device_name, device_type, status, connection_status, battery_level, signal_strength, last_heartbeat, expected_heartbeat_interval, silo_id, warehouse_id, firmware_version",
-      )
+    const { data: devices } = await byWarehouse(
+      context.supabase
+        .from("sensor_devices")
+        .select(
+          "id, device_id, device_name, device_type, status, connection_status, battery_level, signal_strength, last_heartbeat, expected_heartbeat_interval, silo_id, warehouse_id, firmware_version",
+        ),
+      scope,
+    )
       .is("deleted_at", null)
       .limit(500);
 

@@ -2,35 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { fetchDispatchTotals } from "./operations.functions";
-import { resolveLocationScope, type LocationScope } from "./page-scope.server";
-
-/**
- * Narrow a query to the active location.
- *
- * `warehouseIds: null` leaves the query untouched — that is the tenant-wide
- * behaviour every caller had before locations existed, and is still correct for
- * managers, technicians and the "all locations" view.
- *
- * Applied to a table keyed on `warehouse_id`. Rows with a null warehouse are
- * excluded once a location is active: unattributed data belongs to no city, and
- * showing it under one would be exactly the mixing this feature forbids.
- */
-function byWarehouse<Q extends { in: (col: string, vals: string[]) => Q }>(
-  q: Q,
-  scope: LocationScope,
-): Q {
-  if (!scope.warehouseIds) return q;
-  return q.in("warehouse_id", scope.warehouseIds);
-}
-
-/** As {@link byWarehouse}, for tables that key only on `silo_id`. */
-function bySilo<Q extends { in: (col: string, vals: string[]) => Q }>(
-  q: Q,
-  scope: LocationScope,
-): Q {
-  if (!scope.siloIds) return q;
-  return q.in("silo_id", scope.siloIds);
-}
+import { resolveLocationScope, byWarehouse, bySilo } from "./page-scope.server";
 
 type Range = "today" | "7d" | "30d" | "mtd" | "ytd";
 function rangeToWindow(range: Range) {

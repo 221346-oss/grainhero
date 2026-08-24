@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useLocationScopeKey } from "@/components/app/location/LocationScope";
 import { VariableFontText } from "@/components/app/VariableFontText";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -72,6 +73,12 @@ function MonitoringWorkspace() {
   const [activeTab, setActiveTab] = useState<Tab>("incidents");
 
   const getIncidentsFn = useServerFn(getIncidents);
+
+  // Scope every location-dependent query to the active city — in the key as
+
+  // well as the request, so one city's rows are never served for another.
+
+  const loc = useLocationScopeKey();
   const getMaintenanceFn = useServerFn(getMaintenanceOverview);
   const getHealthFn = useServerFn(getDeviceHealth);
   const roleFn = useServerFn(getMyRole);
@@ -80,25 +87,28 @@ function MonitoringWorkspace() {
   const listAlertsFn = useServerFn(listGrainAlerts);
 
   const { data: sensors } = useQuery({
-    queryKey: ["sensor-devices"],
-    queryFn: () => listSensorsFn(),
+    queryKey: ["sensor-devices", loc],
+    queryFn: () => listSensorsFn({ data: { loc: loc ?? undefined } }),
   });
   const { data: actuators } = useQuery({
-    queryKey: ["actuators"],
-    queryFn: () => listActuatorsFn(),
+    queryKey: ["actuators", loc],
+    queryFn: () => listActuatorsFn({ data: { loc: loc ?? undefined } }),
   });
-  const { data: alerts } = useQuery({ queryKey: ["grain-alerts"], queryFn: () => listAlertsFn() });
+  const { data: alerts } = useQuery({
+    queryKey: ["grain-alerts", loc],
+    queryFn: () => listAlertsFn({ data: { loc: loc ?? undefined } }),
+  });
   const { data: incidents } = useQuery({
-    queryKey: ["incidents"],
-    queryFn: () => getIncidentsFn(),
+    queryKey: ["incidents", loc],
+    queryFn: () => getIncidentsFn({ data: { loc: loc ?? undefined } }),
   });
   const { data: maintenance } = useQuery({
-    queryKey: ["maintenance-overview"],
-    queryFn: () => getMaintenanceFn(),
+    queryKey: ["maintenance-overview", loc],
+    queryFn: () => getMaintenanceFn({ data: { loc: loc ?? undefined } }),
   });
   const { data: health } = useQuery({
-    queryKey: ["device-health"],
-    queryFn: () => getHealthFn(),
+    queryKey: ["device-health", loc],
+    queryFn: () => getHealthFn({ data: { loc: loc ?? undefined } }),
     refetchInterval: 15_000,
   });
   const { data: roleData } = useQuery({ queryKey: ["my-role"], queryFn: () => roleFn() });
