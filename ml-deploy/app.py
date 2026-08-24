@@ -867,6 +867,40 @@ async def rag_ingest(
         raise HTTPException(status_code=500, detail=str(exc))
 
 
+import uuid as _uuid
+
+class ChatRequest(BaseModel):
+    message: str
+    session_id: Optional[str] = None
+    tenant_id: Optional[str] = None
+
+class ChatResponse(BaseModel):
+    answer: str
+    session_id: str
+
+@app.post("/chat", response_model=ChatResponse, summary="Stateful Chat (UI Integration)")
+async def chat_endpoint(req: ChatRequest):
+    """
+    Main endpoint for the frontend AIAssistant.
+    Uses session_id to maintain conversation history in memory.
+    """
+    session_id = req.session_id or str(_uuid.uuid4())
+    tenant_id  = req.tenant_id or os.getenv("DEFAULT_TENANT_ID")
+
+    try:
+        agent = GrainHeroAgent(tenant_id=tenant_id, session_id=session_id)
+        # agent.run() handles everything: history, RAG retrieval, Gemini generation
+        response = agent.run(req.message)
+        
+        return ChatResponse(
+            answer=response,
+            session_id=session_id
+        )
+    except Exception as exc:
+        logger.error(f"Chat failed: {exc}")
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
 @app.get("/model-info/{grain}", summary="Model metadata")
 def model_info(grain: str):
     """Return model version, window size W, input dimension, hash, and class labels for a grain."""
