@@ -115,6 +115,7 @@ function AdminDashboardWithLocations({ name }: { name?: string }) {
       <LocationPicker
         locations={scope.locations}
         name={name}
+        plan={scope.plan}
         onSelect={(key) => scope.select(key)}
       />
     );

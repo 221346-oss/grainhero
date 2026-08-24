@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useLocationScopeKey } from "@/components/app/location/LocationScope";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -148,6 +149,12 @@ export function DispatchSaleWizard({
   }, [open, resumeDispatch]);
 
   const listSilosFn = useServerFn(listSilos);
+
+  // Scope every location-dependent query to the active city — in the key as
+
+  // well as the request, so one city's rows are never served for another.
+
+  const loc = useLocationScopeKey();
   const listBatchesFn = useServerFn(listSiloAvailableBatches);
   const listBuyersFn = useServerFn(listBuyers);
   const createInvoiceFn = useServerFn(createDispatchInvoice);
@@ -160,8 +167,8 @@ export function DispatchSaleWizard({
   const listActiveFn = useServerFn(listSilosWithActiveDispatch);
 
   const silosQ = useQuery({
-    queryKey: ["wizard-silos"],
-    queryFn: () => listSilosFn(),
+    queryKey: ["wizard-silos", loc],
+    queryFn: () => listSilosFn({ data: { loc: loc ?? undefined } }),
     enabled: open,
   });
   const buyersQ = useQuery({

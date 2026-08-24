@@ -1,4 +1,5 @@
 import { ActuatorsSkeleton } from "@/components/app/skeletons";
+import { useLocationScopeKey } from "@/components/app/location/LocationScope";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -180,19 +181,22 @@ const typeIcon = (t: string) => {
 function ActuatorsPage() {
   const qc = useQueryClient();
   const listFn = useServerFn(listActuators);
+  // Scope every location-dependent query to the active city — in the key as
+  // well as the request, so one city's rows are never served for another.
+  const loc = useLocationScopeKey();
   const silosFn = useServerFn(listSilos);
   const saveFn = useServerFn(upsertActuator);
   const delFn = useServerFn(deleteActuator);
   const ctrlFn = useServerFn(controlActuator);
 
   const { data: rows = [], isLoading } = useQuery({
-    queryKey: ["actuators"],
-    queryFn: () => listFn() as Promise<Actuator[]>,
+    queryKey: ["actuators", loc],
+    queryFn: () => listFn({ data: { loc: loc ?? undefined } }) as Promise<Actuator[]>,
     refetchInterval: 15000,
   });
   const { data: silos = [] } = useQuery({
-    queryKey: ["silos"],
-    queryFn: () => silosFn() as unknown as Promise<Silo[]>,
+    queryKey: ["silos", loc],
+    queryFn: () => silosFn({ data: { loc: loc ?? undefined } }) as unknown as Promise<Silo[]>,
   });
 
   const [query, setQuery] = useState("");

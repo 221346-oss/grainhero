@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useLocationScopeKey } from "@/components/app/location/LocationScope";
 import { DashboardSkeleton } from "@/components/app/skeletons";
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -52,9 +53,15 @@ function MaintenancePage() {
 
 function TenantMaintenanceView() {
   const fn = useServerFn(getMaintenanceOverview);
+  // Scope every location-dependent query to the active city — in the key as
+  // well as the request, so one city's rows are never served for another.
+  const loc = useLocationScopeKey();
   const doneFn = useServerFn(markMaintenanceDone);
   const qc = useQueryClient();
-  const { data, isLoading } = useQuery({ queryKey: ["maintenance"], queryFn: () => fn() });
+  const { data, isLoading } = useQuery({
+    queryKey: ["maintenance", loc],
+    queryFn: () => fn({ data: { loc: loc ?? undefined } }),
+  });
   const [q, setQ] = useState("");
 
   const doneM = useMutation({
@@ -232,6 +239,8 @@ function TenantMaintenanceView() {
 }
 
 function PlatformMaintenanceView() {
+  // Platform view is super-admin, deliberately across every tenant — never
+  // narrowed by an admin's active location.
   const fn = useServerFn(getPlatformMaintenanceOverview);
   const { data, isLoading, error } = useQuery({
     queryKey: ["platform-maintenance"],

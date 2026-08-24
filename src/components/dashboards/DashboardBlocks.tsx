@@ -1,4 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
+import { useLocationScopeKey } from "@/components/app/location/LocationScope";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
@@ -24,6 +25,9 @@ import { listDispatches } from "@/lib/dispatches.functions";
 // for these widgets) on every dashboard mount.
 function useExtras(range: string = "mtd") {
   const fn = useServerFn(getDashboardExtras);
+  // Scope every location-dependent query to the active city — in the key as
+  // well as the request, so one city's rows are never served for another.
+  const loc = useLocationScopeKey();
   return useQuery({
     queryKey: ["dashboard-extras", range],
     queryFn: () => fn({ data: { range } as never }),
@@ -403,16 +407,19 @@ type DashSilo = {
 export function DashboardSiloCards({ range }: { range?: string } = {}) {
   const navigate = useNavigate();
   const listSilosFn = useServerFn(listSilos);
+  const loc = useLocationScopeKey();
   const listBatchesFn = useServerFn(listGrainBatches);
   const { data: extras } = useExtras(range);
   const { data: silos } = useQuery({
-    queryKey: ["silos"],
-    queryFn: () => listSilosFn() as Promise<DashSilo[]>,
+    queryKey: ["silos", loc],
+    queryFn: () => listSilosFn({ data: { loc: loc ?? undefined } }) as Promise<DashSilo[]>,
   });
   const { data: batches } = useQuery({
-    queryKey: ["grain-batches"],
+    queryKey: ["grain-batches", loc],
     queryFn: () =>
-      listBatchesFn() as Promise<Array<{ quantity_kg: number; silos?: { id: string } | null }>>,
+      listBatchesFn({ data: { loc: loc ?? undefined } }) as Promise<
+        Array<{ quantity_kg: number; silos?: { id: string } | null }>
+      >,
   });
   const siloGate = usePlanGate("max_silos");
   const [dispatchSilo, setDispatchSilo] = useState<DashSilo | null>(null);

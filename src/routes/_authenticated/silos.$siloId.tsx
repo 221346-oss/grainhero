@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useLocationScopeKey } from "@/components/app/location/LocationScope";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -109,15 +110,21 @@ type Dispatch = {
 function SiloDetailPage() {
   const { siloId } = Route.useParams();
   const listS = useServerFn(listSilos);
+  // Scope every location-dependent query to the active city — in the key as
+  // well as the request, so one city's rows are never served for another.
+  const loc = useLocationScopeKey();
   const listB = useServerFn(listGrainBatches);
   const listD = useServerFn(listDispatches);
   const renameFn = useServerFn(renameSilo);
   const fetchRole = useServerFn(getMyRole);
   const qc = useQueryClient();
-  const silosQ = useQuery({ queryKey: ["silos"], queryFn: () => listS() as Promise<Silo[]> });
+  const silosQ = useQuery({
+    queryKey: ["silos", loc],
+    queryFn: () => listS({ data: { loc: loc ?? undefined } }) as Promise<Silo[]>,
+  });
   const batchesQ = useQuery({
-    queryKey: ["grain-batches"],
-    queryFn: () => listB() as Promise<Batch[]>,
+    queryKey: ["grain-batches", loc],
+    queryFn: () => listB({ data: { loc: loc ?? undefined } }) as Promise<Batch[]>,
   });
   const dispatchesQ = useQuery({
     queryKey: ["silo-dispatches", siloId],

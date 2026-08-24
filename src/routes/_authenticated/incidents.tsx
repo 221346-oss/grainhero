@@ -1,4 +1,5 @@
 import { DashboardSkeleton } from "@/components/app/skeletons";
+import { useLocationScopeKey } from "@/components/app/location/LocationScope";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -67,11 +68,14 @@ function IncidentsPage() {
 
 function TenantIncidentsView() {
   const fn = useServerFn(getIncidents);
+  // Scope every location-dependent query to the active city — in the key as
+  // well as the request, so one city's rows are never served for another.
+  const loc = useLocationScopeKey();
   const ackFn = useServerFn(acknowledgeIncident);
   const qc = useQueryClient();
   const { data, isLoading } = useQuery({
-    queryKey: ["incidents"],
-    queryFn: () => fn(),
+    queryKey: ["incidents", loc],
+    queryFn: () => fn({ data: { loc: loc ?? undefined } }),
     refetchInterval: 30_000,
   });
   useRealtimeInvalidate("grain_alerts", [["incidents"]]);

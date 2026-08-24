@@ -35,7 +35,11 @@ export function LocationScopeGate({ children }: { children: ReactNode }) {
   const ready = !isAdmin || !isPending;
 
   return (
-    <LocationScopeProvider locations={isAdmin ? (data?.locations ?? []) : []} ready={ready}>
+    <LocationScopeProvider
+      locations={isAdmin ? (data?.locations ?? []) : []}
+      plan={isAdmin ? data?.plan : undefined}
+      ready={ready}
+    >
       {children}
     </LocationScopeProvider>
   );

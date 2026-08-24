@@ -18,7 +18,7 @@
  */
 import { createContext, useCallback, useContext, useMemo, type ReactNode } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import type { LocationCard } from "@/lib/locations.functions";
+import type { LocationCard, PlanUsage } from "@/lib/locations.functions";
 
 export type LocationScopeValue = {
   /**
@@ -37,6 +37,8 @@ export type LocationScopeValue = {
   warehouseIds: string[];
   /** Every location available to this user. */
   locations: LocationCard[];
+  /** The account's warehouse allowance, when the plan caps it. */
+  plan?: PlanUsage;
   select: (key: string | null) => void;
   clear: () => void;
 };
@@ -45,10 +47,12 @@ const Ctx = createContext<LocationScopeValue | null>(null);
 
 export function LocationScopeProvider({
   locations,
+  plan,
   ready = true,
   children,
 }: {
   locations: LocationCard[];
+  plan?: PlanUsage;
   ready?: boolean;
   children: ReactNode;
 }) {
@@ -83,10 +87,11 @@ export function LocationScopeProvider({
       active,
       warehouseIds: active ? active.warehouses.map((w) => w.id) : [],
       locations,
+      plan,
       select,
       clear,
     }),
-    [ready, active, locations, select, clear],
+    [ready, active, locations, plan, select, clear],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

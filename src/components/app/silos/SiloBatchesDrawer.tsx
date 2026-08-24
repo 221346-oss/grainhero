@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { useLocationScopeKey } from "@/components/app/location/LocationScope";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -53,9 +54,12 @@ export function SiloBatchesDrawer({
   onDispatch: (silo: Silo) => void;
 }) {
   const list = useServerFn(listGrainBatches);
+  // Scope every location-dependent query to the active city — in the key as
+  // well as the request, so one city's rows are never served for another.
+  const loc = useLocationScopeKey();
   const q = useQuery({
-    queryKey: ["grain-batches"],
-    queryFn: () => list() as Promise<Batch[]>,
+    queryKey: ["grain-batches", loc],
+    queryFn: () => list({ data: { loc: loc ?? undefined } }) as Promise<Batch[]>,
     enabled: open,
   });
 

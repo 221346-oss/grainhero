@@ -12,7 +12,7 @@
  */
 import { AlertTriangle, ArrowRight, MapPin, Warehouse } from "lucide-react";
 import { Rail, SectionLabel, compact } from "@/components/app/surface";
-import type { LocationCard } from "@/lib/locations.functions";
+import type { LocationCard, PlanUsage } from "@/lib/locations.functions";
 import { cn } from "@/lib/utils";
 
 function utilisationTone(pct: number | null): "success" | "warning" | "critical" {
@@ -97,13 +97,49 @@ function LocationTile({ loc, onSelect }: { loc: LocationCard; onSelect: () => vo
   );
 }
 
+/**
+ * "3 of 5 warehouses" — the plan allowance, shown beside the cards.
+ *
+ * Rendered only when the plan actually caps warehouses: an unlimited or
+ * unconfigured plan has nothing useful to say here, and a bare "3 of -1" would
+ * be worse than silence.
+ */
+function PlanAllowance({ plan }: { plan?: PlanUsage }) {
+  if (!plan || plan.warehousesLimit <= 0) return null;
+  const pct = Math.round((plan.warehousesUsed / plan.warehousesLimit) * 100);
+
+  return (
+    <div className="flex items-center gap-2.5">
+      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+        Plan
+      </span>
+      <span
+        className={cn(
+          "text-[11px] font-semibold tabular-nums",
+          plan.atLimit ? "text-warning" : "text-muted-foreground",
+        )}
+      >
+        {plan.warehousesUsed} of {plan.warehousesLimit} warehouses
+      </span>
+      <span className="h-px w-16 bg-border/60" aria-hidden="true">
+        <span
+          className={cn("block h-px", plan.atLimit ? "bg-warning" : "bg-success")}
+          style={{ width: `${Math.max(2, Math.min(100, pct))}%` }}
+        />
+      </span>
+    </div>
+  );
+}
+
 export function LocationPicker({
   locations,
   name,
+  plan,
   onSelect,
 }: {
   locations: LocationCard[];
   name?: string;
+  plan?: PlanUsage;
   onSelect: (key: string) => void;
 }) {
   // An admin whose plan allows warehouses but who has provisioned none yet.
@@ -118,6 +154,12 @@ export function LocationPicker({
           Once a hardware order is installed and provisioned, its warehouse appears here as a
           location you can open.
         </p>
+        {plan && plan.warehousesLimit > 0 && (
+          <p className="mt-4 text-[11px] font-semibold tabular-nums text-muted-foreground">
+            Your plan covers {plan.warehousesLimit}{" "}
+            {plan.warehousesLimit === 1 ? "warehouse" : "warehouses"}.
+          </p>
+        )}
       </div>
     );
   }
@@ -125,7 +167,10 @@ export function LocationPicker({
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
       <header className="mb-8 space-y-2">
-        <SectionLabel index="01">Your locations</SectionLabel>
+        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+          <SectionLabel index="01">Your locations</SectionLabel>
+          <PlanAllowance plan={plan} />
+        </div>
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">
           {name ? `Welcome back, ${name}` : "Welcome back"}
         </h1>

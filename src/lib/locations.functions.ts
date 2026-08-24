@@ -28,6 +28,21 @@ export type LocationWarehouse = {
   occupancyKg: number;
 };
 
+/**
+ * How the account's warehouse allowance is being used.
+ *
+ * Shown on the picker so the card grid reflects the plan rather than just
+ * listing whatever exists — an admin should be able to see at a glance that
+ * they are at their cap before wondering why a new site cannot be added.
+ * `limit` of -1 means unlimited (or an unconfigured plan).
+ */
+export type PlanUsage = {
+  planId: string;
+  warehousesUsed: number;
+  warehousesLimit: number;
+  atLimit: boolean;
+};
+
 export type LocationCard = {
   /** Normalised, case-insensitive key — the value carried in the URL. */
   key: string;
@@ -58,7 +73,7 @@ function sum(ns: Array<number | null | undefined>): number {
  */
 export const listAdminLocations = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<{ locations: LocationCard[] }> => {
+  .handler(async ({ context }): Promise<{ locations: LocationCard[]; plan: PlanUsage }> => {
     const sb = context.supabase;
     const { getEffectiveRole } = await import("./rbac.server");
     const role = await getEffectiveRole(sb, context.userId);
@@ -78,8 +93,20 @@ export const listAdminLocations = createServerFn({ method: "GET" })
     const { data, error } = await query;
     if (error) throw error;
 
+    // Plan usage is resolved for every response, including the empty one — the
+    // picker's empty state still needs to say how many warehouses are allowed.
+    const { computePlanGate } = await import("./plan-gate");
+    const gate = await computePlanGate(sb, context.userId, "max_warehouses");
+    const warehousesLimit = typeof gate.limit === "number" ? gate.limit : -1;
+    const plan: PlanUsage = {
+      planId: gate.planId,
+      warehousesUsed: gate.used ?? 0,
+      warehousesLimit,
+      atLimit: !gate.isSuper && warehousesLimit > 0 && (gate.used ?? 0) >= warehousesLimit,
+    };
+
     const rows = data ?? [];
-    if (rows.length === 0) return { locations: [] };
+    if (rows.length === 0) return { locations: [], plan };
 
     // Open alerts per warehouse, counted in one pass rather than per card.
     // "Open" is anything not resolved or closed — `alert_status` carries both,
@@ -136,5 +163,5 @@ export const listAdminLocations = createServerFn({ method: "GET" })
       } satisfies LocationCard;
     });
 
-    return { locations };
+    return { locations, plan };
   });
