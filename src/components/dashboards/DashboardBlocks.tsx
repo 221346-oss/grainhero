@@ -439,8 +439,8 @@ export function DashboardFlowDiagram() {
   const outgoing = groupByTone(dispatchRows, DISPATCH_TONE, (d) => Number(d.total_qty_kg ?? 0), DISPATCH_TONE_LABELS);
 
   return (
-    <Card className="border-border/60 shadow-sm">
-      <CardHeaderLink to="/grain-operations" search={{ tab: "silos" }} title="Grain Flow" />
+    <Card className="border-border/70 bg-card/80 backdrop-blur-md shadow-sm mb-4">
+      <CardHeaderLink to="/grain-operations" search={{ tab: "silos" }} title="End-to-End Supply Chain Stream" />
       <CardContent className="p-3 pt-0">
         <SiloFlowDiagram
           siloName={`${siloRows.length} silo${siloRows.length === 1 ? "" : "s"}`}

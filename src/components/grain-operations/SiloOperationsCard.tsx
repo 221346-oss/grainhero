@@ -93,30 +93,35 @@ export function groupByTone<T extends { status: string | null }>(
 export function SiloOperationsCard({
   silo,
   batches,
+  isAdmin,
+  onView,
   onEdit,
   onDelete,
-  onView,
   onSell,
   onRequestMore,
-  isAdmin,
 }: {
   silo: SiloRow;
   batches: BatchRow[];
-  onEdit: (s: SiloRow) => void;
+  isAdmin?: boolean;
+  onView: (silo: SiloRow) => void;
+  onEdit: (silo: SiloRow) => void;
   onDelete: (id: string) => void;
-  onView: (s: SiloRow) => void;
-  onSell: (s: SiloRow) => void;
-  /** Wired to the same Silo Request Flow as the page-level "Request Silo" button. */
+  onSell: (silo: SiloRow) => void;
   onRequestMore?: () => void;
-  isAdmin: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
   const listDispatchesFn = useServerFn(listDispatches);
 
   const cap = Number(silo.capacity_kg ?? 0);
   const occ = Number(silo.current_occupancy_kg ?? 0);
-  const pct = cap ? Math.round((occ / cap) * 100) : 0;
-  const barColor = pct >= 90 ? "bg-red-500" : pct >= 70 ? "bg-amber-500" : "bg-emerald-500";
+  const pct = cap > 0 ? Math.round((occ / cap) * 100) : 0;
+  const barColor =
+    pct >= 90
+      ? "bg-gradient-to-r from-red-600 via-rose-500 to-amber-400 shadow-[0_0_10px_rgba(239,68,68,0.5)]"
+      : pct >= 70
+        ? "bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-300 shadow-[0_0_10px_rgba(245,158,11,0.5)]"
+        : "bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 shadow-[0_0_10px_rgba(16,185,129,0.5)]";
+
   const siloBadge = siloStatusBadge(pct, silo.status);
 
   const siloBatches = useMemo(() => batches.filter((b) => b.silos?.id === silo.id), [batches, silo.id]);
@@ -156,20 +161,20 @@ export function SiloOperationsCard({
   ];
 
   return (
-    <Card className="border-border/60 shadow-sm">
+    <Card className="border-border/70 bg-gradient-to-br from-card/90 via-card/70 to-muted/20 backdrop-blur-md shadow-sm hover:border-emerald-500/40 transition-all">
       <CardHeader className="p-3 pb-2 flex flex-row items-start justify-between space-y-0">
         <div className="min-w-0">
-          <p className="text-sm font-semibold truncate">{silo.name}</p>
+          <p className="text-sm font-bold truncate text-foreground">{silo.name}</p>
           <p className="text-[10px] text-muted-foreground truncate">{silo.warehouses?.name ?? "—"} · {silo.silo_id}</p>
         </div>
         <Badge className={siloBadge.cls} variant="outline">{siloBadge.label}</Badge>
       </CardHeader>
       <CardContent className="p-3 pt-0 space-y-2">
         <div className="flex items-center gap-2">
-          <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+          <div className="flex-1 h-2 rounded-full bg-muted/80 overflow-hidden">
             <div className={`h-full ${barColor} transition-all`} style={{ width: `${Math.min(100, pct)}%` }} />
           </div>
-          <span className="text-[11px] tabular-nums font-semibold w-9 text-right">{pct}%</span>
+          <span className="text-[11px] tabular-nums font-bold w-9 text-right text-foreground">{pct}%</span>
         </div>
         <p className="text-[10px] text-muted-foreground tabular-nums">{occ.toLocaleString()} / {cap.toLocaleString()} kg</p>
 
@@ -226,7 +231,7 @@ export function SiloOperationsCard({
                 <SiloStatusPie data={pieData} />
               </div>
               <div className="flex flex-col justify-between">
-                <DispatchApprovalPanel siloId={silo.id} isAdmin={isAdmin} />
+                <DispatchApprovalPanel siloId={silo.id} isAdmin={Boolean(isAdmin)} />
                 <div className="flex items-center justify-between mt-2">
                   <ExportMenu
                     filename={`${silo.silo_id}-batches`}
