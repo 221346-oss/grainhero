@@ -33,6 +33,34 @@ describe("deriveCity", () => {
     expect(deriveCity({ location: { address: "Karachi, Sindh, Pakistan" } })).toBe("Karachi");
   });
 
+  it("never treats a generic word as a city", () => {
+    // Plenty of rows predate the "City — XXX" naming or were typed by hand, and
+    // reading their prefix literally puts "Warehouse" on the picker beside
+    // Lahore as though it were a place.
+    expect(deriveCity({ name: "Warehouse — A" })).toBe(UNASSIGNED_CITY);
+    expect(deriveCity({ location_city: "warehouse" })).toBe(UNASSIGNED_CITY);
+    expect(deriveCity({ location: { city: "  Unknown  " } })).toBe(UNASSIGNED_CITY);
+    expect(deriveCity({ location: { address: "Storage, Punjab" } })).toBe(UNASSIGNED_CITY);
+    // A single character is not a place name either.
+    expect(deriveCity({ location_city: "x" })).toBe(UNASSIGNED_CITY);
+  });
+
+  it("rejects raw coordinates that leak into the city field", () => {
+    // A map picker writing the wrong part of its result leaves a latitude
+    // sitting where a city should be; it must not become a card on the picker.
+    expect(deriveCity({ location_city: "33.607377" })).toBe(UNASSIGNED_CITY);
+    expect(deriveCity({ location: { city: "-74.006" } })).toBe(UNASSIGNED_CITY);
+    expect(deriveCity({ location_city: "  12345  " })).toBe(UNASSIGNED_CITY);
+    // But a real name containing digits is fine.
+    expect(deriveCity({ location_city: "Sector 12" })).toBe("Sector 12");
+  });
+
+  it("falls through to a later source when an earlier one is generic", () => {
+    // A junk location_city must not shadow a real city sitting behind it.
+    expect(deriveCity({ location_city: "warehouse", location: { city: "Lahore" } })).toBe("Lahore");
+    expect(deriveCity({ location_city: "unknown", name: "Karachi — B" })).toBe("Karachi");
+  });
+
   it("buckets warehouses with no usable location", () => {
     expect(deriveCity({})).toBe(UNASSIGNED_CITY);
     expect(deriveCity({ location: null, location_city: "   " })).toBe(UNASSIGNED_CITY);

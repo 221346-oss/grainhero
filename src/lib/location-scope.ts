@@ -19,6 +19,55 @@ const NAME_PREFIX = /^\s*([^—]+?)\s*—\s*\S/;
 
 export const UNASSIGNED_CITY = "Unassigned";
 
+/**
+ * Words that are never a city.
+ *
+ * Provisioning names a warehouse `"City — XXX"`, but plenty of rows predate
+ * that or were typed by hand, leaving names like `"Warehouse — A"`. Reading the
+ * prefix literally turns "Warehouse" into a location on the picker, sitting
+ * beside Lahore and Karachi as though it were a place. These fall through to
+ * {@link UNASSIGNED_CITY} instead, which is honest about not knowing.
+ */
+const NOT_A_CITY = new Set([
+  "warehouse",
+  "warehouses",
+  "godown",
+  "store",
+  "storage",
+  "silo",
+  "silos",
+  "facility",
+  "site",
+  "location",
+  "default",
+  "unnamed",
+  "untitled",
+  "unknown",
+  "none",
+  "null",
+  "n/a",
+  "na",
+  "test",
+  "demo",
+]);
+
+/**
+ * True when a candidate could plausibly be a place name.
+ *
+ * Rejects three kinds of junk seen in real rows: generic words, values with no
+ * letters at all (raw coordinates like `33.607377` end up in the city field
+ * when a map picker writes the wrong part of its result), and single
+ * characters.
+ */
+function isUsableCity(value: string): boolean {
+  const v = value.trim().toLowerCase();
+  if (v.length < 2) return false;
+  if (NOT_A_CITY.has(v)) return false;
+  // A place name has letters in it. "33.607377" and "-74.006" do not.
+  if (!/\p{L}/u.test(v)) return false;
+  return true;
+}
+
 export type WarehouseLocation = {
   city?: string | null;
   address?: string | null;
@@ -52,18 +101,20 @@ function clean(v: unknown): string {
 export function deriveCity(w: WarehouseLike): string {
   const loc = (w.location ?? null) as WarehouseLocation;
 
-  const direct = clean(w.location_city) || clean(loc?.city) || clean(loc?.description);
-  if (direct) return direct;
+  for (const candidate of [clean(w.location_city), clean(loc?.city), clean(loc?.description)]) {
+    if (candidate && isUsableCity(candidate)) return candidate;
+  }
 
   const fromName = NAME_PREFIX.exec(clean(w.name));
-  if (fromName?.[1]) return fromName[1].trim();
+  const prefix = fromName?.[1]?.trim();
+  if (prefix && isUsableCity(prefix)) return prefix;
 
   // Addresses are free text. The first comma-separated segment is the least
   // bad guess; anything cleverer misreads as often as it helps.
   const address = clean(w.location_address) || clean(loc?.address);
   if (address) {
     const first = address.split(",")[0]?.trim();
-    if (first) return first;
+    if (first && isUsableCity(first)) return first;
   }
 
   return UNASSIGNED_CITY;

@@ -460,69 +460,79 @@ export function DashboardSiloCards({ range }: { range?: string } = {}) {
           const pct = cap ? Math.round((occ / cap) * 100) : 0;
           const bar = pct >= 90 ? "bg-red-500" : pct >= 70 ? "bg-amber-500" : "bg-emerald-500";
           return (
-            <div key={s.id}>
-              <div className="flex items-center gap-2 group">
-                <Link
-                  to="/grain-operations"
-                  search={{ tab: "silos" }}
-                  title={`${s.name} · ${occ.toLocaleString()}/${cap.toLocaleString()}kg`}
-                  className="flex items-center gap-2 flex-1 min-w-0"
-                >
-                  <span className="text-[11px] w-16 truncate text-muted-foreground group-hover:text-foreground transition">
-                    {s.name}
-                  </span>
-                  <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
-                    <div
-                      className={`h-full ${bar} transition-all`}
-                      style={{ width: `${Math.min(100, pct)}%` }}
-                    />
-                  </div>
-                  <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                    <div className={`h-full ${bar}`} style={{ width: `${Math.min(100, pct)}%` }} />
-                  </div>
-                  <p className="text-[10px] text-muted-foreground tabular-nums">
-                    {occ.toLocaleString()} / {cap.toLocaleString()} kg ({pct}%)
-                  </p>
-                  <div className="grid grid-cols-2 gap-1 text-[10px]">
-                    <div className="rounded bg-muted/30 px-1.5 py-1">
-                      <p className="text-muted-foreground">In</p>
-                      <p className="font-semibold tabular-nums">
-                        {(incomingBySilo[s.id] ?? 0).toLocaleString()}kg
-                      </p>
-                    </div>
-                    <div className="rounded bg-muted/30 px-1.5 py-1">
-                      <p className="text-muted-foreground">Out</p>
-                      <p className="font-semibold tabular-nums">
-                        {(outgoingBySilo[s.id] ?? 0).toLocaleString()}kg
-                      </p>
-                    </div>
-                  </div>
-                </Link>
-                <div className="flex items-center gap-1">
-                  <Button
-                    size="sm"
-                    className="h-6 flex-1 text-[10px] bg-emerald-600 hover:bg-emerald-700 text-white"
-                    onClick={() => setDispatchSilo(s)}
-                  >
-                    Sell
-                  </Button>
-                  <Button size="sm" variant="outline" className="h-6 px-1.5 text-[10px]" asChild>
-                    <Link to="/silos/$siloId" params={{ siloId: s.id }}>
-                      View
-                    </Link>
-                  </Button>
+            // One row per silo: identity and fill read across, figures and
+            // actions sit at the end. This was previously a horizontal flex
+            // holding a duplicated bar and two stacked blocks, which collided
+            // with the buttons; stacking it instead left the controls
+            // stretched across the full panel width.
+            <div
+              key={s.id}
+              className="group flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg py-1.5"
+            >
+              <Link
+                to="/grain-operations"
+                search={{ tab: "silos" }}
+                title={`${s.name} · ${occ.toLocaleString()}/${cap.toLocaleString()}kg`}
+                className="flex min-w-[16rem] flex-1 items-center gap-2"
+              >
+                <span className="w-16 shrink-0 truncate text-[11px] text-muted-foreground transition group-hover:text-foreground">
+                  {s.name}
+                </span>
+                <div className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-muted">
+                  <div
+                    className={`h-full ${bar} transition-all`}
+                    style={{ width: `${Math.min(100, pct)}%` }}
+                  />
                 </div>
-                <button
-                  type="button"
-                  onClick={handleRequestMore}
-                  className="w-full text-[10px] text-emerald-700 dark:text-emerald-400 hover:underline"
+                <span className="w-24 shrink-0 text-right text-[10px] tabular-nums text-muted-foreground">
+                  {occ.toLocaleString()}/{cap.toLocaleString()}
+                </span>
+                <span className="w-8 shrink-0 text-right text-[10px] font-semibold tabular-nums text-muted-foreground">
+                  {pct}%
+                </span>
+              </Link>
+
+              <div className="flex shrink-0 items-center gap-3 text-[10px] tabular-nums">
+                <span className="text-muted-foreground">
+                  In{" "}
+                  <span className="font-semibold text-foreground">
+                    {(incomingBySilo[s.id] ?? 0).toLocaleString()}kg
+                  </span>
+                </span>
+                <span className="text-muted-foreground">
+                  Out{" "}
+                  <span className="font-semibold text-foreground">
+                    {(outgoingBySilo[s.id] ?? 0).toLocaleString()}kg
+                  </span>
+                </span>
+              </div>
+
+              <div className="flex shrink-0 items-center gap-1">
+                <Button
+                  size="sm"
+                  className="h-6 bg-emerald-600 px-2.5 text-[10px] text-white hover:bg-emerald-700"
+                  onClick={() => setDispatchSilo(s)}
                 >
-                  Request more capacity
-                </button>
+                  Sell
+                </Button>
+                <Button size="sm" variant="outline" className="h-6 px-2 text-[10px]" asChild>
+                  <Link to="/silos/$siloId" params={{ siloId: s.id }}>
+                    View
+                  </Link>
+                </Button>
               </div>
             </div>
           );
         })}
+        {rows.length > 0 && (
+          <button
+            type="button"
+            onClick={handleRequestMore}
+            className="w-full pt-1 text-left text-[10px] text-emerald-700 hover:underline dark:text-emerald-400"
+          >
+            Request more capacity
+          </button>
+        )}
       </CardContent>
       <DispatchDialog
         open={!!dispatchSilo}
