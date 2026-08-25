@@ -1,10 +1,16 @@
 # Multi-Location Admin Dashboard — Requirement Report
 
-**Status:** Implemented — R2 outstanding; warehouse-level rework applied
+**Status:** Implemented — all requirements closed; browser verification outstanding
 **Owner:** Abdullah
 **Target branch:** `abdullah_dev` (standing PR #55 → `main`)
 **Date:** 2026-08-25 (rev. 2)
 
+> **Revision 5.** R2 is closed: an expired plan does not block or sign anyone
+> out — it routes them to renewal from inside the dashboard. The
+> pending-approval case needed no work; that state no longer exists. All
+> seventeen requirements are now implemented. What remains is verification, not
+> construction.
+>
 > **Revision 4.** Reviewed again: the **warehouse**, not the city, is the
 > primary unit. Navigation is now city → warehouse → dashboard, model
 > performance is reported per warehouse, and R13 is enforced (a manager holds
@@ -431,7 +437,7 @@ Implemented on `abdullah_dev` (PR #55).
 | R10–R12, R14 | Done | Role gating in `LocationScopeGate`; `platform.*` excluded |
 | R15 | Done | Picker shown for single-location admins |
 | R17 | Done | Plan allowance on the picker via `max_warehouses` |
-| **R2** | **Open** | No payment gate exists anywhere in the app — needs a decision on whether to add one |
+| R2 | Done | `PlanExpiryBanner` persists past expiry and is non-dismissable there; `PlanExpiredPrompt` routes to `/plan-management`. No block, no sign-out. Pending-approval no longer exists as a state (`20260715185932`). |
 | R13 | Done | One manager per warehouse, enforced in `updateWarehouseTeam`. Shared managers rejected with a clear message; becomes an explicit feature only if a customer needs it. |
 
 ### Design decisions taken
