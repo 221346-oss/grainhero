@@ -123,6 +123,57 @@ export const createDispatchInvoice = createServerFn({ method: "POST" })
   });
 
 /**
+ * Deletes a quote invoice that never became a real sale — the wizard's Step 1
+ * ("Generate invoice") creates a buyer_invoices row with no dispatch_id yet;
+ * closing the wizard before Step 2 (Dispatch) leaves it orphaned with
+ * nowhere to go and no dispatch/stock ever touched. Only allowed while it's
+ * still in that exact state (no dispatch attached, nothing paid) — once a
+ * dispatch exists or a payment landed, this is a real financial record and
+ * should be cancelled (see cancelDispatch in dispatches.functions.ts), not
+ * deleted.
+ */
+export const deleteDispatchQuote = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) => z.object({ invoiceId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const role = await getEffectiveRole(context.supabase, context.userId);
+    if (!["super_admin", "admin", "manager"].includes(role)) throw new Error("Forbidden");
+    const sb = context.supabase;
+
+    const { data: inv, error } = await sb
+      .from("buyer_invoices")
+      .select("id, dispatch_id, amount_paid, admin_id")
+      .eq("id", data.invoiceId)
+      .maybeSingle();
+    if (error) throw error;
+    const i = inv as Row | null;
+    if (!i) throw new Error("Invoice not found");
+
+    // Delete any associated buyer_payments first to prevent foreign key constraint error
+    await sb.from("buyer_payments").delete().eq("invoice_id", data.invoiceId);
+    if (i?.dispatch_id) {
+      await sb.from("buyer_payments").delete().eq("dispatch_id", i.dispatch_id);
+      await sb
+        .from("grain_dispatches")
+        .update({ status: "cancelled", notes: "Invoice deleted by admin" } as never)
+        .eq("id", i.dispatch_id)
+        .eq("status", "draft");
+    }
+
+    const { error: delErr } = await sb.from("buyer_invoices").delete().eq("id", data.invoiceId);
+    if (delErr) throw delErr;
+
+    await logActivity({
+      actorId: context.userId,
+      tenantAdminId: i.admin_id as string,
+      action: "invoice.deleted",
+      targetType: "buyer_invoice",
+      targetId: data.invoiceId,
+    });
+    return { ok: true };
+  });
+
+/**
  * Step 3: record a payment against a confirmed dispatch (and its invoice, if
  * any), pre-filled from OCR-extracted receipt details (see ocr-service.ts).
  * The dispatch must already be confirmed — payment only makes sense once
@@ -187,7 +238,8 @@ export const recordDispatchPayment = createServerFn({ method: "POST" })
 
     if (invoice) {
       const newPaid = Number(invoice.amount_paid ?? 0) + data.amount;
-      const fullyPaid = newPaid >= Number(invoice.total_amount) - 0.01;
+      const totalAmount = Number(invoice.total_amount);
+      const fullyPaid = newPaid >= totalAmount - 0.01;
       const { error: uErr } = await sb.from("buyer_invoices").update({
         amount_paid: newPaid,
         payment_status: fullyPaid ? "paid" : "partial",
@@ -195,6 +247,25 @@ export const recordDispatchPayment = createServerFn({ method: "POST" })
         paid_at: fullyPaid ? new Date().toISOString() : null,
       } as never).eq("id", invoice.id);
       if (uErr) throw uErr;
+
+      if (fullyPaid) {
+        await sb.from("grain_dispatches").update({ status: "delivered" } as never).eq("id", data.dispatchId);
+      }
+
+      // Same overpayment check as invoicing.functions.ts's recordPayment —
+      // the OCR-extracted amount is used verbatim (not editable against the
+      // invoice total in the wizard), so a misread receipt or a receipt
+      // attached to the wrong dispatch shows up here as an overshoot.
+      const overBy = newPaid - totalAmount;
+      if (overBy > 1) {
+        const { logSecurityEvent } = await import("@/lib/security-events.functions");
+        await logSecurityEvent({
+          data: {
+            event: "payment_mismatch",
+            meta: { expected: totalAmount, actual: newPaid, overBy, invoiceId: invoice.id, dispatchId: data.dispatchId, source: "dispatch_payment" },
+          },
+        }).catch(() => {});
+      }
     }
 
     await logActivity({

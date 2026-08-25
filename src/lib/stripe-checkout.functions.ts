@@ -816,12 +816,13 @@ export const checkAndUpdatePaymentStatus = createServerFn({ method: "POST" })
     const { stripeFetch } = await import("@/lib/stripe-api.server");
 
     // Get the order
-    const { data: order } = await context.supabase
+    const { data: orderRaw } = await context.supabase
       .from("hardware_orders" as never)
       .select("id, status, stripe_session_id, admin_id")
       .eq("id", data.orderId)
       .eq("admin_id", context.userId)
       .maybeSingle();
+    const order = orderRaw as { id: string; status: string; stripe_session_id: string | null; admin_id: string } | null;
 
     const orderRow = order as { id: string; status: string; stripe_session_id: string | null; admin_id: string } | null;
     if (!orderRow || !orderRow.stripe_session_id) {

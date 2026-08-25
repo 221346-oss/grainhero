@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState, type ComponentType } from "react";
 import { motion } from "framer-motion";
 import { RevenueSection } from "@/components/business/RevenueSection";
-import { Wallet, Download, FileSpreadsheet, FileText, MoreHorizontal } from "lucide-react";
+import { Wallet, CreditCard, Download, FileSpreadsheet, FileText, MoreHorizontal } from "lucide-react";
 import { getRevenueOverview, getMySubscription } from "@/lib/billing.functions";
 import { RevenueChart } from "@/components/business/RevenueChart";
 import { getMyRole } from "@/lib/roles.functions";
@@ -36,10 +36,11 @@ export const Route = createFileRoute("/_authenticated/business")({
   component: BusinessWorkspace,
 });
 
-type Tab = "revenue";
+type Tab = "revenue" | "subscription";
 
 const TABS: { key: Tab; label: string; icon: ComponentType<{ className?: string }> }[] = [
   { key: "revenue", label: "Revenue", icon: Wallet },
+  { key: "subscription", label: "Subscription", icon: CreditCard },
 ];
 
 function money(n: number) {
@@ -62,6 +63,11 @@ function BusinessWorkspace() {
   const invoices = revenue?.invoices ?? [];
   const payments = revenue?.payments ?? [];
   const outstandingDispatches = revenue?.outstandingDispatches ?? [];
+
+  const counts = {
+    revenue: totals.countInvoices ?? 0,
+    subscription: mySub?.invoices?.length ?? 0,
+  } satisfies Record<Tab, number>;
 
   const collectedPct = totals.invoiced > 0 ? Math.min(100, (totals.collected / totals.invoiced) * 100) : 0;
   const outstandingPct = totals.invoiced > 0 ? Math.min(100, (totals.outstanding / totals.invoiced) * 100) : 0;

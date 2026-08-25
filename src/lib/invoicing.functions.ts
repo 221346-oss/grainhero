@@ -172,13 +172,30 @@ export const recordPayment = createServerFn({ method: "POST" })
     if (error) throw error;
 
     const newPaid = Number(i.amount_paid ?? 0) + data.amount;
-    const fullyPaid = newPaid >= Number(i.total_amount) - 0.01;
+    const totalAmount = Number(i.total_amount);
+    const fullyPaid = newPaid >= totalAmount - 0.01;
     await context.supabase.from("buyer_invoices").update({
       amount_paid: newPaid,
       payment_status: fullyPaid ? "paid" : "partial",
       paid_via: data.paymentMethod,
       paid_at: fullyPaid ? new Date().toISOString() : null,
     } as never).eq("id", i.id);
+
+    // A manually-recorded payment that overshoots the invoice total by more
+    // than a rounding tolerance is worth flagging the same way the Stripe
+    // webhook already flags subscription overcharges (payment_mismatch) —
+    // it's the one anomaly this manual-entry flow can actually detect
+    // without a second source of truth to compare against.
+    const overBy = newPaid - totalAmount;
+    if (overBy > 1) {
+      const { logSecurityEvent } = await import("@/lib/security-events.functions");
+      await logSecurityEvent({
+        data: {
+          event: "payment_mismatch",
+          meta: { expected: totalAmount, actual: newPaid, overBy, invoiceId: i.id, source: "invoice_payment" },
+        },
+      }).catch(() => {});
+    }
 
     if (fullyPaid && i.order_id) {
       await context.supabase.from("buyer_orders")

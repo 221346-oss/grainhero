@@ -17,7 +17,6 @@ import { InlineRename } from "@/components/app/InlineRename";
 import { listSilos, listGrainBatches, renameSilo } from "@/lib/operations.functions";
 import { listDispatches } from "@/lib/dispatches.functions";
 import { getMyRole } from "@/lib/roles.functions";
-import { DispatchDialog } from "@/components/app/silos/DispatchDialog";
 
 // Same allow-list used for team invite/manage — technicians can't rename.
 const RENAME_ROLES = ["super_admin", "admin", "manager"];
@@ -97,7 +96,6 @@ function SiloDetailPage() {
   });
   const { data: me } = useQuery({ queryKey: ["my-role"], queryFn: () => fetchRole() });
   const canRename = RENAME_ROLES.includes(me?.role ?? "");
-  const [dispatchOpen, setDispatchOpen] = useState(false);
 
   const renameMutation = useMutation({
     mutationFn: (payload: { id: string; name: string }) => renameFn({ data: payload }),
@@ -227,9 +225,6 @@ function SiloDetailPage() {
               </div>
             )}
             <div className="flex gap-2 pt-2">
-              <Button size="sm" className="gap-1" onClick={() => setDispatchOpen(true)}>
-                <Truck className="w-3.5 h-3.5" /> Dispatch
-              </Button>
               <Button size="sm" variant="outline" className="gap-1" asChild>
                 <Link to="/grain-operations" search={{ tab: "batches" }}>
                   <Wheat className="w-3.5 h-3.5" /> Add batch
@@ -447,13 +442,6 @@ function SiloDetailPage() {
           </CardContent>
         </Card>
       </div>
-
-      <DispatchDialog
-        open={dispatchOpen}
-        onOpenChange={setDispatchOpen}
-        siloId={silo.id}
-        siloName={silo.name}
-      />
     </div>
   );
 }

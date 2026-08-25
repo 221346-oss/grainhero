@@ -240,7 +240,7 @@ export function ReportTicketDialog({
       onOpenChange(false);
       qc.invalidateQueries({ queryKey: ["manager-dashboard"] });
       qc.invalidateQueries({ queryKey: ["open-field-tickets"] });
-      qc.invalidateQueries({ queryKey: ["field-incidents"] });
+      qc.invalidateQueries({ queryKey: ["mobile-field-incidents"] });
       extraInvalidate.forEach((key) => qc.invalidateQueries({ queryKey: key }));
     },
     onError: (e: Error) => toast.error(e.message),

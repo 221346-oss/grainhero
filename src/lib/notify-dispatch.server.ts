@@ -10,6 +10,7 @@
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { sendEmailViaResend } from "@/lib/resend.server";
+import { requireAppOrigin } from "@/lib/app-url";
 import { loadUserDevices, markDeviceError, markDeviceRevoked, markDeviceSuccess, sendPush } from "@/lib/push-dispatch.server";
 
 type Channel = "email" | "sms" | "push";
@@ -174,7 +175,6 @@ export async function dispatchNotification(
   const shouldEmail =
     (forceEmail(category, severity) || channelAllowed("email", category, prefs)) && !!profile?.email;
   const shouldSms = channelAllowed("sms", category, prefs) && !!profile?.phone_e164;
-  const appOrigin = process.env.APP_ORIGIN ?? "https://grainhero.app";
 
   // Email
   if (shouldEmail) {
@@ -182,7 +182,7 @@ export async function dispatchNotification(
       const res = await sendEmailViaResend({
         to: profile!.email!,
         subject: n.title ?? "GrainHero notification",
-        html: buildEmailHtml(n, appOrigin),
+        html: buildEmailHtml(n, requireAppOrigin()),
       });
       await recordDelivery(supabaseAdmin, {
         notificationId,

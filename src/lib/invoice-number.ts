@@ -7,12 +7,19 @@
  * is not safe under concurrency (two requests can read the same count
  * before either insert commits, producing the same number) and drifts from
  * reality if any invoice row is ever deleted (count stops matching the
- * highest sequence actually issued) — either way `buyer_invoices_invoice_number_key`
- * gets violated. `nextInvoiceNumber` now derives the next value from the
- * highest existing sequence number for this admin+year instead of a row
- * count, and `insertInvoiceWithUniqueNumber` retries on an actual unique-
- * constraint violation (Postgres 23505) so a race that slips through
+ * highest sequence actually issued) — either way the invoice_number unique
+ * constraint gets violated. `nextInvoiceNumber` now derives the next value
+ * from the highest existing sequence number for this admin+year instead of
+ * a row count, and `insertInvoiceWithUniqueNumber` retries on an actual
+ * unique-constraint violation (Postgres 23505) so a race that slips through
  * anyway still resolves instead of failing the whole request.
+ *
+ * That uniqueness constraint must be scoped per admin_id (see
+ * 20260818140000_scope_invoice_number_uniqueness_per_tenant.sql) to match
+ * the query above, which only ever looks at this tenant's own rows — a
+ * bare global-unique constraint defeats the retry loop entirely, since a
+ * collision with another tenant's row is invisible to this query and gets
+ * regenerated identically on every attempt.
  */
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

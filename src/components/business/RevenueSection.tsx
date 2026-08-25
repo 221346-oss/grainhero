@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -7,10 +7,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { AlertCircle, Search, Plus, Truck, RotateCcw, DollarSign } from "lucide-react";
+import { DollarSign, FileText, TrendingUp, AlertCircle, CheckCircle2, Search, Plus, Truck, RotateCcw, Ban, Trash2, Download, Loader2 } from "lucide-react";
 import { getRevenueOverview, markInvoicePaid } from "@/lib/billing.functions";
 import { kgToMan, pricePerKgToPerMan } from "@/lib/units";
 import { DispatchSaleWizard } from "@/components/business/DispatchSaleWizard";
+import { deleteDispatchQuote } from "@/lib/dispatch-sales.functions";
+import { generateInvoicePdf } from "@/lib/invoicing-pdf.functions";
+import { cancelDispatch } from "@/lib/dispatches.functions";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { ExportMenu } from "@/components/app/ExportMenu";
 import type { ExportColumn } from "@/lib/csv-pdf-export";
 import type { AppRole } from "@/lib/roles.functions";
@@ -27,6 +34,8 @@ type Invoice = {
   currency: string | null;
   payment_status: string | null;
   due_date: string | null;
+  created_at: string | null;
+  dispatch_id: string | null;
   grain_dispatches: { dispatch_number: string } | null;
 };
 
@@ -106,23 +115,91 @@ function money(n: number, ccy: string | null | undefined) {
 export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
   const fn = useServerFn(getRevenueOverview);
   const markFn = useServerFn(markInvoicePaid);
+  const cancelFn = useServerFn(cancelDispatch);
+  const deleteQuoteFn = useServerFn(deleteDispatchQuote);
   const qc = useQueryClient();
   const { data } = useQuery({ queryKey: ["revenue"], queryFn: () => fn() });
 
   const [q, setQ] = useState("");
   const [wizardOpen, setWizardOpen] = useState(false);
   const [resumeDispatch, setResumeDispatch] = useState<{ id: string; dispatchNumber: string } | null>(null);
+  const [cancelTarget, setCancelTarget] = useState<OutstandingDispatch | null>(null);
+  const [deleteQuoteTarget, setDeleteQuoteTarget] = useState<Invoice | null>(null);
 
-  function openNewSale() { setResumeDispatch(null); setWizardOpen(true); }
+  // Starting a new sale now only happens from Grain Operations (Silo card
+  // "Sell") or the Dashboard — this page is reporting/reopen-only. The
+  // wizard instance stays: Reopen still needs it to resume payment on an
+  // already-approved dispatch that was closed before a receipt was added.
   function openReopen(d: OutstandingDispatch) { setResumeDispatch({ id: d.id, dispatchNumber: d.dispatch_number }); setWizardOpen(true); }
 
-  // Managers see revenue read-only: no outgoing sale creation, no mark-paid action
+  // Listen for the "complete existing sale" button inside the wizard's blocking dispatch warning
+  useEffect(() => {
+    function handleReopenDispatch(e: Event) {
+      const { id, dispatchNumber } = (e as CustomEvent<{ id: string; dispatchNumber: string }>).detail;
+      setResumeDispatch({ id, dispatchNumber });
+      setWizardOpen(true);
+    }
+    window.addEventListener("grainhero:reopen-dispatch", handleReopenDispatch);
+    return () => window.removeEventListener("grainhero:reopen-dispatch", handleReopenDispatch);
+  }, []);
+
+  // Managers see revenue read-only: no mark-paid action
   const canWrite = role === "admin" || role === "super_admin";
 
   const markM = useMutation({
     mutationFn: (id: string) => markFn({ data: { id } }),
     onSuccess: () => { toast.success("Invoice marked paid"); qc.invalidateQueries({ queryKey: ["revenue"] }); },
     onError: (e: any) => toast.error(e.message ?? "Failed"),
+  });
+
+  const cancelM = useMutation({
+    mutationFn: (id: string) => cancelFn({ data: { id, reason: "Cancelled from Outstanding payments" } }),
+    onSuccess: () => {
+      toast.success("Dispatch cancelled — stock restored");
+      setCancelTarget(null);
+      qc.invalidateQueries({ queryKey: ["revenue"] });
+      qc.invalidateQueries({ queryKey: ["silos"] });
+      qc.invalidateQueries({ queryKey: ["grain-batches"] });
+      qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
+      qc.invalidateQueries({ queryKey: ["dashboard-extras"] });
+    },
+    onError: (e: Error) => toast.error(e.message ?? "Could not cancel"),
+  });
+
+  const deleteQuoteM = useMutation({
+    mutationFn: (invoiceId: string) => deleteQuoteFn({ data: { invoiceId } }),
+    onSuccess: () => {
+      toast.success("Quote deleted");
+      setDeleteQuoteTarget(null);
+      qc.invalidateQueries({ queryKey: ["revenue"] });
+    },
+    onError: (e: Error) => toast.error(e.message ?? "Could not delete"),
+  });
+
+  const genPdfFn = useServerFn(generateInvoicePdf);
+  const [downloadingPdfId, setDownloadingPdfId] = useState<string | null>(null);
+
+  const downloadPdfM = useMutation({
+    mutationFn: async (i: Invoice) => {
+      setDownloadingPdfId(i.id);
+      const res = await genPdfFn({ data: { invoiceId: i.id } });
+      if (res?.signedUrl) {
+        const blob = await fetch(res.signedUrl).then(r => r.blob());
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${i.invoice_number}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      } else {
+        throw new Error("No PDF URL generated");
+      }
+    },
+    onSuccess: (_, i) => toast.success(`Downloaded ${i.invoice_number}.pdf`),
+    onError: (e: Error) => toast.error(e.message || "Failed to download PDF"),
+    onSettled: () => setDownloadingPdfId(null),
   });
 
   const invoices = data?.invoices ?? [];
@@ -147,18 +224,12 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
 
   return (
     <div className="space-y-6">
-      {canWrite && (
-        <div className="flex justify-end">
-          <Button onClick={openNewSale} className="gap-1.5">
-            <Plus className="h-4 w-4" /> New sale (Invoice → Dispatch → Payment)
-          </Button>
-        </div>
-      )}
-      {!canWrite && (
-        <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 border border-border rounded-lg px-4 py-2">
-          <span className="text-amber-500">●</span> Read-only — outgoing invoice creation is restricted to admin.
-        </div>
-      )}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Invoiced</div><div className="text-2xl font-bold">{money(totals.invoiced, "PKR")}</div><div className="text-xs text-slate-500 mt-1">{totals.countInvoices} invoices</div></div><FileText className="h-6 w-6 text-emerald-600" /></CardContent></Card>
+        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Collected</div><div className="text-2xl font-bold text-emerald-600">{money(totals.collected, "PKR")}</div><div className="text-xs text-slate-500 mt-1">{totals.countPayments} payments</div></div><CheckCircle2 className="h-6 w-6 text-emerald-600" /></CardContent></Card>
+        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Outstanding</div><div className="text-2xl font-bold text-amber-600">{money(totals.outstanding, "PKR")}</div><div className="text-xs text-slate-500 mt-1">invoiced − collected</div></div><TrendingUp className="h-6 w-6 text-amber-600" /></CardContent></Card>
+        <Card><CardContent className="p-4 flex justify-between items-center"><div><div className="text-xs uppercase text-slate-500 font-semibold">Due</div><div className="text-2xl font-bold text-red-600">{money(totals.due, "PKR")}</div><div className="text-xs text-slate-500 mt-1">{totals.overdue} past due invoice{totals.overdue === 1 ? "" : "s"}</div></div><AlertCircle className="h-6 w-6 text-red-600" /></CardContent></Card>
+      </div>
 
       <DispatchSaleWizard
         open={wizardOpen}
@@ -193,9 +264,14 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
                     <div className="text-xs text-amber-600 font-semibold">{money(d.remaining, d.currency)} due</div>
                   </div>
                   {canWrite && (
-                    <Button size="sm" variant="outline" onClick={() => openReopen(d)} className="gap-1.5">
-                      <RotateCcw className="h-3.5 w-3.5" /> Reopen
-                    </Button>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Button size="sm" variant="outline" onClick={() => openReopen(d)} className="gap-1.5">
+                        <RotateCcw className="h-3.5 w-3.5" /> Reopen
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setCancelTarget(d)} className="gap-1.5 text-rose-600 hover:text-rose-700 border-rose-200 hover:bg-rose-50">
+                        <Ban className="h-3.5 w-3.5" /> Cancel
+                      </Button>
+                    </div>
                   )}
                 </div>
               ))}
@@ -204,6 +280,38 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
         </Card>
       )}
 
+      <AlertDialog open={!!cancelTarget} onOpenChange={(o) => !o && setCancelTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel dispatch {cancelTarget?.dispatch_number}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This reverses the sale: the {cancelTarget ? money(cancelTarget.total_amount, cancelTarget.currency) : ""} worth of stock
+              already deducted from the silo will be restored, and the dispatch is marked cancelled. Only use this for a sale that fell
+              through before payment completed — it's blocked if the dispatch is already fully paid.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep it</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-rose-600 hover:bg-rose-700"
+              disabled={cancelM.isPending}
+              onClick={() => cancelTarget && cancelM.mutate(cancelTarget.id)}
+            >
+              {cancelM.isPending ? "Cancelling…" : "Cancel dispatch"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Card>
+        <CardHeader><CardTitle className="text-sm">By status</CardTitle></CardHeader>
+        <CardContent className="flex flex-wrap gap-2">
+          {Object.entries(byStatus).map(([k, v]) => (
+            <Badge key={k} className={payBadge(k)}>{k}: {String(v)}</Badge>
+          ))}
+          {Object.keys(byStatus).length === 0 && <span className="text-sm text-slate-500">No invoices yet.</span>}
+        </CardContent>
+      </Card>
       <Tabs defaultValue="invoices">
         <TabsList>
           <TabsTrigger value="invoices">Invoices</TabsTrigger>
@@ -235,7 +343,11 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
                           <Badge className={payBadge(i.payment_status)}>{i.payment_status ?? "pending"}</Badge>
                           {dispatch && <Badge variant="outline" className="gap-1"><Truck className="h-3 w-3" /> {dispatch.dispatch_number}</Badge>}
                         </div>
-                        <div className="text-xs text-slate-500 mt-1">{i.buyer_name ?? "—"}{i.buyer_company ? ` · ${i.buyer_company}` : ""}{i.batch_ref ? ` · ${i.batch_ref}` : ""}{i.due_date ? ` · due ${new Date(i.due_date).toLocaleDateString()}` : ""}</div>
+                        <div className="text-xs text-slate-500 mt-1">
+                          {i.buyer_name ?? "—"}{i.buyer_company ? ` · ${i.buyer_company}` : ""}{i.batch_ref ? ` · ${i.batch_ref}` : ""}
+                          {i.created_at ? ` · ${new Date(i.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })} ${new Date(i.created_at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}` : ""}
+                          {i.due_date ? ` · due ${new Date(i.due_date).toLocaleDateString()}` : ""}
+                        </div>
                         {qtyKg != null && pricePerKg != null && (
                           <div className="text-[11px] text-slate-400 mt-0.5">{qtyKg.toLocaleString()} kg (~{kgToMan(qtyKg).toFixed(1)} man) · {money(pricePerKg, i.currency)}/kg · {money(pricePerKgToPerMan(pricePerKg), i.currency)}/man</div>
                         )}
@@ -244,9 +356,17 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
                         <div className="font-bold">{money(i.total_amount, i.currency)}</div>
                         {remaining > 0 && <div className="text-xs text-amber-600">{money(remaining, i.currency)} due</div>}
                       </div>
+                      <Button size="sm" variant="outline" onClick={() => downloadPdfM.mutate(i)} disabled={downloadingPdfId === i.id} className="gap-1">
+                        {downloadingPdfId === i.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5 text-emerald-600" />} PDF
+                      </Button>
                       {remaining > 0 && canWrite && (
                         <Button size="sm" variant="outline" onClick={() => markM.mutate(i.id)} disabled={markM.isPending}>
                           <DollarSign className="h-3.5 w-3.5 mr-1" /> Mark paid
+                        </Button>
+                      )}
+                      {canWrite && (
+                        <Button size="sm" variant="outline" onClick={() => setDeleteQuoteTarget(i)} className="text-rose-600 hover:text-rose-700 border-rose-200 hover:bg-rose-50">
+                          <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete
                         </Button>
                       )}
                     </div>
@@ -289,6 +409,27 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <AlertDialog open={!!deleteQuoteTarget} onOpenChange={(o) => !o && setDeleteQuoteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete invoice {deleteQuoteTarget?.invoice_number}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes the invoice record from the database. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-rose-600 hover:bg-rose-700"
+              disabled={deleteQuoteM.isPending}
+              onClick={() => deleteQuoteTarget && deleteQuoteM.mutate(deleteQuoteTarget.id)}
+            >
+              {deleteQuoteM.isPending ? "Deleting…" : "Delete invoice"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

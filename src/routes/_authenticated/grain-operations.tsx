@@ -281,7 +281,8 @@ function GrainOperationsWorkspace() {
         {/* Tabbed Sections */}
         <div className="bg-card border border-border rounded-2xl overflow-hidden">
           {/* Tab Bar — variable-font hover nav */}
-          <div className="border-b border-border px-4 md:px-6 overflow-x-auto no-scrollbar">
+          <div className="relative border-b border-border">
+          <div className="px-4 md:px-6 overflow-x-auto no-scrollbar">
             <div className="flex items-center gap-8">
               {TABS.map((tab) => {
                 const isActive = activeTab === tab.key;
@@ -319,6 +320,10 @@ function GrainOperationsWorkspace() {
                 );
               })}
             </div>
+          </div>
+          {/* Scroll hint — a deep-linked tab (e.g. Buyers) can land off-screen
+              on narrow viewports since the bar has no scrollbar of its own. */}
+          <div className="pointer-events-none absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-card to-transparent md:hidden" />
           </div>
 
           {/* Tab Content */}

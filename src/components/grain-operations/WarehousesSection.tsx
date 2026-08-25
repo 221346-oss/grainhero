@@ -582,13 +582,13 @@ export function WarehousesSection() {
 
                 {/* Actions */}
                 <div className="flex items-center gap-0 px-2 pb-2 mt-auto border-t border-slate-100 pt-1.5">
-                  <Button variant="ghost" size="sm" onClick={() => { setSelected(w); setViewOpen(true); }} className="h-6 flex-1 text-[10px] text-slate-500 hover:text-slate-800 gap-0.5 rounded-md">
+                  <Button variant="ghost" size="sm" onClick={() => { setSelected(w); setViewOpen(true); }} className="h-9 flex-1 text-[10px] text-slate-500 hover:text-slate-800 gap-0.5 rounded-md">
                     <Eye className="w-3 h-3" /> View
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={() => openEdit(w)} className="h-6 flex-1 text-[10px] text-slate-500 hover:text-slate-800 gap-0.5 rounded-md">
+                  <Button variant="ghost" size="sm" onClick={() => openEdit(w)} className="h-9 flex-1 text-[10px] text-slate-500 hover:text-slate-800 gap-0.5 rounded-md">
                     <Edit2 className="w-3 h-3" /> Edit
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={() => setDeleteId(w.id)} className="h-6 w-7 p-0 text-rose-400 hover:text-rose-600 rounded-md">
+                  <Button variant="ghost" size="sm" onClick={() => setDeleteId(w.id)} className="h-9 w-9 p-0 text-rose-400 hover:text-rose-600 rounded-md">
                     <Trash2 className="w-3 h-3" />
                   </Button>
                 </div>

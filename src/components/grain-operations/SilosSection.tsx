@@ -48,7 +48,7 @@ import {
 import { parsePlanLimitError, usePlanGate } from "@/lib/plan-gate";
 import { getMyRole } from "@/lib/roles.functions";
 import { SiloOperationsCard, type BatchRow } from "./SiloOperationsCard";
-import { DispatchDialog } from "@/components/app/silos/DispatchDialog";
+import { DispatchSaleWizard } from "@/components/business/DispatchSaleWizard";
 
 function friendlySaveError(e: Error): string {
   const limit = parsePlanLimitError(e);
@@ -420,6 +420,7 @@ export function SilosSection() {
               <Select
                 value={form.warehouse_id}
                 onValueChange={(v) => setForm({ ...form, warehouse_id: v })}
+                disabled={isManager}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select warehouse" />
@@ -441,6 +442,7 @@ export function SilosSection() {
                 required
                 value={form.capacity_kg}
                 onChange={(e) => setForm({ ...form, capacity_kg: e.target.value })}
+                disabled={isManager}
               />
             </div>
             <div>
@@ -449,6 +451,7 @@ export function SilosSection() {
                 value={form.location_description}
                 onChange={(e) => setForm({ ...form, location_description: e.target.value })}
                 placeholder="e.g. Building A, Zone 1"
+                disabled={isManager}
               />
             </div>
             <div>
@@ -473,8 +476,14 @@ export function SilosSection() {
                 rows={2}
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                disabled={isManager}
               />
             </div>
+            {isManager && (
+              <p className="text-xs text-muted-foreground -mt-1">
+                Managers can update silo status only — other fields are managed by an admin.
+              </p>
+            )}
           </form>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setEditOpen(false)}>
@@ -573,12 +582,18 @@ export function SilosSection() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Sell — creates a dispatch request from this silo, pending admin approval */}
-      <DispatchDialog
+      {/* Sell — full Invoice → Dispatch → Payment flow, pre-scoped to this silo */}
+      <DispatchSaleWizard
         open={!!sellSilo}
         onOpenChange={(o) => !o && setSellSilo(null)}
-        siloId={sellSilo?.id ?? null}
-        siloName={sellSilo?.name}
+        onDone={() => {
+          qc.invalidateQueries({ queryKey: ["silos"] });
+          qc.invalidateQueries({ queryKey: ["grain-batches"] });
+          qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
+          qc.invalidateQueries({ queryKey: ["dashboard-extras"] });
+          qc.invalidateQueries({ queryKey: ["revenue"] });
+        }}
+        presetSilo={sellSilo ? { id: sellSilo.id, name: sellSilo.name, current_occupancy_kg: sellSilo.current_occupancy_kg, capacity_kg: sellSilo.capacity_kg } : null}
       />
 
       {/* Plan limit dialog — shown when admin tries to request a silo beyond their plan cap */}

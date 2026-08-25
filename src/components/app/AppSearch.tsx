@@ -41,15 +41,14 @@ const NAV_TARGETS: NavTarget[] = [
   { label: "Environmental", to: "/environmental", group: "Operations", keywords: "climate weather" },
   // Insights
   { label: "Intelligence", to: "/intelligence", group: "Insights", keywords: "ai predictions analytics ml models reports charts graphs data visualization" },
-  { label: "Traceability", to: "/traceability", group: "Insights" },
   { label: "Administration", to: "/administration", group: "Admin", keywords: "team members users security activity logs audit history" },
   // Business
   { label: "Orders", to: "/orders", group: "Business", keywords: "hardware install" },
   { label: "Business", to: "/business", group: "Business", keywords: "revenue income subscription insurance policies claims plan management billing" },
   { label: "Plans", to: "/plans", group: "Business", keywords: "pricing" },
   // Admin
-  { label: "Server Monitoring", to: "/server-monitoring", group: "Admin" },
   { label: "Settings", to: "/settings", group: "Admin" },
+  { label: "Notification preferences", to: "/settings/notifications", group: "Admin", keywords: "email sms push alerts channels" },
   // Platform (super_admin)
   { label: "Platform · Tenants", to: "/platform/tenants", group: "Platform" },
   { label: "Platform · Users & roles", to: "/platform/users", group: "Platform" },
@@ -162,7 +161,7 @@ export function AppSearch() {
         placeholder="Search anything or jump to a page…"
         aria-label="Search anything or jump to a page"
         className={cn(
-          "w-full h-9 pl-9 pr-16 rounded-full text-sm bg-transparent hover:bg-muted focus:bg-background",
+          "w-full h-9 pl-9 pr-9 sm:pr-16 rounded-full text-sm bg-transparent hover:bg-muted focus:bg-background",
           "border-0 focus:outline-none transition placeholder:text-muted-foreground",
         )}
       />

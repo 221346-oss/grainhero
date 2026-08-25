@@ -7,7 +7,13 @@ import { AppSearch } from "@/components/app/AppSearch";
 import { AppSidebar, type SidebarMode } from "@/components/app/AppSidebar";
 import { DashboardQuickTabs } from "@/components/app/DashboardQuickTabs";
 import { ProfileMenu } from "@/components/app/ProfileMenu";
-import { Sun, Moon, Menu } from "lucide-react";
+import { Sun, Moon, Menu, MoreVertical, Hash } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Link } from "@tanstack/react-router";
 import { SessionGuard } from "@/components/app/SessionGuard";
 import { OnboardingTour } from "@/components/app/OnboardingTour";
@@ -63,7 +69,6 @@ export const Route = createFileRoute("/_authenticated")({
     // super_admin → platform equivalent. Keep in sync with plan §2.
     const SUPER_ADMIN_REDIRECTS: Record<string, string> = {
       "/team-management": "/platform/users",
-      "/traceability": "/dashboard",
       "/orders": "/platform/orders",
       "/monitoring": "/platform/monitoring",
       "/intelligence": "/platform/intelligence",
@@ -102,9 +107,16 @@ export const Route = createFileRoute("/_authenticated")({
 
 function AuthenticatedLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { role: myRole } = useIsSuperAdmin();
   const [mode, setMode] = useState<ThemeMode>(() =>
     typeof window !== "undefined" ? getStoredThemeMode() : "light"
   );
+  // Ticket pill + theme toggle collapse into a single "more" menu below the
+  // `sm` breakpoint — the header was crowding the search bar out on narrow
+  // screens even after hiding AdminUpgradeLink there. TicketSidePanel is
+  // still the same component/query, just given an externally-controlled
+  // open state for this one entry point instead of its own header pill.
+  const [mobileTicketsOpen, setMobileTicketsOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   // Desktop sidebar tri-state (expanded / collapsed-icon-rail / hidden),
   // persisted so it survives reloads. Falls back to the legacy boolean key
@@ -177,7 +189,7 @@ function AuthenticatedLayout() {
       <SessionGuard />
       <OnboardingTour />
       <BugReportButton />
-      <div className="app-scope min-h-screen flex w-full bg-white">
+      <div className="app-scope min-h-screen flex w-full bg-background text-foreground transition-colors duration-200">
         <div data-tour="sidebar" className="contents">
           <AppSidebar mode={sidebarMode} onModeChange={setSidebarMode} />
           <MobileAdminNav isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
@@ -192,7 +204,7 @@ function AuthenticatedLayout() {
               visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] } },
               hidden: { opacity: 0, y: -20, transition: { duration: 0.25, ease: [0.55, 0.085, 0.68, 0.53] } },
             }}
-            className="h-14 flex items-center gap-2 sm:gap-3 bg-white/90 backdrop-blur-md px-3 sm:px-6 border-b border-border sticky top-0 z-30 w-full"
+            className="h-14 flex items-center gap-2 sm:gap-3 bg-background/80 backdrop-blur-md px-3 sm:px-6 border-b border-border sticky top-0 z-30 w-full transition-colors duration-200"
           >
             {/* Mobile menu button + logo */}
             <div className="flex md:hidden items-center gap-2 shrink-0">
@@ -213,18 +225,54 @@ function AuthenticatedLayout() {
             </div>
             <DashboardQuickTabs />
             <AdminUpgradeLink />
-            <TicketSidePanel />
-            {/* Dark / Light toggle */}
-            <button
-              type="button"
-              onClick={handleToggle}
-              aria-label={mode === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-              className="shrink-0 h-9 w-9 grid place-items-center rounded-full hover:bg-muted transition text-muted-foreground hover:text-foreground"
-            >
-              {mode === "dark"
-                ? <Sun className="h-4 w-4" />
-                : <Moon className="h-4 w-4" />}
-            </button>
+
+            {/* sm and up: ticket pill + theme toggle shown inline, unchanged */}
+            <div className="hidden sm:flex items-center gap-2 sm:gap-3">
+              <TicketSidePanel />
+              <button
+                type="button"
+                onClick={handleToggle}
+                aria-label={mode === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                className="shrink-0 h-9 w-9 grid place-items-center rounded-full hover:bg-muted transition text-muted-foreground hover:text-foreground"
+              >
+                {mode === "dark"
+                  ? <Sun className="h-4 w-4" />
+                  : <Moon className="h-4 w-4" />}
+              </button>
+            </div>
+
+            {/* Below sm: same two controls, collapsed into one overflow menu */}
+            <div className="sm:hidden shrink-0">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="More options"
+                    className="h-9 w-9 grid place-items-center rounded-full hover:bg-muted transition text-muted-foreground hover:text-foreground"
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {(myRole === "admin" || myRole === "super_admin") && (
+                    <DropdownMenuItem onClick={() => setMobileTicketsOpen(true)}>
+                      <Hash className="h-4 w-4 mr-2" /> Tickets
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem onClick={handleToggle}>
+                    {mode === "dark"
+                      ? <Sun className="h-4 w-4 mr-2" />
+                      : <Moon className="h-4 w-4 mr-2" />}
+                    {mode === "dark" ? "Light mode" : "Dark mode"}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <TicketSidePanel
+                controlledOpen={mobileTicketsOpen}
+                onControlledClose={() => setMobileTicketsOpen(false)}
+              />
+            </div>
+
             <NotificationBell />
             <ProfileMenu />
           </motion.header>
@@ -245,7 +293,7 @@ function AdminUpgradeLink() {
   return (
     <Link
       to="/plan-management"
-      className="shrink-0 h-9 inline-flex items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold text-[#2FAC0C] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:text-emerald-400"
+      className="hidden sm:inline-flex shrink-0 h-9 items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold text-[#2FAC0C] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:text-emerald-400"
     >
       <TextShimmer duration={2.2} baseColor="#2FAC0C99" peakColor="#4ade80">Upgrade</TextShimmer>
     </Link>

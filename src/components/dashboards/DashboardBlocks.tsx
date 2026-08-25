@@ -18,10 +18,13 @@ import { listGrainBatches, listSilos } from "@/lib/operations.functions";
 import { listFieldIncidents } from "@/lib/field-incidents.functions";
 import { listActivityLogs } from "@/lib/notifications-audit.functions";
 import { usePlanGate } from "@/lib/plan-gate";
-import { DispatchDialog } from "@/components/app/silos/DispatchDialog";
-import { siloStatusBadge } from "@/components/grain-operations/SiloOperationsCard";
+import {
+  siloStatusBadge, BATCH_TONE, BATCH_TONE_LABELS, DISPATCH_TONE, DISPATCH_TONE_LABELS, groupByTone,
+} from "@/components/grain-operations/SiloOperationsCard";
+import { SiloFlowDiagram } from "@/components/grain-operations/SiloFlowDiagram";
 import { listBuyers } from "@/lib/operations.functions";
 import { listDispatches } from "@/lib/dispatches.functions";
+import { listMyHardwareOrders } from "@/lib/hardware-orders.functions";
 
 // range must match whatever AdminDashboard.tsx's own useQuery is keyed on —
 // same queryKey means react-query dedupes this into the SAME network call
@@ -61,7 +64,7 @@ function CardHeaderLink({ to, search, title, count }: { to: string; search?: Rec
           <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-mono tabular-nums">{count}</Badge>
         )}
       </CardTitle>
-      <Link to={to} search={search as never} aria-label={`Open ${title}`} className="text-emerald-600 hover:text-emerald-700">
+      <Link to={to} search={search as never} aria-label={`Open ${title}`} className="-m-2 p-2 text-emerald-600 hover:text-emerald-700">
         <ArrowUpRight className="h-3.5 w-3.5" />
       </Link>
     </CardHeader>
@@ -330,7 +333,6 @@ export function DashboardSiloCards({ range }: { range?: string } = {}) {
     queryFn: () => listBatchesFn() as Promise<Array<{ quantity_kg: number; silos?: { id: string } | null }>>,
   });
   const siloGate = usePlanGate("max_silos");
-  const [dispatchSilo, setDispatchSilo] = useState<DashSilo | null>(null);
 
   const incomingBySilo = useMemo(() => {
     const map: Record<string, number> = {};
@@ -364,22 +366,19 @@ export function DashboardSiloCards({ range }: { range?: string } = {}) {
           const bar = pct >= 90 ? "bg-red-500" : pct >= 70 ? "bg-amber-500" : "bg-emerald-500";
           return (
             <div key={s.id}>
-              <div className="flex items-center gap-2 group">
+              <div className="flex flex-wrap items-center gap-2 group">
                 <Link
                   to="/grain-operations"
                   search={{ tab: "silos" }}
                   title={`${s.name} · ${occ.toLocaleString()}/${cap.toLocaleString()}kg`}
-                  className="flex items-center gap-2 flex-1 min-w-0"
+                  className="flex flex-1 flex-wrap items-center gap-2 min-w-0"
                 >
-                  <span className="text-[11px] w-16 truncate text-muted-foreground group-hover:text-foreground transition">{s.name}</span>
-                  <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+                  <span className="text-[11px] w-16 shrink-0 truncate text-muted-foreground group-hover:text-foreground transition">{s.name}</span>
+                  <div className="flex-1 min-w-[60px] h-2 rounded-full bg-muted overflow-hidden">
                     <div className={`h-full ${bar} transition-all`} style={{ width: `${Math.min(100, pct)}%` }} />
                   </div>
-                  <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                    <div className={`h-full ${bar}`} style={{ width: `${Math.min(100, pct)}%` }} />
-                  </div>
-                  <p className="text-[10px] text-muted-foreground tabular-nums">{occ.toLocaleString()} / {cap.toLocaleString()} kg ({pct}%)</p>
-                  <div className="grid grid-cols-2 gap-1 text-[10px]">
+                  <p className="text-[10px] text-muted-foreground tabular-nums shrink-0">{occ.toLocaleString()} / {cap.toLocaleString()} kg ({pct}%)</p>
+                  <div className="grid grid-cols-2 gap-1 text-[10px] shrink-0">
                     <div className="rounded border border-border/50 bg-muted/30 px-1.5 py-1">
                       <p className="text-muted-foreground">In</p>
                       <p className="font-semibold tabular-nums">{(incomingBySilo[s.id] ?? 0).toLocaleString()}kg</p>
@@ -390,32 +389,66 @@ export function DashboardSiloCards({ range }: { range?: string } = {}) {
                     </div>
                   </div>
                 </Link>
-                <div className="flex items-center gap-1">
-                  <Button size="sm" className="h-6 flex-1 text-[10px] bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => setDispatchSilo(s)}>
-                    Sell
-                  </Button>
-                  <Button size="sm" variant="outline" className="h-6 px-1.5 text-[10px]" asChild>
+                <div className="flex items-center gap-1 shrink-0">
+                  <Button size="sm" variant="outline" className="h-8 px-2.5 text-[11px]" asChild>
                     <Link to="/silos/$siloId" params={{ siloId: s.id }}>View</Link>
                   </Button>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleRequestMore}
-                  className="w-full text-[10px] text-emerald-700 dark:text-emerald-400 hover:underline"
-                >
-                  Request more capacity
-                </button>
               </div>
+              <button
+                type="button"
+                onClick={handleRequestMore}
+                className="mt-1 block w-full text-left text-[10px] text-emerald-700 dark:text-emerald-400 hover:underline"
+              >
+                Request more capacity
+              </button>
             </div>
           );
         })}
       </CardContent>
-      <DispatchDialog
-        open={!!dispatchSilo}
-        onOpenChange={(o) => !o && setDispatchSilo(null)}
-        siloId={dispatchSilo?.id ?? null}
-        siloName={dispatchSilo?.name}
-      />
+    </Card>
+  );
+}
+
+// ── Flow Diagram — tenant-wide Farm → Intake → Silo → Sale → Buyer view ────
+// Reuses SiloFlowDiagram (Grain Operations' per-silo expanded view, normally
+// hidden behind a click) and the exact tone-grouping helpers SiloOperationsCard
+// uses for a single silo, aggregated across every silo/batch/dispatch instead
+// of scoped to one, so it can be default-visible on the dashboard.
+export function DashboardFlowDiagram() {
+  const listSilosFn = useServerFn(listSilos);
+  const listBatchesFn = useServerFn(listGrainBatches);
+  const listDispatchesFn = useServerFn(listDispatches);
+
+  const { data: silos } = useQuery({ queryKey: ["silos"], queryFn: () => listSilosFn() });
+  const { data: batches } = useQuery({ queryKey: ["grain-batches"], queryFn: () => listBatchesFn() });
+  const { data: dispatchesData } = useQuery({
+    queryKey: ["dispatches-all"],
+    queryFn: () => listDispatchesFn({ data: { limit: 300 } }),
+  });
+
+  const siloRows = (silos ?? []) as Array<{ capacity_kg: number | null; current_occupancy_kg: number | null }>;
+  const batchRows = (batches ?? []) as Array<{ status: string | null; quantity_kg: number }>;
+  const dispatchRows = (dispatchesData?.dispatches ?? []) as Array<{ status: string | null; total_qty_kg: number }>;
+
+  const totalCap = siloRows.reduce((a, s) => a + Number(s.capacity_kg ?? 0), 0);
+  const totalOcc = siloRows.reduce((a, s) => a + Number(s.current_occupancy_kg ?? 0), 0);
+  const pct = totalCap ? Math.round((totalOcc / totalCap) * 100) : 0;
+
+  const incoming = groupByTone(batchRows, BATCH_TONE, (b) => Number(b.quantity_kg ?? 0), BATCH_TONE_LABELS);
+  const outgoing = groupByTone(dispatchRows, DISPATCH_TONE, (d) => Number(d.total_qty_kg ?? 0), DISPATCH_TONE_LABELS);
+
+  return (
+    <Card className="border-border/70 bg-card/80 backdrop-blur-md shadow-sm mb-4">
+      <CardHeaderLink to="/grain-operations" search={{ tab: "silos" }} title="End-to-End Supply Chain Stream" />
+      <CardContent className="p-3 pt-0">
+        <SiloFlowDiagram
+          siloName={`${siloRows.length} silo${siloRows.length === 1 ? "" : "s"}`}
+          occupancyPct={pct}
+          incoming={incoming}
+          outgoing={outgoing}
+        />
+      </CardContent>
     </Card>
   );
 }
@@ -448,6 +481,34 @@ export function IncomingQueueCard({ range }: { range?: string } = {}) {
             ))}
           </div>
         )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ── Orders — pending/in-progress hardware install orders ───────────────────
+// Reuses listMyHardwareOrders (the same query that powers /orders itself)
+// rather than a new one.
+const ORDER_TERMINAL_STATUSES = new Set(["completed", "live", "cancelled"]);
+
+export function OrdersSummaryCard() {
+  const fn = useServerFn(listMyHardwareOrders);
+  const { data } = useQuery({ queryKey: ["my-hardware-orders"], queryFn: () => fn() });
+  const orders = data?.orders ?? [];
+  const pending = orders.filter((o) => !ORDER_TERMINAL_STATUSES.has(String(o.status)));
+
+  return (
+    <Card className="border-border/60 shadow-sm">
+      <CardHeaderLink to="/orders" title="Install Orders" count={pending.length} />
+      <CardContent className="p-3 pt-0">
+        <p className="text-xs text-muted-foreground">
+          {pending.length === 0
+            ? "No orders pending install"
+            : `${pending.length} order${pending.length === 1 ? "" : "s"} pending install`}
+        </p>
+        <Button asChild size="sm" variant="outline" className="w-full mt-2 h-7 text-xs">
+          <Link to="/orders">View orders</Link>
+        </Button>
       </CardContent>
     </Card>
   );
@@ -656,14 +717,14 @@ export function SupportTicketsCard({
             <button
               type="button"
               onClick={() => setShowNewTicket(true)}
-              className="text-[11px] font-semibold text-emerald-700 hover:text-emerald-800 hover:underline"
+              className="-my-2 py-2 text-[11px] font-semibold text-emerald-700 hover:text-emerald-800 hover:underline"
             >
               + New Ticket
             </button>
             <button
               type="button"
               onClick={onViewAll}
-              className="text-[11px] font-semibold text-emerald-700 hover:text-emerald-800 hover:underline"
+              className="-my-2 py-2 text-[11px] font-semibold text-emerald-700 hover:text-emerald-800 hover:underline"
             >
               View all
             </button>
@@ -716,7 +777,7 @@ export function SupportTicketsCard({
                     <button
                       type="button"
                       onClick={() => openDiscuss(t)}
-                      className="relative shrink-0 text-[10px] font-semibold text-slate-500 border border-slate-200 rounded px-1.5 py-0.5 hover:border-emerald-400 hover:text-emerald-700 transition"
+                      className="relative shrink-0 -my-1 text-[10px] font-semibold text-slate-500 border border-slate-200 rounded px-1.5 py-1.5 hover:border-emerald-400 hover:text-emerald-700 transition"
                     >
                       Discuss
                       {unread > 0 && (

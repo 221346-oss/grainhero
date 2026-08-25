@@ -3,7 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import type { Database } from "@/integrations/supabase/types";
 import { assertPlanAllows } from "@/lib/plan-gate";
-import { requireRole } from "@/lib/rbac.server";
+import { requireRole, getEffectiveRole } from "@/lib/rbac.server";
 import { logActivity, logManagerAction } from "@/lib/activity";
 
 // Roles allowed to rename a silo/warehouse — same allow-list used for team
@@ -344,26 +344,32 @@ export const upsertSilo = createServerFn({ method: "POST" })
       // admin/manager/super_admin — same allow-list as team invite/manage —
       // everything else in this form stays open to whoever could already
       // edit a silo.
-      if (data.name) {
-        const { data: current } = await context.supabase
-          .from("silos")
-          .select("name")
-          .eq("id", data.id)
-          .maybeSingle();
-        if (current && current.name !== data.name) {
-          await requireRole(context.supabase, context.userId, [...SILO_RENAME_ROLES]);
-        }
+      // Manager can only change status — everything else on this form
+      // (warehouse, capacity, location, notes; name is already gated above
+      // via SILO_RENAME_ROLES) is read-only for them. Enforced here, not
+      // just disabled in the dialog, since this endpoint is reachable
+      // directly. Fetch current values once and reuse for both the rename
+      // check and the manager field-lock below.
+      const { data: current } = await context.supabase
+        .from("silos")
+        .select("name, warehouse_id, capacity_kg, location, notes")
+        .eq("id", data.id)
+        .maybeSingle();
+      if (data.name && current && current.name !== data.name) {
+        await requireRole(context.supabase, context.userId, [...SILO_RENAME_ROLES]);
       }
+      const role = await getEffectiveRole(context.supabase, context.userId);
+      const managerLocked = role === "manager";
       const { data: row, error } = await context.supabase
         .from("silos")
         .update({
-          warehouse_id: data.warehouse_id,
-          capacity_kg: data.capacity_kg,
-          location,
+          warehouse_id: managerLocked ? (current?.warehouse_id ?? data.warehouse_id) : data.warehouse_id,
+          capacity_kg: managerLocked ? (current?.capacity_kg ?? data.capacity_kg) : data.capacity_kg,
+          location: managerLocked ? (current?.location ?? location) : location,
           status: data.status,
-          notes: data.notes ?? null,
+          notes: managerLocked ? (current?.notes ?? null) : (data.notes ?? null),
           updated_by: context.userId,
-          ...(data.name ? { name: data.name } : {}),
+          ...(data.name && !managerLocked ? { name: data.name } : {}),
         })
         .eq("id", data.id)
         .select("*")

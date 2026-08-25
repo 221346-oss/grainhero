@@ -45,7 +45,7 @@ export const updateFieldSettings = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-export const listFieldIncidents = createServerFn({ method: "GET" })
+export const listMobileFieldIncidents = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase

@@ -17,7 +17,7 @@ export function RangeChip({ value, onChange }: { value: RangeKey; onChange: (v: 
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="inline-flex items-center gap-1 h-7 px-2.5 rounded-full border text-[11px] font-medium bg-card hover:border-emerald-500/50 hover:text-emerald-600 transition"
+          className="inline-flex items-center gap-1 h-9 px-2.5 rounded-full border text-[11px] font-medium bg-card hover:border-emerald-500/50 hover:text-emerald-600 transition"
         >
           {label}
           <ChevronDown className="h-3 w-3" />
