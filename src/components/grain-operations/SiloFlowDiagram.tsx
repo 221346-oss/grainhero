@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ArrowRight, Warehouse, PackageCheck, Truck, ShieldCheck, Activity, FileCheck, Layers } from "lucide-react";
+import { ArrowRight, Warehouse, Truck, FlaskConical, FileCheck, PackageCheck, Activity, ShieldCheck, Scale, CheckCircle2 } from "lucide-react";
 
 export type FlowGroup = {
   label: string;
@@ -19,164 +19,155 @@ export function SiloFlowDiagram({
 }) {
   const pct = Math.max(0, Math.min(100, occupancyPct ?? 65));
 
+  const steps = [
+    {
+      num: "01",
+      title: "Truck Arrival",
+      tag: "Intake Scale",
+      desc: "Farm harvest intake & weighbridge scale",
+      icon: Truck,
+      color: "emerald",
+      borderCls: "border-emerald-500/30 bg-emerald-500/5 hover:border-emerald-500/60",
+      tagCls: "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
+      iconCls: "text-emerald-500",
+    },
+    {
+      num: "02",
+      title: "Quality Check",
+      tag: "QC Testing",
+      desc: "Automated moisture & grade classification",
+      icon: FlaskConical,
+      color: "cyan",
+      borderCls: "border-cyan-500/30 bg-cyan-500/5 hover:border-cyan-500/60",
+      tagCls: "text-cyan-600 dark:text-cyan-400 bg-cyan-500/10 border-cyan-500/20",
+      iconCls: "text-cyan-500",
+    },
+    {
+      num: "03",
+      title: "Silo Storage",
+      tag: "IoT Silo Hub",
+      desc: "24/7 Temp, CO2 & moisture telemetry",
+      icon: Warehouse,
+      color: "primary",
+      borderCls: "border-primary/40 bg-primary/5 hover:border-primary/70",
+      tagCls: "text-primary bg-primary/10 border-primary/20",
+      iconCls: "text-primary",
+      isCenterHub: true,
+    },
+    {
+      num: "04",
+      title: "Invoice & Order",
+      tag: "Buyer Billing",
+      desc: "Contract creation & payment locking",
+      icon: FileCheck,
+      color: "amber",
+      borderCls: "border-amber-500/30 bg-amber-500/5 hover:border-amber-500/60",
+      tagCls: "text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20",
+      iconCls: "text-amber-500",
+    },
+    {
+      num: "05",
+      title: "Dispatch Outflow",
+      tag: "Freight Loadout",
+      desc: "Physical truck loading & buyer delivery",
+      icon: PackageCheck,
+      color: "purple",
+      borderCls: "border-purple-500/30 bg-purple-500/5 hover:border-purple-500/60",
+      tagCls: "text-purple-600 dark:text-purple-400 bg-purple-500/10 border-purple-500/20",
+      iconCls: "text-purple-500",
+    },
+  ];
+
   return (
-    <div className="relative overflow-hidden rounded-xl border border-border/70 bg-gradient-to-br from-card/90 via-card/60 to-muted/30 p-5 backdrop-blur-md shadow-sm">
-      {/* Background Animated Pipeline Connector */}
-      <div className="absolute inset-0 pointer-events-none opacity-20">
-        <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-emerald-500 via-primary to-purple-500" />
+    <div className="relative overflow-hidden rounded-2xl border border-border/70 bg-gradient-to-br from-card/95 via-card/70 to-muted/20 p-5 backdrop-blur-xl shadow-md">
+      
+      {/* Background Animated Laser Stream Line */}
+      <div className="hidden lg:block absolute top-1/2 left-8 right-8 h-0.5 -translate-y-1/2 pointer-events-none opacity-30">
+        <div className="w-full h-full bg-gradient-to-r from-emerald-500 via-cyan-400 via-primary via-amber-400 to-purple-500" />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-[1fr_200px_1fr] items-center gap-6 relative z-10">
-        
-        {/* STEP 1: INTAKE & QC */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4 relative group hover:border-emerald-500/40 transition-all"
-        >
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-              Step 01 · Intake
-            </span>
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-            </span>
-          </div>
-
-          <h3 className="text-sm font-bold text-foreground flex items-center gap-2 mb-1">
-            <PackageCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" /> Batch Receipt & QC
-          </h3>
-          <p className="text-[11px] text-muted-foreground leading-relaxed mb-3">
-            Harvest intake, moisture testing, grade classification & admin approval.
-          </p>
-
-          <div className="space-y-1.5 text-[11px] text-foreground font-medium">
-            <div className="flex items-center gap-2 bg-background/60 p-1.5 rounded border border-border/40">
-              <ShieldCheck className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-              <span>1. Moisture & Grade QC Check</span>
-            </div>
-            <div className="flex items-center gap-2 bg-background/60 p-1.5 rounded border border-border/40">
-              <Layers className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-              <span>2. Batch Allocation to Silo</span>
-            </div>
-          </div>
-
-          {/* Animated Flow Connector Arrow */}
-          <div className="mt-3 flex items-center justify-end gap-1.5 text-emerald-600 dark:text-emerald-400 font-mono text-[10px]">
-            <span>Moving to Storage</span>
-            <div className="overflow-hidden w-6 h-4 flex items-center relative">
+      {/* 5 Distinct Horizontal Step Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 relative z-10">
+        {steps.map((s, idx) => {
+          const Icon = s.icon;
+          return (
+            <div key={s.num} className="relative flex flex-col justify-between">
+              
               <motion.div
-                animate={{ x: [-10, 10] }}
-                transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: idx * 0.08 }}
+                className={`h-full rounded-xl border ${s.borderCls} p-3.5 flex flex-col justify-between backdrop-blur-md transition-all duration-200 group relative shadow-xs`}
               >
-                <ArrowRight className="h-3.5 w-3.5" />
+                {/* Header Badge & Pulse */}
+                <div>
+                  <div className="flex items-center justify-between mb-2.5">
+                    <span className={`text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${s.tagCls}`}>
+                      Step {s.num} · {s.tag}
+                    </span>
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                    </span>
+                  </div>
+
+                  {/* Title & Icon */}
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <div className="p-1.5 rounded-lg bg-background/80 border border-border/40 shadow-2xs">
+                      <Icon className={`h-4 w-4 ${s.iconCls}`} />
+                    </div>
+                    <h4 className="text-xs font-bold text-foreground tracking-tight group-hover:text-primary transition-colors">
+                      {s.title}
+                    </h4>
+                  </div>
+
+                  <p className="text-[11px] text-muted-foreground leading-snug">
+                    {s.desc}
+                  </p>
+                </div>
+
+                {/* Center Hub Specific Vessel Render (Step 03) */}
+                {s.isCenterHub && (
+                  <div className="my-2.5 flex flex-col items-center justify-center p-2 rounded-lg bg-slate-900/90 border border-slate-700/80 shadow-inner">
+                    <div className="w-12 h-2.5 rounded-t-full bg-slate-400 border border-slate-300 flex justify-center items-center">
+                      <span className="h-1 w-1 rounded-full bg-emerald-400 animate-pulse" />
+                    </div>
+                    <div className="relative w-16 h-12 rounded-b-md border border-slate-600 bg-slate-950 overflow-hidden flex flex-col justify-end">
+                      <motion.div
+                        className="w-full bg-gradient-to-t from-emerald-600 to-teal-400"
+                        initial={{ height: "0%" }}
+                        animate={{ height: `${pct}%` }}
+                        transition={{ duration: 0.8 }}
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-[10px] font-mono font-black text-white drop-shadow-md">{pct}%</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step Connector Indicator */}
+                <div className="mt-3 pt-2 border-t border-border/40 flex items-center justify-between text-[10px] font-mono text-muted-foreground">
+                  <span className="flex items-center gap-1 text-[9px]">
+                    <CheckCircle2 className="h-3 w-3 text-emerald-500" /> Active
+                  </span>
+                  {idx < steps.length - 1 && (
+                    <div className="overflow-hidden w-5 h-3 flex items-center relative text-primary">
+                      <motion.div
+                        animate={{ x: [-8, 8] }}
+                        transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+                      >
+                        <ArrowRight className="h-3 w-3" />
+                      </motion.div>
+                    </div>
+                  )}
+                </div>
+
               </motion.div>
+
             </div>
-          </div>
-        </motion.div>
-
-        {/* STEP 2: CENTER SILO TOWER (HUB) */}
-        <div className="flex flex-col items-center justify-center p-2 relative">
-          
-          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20 mb-2">
-            Step 02 · Center Hub
-          </span>
-
-          {/* Silo Roof */}
-          <div className="w-16 h-4 rounded-t-full bg-slate-700 dark:bg-slate-300 shadow-md relative z-10 border border-slate-600 dark:border-slate-400 flex justify-center items-center">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#34d399]" />
-          </div>
-
-          {/* Silo Vessel Body */}
-          <div className="relative w-28 h-40 rounded-t-xl rounded-b-lg border-2 border-slate-700/80 dark:border-slate-400/80 bg-slate-900/90 shadow-xl overflow-hidden flex flex-col justify-end">
-            
-            {/* Animated Fluid Grain Level */}
-            <motion.div
-              className="w-full relative bg-gradient-to-t from-emerald-600 via-emerald-500 to-teal-400 shadow-[0_0_15px_rgba(16,185,129,0.4)]"
-              initial={{ height: "0%" }}
-              animate={{ height: `${pct}%` }}
-              transition={{ duration: 0.8, ease: "easeInOut" }}
-            >
-              <motion.div
-                animate={{ x: [-20, 0, -20] }}
-                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute -top-1 left-0 right-0 h-2 bg-white/30 backdrop-blur-xs rounded-full opacity-80"
-              />
-            </motion.div>
-
-            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-white/10 pointer-events-none" />
-
-            {/* Vessel Glass Icon & Label */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none p-1 text-center">
-              <Warehouse className="h-7 w-7 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] mb-1" />
-              <div className="bg-black/70 backdrop-blur-md px-2.5 py-0.5 rounded-full border border-white/20 shadow-lg">
-                <span className="text-xs font-black font-mono text-white">Silo Storage</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Silo Stand */}
-          <div className="w-24 h-2 bg-slate-800 dark:bg-slate-400 rounded-b border-x border-b border-slate-700" />
-          
-          <div className="mt-2 text-center">
-            <p className="text-xs font-bold text-foreground">IoT Monitored Silo</p>
-            <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground font-mono">
-              <Activity className="h-3 w-3 text-emerald-500 animate-pulse" /> Temp / Humidity Live
-            </span>
-          </div>
-        </div>
-
-        {/* STEP 3: DISPATCH & SALES */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.2 }}
-          className="rounded-xl border border-purple-500/20 bg-purple-500/5 p-4 relative group hover:border-purple-500/40 transition-all"
-        >
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-500/20">
-              Step 03 · Dispatch
-            </span>
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500" />
-            </span>
-          </div>
-
-          <h3 className="text-sm font-bold text-foreground flex items-center gap-2 mb-1">
-            <Truck className="h-4 w-4 text-purple-600 dark:text-purple-400" /> Buyer Dispatch & Sales
-          </h3>
-          <p className="text-[11px] text-muted-foreground leading-relaxed mb-3">
-            Sales invoice creation, buyer confirmation, physical dispatch & payment.
-          </p>
-
-          <div className="space-y-1.5 text-[11px] text-foreground font-medium">
-            <div className="flex items-center gap-2 bg-background/60 p-1.5 rounded border border-border/40">
-              <FileCheck className="h-3.5 w-3.5 text-purple-500 shrink-0" />
-              <span>1. Invoice & Dispatch Order</span>
-            </div>
-            <div className="flex items-center gap-2 bg-background/60 p-1.5 rounded border border-border/40">
-              <Truck className="h-3.5 w-3.5 text-purple-500 shrink-0" />
-              <span>2. Truck Outflow & Receipt</span>
-            </div>
-          </div>
-
-          {/* Animated Outflow Connector Arrow */}
-          <div className="mt-3 flex items-center gap-1.5 text-purple-600 dark:text-purple-400 font-mono text-[10px]">
-            <div className="overflow-hidden w-6 h-4 flex items-center relative">
-              <motion.div
-                animate={{ x: [-10, 10] }}
-                transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
-              >
-                <ArrowRight className="h-3.5 w-3.5" />
-              </motion.div>
-            </div>
-            <span>Fulfilled to Buyer</span>
-          </div>
-        </motion.div>
-
+          );
+        })}
       </div>
     </div>
   );
