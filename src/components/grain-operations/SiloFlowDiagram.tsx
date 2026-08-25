@@ -100,7 +100,7 @@ function CustomColorfulTruck({ stage }: { stage: number }) {
           </span>
         )}
         {stage === 4 && (
-          <span className="bg-purple-500/15 text-purple-700 dark:text-purple-300 text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border border-purple-500/30 animate-bounce whitespace-nowrap shrink-0 shadow-2xs">
+          <span className="bg-purple-500/15 text-purple-700 dark:text-purple-300 text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border border-purple-500/30 whitespace-nowrap shrink-0 shadow-2xs">
             🚚 Outbound Buyer Dispatch
           </span>
         )}
@@ -268,7 +268,7 @@ export function SiloFlowDiagram({
               </span>
               <span className={`text-[9px] font-mono font-bold px-2 py-0.5 rounded-full border transition-colors ${
                 stage === 3
-                  ? "bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border-emerald-500/40 animate-bounce"
+                  ? "bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border-emerald-500/40"
                   : "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30"
               }`}>
                 {stage === 3 ? "PAID ✅" : "PENDING ⏳"}
