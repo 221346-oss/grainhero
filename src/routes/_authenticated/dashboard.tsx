@@ -12,6 +12,7 @@ import { getImpersonationSession } from "@/components/app/ImpersonationBanner";
 import { useState, useEffect } from "react";
 import { useLocationScope } from "@/components/app/location/LocationScope";
 import { LocationPicker, WarehousePicker } from "@/components/app/location/LocationPicker";
+import { PlanExpiredPrompt } from "@/components/app/PlanExpiredPrompt";
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
@@ -103,6 +104,9 @@ function AdminDashboardWithLocations({ name }: { name?: string }) {
   // No provider at all (non-admin roles) — unscoped dashboard, as before.
   if (!scope) return <AdminDashboard name={name} />;
 
+  // Shown above whichever level the admin is on. It never blocks — an expired
+  // tenant keeps their dashboard and is routed to renewal from inside it.
+
   // Still loading. An empty list here is indistinguishable from "no warehouses",
   // and rendering the unscoped dashboard would flash every city's data merged.
   if (!scope.ready) {
@@ -114,7 +118,14 @@ function AdminDashboardWithLocations({ name }: { name?: string }) {
   }
 
   // A warehouse is selected — that is the scope the dashboard runs on.
-  if (scope.activeWarehouse) return <AdminDashboard name={name} />;
+  if (scope.activeWarehouse) {
+    return (
+      <>
+        <PlanExpiredPrompt />
+        <AdminDashboard name={name} />
+      </>
+    );
+  }
 
   // A city is selected. If it holds a single warehouse there is nothing to
   // choose, so go straight in rather than showing a one-card second level.
@@ -123,21 +134,27 @@ function AdminDashboardWithLocations({ name }: { name?: string }) {
       return <SingleWarehouseRedirect scope={scope} />;
     }
     return (
-      <WarehousePicker
-        location={scope.active}
-        onSelect={(id) => scope.selectWarehouse(id)}
-        onBack={() => scope.clear()}
-      />
+      <>
+        <PlanExpiredPrompt />
+        <WarehousePicker
+          location={scope.active}
+          onSelect={(id) => scope.selectWarehouse(id)}
+          onBack={() => scope.clear()}
+        />
+      </>
     );
   }
 
   return (
-    <LocationPicker
-      locations={scope.locations}
-      name={name}
-      plan={scope.plan}
-      onSelect={(key) => scope.select(key)}
-    />
+    <>
+      <PlanExpiredPrompt />
+      <LocationPicker
+        locations={scope.locations}
+        name={name}
+        plan={scope.plan}
+        onSelect={(key) => scope.select(key)}
+      />
+    </>
   );
 }
 
