@@ -1,14 +1,17 @@
 # Multi-Location Admin Dashboard — Requirement Report
 
-**Status:** Reviewed — clarifications received, Q3 outstanding
+**Status:** Implemented — R2 and R13 outstanding, Q3 partially addressed
 **Owner:** Abdullah
 **Target branch:** `abdullah_dev` (standing PR #55 → `main`)
 **Date:** 2026-08-25 (rev. 2)
 
-> **Revision 2.** The specification below has been reviewed and a round of
-> clarifications returned. Q1, Q4 and Q6 are resolved, Q2 is delegated, Q5 is
-> deferred, and Q7/Q8 are partially answered — see §5. Q3 remains the one
-> material unknown. Suggestion S3 has been withdrawn, having been overruled.
+> **Revision 3.** The feature is built. R1 and R3–R17 are implemented across
+> the dashboard and every location-dependent page; see §10 for the delivery
+> record. Two requirements remain open — **R2** (payment precondition) and
+> **R13** (enforcing the manager rule in existing code) — both because they
+> need a decision rather than because the work is hard. **Q3** was taken along
+> the metrics-first path (S16), which holds under either reading; separately
+> trained per-site models remain unscoped.
 
 ---
 
@@ -405,3 +408,45 @@ absorbed silently into this task.
 Suggestions S2, S4–S9, S11–S18, and S20–S21 are implementation-level and do not
 need sign-off; they are recorded so the decisions behind them are visible. S3 has
 been withdrawn.
+
+---
+
+## 10. Delivery record
+
+Implemented on `abdullah_dev` (PR #55).
+
+| Requirement | Status | Where |
+|---|---|---|
+| R1, R3–R6 | Done | `LocationPicker`, `listAdminLocations`, `location-scope.ts` |
+| R7 | Done | 62 queries scoped across every location-dependent page |
+| R8, R16 | Done | `LocationSwitcher`, `?loc=` param, scope-keyed caches |
+| R9 | Done (metrics-first) | `getMLModels` scoped; per-site training not attempted |
+| R10–R12, R14 | Done | Role gating in `LocationScopeGate`; `platform.*` excluded |
+| R15 | Done | Picker shown for single-location admins |
+| R17 | Done | Plan allowance on the picker via `max_warehouses` |
+| **R2** | **Open** | No payment gate exists anywhere in the app — needs a decision on whether to add one |
+| **R13** | **Partial** | One manager per warehouse holds structurally (`manager_id` is scalar). Whether one person may manage several warehouses is undecided, so nothing is enforced in existing code. |
+
+### Design decisions taken
+
+- **Q2 (delegated):** a card is a **city**, scoping to the list of warehouses
+  within it. This is the superset — it satisfies R6 today and allows a
+  per-warehouse drill-down later without changing the data model.
+- **Failing closed:** an unknown or stale `?loc=` resolves to an **empty**
+  scope, never the tenant-wide one. RLS gives no backstop here because the
+  admin genuinely owns every warehouse, so a widening bug would look like
+  authorised access.
+- **Scope resolved server-side** from the caller's own warehouses rather than
+  from ids supplied by the client.
+- **Deliberately account-wide:** `subscriptions`, `profiles`, `buyers`, and all
+  `platform.*` views. Each is annotated in code with the reason.
+
+### Known limitations
+
+- **Nothing has been verified in a browser.** There is no `.env.local`, so the
+  dev server cannot run locally. Every change passes typecheck, lint, tests and
+  build, but a wrong warehouse filter hides rows silently rather than erroring —
+  no static check catches that. **This is the largest outstanding risk.**
+- Test coverage is unit-level only (city derivation and scope resolution).
+  There are no integration tests proving cross-location isolation against a real
+  database, which is what S15 actually asked for.
