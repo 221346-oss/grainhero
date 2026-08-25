@@ -1,10 +1,17 @@
 # Multi-Location Admin Dashboard — Requirement Report
 
-**Status:** Implemented — R2 and R13 outstanding, Q3 partially addressed
+**Status:** Implemented — R2 outstanding; warehouse-level rework applied
 **Owner:** Abdullah
 **Target branch:** `abdullah_dev` (standing PR #55 → `main`)
 **Date:** 2026-08-25 (rev. 2)
 
+> **Revision 4.** Reviewed again: the **warehouse**, not the city, is the
+> primary unit. Navigation is now city → warehouse → dashboard, model
+> performance is reported per warehouse, and R13 is enforced (a manager holds
+> one warehouse only). Q2 is closed on that basis. **R2** is the last open
+> requirement, and the question about it needs rephrasing — it was not
+> understood as asked.
+>
 > **Revision 3.** The feature is built. R1 and R3–R17 are implemented across
 > the dashboard and every location-dependent page; see §10 for the delivery
 > record. Two requirements remain open — **R2** (payment precondition) and
@@ -420,18 +427,19 @@ Implemented on `abdullah_dev` (PR #55).
 | R1, R3–R6 | Done | `LocationPicker`, `listAdminLocations`, `location-scope.ts` |
 | R7 | Done | 62 queries scoped across every location-dependent page |
 | R8, R16 | Done | `LocationSwitcher`, `?loc=` param, scope-keyed caches |
-| R9 | Done (metrics-first) | `getMLModels` scoped; per-site training not attempted |
+| R9 | Done (metrics-first, **per warehouse**) | `getMLModels` scoped to one warehouse; per-site training not attempted |
 | R10–R12, R14 | Done | Role gating in `LocationScopeGate`; `platform.*` excluded |
 | R15 | Done | Picker shown for single-location admins |
 | R17 | Done | Plan allowance on the picker via `max_warehouses` |
 | **R2** | **Open** | No payment gate exists anywhere in the app — needs a decision on whether to add one |
-| **R13** | **Partial** | One manager per warehouse holds structurally (`manager_id` is scalar). Whether one person may manage several warehouses is undecided, so nothing is enforced in existing code. |
+| R13 | Done | One manager per warehouse, enforced in `updateWarehouseTeam`. Shared managers rejected with a clear message; becomes an explicit feature only if a customer needs it. |
 
 ### Design decisions taken
 
-- **Q2 (delegated):** a card is a **city**, scoping to the list of warehouses
-  within it. This is the superset — it satisfies R6 today and allows a
-  per-warehouse drill-down later without changing the data model.
+- **Q2 (closed):** two levels — city cards, then the warehouses inside. The
+  **warehouse is the primary scope**: it is what every location-dependent table
+  keys on and what model performance is measured against. A city with one
+  warehouse skips the second level.
 - **Failing closed:** an unknown or stale `?loc=` resolves to an **empty**
   scope, never the tenant-wide one. RLS gives no backstop here because the
   admin genuinely owns every warehouse, so a widening bug would look like
