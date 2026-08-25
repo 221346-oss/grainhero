@@ -1,10 +1,16 @@
 # Multi-Location Admin Dashboard — Requirement Report
 
-**Status:** Implemented — all requirements closed; browser verification outstanding
+**Status:** Complete — all requirements implemented and verified in the running app
 **Owner:** Abdullah
 **Target branch:** `abdullah_dev` (standing PR #55 → `main`)
 **Date:** 2026-08-25 (rev. 2)
 
+> **Revision 6.** Verified end to end against the live app. The picker,
+> warehouse drill-down, switcher, empty state and role exclusions all behave as
+> specified, and two warehouses in the same city were confirmed to show
+> genuinely separate data. Three defects were found and fixed in the process —
+> see §11.
+>
 > **Revision 5.** R2 is closed: an expired plan does not block or sign anyone
 > out — it routes them to renewal from inside the dashboard. The
 > pending-approval case needed no work; that state no longer exists. All
@@ -457,10 +463,53 @@ Implemented on `abdullah_dev` (PR #55).
 
 ### Known limitations
 
-- **Nothing has been verified in a browser.** There is no `.env.local`, so the
-  dev server cannot run locally. Every change passes typecheck, lint, tests and
-  build, but a wrong warehouse filter hides rows silently rather than erroring —
-  no static check catches that. **This is the largest outstanding risk.**
 - Test coverage is unit-level only (city derivation and scope resolution).
   There are no integration tests proving cross-location isolation against a real
-  database, which is what S15 actually asked for.
+  database, which is what S15 actually asked for — the isolation was confirmed
+  by hand instead (§11).
+- Location data quality is poor in places. The picker now refuses obvious junk,
+  but values a person genuinely typed (`abcd`, a bare street address) still
+  appear as city names because nothing can distinguish them from a real place.
+  Worth a data cleanup separately.
+
+---
+
+## 11. Verification
+
+Checked against the running app, signed in as super admin and using the
+platform's own "View as" to reach a tenant with warehouses in six locations.
+
+| Check | Result |
+|---|---|
+| Location picker | Six cities, real silo/capacity/utilisation figures |
+| City with multiple warehouses | Drill-down lists them separately |
+| Scoped dashboard | Opens on `?loc=…&wh=…` |
+| Header switcher | Current city's warehouses first, then all cities |
+| Empty state | Renders for a tenant with no warehouses |
+| Super admin | No picker, no switcher (R10) |
+| Pending role | Platform user filter reads "Pending (0)" |
+
+**Isolation, the constraint the whole feature exists for.** Two warehouses in
+the *same* city:
+
+| | Lahore — F744F0 | Lahore-125 farm road |
+|---|---|---|
+| Active silos | 2 | 1 |
+| Total grain | 6,000 kg | 0 |
+| Health score | 50 | 35 |
+
+Separate data, switching instantly, no bleed.
+
+### Defects found and fixed
+
+1. **Impersonated tenants saw no locations.** `useIsSuperAdmin` reports the real
+   role, so the scope gate treated an impersonating super admin as a super
+   admin while the dashboard treated them as an admin. The two disagreed and
+   the picker was always empty.
+2. **Junk cities on the picker.** `deriveCity` accepted any string, so a
+   warehouse named `"Warehouse — A"` produced a city called "Warehouse", and a
+   latitude in the city field produced one called "33.607377".
+3. **Silo rows collided.** A duplicated progress bar and stacked blocks inside
+   a horizontal flex overlapped the Sell and View buttons at panel width.
+
+None of the three were caught by types, lint, tests or the build.
