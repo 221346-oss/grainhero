@@ -82,7 +82,7 @@ function CustomColorfulTruck({ stage }: { stage: number }) {
         </svg>
       </div>
 
-      {/* Dynamic Status Pill BELOW Truck (Theme Mapped Soft Pill) */}
+      {/* Dynamic Status Pill BELOW Truck */}
       <div className="mt-1.5 whitespace-nowrap flex items-center justify-center">
         {stage <= 1 && (
           <span className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border border-emerald-500/30 whitespace-nowrap shrink-0 shadow-2xs">
@@ -147,8 +147,13 @@ export function SiloFlowDiagram({
     }
   };
 
-  // Dynamic Silo Fill & Empty Cycle
-  const siloFillHeights = ["0%", "0%", "100%", "100%", "0%"];
+  // DYNAMIC SILO FILL CYCLE:
+  // Stage 0 (Card 1 Intake): 0% (Empty)
+  // Stage 1 (Card 2 QC): 0% (Empty)
+  // Stage 2 (Card 3 Silo Hub): Fills smoothly 0% -> 100% as truck offloads!
+  // Stage 3 (Card 4 Billing): Truck moves past Card 3 -> Silo smoothly empties 100% -> 0%!
+  // Stage 4 (Card 5 Dispatch): 0% (Empty)
+  const siloFillHeights = ["0%", "0%", "100%", "0%", "0%"];
 
   return (
     <div className="relative overflow-hidden rounded-2xl border border-border/70 bg-card text-card-foreground p-4 md:p-6 backdrop-blur-2xl shadow-md">
@@ -251,7 +256,7 @@ export function SiloFlowDiagram({
             <span className="text-[9px] font-mono text-muted-foreground font-medium">Automated Storage</span>
           </div>
 
-          {/* Node 04: Order & Billing (SOFT ELEGANT EMBEDDED BADGES) */}
+          {/* Node 04: Order & Billing */}
           <div className={`rounded-xl border p-3 flex flex-col justify-between backdrop-blur-md transition-all min-h-[155px] relative overflow-hidden ${
             stage === 3
               ? "border-amber-500/80 bg-amber-500/10 dark:bg-amber-950/40 shadow-[0_0_25px_rgba(245,158,11,0.25)]"
