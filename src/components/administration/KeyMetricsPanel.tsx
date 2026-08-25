@@ -1,4 +1,5 @@
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { TrendingUp, TrendingDown, Activity } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export interface KeyMetricsStats {
   label: string;
@@ -11,61 +12,72 @@ interface KeyMetricsPanelProps {
 }
 
 export function KeyMetricsPanel({ stats }: KeyMetricsPanelProps) {
-  // Calculate percentage for progress bar visualization
-  // For demonstration, we calculate based on typical ranges
   const getProgressPercentage = (label: string, value: number | string): number => {
-    const numValue = typeof value === "string" ? parseInt(value) : value;
-    
-    // Different scaling based on metric type
+    const numValue = typeof value === "string" ? parseInt(value) || 0 : value;
     if (label.includes("Members")) return Math.min((numValue / 50) * 100, 100);
     if (label.includes("Invites")) return Math.min((numValue / 10) * 100, 100);
     if (label.includes("Events")) return Math.min((numValue / 100) * 100, 100);
-    
     return Math.min((numValue / 100) * 100, 100);
   };
 
   return (
-    <div className="bg-card border border-border rounded-[2rem] p-6 lg:p-8 flex flex-col justify-between relative h-full">
-      <div className="flex justify-between items-start mb-6">
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
-          Key Metrics
-        </p>
-        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest bg-muted px-2 py-1 rounded-md">
-          Last 12 Cycles
-        </p>
+    <div className="relative overflow-hidden rounded-xl border border-border/70 bg-gradient-to-br from-card/90 via-card/70 to-muted/30 p-5 backdrop-blur-md shadow-sm h-full flex flex-col justify-between">
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center gap-2">
+          <Activity className="h-4 w-4 text-emerald-500 animate-pulse" />
+          <p className="text-xs font-bold uppercase tracking-wider text-foreground">
+            System Key Metrics
+          </p>
+        </div>
+        <span className="text-[10px] font-mono font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+          Live Telemetry
+        </span>
       </div>
-      
-      <div className="space-y-6 flex-1 flex flex-col justify-center mt-2">
-        {stats.map((s, idx) => {
+
+      <div className="grid gap-px bg-border/60 rounded-lg overflow-hidden my-auto shadow-xs">
+        {stats.map((s) => {
           const percentage = getProgressPercentage(s.label, s.value);
           return (
-            <div key={s.label} className="w-full">
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center w-[45%] min-w-[120px]">
-                  <div className="truncate">
-                    <p className="text-xs font-medium text-muted-foreground">{s.label}</p>
-                    <p className="text-base font-black text-foreground truncate">
-                      {typeof s.value === "string" ? s.value : s.value.toString()}
-                    </p>
-                  </div>
+            <div key={s.label} className="bg-card p-3.5 hover:bg-muted/40 transition-colors">
+              <div className="flex items-center justify-between gap-3 mb-2">
+                <div>
+                  <p className="text-[11px] font-medium text-muted-foreground">{s.label}</p>
+                  <p className="text-lg font-black text-foreground font-mono mt-0.5">
+                    {typeof s.value === "string" ? s.value : s.value.toLocaleString()}
+                  </p>
                 </div>
-                <div className="flex-1 flex items-center justify-center px-2">
-                  <div className="w-full h-1 bg-muted rounded-full relative overflow-hidden">
-                    <div 
-                      className={`absolute left-0 top-0 bottom-0 rounded-full transition-all duration-700 ${
-                        s.up ? 'bg-emerald-500' : 'bg-rose-500'
-                      }`} 
-                      style={{ width: `${percentage}%` }} 
-                    />
-                  </div>
-                </div>
-                <div className="text-right w-12 shrink-0">
-                  <span className="text-sm font-bold text-muted-foreground">
-                    {percentage.toFixed(1)}%
-                  </span>
+                <div
+                  className={cn(
+                    "flex items-center gap-1 text-[10px] font-bold font-mono px-2 py-0.5 rounded-full border shrink-0",
+                    s.up
+                      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                      : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
+                  )}
+                >
+                  {s.up ? (
+                    <>
+                      <TrendingUp className="h-3 w-3" /> +Live
+                    </>
+                  ) : (
+                    <>
+                      <TrendingDown className="h-3 w-3" /> Monitor
+                    </>
+                  )}
                 </div>
               </div>
-              {idx < stats.length - 1 && <div className="h-px w-full bg-border mt-6" />}
+
+              {/* Progress Level Gauge Bar */}
+              <div className="w-full h-1.5 bg-muted/80 rounded-full overflow-hidden">
+                <div
+                  className={cn(
+                    "h-full rounded-full transition-all duration-700 shadow-[0_0_8px]",
+                    s.up
+                      ? "bg-gradient-to-r from-emerald-500 to-teal-400 shadow-emerald-500/50"
+                      : "bg-gradient-to-r from-rose-500 to-amber-500 shadow-rose-500/50"
+                  )}
+                  style={{ width: `${Math.max(8, percentage)}%` }}
+                />
+              </div>
             </div>
           );
         })}

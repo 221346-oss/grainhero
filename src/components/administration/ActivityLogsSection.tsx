@@ -23,9 +23,9 @@ const CATEGORY_LABEL: Record<string, string> = {
   system: "System",
 };
 const SEVERITY_STYLE: Record<string, string> = {
-  info: "bg-blue-100 text-blue-700 border-blue-300",
-  warning: "bg-amber-100 text-amber-700 border-amber-300",
-  critical: "bg-red-100 text-red-700 border-red-300",
+  info: "bg-info/15 text-info border-info/30 dark:bg-info/20 dark:text-info",
+  warning: "bg-warning/15 text-warning border-warning/30 dark:bg-warning/20 dark:text-warning",
+  critical: "bg-severity-critical/15 text-severity-critical border-severity-critical/30 dark:bg-severity-critical/20 dark:text-severity-critical",
 };
 
 function fmtAbs(s: string) {
