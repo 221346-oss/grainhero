@@ -1,5 +1,5 @@
 import { TeamManagementSkeleton } from "@/components/app/skeletons";
-import { useLocationScopeKey } from "@/components/app/location/LocationScope";
+import { useLocationScopeQuery } from "@/components/app/location/LocationScope";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -111,7 +111,7 @@ function TeamPage() {
   const roleFn = useServerFn(getMyRole);
   // Scope every location-dependent query to the active city — in the key as
   // well as the request, so one city's rows are never served for another.
-  const loc = useLocationScopeKey();
+  const { key: loc, params: locParams } = useLocationScopeQuery();
   const listFn = useServerFn(listTeamMembers);
   const inviteFn = useServerFn(inviteTeamMember);
   const updateFn = useServerFn(updateTeamMember);
@@ -175,12 +175,12 @@ function TeamPage() {
   const isManagerOrAdmin = ["super_admin", "admin", "manager"].includes(currentRole);
   const { data: allSilos } = useQuery({
     queryKey: ["silos", loc],
-    queryFn: () => listSilosFn({ data: { loc: loc ?? undefined } }),
+    queryFn: () => listSilosFn({ data: locParams }),
     enabled: isManagerOrAdmin,
   });
   const { data: allBatches } = useQuery({
     queryKey: ["grain-batches", loc],
-    queryFn: () => listBatchesFn({ data: { loc: loc ?? undefined } }),
+    queryFn: () => listBatchesFn({ data: locParams }),
     enabled: isManagerOrAdmin,
   });
 

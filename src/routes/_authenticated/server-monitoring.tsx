@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useLocationScopeKey } from "@/components/app/location/LocationScope";
+import { useLocationScopeQuery } from "@/components/app/location/LocationScope";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,10 +42,10 @@ function ServerMonitoringPage() {
   const fn = useServerFn(getDeviceHealth);
   // Scope every location-dependent query to the active city — in the key as
   // well as the request, so one city's rows are never served for another.
-  const loc = useLocationScopeKey();
+  const { key: loc, params: locParams } = useLocationScopeQuery();
   const { data, isLoading } = useQuery({
     queryKey: ["device-health", loc],
-    queryFn: () => fn({ data: { loc: loc ?? undefined } }),
+    queryFn: () => fn({ data: locParams }),
     refetchInterval: 15_000,
   });
 

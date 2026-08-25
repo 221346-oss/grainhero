@@ -15,7 +15,7 @@ import {
 } from "./DashboardBlocks";
 import type { RangeKey } from "./RangeChip";
 import { getDashboardExtras } from "@/lib/dashboard-extras.functions";
-import { useLocationScopeKey } from "@/components/app/location/LocationScope";
+import { useLocationScopeQuery } from "@/components/app/location/LocationScope";
 
 export function AdminDashboard({ name }: { name?: string }) {
   const [range, setRange] = useState<RangeKey>("mtd");
@@ -26,12 +26,12 @@ export function AdminDashboard({ name }: { name?: string }) {
   // cross-location bleed the server filter exists to prevent, but with no
   // server-side bug to find. Keying by it also lets each location's results
   // coexist, which is what makes switching back instant.
-  const loc = useLocationScopeKey();
+  const { key: loc, params: locParams } = useLocationScopeQuery();
 
   const fn = useServerFn(getDashboardExtras);
   const { data: extras } = useQuery({
     queryKey: ["dashboard-extras", range, loc],
-    queryFn: () => fn({ data: { range, loc: loc ?? undefined } }),
+    queryFn: () => fn({ data: { range, ...locParams } }),
     refetchInterval: 30_000,
   });
 

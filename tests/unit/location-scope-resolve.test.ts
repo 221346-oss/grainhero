@@ -95,6 +95,39 @@ describe("resolveLocationScope", () => {
     expect(scope.warehouseIds).not.toBeNull();
   });
 
+  it("scopes to a single warehouse when one is named", async () => {
+    // The warehouse is the primary unit — model performance and every
+    // location-dependent table key on it, not on the city.
+    const sb = fakeSupabase({ warehouses: WAREHOUSES, silos: SILOS });
+    const scope = await resolveLocationScope(sb as never, null, "w-khi-2");
+
+    expect(scope.warehouseId).toBe("w-khi-2");
+    expect(scope.warehouseIds).toEqual(["w-khi-2"]);
+    // Its sibling in the same city must be excluded.
+    expect(scope.warehouseIds).not.toContain("w-khi-1");
+    // The city is resolved from the warehouse, not required as input.
+    expect(scope.cityKey).toBe("karachi");
+  });
+
+  it("refuses a warehouse the caller does not own", async () => {
+    // An id from the client is a request, not a permission. RLS would not stop
+    // this on its own, since an admin owns every warehouse in their account.
+    const sb = fakeSupabase({ warehouses: WAREHOUSES, silos: SILOS });
+    const scope = await resolveLocationScope(sb as never, null, "w-someone-else");
+
+    expect(scope.warehouseIds).toEqual([]);
+    expect(scope.siloIds).toEqual([]);
+    expect(scope.warehouseIds).not.toBeNull();
+  });
+
+  it("lets the warehouse win over a city that disagrees with it", async () => {
+    const sb = fakeSupabase({ warehouses: WAREHOUSES, silos: SILOS });
+    const scope = await resolveLocationScope(sb as never, "rawalpindi", "w-khi-1");
+
+    expect(scope.warehouseIds).toEqual(["w-khi-1"]);
+    expect(scope.cityKey).toBe("karachi");
+  });
+
   it("groups warehouses with no usable city under the unassigned bucket", async () => {
     const sb = fakeSupabase({ warehouses: WAREHOUSES, silos: SILOS });
     const scope = await resolveLocationScope(sb as never, "unassigned");

@@ -1,5 +1,5 @@
 import type { ComponentType } from "react";
-import { useLocationScopeKey } from "@/components/app/location/LocationScope";
+import { useLocationScopeQuery } from "@/components/app/location/LocationScope";
 
 import { Loader2, AlertTriangle, AlertCircle, Bell, Activity } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -19,10 +19,10 @@ export function AlertsSection() {
   const listFn = useServerFn(listGrainAlerts);
   // Scope every location-dependent query to the active city — in the key as
   // well as the request, so one city's rows are never served for another.
-  const loc = useLocationScopeKey();
+  const { key: loc, params: locParams } = useLocationScopeQuery();
   const { data, isLoading } = useQuery({
     queryKey: ["grain-alerts", loc],
-    queryFn: () => listFn({ data: { loc: loc ?? undefined } }),
+    queryFn: () => listFn({ data: locParams }),
   });
 
   const alerts = (data ?? []).filter((a: any) => a.status === "pending");

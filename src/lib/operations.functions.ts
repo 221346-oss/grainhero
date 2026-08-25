@@ -14,8 +14,11 @@ import { resolveLocationScope, byWarehouse, bySilo } from "./page-scope.server";
  * locations existed, and still what managers, technicians and the "all
  * locations" view want.
  */
-const locInput = z.object({ loc: z.string().trim().min(1).optional() });
-function parseLoc(data: unknown): { loc?: string } {
+const locInput = z.object({
+  loc: z.string().trim().min(1).optional(),
+  wh: z.string().uuid().optional(),
+});
+function parseLoc(data: unknown): { loc?: string; wh?: string } {
   return locInput.parse(data ?? {});
 }
 
@@ -256,7 +259,7 @@ export const listSilos = createServerFn({ method: "GET" })
     // Get user's role
     const { getEffectiveRole } = await import("./rbac.server");
     const userRole = await getEffectiveRole(context.supabase, context.userId);
-    const scope = await resolveLocationScope(context.supabase, input?.loc);
+    const scope = await resolveLocationScope(context.supabase, input?.loc, input?.wh);
 
     let query = byWarehouse(
       context.supabase.from("silos").select(
@@ -515,7 +518,7 @@ export const listGrainBatches = createServerFn({ method: "GET" })
     // Get user role to filter visible batches
     const { getEffectiveRole } = await import("./rbac.server");
     const userRole = await getEffectiveRole(context.supabase, context.userId);
-    const scope = await resolveLocationScope(context.supabase, input?.loc);
+    const scope = await resolveLocationScope(context.supabase, input?.loc, input?.wh);
 
     let query = byWarehouse(
       context.supabase
@@ -1195,7 +1198,7 @@ export const listSensorDevices = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator(parseLoc)
   .handler(async ({ context, data: input }) => {
-    const scope = await resolveLocationScope(context.supabase, input?.loc);
+    const scope = await resolveLocationScope(context.supabase, input?.loc, input?.wh);
     const { data, error } = await byWarehouse(
       context.supabase
         .from("sensor_devices")
@@ -1373,7 +1376,7 @@ export const listActuators = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator(parseLoc)
   .handler(async ({ context, data: input }) => {
-    const scope = await resolveLocationScope(context.supabase, input?.loc);
+    const scope = await resolveLocationScope(context.supabase, input?.loc, input?.wh);
     // actuators carry no warehouse_id — they hang off a silo, so the scope's
     // resolved silo list is the only way to narrow them.
     const { data, error } = await bySilo(
@@ -1560,7 +1563,7 @@ export const listGrainAlerts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator(parseLoc)
   .handler(async ({ context, data: input }) => {
-    const scope = await resolveLocationScope(context.supabase, input?.loc);
+    const scope = await resolveLocationScope(context.supabase, input?.loc, input?.wh);
     const { data, error } = await byWarehouse(
       context.supabase
         .from("grain_alerts")
@@ -2240,6 +2243,28 @@ export const updateWarehouseTeam = createServerFn({ method: "POST" })
     const { warehouseId, managerId, technicianIds } = parsed;
 
     const sb = context.supabase;
+
+    // R13 — a manager belongs to exactly one warehouse. Two warehouses means two
+    // managers; the same person cannot cover both. Enforced here because
+    // `warehouses.manager_id` being scalar only stops the inverse (two managers
+    // on one warehouse) and nothing stopped one person being set on several.
+    // If a customer ever needs shared managers this becomes an explicit feature,
+    // not an accident.
+    if (managerId) {
+      const { data: alreadyManaging } = await sb
+        .from("warehouses")
+        .select("id, name")
+        .eq("manager_id", managerId)
+        .neq("id", warehouseId)
+        .is("deleted_at", null)
+        .limit(1);
+      const clash = alreadyManaging?.[0];
+      if (clash) {
+        throw new Error(
+          `That manager already manages "${clash.name}". A manager can only be assigned to one warehouse — free them up there first, or pick someone else.`,
+        );
+      }
+    }
 
     // Update warehouse with new assignments
     const { error: updateErr } = await sb

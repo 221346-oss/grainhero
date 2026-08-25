@@ -18,7 +18,7 @@
  */
 import { createContext, useCallback, useContext, useMemo, type ReactNode } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import type { LocationCard, PlanUsage } from "@/lib/locations.functions";
+import type { LocationCard, LocationWarehouse, PlanUsage } from "@/lib/locations.functions";
 
 export type LocationScopeValue = {
   /**
@@ -29,17 +29,35 @@ export type LocationScopeValue = {
    * every page load, showing every city's data merged.
    */
   ready: boolean;
-  /** Normalised key of the active city, or null when none is chosen yet. */
+  /**
+   * Cache-key fragment for the active scope. Fold this into every query key
+   * whose results depend on the location — omitting it is the cross-location
+   * bleed this exists to prevent.
+   */
   scopeKey: string | null;
-  /** The active location, or null while unresolved. */
+  /** Parameters to send with a scoped request. */
+  scopeParams: { loc?: string; wh?: string };
+  /** The active city, or null while none is chosen. */
   active: LocationCard | null;
+  /**
+   * The single warehouse in scope, when one is selected.
+   *
+   * The warehouse is the primary unit: it is what every location-dependent
+   * table keys on, and what model performance is measured against — two
+   * warehouses in one city can hold very different numbers of silos.
+   */
+  activeWarehouse: LocationWarehouse | null;
   /** Warehouse ids in scope. Empty when nothing is selected — never "all". */
   warehouseIds: string[];
   /** Every location available to this user. */
   locations: LocationCard[];
   /** The account's warehouse allowance, when the plan caps it. */
   plan?: PlanUsage;
+  /** Enter a city (the intermediate level of the picker). */
   select: (key: string | null) => void;
+  /** Enter a single warehouse — the scope the dashboard actually runs on. */
+  selectWarehouse: (warehouseId: string | null) => void;
+  /** Back to the city grid. */
   clear: () => void;
 };
 
@@ -57,8 +75,9 @@ export function LocationScopeProvider({
   children: ReactNode;
 }) {
   const navigate = useNavigate();
-  const search = useSearch({ strict: false }) as { loc?: string };
+  const search = useSearch({ strict: false }) as { loc?: string; wh?: string };
   const requested = typeof search.loc === "string" ? search.loc : null;
+  const requestedWh = typeof search.wh === "string" ? search.wh : null;
 
   // Only honour a key that actually resolves. A stale or hand-edited `?loc=`
   // must fall back to the picker rather than silently showing everything.
@@ -67,11 +86,39 @@ export function LocationScopeProvider({
     [locations, requested],
   );
 
+  // A warehouse id resolves against every location, not just the active city —
+  // a direct link may name a warehouse without naming its city.
+  const activeWarehouse = useMemo(() => {
+    if (!requestedWh) return null;
+    for (const l of locations) {
+      const w = l.warehouses.find((x) => x.id === requestedWh);
+      if (w) return w;
+    }
+    return null;
+  }, [locations, requestedWh]);
+
   const select = useCallback(
     (key: string | null) => {
       void navigate({
         to: ".",
-        search: (prev: Record<string, unknown>) => ({ ...prev, loc: key ?? undefined }),
+        // Entering a city clears any warehouse — otherwise a stale `wh` from
+        // the previous city would survive the move and scope to the wrong site.
+        search: (prev: Record<string, unknown>) => ({
+          ...prev,
+          loc: key ?? undefined,
+          wh: undefined,
+        }),
+        replace: false,
+      });
+    },
+    [navigate],
+  );
+
+  const selectWarehouse = useCallback(
+    (warehouseId: string | null) => {
+      void navigate({
+        to: ".",
+        search: (prev: Record<string, unknown>) => ({ ...prev, wh: warehouseId ?? undefined }),
         replace: false,
       });
     },
@@ -83,15 +130,23 @@ export function LocationScopeProvider({
   const value = useMemo<LocationScopeValue>(
     () => ({
       ready,
-      scopeKey: active?.key ?? null,
+      // The warehouse wins when both are present — it is the narrower scope.
+      scopeKey: activeWarehouse?.id ?? active?.key ?? null,
+      scopeParams: activeWarehouse ? { wh: activeWarehouse.id } : active ? { loc: active.key } : {},
       active,
-      warehouseIds: active ? active.warehouses.map((w) => w.id) : [],
+      activeWarehouse,
+      warehouseIds: activeWarehouse
+        ? [activeWarehouse.id]
+        : active
+          ? active.warehouses.map((w) => w.id)
+          : [],
       locations,
       plan,
       select,
+      selectWarehouse,
       clear,
     }),
-    [ready, active, locations, plan, select, clear],
+    [ready, active, activeWarehouse, locations, plan, select, selectWarehouse, clear],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
@@ -120,4 +175,25 @@ export function useLocationScope(): LocationScopeValue | null {
  */
 export function useLocationScopeKey(): string | null {
   return useContext(Ctx)?.scopeKey ?? null;
+}
+
+/**
+ * Everything a scoped query needs: the cache-key fragment and the request
+ * parameters.
+ *
+ * ```ts
+ * const { key, params } = useLocationScopeQuery();
+ * useQuery({ queryKey: ["silos", key], queryFn: () => listSilos({ data: params }) });
+ * ```
+ *
+ * The key and the params must move together. Sending the scope without keying
+ * by it serves one location's cached rows for another; keying by it without
+ * sending it just refetches identical data.
+ */
+export function useLocationScopeQuery(): {
+  key: string | null;
+  params: { loc?: string; wh?: string };
+} {
+  const ctx = useContext(Ctx);
+  return { key: ctx?.scopeKey ?? null, params: ctx?.scopeParams ?? {} };
 }

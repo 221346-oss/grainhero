@@ -11,7 +11,7 @@ import { TechnicianDashboard } from "@/components/dashboards/TechnicianDashboard
 import { getImpersonationSession } from "@/components/app/ImpersonationBanner";
 import { useState, useEffect } from "react";
 import { useLocationScope } from "@/components/app/location/LocationScope";
-import { LocationPicker } from "@/components/app/location/LocationPicker";
+import { LocationPicker, WarehousePicker } from "@/components/app/location/LocationPicker";
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
@@ -27,9 +27,13 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   }),
   // `?loc=` carries the admin's active location. Registered here so the router
   // preserves it across navigations instead of stripping it as unknown.
-  validateSearch: (search: Record<string, unknown>): { loc?: string } => {
-    const loc = search.loc;
-    return typeof loc === "string" && loc.trim() ? { loc } : {};
+  // `loc` is the city level, `wh` the warehouse the dashboard runs on.
+  // Registered here so the router preserves them rather than stripping them.
+  validateSearch: (search: Record<string, unknown>): { loc?: string; wh?: string } => {
+    const out: { loc?: string; wh?: string } = {};
+    if (typeof search.loc === "string" && search.loc.trim()) out.loc = search.loc;
+    if (typeof search.wh === "string" && search.wh.trim()) out.wh = search.wh;
+    return out;
   },
   component: DashboardPage,
 });
@@ -109,17 +113,53 @@ function AdminDashboardWithLocations({ name }: { name?: string }) {
     );
   }
 
-  // Settled and genuinely empty — the picker owns that state.
-  if (!scope.active) {
+  // A warehouse is selected — that is the scope the dashboard runs on.
+  if (scope.activeWarehouse) return <AdminDashboard name={name} />;
+
+  // A city is selected. If it holds a single warehouse there is nothing to
+  // choose, so go straight in rather than showing a one-card second level.
+  if (scope.active) {
+    if (scope.active.warehouses.length === 1) {
+      return <SingleWarehouseRedirect scope={scope} />;
+    }
     return (
-      <LocationPicker
-        locations={scope.locations}
-        name={name}
-        plan={scope.plan}
-        onSelect={(key) => scope.select(key)}
+      <WarehousePicker
+        location={scope.active}
+        onSelect={(id) => scope.selectWarehouse(id)}
+        onBack={() => scope.clear()}
       />
     );
   }
 
-  return <AdminDashboard name={name} />;
+  return (
+    <LocationPicker
+      locations={scope.locations}
+      name={name}
+      plan={scope.plan}
+      onSelect={(key) => scope.select(key)}
+    />
+  );
+}
+
+/**
+ * A city with one warehouse needs no second level — select it and move on.
+ *
+ * Done in an effect rather than during render because selecting navigates, and
+ * navigating from a render pass is not allowed.
+ */
+function SingleWarehouseRedirect({
+  scope,
+}: {
+  scope: NonNullable<ReturnType<typeof useLocationScope>>;
+}) {
+  const only = scope.active?.warehouses[0]?.id;
+  useEffect(() => {
+    if (only) scope.selectWarehouse(only);
+  }, [only, scope]);
+
+  return (
+    <div className="p-6">
+      <DashboardSkeleton />
+    </div>
+  );
 }

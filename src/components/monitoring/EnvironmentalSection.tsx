@@ -1,7 +1,7 @@
 "use client";
 
 import { Loader2, Thermometer, Droplets, Wind } from "lucide-react";
-import { useLocationScopeKey } from "@/components/app/location/LocationScope";
+import { useLocationScopeQuery } from "@/components/app/location/LocationScope";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { listSilos } from "@/lib/operations.functions";
@@ -10,10 +10,10 @@ export function EnvironmentalSection() {
   const listFn = useServerFn(listSilos);
   // Scope every location-dependent query to the active city — in the key as
   // well as the request, so one city's rows are never served for another.
-  const loc = useLocationScopeKey();
+  const { key: loc, params: locParams } = useLocationScopeQuery();
   const { data, isLoading } = useQuery({
     queryKey: ["silos", loc],
-    queryFn: () => listFn({ data: { loc: loc ?? undefined } }),
+    queryFn: () => listFn({ data: locParams }),
   });
 
   const silos = (data ?? []).filter((s: any) => s.current_conditions);

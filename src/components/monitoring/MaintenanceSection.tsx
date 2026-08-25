@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useLocationScopeKey } from "@/components/app/location/LocationScope";
+import { useLocationScopeQuery } from "@/components/app/location/LocationScope";
 import { Loader2, Wrench } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -47,13 +47,13 @@ function RequestMaintenanceDialog({
   const listDevicesFn = useServerFn(listSensorDevices);
   // Scope every location-dependent query to the active city — in the key as
   // well as the request, so one city's rows are never served for another.
-  const loc = useLocationScopeKey();
+  const { key: loc, params: locParams } = useLocationScopeQuery();
   const createFn = useServerFn(createMaintenanceRequest);
   const [form, setForm] = useState(emptyForm);
 
   const devicesQ = useQuery({
     queryKey: ["sensor-devices", loc],
-    queryFn: () => listDevicesFn({ data: { loc: loc ?? undefined } }),
+    queryFn: () => listDevicesFn({ data: locParams }),
     enabled: open,
   });
   const devices = (devicesQ.data ?? []) as Array<{
@@ -189,14 +189,14 @@ export function MaintenanceSection() {
   const getFn = useServerFn(getMaintenanceOverview);
   // Scope every location-dependent query to the active city — in the key as
   // well as the request, so one city's rows are never served for another.
-  const loc = useLocationScopeKey();
+  const { key: loc, params: locParams } = useLocationScopeQuery();
   const listRequestsFn = useServerFn(listMaintenanceRequests);
   const fetchRole = useServerFn(getMyRole);
   const [dlgOpen, setDlgOpen] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["maintenance-overview", loc],
-    queryFn: () => getFn({ data: { loc: loc ?? undefined } }),
+    queryFn: () => getFn({ data: locParams }),
   });
   const { data: me } = useQuery({ queryKey: ["my-role"], queryFn: () => fetchRole() });
   const canRequest = me?.role === "admin";

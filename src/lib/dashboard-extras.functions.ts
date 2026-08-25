@@ -44,9 +44,10 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
     z
       .object({
         range: z.enum(["today", "7d", "30d", "mtd", "ytd"]).default("30d"),
-        // Normalised city key from the active location scope. Absent means the
-        // tenant-wide view.
+        // Active location scope. `wh` is the primary unit — a single warehouse;
+        // `loc` is the city level of the picker. Both absent means tenant-wide.
         loc: z.string().trim().min(1).optional(),
+        wh: z.string().uuid().optional(),
       })
       .parse(data ?? {}),
   )
@@ -55,7 +56,7 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
     const range = (data?.range ?? "30d") as Range;
     // Resolved server-side from the caller's own warehouses — see
     // resolveLocationScope for why the client's list is not trusted.
-    const scope = await resolveLocationScope(context.supabase, data?.loc);
+    const scope = await resolveLocationScope(context.supabase, data?.loc, data?.wh);
     const { startISO, priorStartISO, priorEndISO } = rangeToWindow(range);
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
     const now0 = new Date();

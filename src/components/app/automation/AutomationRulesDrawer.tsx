@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLocationScopeKey } from "@/components/app/location/LocationScope";
+import { useLocationScopeQuery } from "@/components/app/location/LocationScope";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -49,7 +49,7 @@ export function AutomationRulesDrawer({
   const listFn = useServerFn(listAutomationRules);
   // Scope every location-dependent query to the active city — in the key as
   // well as the request, so one city's rows are never served for another.
-  const loc = useLocationScopeKey();
+  const { key: loc, params: locParams } = useLocationScopeQuery();
   const listActFn = useServerFn(listActuators);
   const saveFn = useServerFn(saveAutomationRule);
   const delFn = useServerFn(deleteAutomationRule);
@@ -72,7 +72,7 @@ export function AutomationRulesDrawer({
   });
   const { data: actData } = useQuery({
     queryKey: ["actuators-for-rule", loc],
-    queryFn: () => listActFn({ data: { loc: loc ?? undefined } }),
+    queryFn: () => listActFn({ data: locParams }),
     enabled: open,
   });
   const actuators =

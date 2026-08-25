@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useLocationScopeKey } from "@/components/app/location/LocationScope";
+import { useLocationScopeQuery } from "@/components/app/location/LocationScope";
 import { useServerFn } from "@tanstack/react-start";
 import { listGrainAlerts } from "@/lib/operations.functions";
 import { Clock, CheckCircle2, AlertTriangle } from "lucide-react";
@@ -22,10 +22,10 @@ export function AlertsFunnel() {
   const listFn = useServerFn(listGrainAlerts);
   // Scope every location-dependent query to the active city — in the key as
   // well as the request, so one city's rows are never served for another.
-  const loc = useLocationScopeKey();
+  const { key: loc, params: locParams } = useLocationScopeQuery();
   const { data } = useQuery({
     queryKey: ["grain-alerts", loc],
-    queryFn: () => listFn({ data: { loc: loc ?? undefined } }),
+    queryFn: () => listFn({ data: locParams }),
   });
   const list = (data ?? []) as any[];
 

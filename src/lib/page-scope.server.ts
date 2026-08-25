@@ -63,37 +63,53 @@ export async function resolvePageScope(
  * `silo_id` and cannot be filtered by warehouse directly.
  */
 export type LocationScope = {
+  /** Normalised city key, when the scope came from a city. */
   cityKey: string | null;
+  /** The single warehouse in scope, when one was selected. */
+  warehouseId: string | null;
+  /**
+   * Warehouses the request may read. `null` means every warehouse in the
+   * tenant — the behaviour before locations existed.
+   */
   warehouseIds: string[] | null;
+  /** Silos in those warehouses, for tables keyed only on `silo_id`. */
   siloIds: string[] | null;
 };
 
 /** The unscoped default — the whole tenant, as before locations existed. */
 export const ALL_LOCATIONS: LocationScope = {
   cityKey: null,
+  warehouseId: null,
   warehouseIds: null,
   siloIds: null,
 };
 
 /**
- * Resolve a city key into the warehouses and silos it contains.
+ * Resolve the active scope from a warehouse id, a city key, or neither.
  *
- * The city is resolved **server-side from the caller's own warehouses** rather
- * than trusting a list of ids from the client. RLS already stops one tenant
- * reading another's rows, but an admin owns every warehouse in their account —
- * so nothing at the database level would stop a hand-edited `?loc=` widening the
- * view. Deriving here is what makes the scope trustworthy.
+ * The **warehouse is the primary unit** — it is what every location-dependent
+ * table keys on, and what model performance is reported against, because two
+ * warehouses in the same city can hold very different numbers of silos and so
+ * produce genuinely different datasets. A city key is accepted as the
+ * intermediate level of the picker and resolves to the warehouses within it.
  *
- * An unknown or empty city yields {@link ALL_LOCATIONS}: a stale link degrades
- * to the tenant-wide view the user is already entitled to, never to an error
- * and never to another tenant's data.
+ * Resolution happens **server-side from the caller's own warehouses** rather
+ * than trusting ids from the client. RLS already stops one tenant reading
+ * another's rows, but an admin owns every warehouse in their account — so
+ * nothing at the database level would stop a hand-edited query string widening
+ * the view, or naming a warehouse in a city they are not currently viewing.
+ *
+ * An unknown warehouse or city yields an **empty** scope, never the tenant-wide
+ * one: a stale link must show nothing rather than everything.
  */
 export async function resolveLocationScope(
   supabase: SupabaseClient,
-  cityKey: string | null | undefined,
+  cityKey?: string | null,
+  warehouseId?: string | null,
 ): Promise<LocationScope> {
-  const key = typeof cityKey === "string" ? cityKey.trim() : "";
-  if (!key) return ALL_LOCATIONS;
+  const city = typeof cityKey === "string" ? cityKey.trim() : "";
+  const wh = typeof warehouseId === "string" ? warehouseId.trim() : "";
+  if (!city && !wh) return ALL_LOCATIONS;
 
   const { data, error } = await supabase
     .from("warehouses")
@@ -101,17 +117,27 @@ export async function resolveLocationScope(
     .is("deleted_at", null)
     .limit(500);
   if (error) throw error;
+  const owned = data ?? [];
 
-  const { cityKey: normalise, deriveCity } = await import("./location-scope");
-  const warehouseIds = (data ?? [])
-    .filter((w) => normalise(deriveCity(w)) === key)
-    .map((w) => w.id);
+  let warehouseIds: string[];
+  let resolvedCity: string | null = city || null;
 
-  // An unrecognised key must not silently widen the scope to the whole tenant —
-  // that is the cross-location bleed this exists to prevent. Return an empty
-  // list so the caller shows nothing rather than everything.
+  if (wh) {
+    // Warehouse-level scope. Confirm the caller actually owns it — an id from
+    // the client is a request, not a permission.
+    const match = owned.find((w) => w.id === wh);
+    warehouseIds = match ? [match.id] : [];
+    if (match) {
+      const { cityKey: normalise, deriveCity } = await import("./location-scope");
+      resolvedCity = normalise(deriveCity(match));
+    }
+  } else {
+    const { cityKey: normalise, deriveCity } = await import("./location-scope");
+    warehouseIds = owned.filter((w) => normalise(deriveCity(w)) === city).map((w) => w.id);
+  }
+
   if (warehouseIds.length === 0) {
-    return { cityKey: key, warehouseIds: [], siloIds: [] };
+    return { cityKey: resolvedCity, warehouseId: wh || null, warehouseIds: [], siloIds: [] };
   }
 
   const { data: silos } = await supabase
@@ -122,7 +148,8 @@ export async function resolveLocationScope(
     .limit(2000);
 
   return {
-    cityKey: key,
+    cityKey: resolvedCity,
+    warehouseId: wh || null,
     warehouseIds,
     siloIds: (silos ?? []).map((s) => s.id),
   };

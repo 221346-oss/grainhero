@@ -195,13 +195,17 @@ export const getSiloPredictions = createServerFn({ method: "GET" })
 export const getMLModels = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) =>
-    z.object({ loc: z.string().trim().min(1).optional() }).parse(data ?? {}),
+    z
+      .object({ loc: z.string().trim().min(1).optional(), wh: z.string().uuid().optional() })
+      .parse(data ?? {}),
   )
   .handler(async ({ context, data: input }) => {
     await assertAllowed(context.supabase, context.userId);
-    // Model performance is reported per location: each site has its own dataset,
-    // so accuracy and confidence legitimately differ between them.
-    const scope = await resolveLocationScope(context.supabase, input?.loc);
+    // Model performance is reported per **warehouse**, not per city. Two
+    // warehouses in the same city can hold very different numbers of silos — one
+    // silo versus three is a materially different dataset — so aggregating them
+    // under a city would hide exactly the difference this is meant to show.
+    const scope = await resolveLocationScope(context.supabase, input?.loc, input?.wh);
 
     // Derive live "accuracy" proxy from readings that have ml_risk_class populated.
     const { data: readings } = await byWarehouse(
@@ -236,10 +240,11 @@ export const getMLModels = createServerFn({ method: "GET" })
     // derived from a handful of readings with the same confidence as an
     // established site's.
     const MIN_SAMPLES = 50;
-    const scoped = scope.warehouseIds !== null;
 
     return {
-      scoped,
+      scoped: scope.warehouseIds !== null,
+      /** True when the figures are for a single warehouse rather than a city. */
+      perWarehouse: scope.warehouseId !== null,
       labelledSamples: withLabel.length,
       lowConfidence: total < MIN_SAMPLES,
       minSamples: MIN_SAMPLES,

@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useLocationScopeKey } from "@/components/app/location/LocationScope";
+import { useLocationScopeQuery } from "@/components/app/location/LocationScope";
 import { SensorsSkeleton } from "@/components/app/skeletons";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -193,7 +193,7 @@ function SensorsPage() {
   const listFn = useServerFn(listSensorDevices);
   // Scope every location-dependent query to the active city — in the key as
   // well as the request, so one city's rows are never served for another.
-  const loc = useLocationScopeKey();
+  const { key: loc, params: locParams } = useLocationScopeQuery();
   const upsertFn = useServerFn(upsertSensorDevice);
   const deleteFn = useServerFn(deleteSensorDevice);
   const latestFn = useServerFn(listLatestSensorReadings);
@@ -206,7 +206,7 @@ function SensorsPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ["sensor-devices", loc],
-    queryFn: () => listFn({ data: { loc: loc ?? undefined } }) as Promise<Device[]>,
+    queryFn: () => listFn({ data: locParams }) as Promise<Device[]>,
   });
   const { data: readings } = useQuery({
     queryKey: ["sensor-readings-latest"],
@@ -219,7 +219,7 @@ function SensorsPage() {
   });
   const { data: silosData } = useQuery({
     queryKey: ["silos", loc],
-    queryFn: () => listSiloFn({ data: { loc: loc ?? undefined } }) as Promise<Silo[]>,
+    queryFn: () => listSiloFn({ data: locParams }) as Promise<Silo[]>,
   });
   const warehouses = warehousesData ?? [];
   const silos = silosData ?? [];

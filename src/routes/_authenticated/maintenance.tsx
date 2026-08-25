@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useLocationScopeKey } from "@/components/app/location/LocationScope";
+import { useLocationScopeQuery } from "@/components/app/location/LocationScope";
 import { DashboardSkeleton } from "@/components/app/skeletons";
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -55,12 +55,12 @@ function TenantMaintenanceView() {
   const fn = useServerFn(getMaintenanceOverview);
   // Scope every location-dependent query to the active city — in the key as
   // well as the request, so one city's rows are never served for another.
-  const loc = useLocationScopeKey();
+  const { key: loc, params: locParams } = useLocationScopeQuery();
   const doneFn = useServerFn(markMaintenanceDone);
   const qc = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: ["maintenance", loc],
-    queryFn: () => fn({ data: { loc: loc ?? undefined } }),
+    queryFn: () => fn({ data: locParams }),
   });
   const [q, setQ] = useState("");
 

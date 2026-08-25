@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useLocationScopeKey } from "@/components/app/location/LocationScope";
+import { useLocationScopeQuery } from "@/components/app/location/LocationScope";
 import QRCodeDisplay from "@/components/QRCodeDisplay";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -102,10 +102,10 @@ function TraceabilityPage() {
   const fetchBatches = useServerFn(listGrainBatches);
   // Scope every location-dependent query to the active city — in the key as
   // well as the request, so one city's rows are never served for another.
-  const loc = useLocationScopeKey();
+  const { key: loc, params: locParams } = useLocationScopeQuery();
   const { data, isLoading, refetch, isFetching } = useQuery({
     queryKey: ["traceability-batches", loc],
-    queryFn: () => fetchBatches({ data: { loc: loc ?? undefined } }),
+    queryFn: () => fetchBatches({ data: locParams }),
   });
   const batches = (data ?? []) as Batch[];
 

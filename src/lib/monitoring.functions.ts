@@ -3,7 +3,10 @@ import { resolveLocationScope, byWarehouse } from "./page-scope.server";
 import { z as _z } from "zod";
 
 /** Optional active-location key; absent means the tenant-wide view. */
-const locSchema = _z.object({ loc: _z.string().trim().min(1).optional() });
+const locSchema = _z.object({
+  loc: _z.string().trim().min(1).optional(),
+  wh: _z.string().uuid().optional(),
+});
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { getEffectiveRole } from "./rbac.server";
@@ -116,7 +119,7 @@ export const getIncidents = createServerFn({ method: "GET" })
   .handler(async ({ context, data: input }) => {
     const r = await role(context.supabase, context.userId);
     requireAny(r, ["super_admin", "admin", "manager", "technician"]);
-    const scope = await resolveLocationScope(context.supabase, input?.loc);
+    const scope = await resolveLocationScope(context.supabase, input?.loc, input?.wh);
 
     // Fetch both system alerts (high/critical priority) AND field incidents
     // (source = field_incident, priority = medium) in one query so the

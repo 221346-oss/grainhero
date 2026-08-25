@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { useLocationScopeKey } from "@/components/app/location/LocationScope";
+import { useLocationScopeQuery } from "@/components/app/location/LocationScope";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -61,17 +61,17 @@ export function KpiSummary({
   const listBatchesFn = useServerFn(listGrainBatches);
   // Scope every location-dependent query to the active city — in the key as
   // well as the request, so one city's rows are never served for another.
-  const loc = useLocationScopeKey();
+  const { key: loc, params: locParams } = useLocationScopeQuery();
   const listSilosFn = useServerFn(listSilos);
   const listApprovalsFn = useServerFn(listPendingApprovalBatches);
 
   const { data: batchesData } = useQuery({
     queryKey: ["grain-batches", loc],
-    queryFn: () => listBatchesFn({ data: { loc: loc ?? undefined } }),
+    queryFn: () => listBatchesFn({ data: locParams }),
   });
   const { data: silosData } = useQuery({
     queryKey: ["silos", loc],
-    queryFn: () => listSilosFn({ data: { loc: loc ?? undefined } }),
+    queryFn: () => listSilosFn({ data: locParams }),
   });
   const { data: approvalsData } = useQuery({
     queryKey: ["pending-approvals"],

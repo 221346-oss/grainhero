@@ -10,9 +10,9 @@
  * are the quiet 10px uppercase register, figures are bold and tabular, and
  * colour is semantic only.
  */
-import { AlertTriangle, ArrowRight, MapPin, Warehouse } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, MapPin, Warehouse } from "lucide-react";
 import { Rail, SectionLabel, compact } from "@/components/app/surface";
-import type { LocationCard, PlanUsage } from "@/lib/locations.functions";
+import type { LocationCard, LocationWarehouse, PlanUsage } from "@/lib/locations.functions";
 import { cn } from "@/lib/utils";
 
 function utilisationTone(pct: number | null): "success" | "warning" | "critical" {
@@ -127,6 +127,97 @@ function PlanAllowance({ plan }: { plan?: PlanUsage }) {
           style={{ width: `${Math.max(2, Math.min(100, pct))}%` }}
         />
       </span>
+    </div>
+  );
+}
+
+/**
+ * A single warehouse inside a city.
+ *
+ * The warehouse is the unit everything actually runs on — two warehouses in one
+ * city can hold very different numbers of silos, so their data and their model
+ * performance genuinely differ. Picking a city is only the way to reach one.
+ */
+function WarehouseTile({ wh, onSelect }: { wh: LocationWarehouse; onSelect: () => void }) {
+  const pct = wh.capacityKg > 0 ? Math.round((wh.occupancyKg / wh.capacityKg) * 100) : null;
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={cn(
+        "group flex flex-col gap-3 rounded-2xl bg-card/50 p-4 text-left",
+        "transition-colors hover:bg-card/80 focus-visible:outline-none",
+        "focus-visible:ring-2 focus-visible:ring-success/50",
+      )}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <Warehouse className="h-3 w-3 shrink-0" />
+            <span className="truncate">{wh.warehouse_id}</span>
+          </div>
+          <h4 className="mt-1 truncate text-sm font-semibold text-foreground">{wh.name}</h4>
+        </div>
+        <ArrowRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" />
+      </div>
+
+      <div className="flex items-baseline gap-4">
+        <div>
+          <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Silos
+          </div>
+          <div className="text-xl font-bold tabular-nums text-foreground">{wh.siloCount}</div>
+        </div>
+        <div>
+          <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Capacity
+          </div>
+          <div className="text-xl font-bold tabular-nums text-foreground">
+            {compact(wh.capacityKg)}
+            <span className="ml-1 text-[10px] font-semibold text-muted-foreground">kg</span>
+          </div>
+        </div>
+      </div>
+
+      {pct !== null && <Rail pct={pct} tone={utilisationTone(pct)} />}
+    </button>
+  );
+}
+
+/** Second level — the warehouses inside one city. */
+export function WarehousePicker({
+  location,
+  onSelect,
+  onBack,
+}: {
+  location: LocationCard;
+  onSelect: (warehouseId: string) => void;
+  onBack: () => void;
+}) {
+  return (
+    <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
+      <header className="mb-8 space-y-2">
+        <button
+          type="button"
+          onClick={onBack}
+          className="group flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <ArrowLeft className="h-3 w-3 transition-transform group-hover:-translate-x-0.5" />
+          All locations
+        </button>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">{location.city}</h1>
+        <p className="max-w-prose text-[13px] text-muted-foreground">
+          {location.warehouseCount} warehouses here. Each one is kept separate — its silos, its
+          data, and its model performance are its own.
+        </p>
+      </header>
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {location.warehouses.map((wh) => (
+          <WarehouseTile key={wh.id} wh={wh} onSelect={() => onSelect(wh.id)} />
+        ))}
+      </div>
     </div>
   );
 }

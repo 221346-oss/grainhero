@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useLocationScopeKey } from "@/components/app/location/LocationScope";
+import { useLocationScopeQuery } from "@/components/app/location/LocationScope";
 import React from "react";
 import { VariableFontText } from "@/components/app/VariableFontText";
 import { motion } from "framer-motion";
@@ -78,7 +78,7 @@ function GrainOperationsWorkspace() {
   const roleFn = useServerFn(getMyRole);
   // Scope every location-dependent query to the active city — in the key as
   // well as the request, so one city's rows are never served for another.
-  const loc = useLocationScopeKey();
+  const { key: loc, params: locParams } = useLocationScopeQuery();
   const { data: roleData } = useQuery({
     queryKey: ["my-role"],
     queryFn: () => roleFn(),
@@ -104,11 +104,11 @@ function GrainOperationsWorkspace() {
 
   const { data: batches } = useQuery({
     queryKey: ["grain-batches", loc],
-    queryFn: () => listBatchesFn({ data: { loc: loc ?? undefined } }),
+    queryFn: () => listBatchesFn({ data: locParams }),
   });
   const { data: silos } = useQuery({
     queryKey: ["silos", loc],
-    queryFn: () => listSilosFn({ data: { loc: loc ?? undefined } }),
+    queryFn: () => listSilosFn({ data: locParams }),
   });
   const { data: buyers } = useQuery({ queryKey: ["buyers"], queryFn: () => listBuyersFn() });
 

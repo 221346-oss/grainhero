@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useLocationScopeKey } from "@/components/app/location/LocationScope";
+import { useLocationScopeQuery } from "@/components/app/location/LocationScope";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -110,7 +110,7 @@ export function DataVisualizationPanel() {
   const getDevicesFn = useServerFn(listSensorDevices);
   // Scope every location-dependent query to the active city — in the key as
   // well as the request, so one city's rows are never served for another.
-  const loc = useLocationScopeKey();
+  const { key: loc, params: locParams } = useLocationScopeQuery();
   const getHistoryFn = useServerFn(getSensorHistory);
   const exportCsvFn = useServerFn(exportSensorCSV);
   const getMLFn = useServerFn(getMLModels);
@@ -126,7 +126,7 @@ export function DataVisualizationPanel() {
   // Fetch all devices for selection
   const { data: devices = [], isLoading: isLoadingDevices } = useQuery({
     queryKey: ["sensor-devices-list", loc],
-    queryFn: () => getDevicesFn({ data: { loc: loc ?? undefined } }),
+    queryFn: () => getDevicesFn({ data: locParams }),
   });
 
   // Active selected device
