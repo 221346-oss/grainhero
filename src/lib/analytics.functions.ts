@@ -1,4 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { resolveLocationScope, byWarehouse } from "./page-scope.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getEffectiveRole } from "./rbac.server";
 import { fetchDispatchTotals } from "./operations.functions";
@@ -192,13 +194,24 @@ export const getSiloPredictions = createServerFn({ method: "GET" })
 
 export const getMLModels = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((data) =>
+    z.object({ loc: z.string().trim().min(1).optional() }).parse(data ?? {}),
+  )
+  .handler(async ({ context, data: input }) => {
     await assertAllowed(context.supabase, context.userId);
+    // Model performance is reported per location: each site has its own dataset,
+    // so accuracy and confidence legitimately differ between them.
+    const scope = await resolveLocationScope(context.supabase, input?.loc);
 
     // Derive live "accuracy" proxy from readings that have ml_risk_class populated.
-    const { data: readings } = await context.supabase
-      .from("sensor_readings")
-      .select("ml_risk_class, ml_confidence, spoilage_label, anomaly_detected, reading_timestamp")
+    const { data: readings } = await byWarehouse(
+      context.supabase
+        .from("sensor_readings")
+        .select(
+          "ml_risk_class, ml_confidence, spoilage_label, anomaly_detected, reading_timestamp",
+        ),
+      scope,
+    )
       .not("ml_risk_class", "is", null)
       .order("reading_timestamp", { ascending: false })
       .limit(1000);
@@ -218,7 +231,18 @@ export const getMLModels = createServerFn({ method: "GET" })
     const accuracy = withLabel.length ? correct / withLabel.length : 0.91;
     const avgConf = total ? rows.reduce((s, r) => s + (r.ml_confidence ?? 0), 0) / total : 0.87;
 
+    // S18 — a newly provisioned site has little history, so its figures are
+    // volatile. Report the basis alongside them rather than presenting a number
+    // derived from a handful of readings with the same confidence as an
+    // established site's.
+    const MIN_SAMPLES = 50;
+    const scoped = scope.warehouseIds !== null;
+
     return {
+      scoped,
+      labelledSamples: withLabel.length,
+      lowConfidence: total < MIN_SAMPLES,
+      minSamples: MIN_SAMPLES,
       models: [
         {
           id: "spoilage-classifier-v3",

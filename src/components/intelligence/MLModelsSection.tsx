@@ -6,6 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Database, Activity, GitBranch } from "lucide-react";
 import { getMLModels } from "@/lib/analytics.functions";
 import { getMyRole } from "@/lib/roles.functions";
+import { useLocationScope } from "@/components/app/location/LocationScope";
 
 export function MLModelsSection() {
   const fetchRole = useServerFn(getMyRole);
@@ -14,9 +15,13 @@ export function MLModelsSection() {
   const role = roleQ.data?.role ?? "pending";
   const allowed = role === "admin";
 
+  // Each site trains on its own data, so performance is reported per location.
+  const scope = useLocationScope();
+  const loc = scope?.scopeKey ?? null;
+
   const { data } = useQuery({
-    queryKey: ["ml-models"],
-    queryFn: () => fetchModels(),
+    queryKey: ["ml-models", loc],
+    queryFn: () => fetchModels({ data: { loc: loc ?? undefined } }),
     enabled: allowed,
   });
 
@@ -38,6 +43,20 @@ export function MLModelsSection() {
 
   return (
     <div className="space-y-6">
+      {/* Say which data these figures come from. Without this an admin reading
+          one city's accuracy has no way to tell it is not the whole account. */}
+      {scope?.active && (
+        <p className="text-[11px] text-muted-foreground">
+          Performance for <span className="font-semibold text-foreground">{scope.active.city}</span>{" "}
+          only — each location trains on its own data, so these figures differ between sites.
+        </p>
+      )}
+      {data?.lowConfidence && (
+        <p className="text-[11px] font-medium text-warning">
+          Based on {data.labelledSamples ?? 0} labelled readings — below the {data.minSamples ?? 50}{" "}
+          needed for a stable figure. Treat these numbers as indicative.
+        </p>
+      )}
       <div className="grid gap-4 lg:grid-cols-2">
         {models.map((m: any) => (
           <Card key={m.id}>
