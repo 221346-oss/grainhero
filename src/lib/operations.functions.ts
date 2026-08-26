@@ -1174,6 +1174,69 @@ export const listSensorDevices = createServerFn({ method: "GET" })
     return data ?? [];
   });
 
+/**
+ * Fetch sensor devices assigned to technician's silos (via grain_batches).
+ * Also fetches latest readings for each sensor.
+ */
+export const getTechnicianSensors = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) => z.object({
+    limit: z.number().int().min(1).max(500).default(100),
+  }).parse(d ?? {}))
+  .handler(async ({ data, context }) => {
+    // Step 1: Get all silos where technician has assigned batches
+    const { data: batches, error: batchError } = await context.supabase
+      .from("grain_batches")
+      .select("silo_id")
+      .eq("assigned_technician_id", context.userId)
+      .not("silo_id", "is", null);
+    
+    if (batchError) throw batchError;
+
+    const siloIds = Array.from(new Set((batches ?? []).map((b: any) => b.silo_id as string).filter(Boolean)));
+
+    // If technician has no assigned batches/silos, return empty
+    if (siloIds.length === 0) {
+      return { sensors: [], latestReadings: {} };
+    }
+
+    // Step 2: Get sensor devices for those silos
+    const { data: sensors, error: sensorError } = await context.supabase
+      .from("sensor_devices")
+      .select(
+        "id, device_id, device_name, warehouse_id, silo_id, status, power_source, sensor_types, last_calibration_date, is_enabled, created_at, notes, silos:silo_id(id, silo_id, name), warehouses:warehouse_id(id, name, warehouse_id)"
+      )
+      .in("silo_id", siloIds)
+      .eq("is_enabled", true)
+      .order("created_at", { ascending: false })
+      .limit(data.limit);
+    
+    if (sensorError) throw sensorError;
+
+    // Step 3: Get latest readings for each sensor (last reading only)
+    const latestReadings: Record<string, any> = {};
+    if ((sensors ?? []).length > 0) {
+      const deviceIds = (sensors ?? []).map((s: any) => s.id);
+      const { data: readings } = await context.supabase
+        .from("sensor_readings")
+        .select("id, device_id, reading_timestamp, temperature_value, humidity_value, moisture_value, co2_value, voc_value, dew_point, pressure_value, light_value, ambient_temperature, ambient_humidity, battery_level, signal_strength")
+        .in("device_id", deviceIds)
+        .order("reading_timestamp", { ascending: false })
+        .limit(deviceIds.length); // One per device
+
+      // Index readings by device_id, keeping only the latest
+      const seen = new Set<string>();
+      (readings ?? []).forEach((reading: any) => {
+        if (!seen.has(reading.device_id)) {
+          latestReadings[reading.device_id] = reading;
+          seen.add(reading.device_id);
+        }
+      });
+    }
+
+    return { sensors: (sensors ?? []) as unknown as any[], latestReadings };
+  });
+
 const sensorTypeEnum = z.enum([
   "co2",
   "humidity",
@@ -1345,6 +1408,58 @@ export const listActuators = createServerFn({ method: "GET" })
     return data ?? [];
   });
 
+/**
+ * Fetch actuators for technician's assigned silos (via grain_batches).
+ * Groups actuators by silo and includes current state.
+ */
+export const getTechnicianActuators = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) => z.object({
+    limit: z.number().int().min(1).max(500).default(100),
+  }).parse(d ?? {}))
+  .handler(async ({ data, context }) => {
+    // Step 1: Get all silos where technician has assigned batches
+    const { data: batches, error: batchError } = await context.supabase
+      .from("grain_batches")
+      .select("silo_id")
+      .eq("assigned_technician_id", context.userId)
+      .not("silo_id", "is", null);
+    
+    if (batchError) throw batchError;
+
+    const siloIds = Array.from(new Set((batches ?? []).map((b: any) => b.silo_id as string).filter(Boolean)));
+
+    // If technician has no assigned batches/silos, return empty
+    if (siloIds.length === 0) {
+      return { actuatorsBySilo: {}, allActuators: [] };
+    }
+
+    // Step 2: Get actuators for those silos
+    const { data: actuators, error: actuatorError } = await context.supabase
+      .from("actuators")
+      .select(
+        "id, actuator_id, name, actuator_type, silo_id, status, control_mode, is_enabled, is_on, power_level, target_fan_speed, current_operation, silos:silo_id(id, silo_id, name)"
+      )
+      .in("silo_id", siloIds)
+      .eq("is_enabled", true)
+      .order("created_at", { ascending: false })
+      .limit(data.limit);
+    
+    if (actuatorError) throw actuatorError;
+
+    // Step 3: Group actuators by silo
+    const actuatorsBySilo: Record<string, any[]> = {};
+    (actuators ?? []).forEach((act: any) => {
+      const siloId = act.silo_id;
+      if (!actuatorsBySilo[siloId]) {
+        actuatorsBySilo[siloId] = [];
+      }
+      actuatorsBySilo[siloId].push(act);
+    });
+
+    return { actuatorsBySilo, allActuators: (actuators ?? []) as unknown as any[] };
+  });
+
 const actuatorInput = z.object({
   id: z.string().uuid().optional(),
   actuator_id: z.string().min(1).max(80),
@@ -1511,6 +1626,46 @@ export const controlActuator = createServerFn({ method: "POST" })
     if (error) throw error;
 
     return row;
+  });
+
+/**
+ * Technician-specific actuator command wrapper with activity logging.
+ * Calls controlActuator and records the action in activity_logs.
+ */
+export const sendActuatorCommand = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) => parseOrThrow(controlInput, d))
+  .handler(async ({ data, context }) => {
+    // Execute the control command
+    const result = await controlActuator.rpc({ data, context } as any);
+
+    // Get tenant admin id for activity logging
+    const { data: profile } = await context.supabase
+      .from("profiles")
+      .select("id, admin_id")
+      .eq("id", context.userId)
+      .maybeSingle();
+    const tenantAdminId = (profile as any)?.admin_id ?? (profile as any)?.id ?? context.userId;
+
+    // Log the activity
+    try {
+      await logActivity({
+        actorId: context.userId,
+        tenantAdminId,
+        action: `actuator.${data.action}`,
+        targetType: "actuator",
+        targetId: data.id,
+        meta: {
+          value: data.value ?? null,
+          action: data.action,
+        },
+      });
+    } catch (e) {
+      console.warn("[sendActuatorCommand] Activity logging failed:", e);
+      // Don't fail the command if logging fails
+    }
+
+    return result;
   });
 
 export const listGrainAlerts = createServerFn({ method: "GET" })
@@ -1913,6 +2068,8 @@ export const getDashboardStats = createServerFn({ method: "GET" })
       alertsTotal,
       alertsOpen,
       alertsCritical,
+      incidentsTotal,
+      incidentsOpen,
     ] = await Promise.all([
       context.supabase.from("warehouses").select("id", { count: "exact", head: true }),
       context.supabase.from("silos").select("id", { count: "exact", head: true }),
@@ -1952,6 +2109,11 @@ export const getDashboardStats = createServerFn({ method: "GET" })
         .from("grain_alerts")
         .select("id", { count: "exact", head: true })
         .in("priority", ["critical", "high"]),
+      context.supabase.from("field_incidents").select("id", { count: "exact", head: true }),
+      context.supabase
+        .from("field_incidents")
+        .select("id", { count: "exact", head: true })
+        .in("status", ["open", "investigating"] as never),
     ]);
     return {
       warehouses: warehouses.count ?? 0,
@@ -1973,6 +2135,10 @@ export const getDashboardStats = createServerFn({ method: "GET" })
         total: alertsTotal.count ?? 0,
         open: alertsOpen.count ?? 0,
         critical: alertsCritical.count ?? 0,
+      },
+      incidents: {
+        total: incidentsTotal.count ?? 0,
+        open: incidentsOpen.count ?? 0,
       },
     };
   });

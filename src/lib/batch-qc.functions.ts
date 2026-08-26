@@ -358,6 +358,44 @@ export const resolveRejectedBatch = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/** Technician: list all batches assigned to them across all QC statuses */
+export const getMyAssignedBatches = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await requireRole(context.supabase, context.userId, ["technician"]);
+
+    const { data, error } = await context.supabase
+      .from("grain_batches")
+      .select(`
+        id,
+        batch_id,
+        grain_type,
+        variety,
+        quantity_kg,
+        status,
+        created_at,
+        intake_date,
+        farmer_name,
+        silo_id,
+        risk_score,
+        moisture_content,
+        protein_content,
+        test_weight,
+        intake_conditions,
+        silos (
+          id,
+          name,
+          silo_id
+        )
+      `)
+      .eq("assigned_technician_id", context.userId)
+      .in("status", ["pending_qc", "qc_submitted", "qc_failed", "qc_passed"] as never)
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+    return { batches: data ?? [] };
+  });
+
 /** List all batches awaiting admin approval (pending_approval status) */
 export const listPendingApprovalBatches = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])

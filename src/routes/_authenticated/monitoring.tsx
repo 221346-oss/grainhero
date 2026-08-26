@@ -96,17 +96,18 @@ function MonitoringWorkspace() {
 
   const userRole = roleData?.role ?? "pending";
 
-  if (!roleData) return <KpiChartHubSkeleton />;
-
-  // Filter tabs based on role - manager only sees Incidents tab
-  const visibleTabs = userRole === "manager" ? TABS.filter((t) => t.key === "incidents") : TABS;
-
-  // Set default tab based on role
+  // Set default tab based on role - call before any conditional logic
   useEffect(() => {
     if (userRole === "manager" && activeTab !== "incidents") {
       setActiveTab("incidents");
     }
   }, [userRole, activeTab]);
+
+  // Now safe to return early after all hooks are called
+  if (!roleData) return <KpiChartHubSkeleton />;
+
+  // Filter tabs based on role - manager only sees Incidents tab
+  const visibleTabs = userRole === "manager" ? TABS.filter((t) => t.key === "incidents") : TABS;
 
   const counts = {
     sensors: Array.isArray(sensors) ? sensors.length : 0,
