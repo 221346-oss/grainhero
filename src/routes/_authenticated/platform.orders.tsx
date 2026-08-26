@@ -93,7 +93,7 @@ function getPlanTabs(t: (key: string) => string) {
     { key: "enterprise", label: "Enterprise", color: "#7c3aed" },
   ] as const;
 }
-type PlanKey = (typeof PLAN_TABS)[number]["key"];
+type PlanKey = ReturnType<typeof getPlanTabs>[number]["key"];
 
 function normalisePlan(raw: string | null | undefined): PlanKey {
   const s = (raw ?? "").toLowerCase().trim();
@@ -132,26 +132,28 @@ function matchesStatusFilter(orderStatus: string, filter: string): boolean {
 }
 
 // ── Export columns ───────────────────────────────────────────────────────────
-const orderExportColumns: ExportColumn<any>[] = [
-  { header: "Order ID", value: (o) => String(o.id ?? "").slice(0, 8) },
-  { header: "Plan", value: (o) => o.plan_name ?? o.plan_id ?? "—" },
-  { header: "Buyer name", value: (o) => o.buyer?.name ?? o.customer_name ?? "—" },
-  { header: "Buyer email", value: (o) => o.buyer?.email ?? o.customer_email ?? "—" },
-  { header: "Qty", value: (o) => o.hardware_quantity ?? 0 },
-  { header: "Total (PKR)", value: (o) => fmt(Number(o.hardware_total ?? 0)) },
-  { header: "Status", value: (o) => STATUS_CFG[o.status]?.label ?? o.status ?? "—" },
-  { header: "City", value: (o) => o.install_city ?? "—" },
-  { header: "Country", value: (o) => o.install_country ?? "—" },
-  {
-    header: "Placed",
-    value: (o) => (o.created_at ? new Date(o.created_at).toLocaleDateString() : "—"),
-  },
-  { header: "Technician", value: (o) => o.technician_name ?? "—" },
-];
+function createOrderExportColumns(statusCfg: Record<string, { badge: string; label: string }>): ExportColumn<any>[] {
+  return [
+    { header: "Order ID", value: (o) => String(o.id ?? "").slice(0, 8) },
+    { header: "Plan", value: (o) => o.plan_name ?? o.plan_id ?? "—" },
+    { header: "Buyer name", value: (o) => o.buyer?.name ?? o.customer_name ?? "—" },
+    { header: "Buyer email", value: (o) => o.buyer?.email ?? o.customer_email ?? "—" },
+    { header: "Qty", value: (o) => o.hardware_quantity ?? 0 },
+    { header: "Total (PKR)", value: (o) => fmt(Number(o.hardware_total ?? 0)) },
+    { header: "Status", value: (o) => statusCfg[o.status]?.label ?? o.status ?? "—" },
+    { header: "City", value: (o) => o.install_city ?? "—" },
+    { header: "Country", value: (o) => o.install_country ?? "—" },
+    {
+      header: "Placed",
+      value: (o) => (o.created_at ? new Date(o.created_at).toLocaleDateString() : "—"),
+    },
+    { header: "Technician", value: (o) => o.technician_name ?? "—" },
+  ];
+}
 
 // ── Export button row ────────────────────────────────────────────────────────
-function ExportRow({ rows, label, filename }: { rows: any[]; label: string; filename: string }) {
-  return <ExportMenu filename={filename} title={label} rows={rows} columns={orderExportColumns} />;
+function ExportRow({ rows, label, filename, columns }: { rows: any[]; label: string; filename: string; columns: ExportColumn<any>[] }) {
+  return <ExportMenu filename={filename} title={label} rows={rows} columns={columns} />;
 }
 
 // ── Skeleton ─────────────────────────────────────────────────────────────────
@@ -360,6 +362,9 @@ function PlatformOrdersPage() {
 
   const allOrders: any[] = data?.orders ?? [];
 
+  // Create export columns with access to STATUS_CFG
+  const orderExportColumns = useMemo(() => createOrderExportColumns(STATUS_CFG), [STATUS_CFG]);
+
   // Filtered view — uses module-level matchesStatusFilter for group-aware matching
   const filtered = useMemo(() => {
     return allOrders.filter((o) => {
@@ -423,6 +428,7 @@ function PlatformOrdersPage() {
             rows={filtered}
             label={`Install Orders — ${PLAN_TABS.find((t) => t.key === planTab)?.label ?? "All"} — GrainHero`}
             filename={`install-orders-${planTab}`}
+            columns={orderExportColumns}
           />
           <button
             onClick={() => refetch()}
@@ -523,6 +529,7 @@ function PlatformOrdersPage() {
               rows={filtered}
               label={`${PLAN_TABS.find((t) => t.key === planTab)?.label} Orders — GrainHero`}
               filename={`orders-${planTab}`}
+              columns={orderExportColumns}
             />
           </div>
         )}

@@ -60,7 +60,7 @@ function extractAttachment(description: string) {
       cleanDescription: description.replace(/\n\n\[Attachment: [^\]]+\]\([^)]+\)/, ""),
     };
   }
-  return { name: null, url: null, cleanDescription: description };
+  return { name: undefined, url: undefined, cleanDescription: description };
 }
 
 interface Props {
