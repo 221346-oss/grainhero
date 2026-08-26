@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowUpRight, UserPlus, Package, AlertTriangle, Settings } from "lucide-react";
 import { getPlatformLogs } from "@/lib/platform-no-admin.functions";
 import { HairlineGrid, NeonPanel } from "@/components/charts/neon";
+import { useTranslation } from "@/i18n";
 
 type Signup = {
   id: string;
@@ -23,32 +24,34 @@ type ActivityCategory = {
   bgColor: string;
 };
 
-const activityCategories: Record<string, ActivityCategory> = {
-  signup: {
-    icon: UserPlus,
-    label: "New Signup",
-    color: "text-success",
-    bgColor: "bg-success/10",
-  },
-  order: {
-    icon: Package,
-    label: "Install Order",
-    color: "text-info",
-    bgColor: "bg-info/10",
-  },
-  alert: {
-    icon: AlertTriangle,
-    label: "System Alert",
-    color: "text-warning",
-    bgColor: "bg-warning/10",
-  },
-  default: {
-    icon: Settings,
-    label: "System Event",
-    color: "text-muted-foreground",
-    bgColor: "bg-muted",
-  },
-};
+function getActivityCategories(t: (key: string) => string): Record<string, ActivityCategory> {
+  return {
+    signup: {
+      icon: UserPlus,
+      label: t("superAdmin.newSignup"),
+      color: "text-success",
+      bgColor: "bg-success/10",
+    },
+    order: {
+      icon: Package,
+      label: t("superAdmin.installOrderEvent"),
+      color: "text-info",
+      bgColor: "bg-info/10",
+    },
+    alert: {
+      icon: AlertTriangle,
+      label: t("superAdmin.systemAlert"),
+      color: "text-warning",
+      bgColor: "bg-warning/10",
+    },
+    default: {
+      icon: Settings,
+      label: t("superAdmin.systemEvent"),
+      color: "text-muted-foreground",
+      bgColor: "bg-muted",
+    },
+  };
+}
 
 function categorizeActivity(action?: string | null): string {
   if (!action) return "default";
@@ -60,6 +63,7 @@ function categorizeActivity(action?: string | null): string {
 }
 
 export function SuperBento({ recentSignups }: { recentSignups: Signup[] }) {
+  const { t } = useTranslation();
   const logsFn = useServerFn(getPlatformLogs);
   const { data: logs } = useQuery({
     queryKey: ["platform-logs", "dashboard"],
@@ -75,12 +79,14 @@ export function SuperBento({ recentSignups }: { recentSignups: Signup[] }) {
     alerts: rows.filter((r) => categorizeActivity(r.action) === "alert").length,
   };
 
+  const activityCategories = getActivityCategories(t);
+
   return (
     <div className="grid gap-3 lg:grid-cols-2">
       {/* Recent signups - Simplified */}
       <Card className="border-border/60 shadow-sm">
         <CardHeader className="p-3 flex flex-row items-center justify-between space-y-0">
-          <CardTitle className="text-sm">Recent Signups</CardTitle>
+          <CardTitle className="text-sm">{t("superAdmin.recentSignups")}</CardTitle>
           <Link
             to="/platform/users"
             aria-label="Open users"
@@ -94,9 +100,9 @@ export function SuperBento({ recentSignups }: { recentSignups: Signup[] }) {
             <table className="w-full text-xs">
               <thead className="bg-muted/40 text-muted-foreground text-[10px] uppercase tracking-wider sticky top-0">
                 <tr>
-                  <th className="text-left px-3 py-1.5 font-medium">User</th>
-                  <th className="text-left px-2 py-1.5 font-medium hidden sm:table-cell">Plan</th>
-                  <th className="text-right px-3 py-1.5 font-medium">Joined</th>
+                  <th className="text-left px-3 py-1.5 font-medium">{t("superAdmin.user")}</th>
+                  <th className="text-left px-2 py-1.5 font-medium hidden sm:table-cell">{t("superAdmin.plan")}</th>
+                  <th className="text-right px-3 py-1.5 font-medium">{t("superAdmin.joined")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/40">
@@ -104,7 +110,7 @@ export function SuperBento({ recentSignups }: { recentSignups: Signup[] }) {
                   <tr key={s.id} className="hover:bg-muted/30 transition">
                     <td className="px-3 py-2">
                       <Link to="/platform/users" className="block min-w-0">
-                        <p className="font-medium truncate">{s.name || "New User"}</p>
+                        <p className="font-medium truncate">{s.name || t("superAdmin.newUser")}</p>
                         <p className="text-[10px] text-muted-foreground truncate">{s.email}</p>
                       </Link>
                     </td>
@@ -121,7 +127,7 @@ export function SuperBento({ recentSignups }: { recentSignups: Signup[] }) {
                 {recentSignups.length === 0 && (
                   <tr>
                     <td colSpan={3} className="text-center text-muted-foreground py-8 text-xs">
-                      No recent signups
+                      {t("superAdmin.noRecentSignups")}
                     </td>
                   </tr>
                 )}
@@ -134,7 +140,7 @@ export function SuperBento({ recentSignups }: { recentSignups: Signup[] }) {
       {/* Activity Summary - SIMPLIFIED for beginners */}
       <Card className="border-border/60 shadow-sm">
         <CardHeader className="p-3 flex flex-row items-center justify-between space-y-0">
-          <CardTitle className="text-sm">Platform Activity</CardTitle>
+          <CardTitle className="text-sm">{t("superAdmin.platformActivity")}</CardTitle>
           <Link
             to="/platform/audit-logs"
             aria-label="View all activity"
@@ -152,7 +158,7 @@ export function SuperBento({ recentSignups }: { recentSignups: Signup[] }) {
                 <span className="text-xl font-bold tabular-nums text-foreground">
                   {activitySummary.signups}
                 </span>
-                <span className="text-[10px] text-muted-foreground">New Users</span>
+                <span className="text-[10px] text-muted-foreground">{t("superAdmin.newUsers")}</span>
               </div>
             </NeonPanel>
             <NeonPanel className="text-center py-2">
@@ -161,7 +167,7 @@ export function SuperBento({ recentSignups }: { recentSignups: Signup[] }) {
                 <span className="text-xl font-bold tabular-nums text-foreground">
                   {activitySummary.orders}
                 </span>
-                <span className="text-[10px] text-muted-foreground">Orders</span>
+                <span className="text-[10px] text-muted-foreground">{t("superAdmin.orders")}</span>
               </div>
             </NeonPanel>
             <NeonPanel className="text-center py-2">
@@ -170,7 +176,7 @@ export function SuperBento({ recentSignups }: { recentSignups: Signup[] }) {
                 <span className="text-xl font-bold tabular-nums text-foreground">
                   {activitySummary.alerts}
                 </span>
-                <span className="text-[10px] text-muted-foreground">Alerts</span>
+                <span className="text-[10px] text-muted-foreground">{t("superAdmin.alerts")}</span>
               </div>
             </NeonPanel>
           </HairlineGrid>
@@ -178,10 +184,10 @@ export function SuperBento({ recentSignups }: { recentSignups: Signup[] }) {
           {/* Recent Events - Simplified */}
           <div className="space-y-1">
             <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
-              Recent Events
+              {t("superAdmin.recentEvents")}
             </p>
             {rows.length === 0 && (
-              <p className="text-xs text-muted-foreground py-2">No recent activity</p>
+              <p className="text-xs text-muted-foreground py-2">{t("superAdmin.noRecentActivity")}</p>
             )}
             <div className="space-y-1">
               {rows.slice(0, 5).map((r) => {
@@ -199,7 +205,7 @@ export function SuperBento({ recentSignups }: { recentSignups: Signup[] }) {
                       <Icon className={`w-3 h-3 ${category.color}`} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate text-foreground">{category.label}</p>
+                      <p className="font-medium truncate text-foreground">{activityCategories[categorizeActivity(r.action)]?.label || category.label}</p>
                       <p className="text-[10px] text-muted-foreground truncate">
                         {r.created_at
                           ? new Date(r.created_at).toLocaleTimeString([], {

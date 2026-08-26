@@ -39,6 +39,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/platform/silo-requests")({
   head: () => ({ meta: [{ title: "Silo requests — Platform" }] }),
@@ -46,27 +47,28 @@ export const Route = createFileRoute("/_authenticated/platform/silo-requests")({
 });
 
 // ── Status config ─────────────────────────────────────────────────────────────
+// `label` holds a translation key under the `siloRequests` section.
 const STATUS_CFG: Record<string, { badge: string; label: string }> = {
   pending_payment: {
     badge: "bg-muted text-muted-foreground border-border",
-    label: "Pending payment",
+    label: "stPendingPayment",
   },
-  paid: { badge: "bg-blue-100 text-blue-800 border-blue-200", label: "Paid" },
-  new: { badge: "bg-amber-100 text-amber-800 border-amber-200", label: "New" },
-  approved: { badge: "bg-emerald-100 text-emerald-800 border-emerald-200", label: "Approved" },
-  packing: { badge: "bg-amber-100 text-amber-800 border-amber-200", label: "Packing" },
-  shipped: { badge: "bg-indigo-100 text-indigo-800 border-indigo-200", label: "Shipped" },
-  in_transit: { badge: "bg-indigo-100 text-indigo-800 border-indigo-200", label: "In transit" },
-  installing: { badge: "bg-cyan-100 text-cyan-800 border-cyan-200", label: "Installing" },
+  paid: { badge: "bg-blue-100 text-blue-800 border-blue-200", label: "stPaid" },
+  new: { badge: "bg-amber-100 text-amber-800 border-amber-200", label: "stNew" },
+  approved: { badge: "bg-emerald-100 text-emerald-800 border-emerald-200", label: "stApproved" },
+  packing: { badge: "bg-amber-100 text-amber-800 border-amber-200", label: "stPacking" },
+  shipped: { badge: "bg-indigo-100 text-indigo-800 border-indigo-200", label: "stShipped" },
+  in_transit: { badge: "bg-indigo-100 text-indigo-800 border-indigo-200", label: "stInTransit" },
+  installing: { badge: "bg-cyan-100 text-cyan-800 border-cyan-200", label: "stInstalling" },
   tech_assigned: {
     badge: "bg-indigo-100 text-indigo-800 border-indigo-200",
-    label: "Tech assigned",
+    label: "stTechAssigned",
   },
-  completed: { badge: "bg-emerald-100 text-emerald-800 border-emerald-200", label: "Completed" },
-  installed: { badge: "bg-emerald-100 text-emerald-800 border-emerald-200", label: "Installed" },
-  live: { badge: "bg-emerald-600 text-white border-emerald-600", label: "Live" },
-  cancelled: { badge: "bg-red-100 text-red-700 border-red-200", label: "Cancelled" },
-  refunded: { badge: "bg-muted text-muted-foreground border-border", label: "Refunded" },
+  completed: { badge: "bg-emerald-100 text-emerald-800 border-emerald-200", label: "stCompleted" },
+  installed: { badge: "bg-emerald-100 text-emerald-800 border-emerald-200", label: "stInstalled" },
+  live: { badge: "bg-emerald-600 text-white border-emerald-600", label: "stLive" },
+  cancelled: { badge: "bg-red-100 text-red-700 border-red-200", label: "stCancelled" },
+  refunded: { badge: "bg-muted text-muted-foreground border-border", label: "stRefunded" },
 };
 
 // Pending review = only orders that haven't been approved/rejected yet.
@@ -89,11 +91,12 @@ const REJECTED_STATUSES = new Set(["cancelled", "refunded"]);
 
 type Tab = "pending" | "approved" | "rejected" | "all";
 
+// `label` holds a translation key under the `siloRequests` section.
 const TAB_CFG: { key: Tab; label: string; color: string }[] = [
-  { key: "pending", label: "Pending review", color: "#f59e0b" },
-  { key: "approved", label: "Approved", color: "#10b981" },
-  { key: "rejected", label: "Rejected", color: "#ef4444" },
-  { key: "all", label: "All requests", color: "#64748b" },
+  { key: "pending", label: "pendingReview", color: "#f59e0b" },
+  { key: "approved", label: "approved", color: "#10b981" },
+  { key: "rejected", label: "rejected", color: "#ef4444" },
+  { key: "all", label: "allRequests", color: "#64748b" },
 ];
 
 // Which "action" panel is open inside the sheet
@@ -103,6 +106,7 @@ const fmt = (n: number) => new Intl.NumberFormat("en-PK").format(n);
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 function SiloRequestsPage() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const fetchFn = useServerFn(listAllHardwareOrders);
   const updateFn = useServerFn(updateHardwareOrder);
@@ -186,12 +190,16 @@ function SiloRequestsPage() {
           orderId: selected!.id,
           message:
             upgradeNote.trim() ||
-            `Your current plan (${siloInfo?.planName ?? "your plan"}) allows up to ${siloInfo?.limit ?? "N"} silos and you are already using ${siloInfo?.used ?? "all"} of them. Please upgrade your plan to add more silos. Visit /plan-management to request an upgrade.`,
+            t("siloRequests.upgradeDefaultMsg", {
+              plan: siloInfo?.planName ?? "—",
+              limit: siloInfo?.limit ?? "—",
+              used: siloInfo?.used ?? "—",
+            }),
           emailBuyer: true,
         },
       }),
     onSuccess: () => {
-      toast.success("Upgrade request sent to tenant.");
+      toast.success(t("siloRequests.toastUpgradeSent"));
       closeSheet();
     },
     onError: (e: Error) => toast.error(e.message),
@@ -223,10 +231,10 @@ function SiloRequestsPage() {
       { orderId, status: "approved" },
       {
         onSuccess: () => {
-          toast.success("Request approved — tenant has been notified to complete payment.");
+          toast.success(t("siloRequests.toastApproved"));
         },
         onError: (e: Error) => {
-          toast.error(`Approval failed: ${e.message}`);
+          toast.error(t("siloRequests.toastApprovalFailed", { msg: e.message }));
         },
       },
     );
@@ -236,7 +244,7 @@ function SiloRequestsPage() {
     if (!selected) return;
     const reason = rejectReason.trim();
     if (!reason) {
-      toast.error("Please enter a rejection reason");
+      toast.error(t("siloRequests.toastEnterReason"));
       return;
     }
     // Capture values BEFORE closeSheet() nulls out `selected` and `rejectReason`
@@ -246,10 +254,10 @@ function SiloRequestsPage() {
       { orderId, status: "cancelled", cancelReason: reason },
       {
         onSuccess: () => {
-          toast.success("Request rejected — tenant has been notified.");
+          toast.success(t("siloRequests.toastRejected"));
         },
         onError: (e: Error) => {
-          toast.error(`Rejection failed: ${e.message}`);
+          toast.error(t("siloRequests.toastRejectionFailed", { msg: e.message }));
         },
       },
     );
@@ -259,8 +267,8 @@ function SiloRequestsPage() {
 
   return (
     <AdminPageShell
-      title="Silo requests"
-      subtitle="Hardware silo installation requests from tenant admins — review, approve or reject"
+      title={t("siloRequests.title")}
+      subtitle={t("siloRequests.subtitle")}
       actions={
         <button
           onClick={() => refetch()}
@@ -268,35 +276,35 @@ function SiloRequestsPage() {
           className="inline-flex items-center gap-1.5 rounded border border-border px-3 py-1.5 text-[13px] text-muted-foreground hover:bg-muted transition-colors disabled:opacity-50"
         >
           <RefreshCw className={cn("w-3 h-3", isFetching && "animate-spin")} />
-          Refresh
+          {t("siloRequests.refresh")}
         </button>
       }
     >
       {/* Summary tiles — neon hairline gap-px grid ─────────────────────── */}
       <div className="grid gap-px bg-border rounded-md overflow-hidden grid-cols-2 sm:grid-cols-4">
-        {TAB_CFG.map((t) => (
+        {TAB_CFG.map((c) => (
           <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            className={`bg-background p-4 text-left transition-colors hover:bg-muted/40 focus:outline-none ${tab === t.key ? "bg-muted/60" : ""}`}
+            key={c.key}
+            onClick={() => setTab(c.key)}
+            className={`bg-background p-4 text-left transition-colors hover:bg-muted/40 focus:outline-none ${tab === c.key ? "bg-muted/60" : ""}`}
           >
             <p className="text-[11px] text-muted-foreground uppercase tracking-widest mb-1">
-              {t.label}
+              {t(`siloRequests.${c.label}`)}
             </p>
             <p
               className={`text-2xl font-medium tabular-nums leading-none ${
-                t.key === "pending" && counts.pending > 0
+                c.key === "pending" && counts.pending > 0
                   ? "text-warning"
-                  : t.key === "rejected"
+                  : c.key === "rejected"
                     ? "text-severity-critical"
-                    : t.key === "approved"
+                    : c.key === "approved"
                       ? "text-success"
                       : "text-foreground"
               }`}
             >
-              {counts[t.key]}
+              {counts[c.key]}
             </p>
-            {tab === t.key && <span className="mt-1.5 inline-block w-4 h-px bg-foreground/40" />}
+            {tab === c.key && <span className="mt-1.5 inline-block w-4 h-px bg-foreground/40" />}
           </button>
         ))}
       </div>
@@ -307,7 +315,7 @@ function SiloRequestsPage() {
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by name, plan, city…"
+          placeholder={t("siloRequests.searchPlaceholder")}
           className="pl-8 h-8 text-[13px] bg-transparent"
         />
       </div>
@@ -329,17 +337,17 @@ function SiloRequestsPage() {
         <div className="border border-border rounded-md bg-background py-16 text-center">
           <Package className="mx-auto h-8 w-8 text-muted-foreground/30 mb-3" />
           <p className="text-[13px] text-muted-foreground">
-            {tab === "pending" ? "No pending silo requests" : "No requests match your filters"}
+            {tab === "pending" ? t("siloRequests.noPending") : t("siloRequests.noMatch")}
           </p>
         </div>
       ) : (
         <div className="border border-border rounded-md overflow-hidden bg-background">
           <div className="hidden md:grid grid-cols-[2fr_1.5fr_1fr_1fr_1.5fr_auto] gap-0 border-b border-border px-4 py-2.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider bg-muted/30">
-            <span>Requester</span>
-            <span>Plan</span>
-            <span>Qty</span>
-            <span>Location</span>
-            <span>Status</span>
+            <span>{t("siloRequests.requester")}</span>
+            <span>{t("siloRequests.plan")}</span>
+            <span>{t("siloRequests.qty")}</span>
+            <span>{t("siloRequests.location")}</span>
+            <span>{t("siloRequests.status")}</span>
             <span />
           </div>
           <div className="divide-y divide-border">
@@ -353,7 +361,7 @@ function SiloRequestsPage() {
             ))}
           </div>
           <div className="px-4 py-2 border-t border-border text-[12px] text-muted-foreground">
-            {filtered.length} request{filtered.length !== 1 ? "s" : ""}
+            {filtered.length} {t("siloRequests.requests")}
           </div>
         </div>
       )}
@@ -369,11 +377,11 @@ function SiloRequestsPage() {
           {selected && (
             <>
               <SheetHeader className="mb-4">
-                <SheetTitle className="text-lg font-bold">Silo request</SheetTitle>
+                <SheetTitle className="text-lg font-bold">{t("siloRequests.sheetTitle")}</SheetTitle>
                 <SheetDescription>
                   {PENDING_STATUSES.has(selected.status)
-                    ? "Review the details below, then approve or reject."
-                    : "Request details."}
+                    ? t("siloRequests.sheetDescPending")
+                    : t("siloRequests.sheetDesc")}
                 </SheetDescription>
               </SheetHeader>
 
@@ -382,12 +390,14 @@ function SiloRequestsPage() {
                 variant="outline"
                 className={cn("w-fit capitalize text-xs mb-5", STATUS_CFG[selected.status]?.badge)}
               >
-                {STATUS_CFG[selected.status]?.label ?? selected.status}
+                {STATUS_CFG[selected.status]
+                  ? t(`siloRequests.${STATUS_CFG[selected.status].label}`)
+                  : selected.status}
               </Badge>
 
               {/* Request details */}
               <div className="space-y-4 text-sm flex-1">
-                <DetailRow icon={<User className="h-4 w-4" />} label="Requester">
+                <DetailRow icon={<User className="h-4 w-4" />} label={t("siloRequests.requester")}>
                   <p className="font-medium text-foreground">
                     {selected.buyer?.name ?? selected.customer_name ?? "—"}
                   </p>
@@ -397,23 +407,22 @@ function SiloRequestsPage() {
                 </DetailRow>
 
                 {selected.business_name && (
-                  <DetailRow icon={<Building2 className="h-4 w-4" />} label="Business">
+                  <DetailRow icon={<Building2 className="h-4 w-4" />} label={t("siloRequests.business")}>
                     <p className="font-medium text-foreground">{selected.business_name}</p>
                   </DetailRow>
                 )}
 
-                <DetailRow icon={<Package className="h-4 w-4" />} label="Plan / hardware">
+                <DetailRow icon={<Package className="h-4 w-4" />} label={t("siloRequests.planHardware")}>
                   <p className="font-medium text-foreground">
                     {selected.plan_name ?? selected.plan_id ?? "—"}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {selected.hardware_quantity ?? 1} silo unit
-                    {(selected.hardware_quantity ?? 1) !== 1 ? "s" : ""}
+                    {selected.hardware_quantity ?? 1} {t("siloRequests.siloUnits")}
                     {" · "}PKR {fmt(Number(selected.hardware_total ?? 0))}
                   </p>
                 </DetailRow>
 
-                <DetailRow icon={<MapPin className="h-4 w-4" />} label="Install location">
+                <DetailRow icon={<MapPin className="h-4 w-4" />} label={t("siloRequests.installLocation")}>
                   <p className="font-medium text-foreground">
                     {[selected.install_address, selected.install_city, selected.install_country]
                       .filter(Boolean)
@@ -422,27 +431,27 @@ function SiloRequestsPage() {
                 </DetailRow>
 
                 {selected.contact_phone && (
-                  <DetailRow icon={<Phone className="h-4 w-4" />} label="Contact phone">
+                  <DetailRow icon={<Phone className="h-4 w-4" />} label={t("siloRequests.contactPhone")}>
                     <p className="font-medium text-foreground">{selected.contact_phone}</p>
                   </DetailRow>
                 )}
 
                 {selected.preferred_install_date && (
-                  <DetailRow icon={<Clock className="h-4 w-4" />} label="Preferred install date">
+                  <DetailRow icon={<Clock className="h-4 w-4" />} label={t("siloRequests.preferredDate")}>
                     <p className="font-medium text-foreground">
                       {new Date(selected.preferred_install_date).toLocaleDateString()}
                     </p>
                   </DetailRow>
                 )}
 
-                <DetailRow icon={<Clock className="h-4 w-4" />} label="Requested on">
+                <DetailRow icon={<Clock className="h-4 w-4" />} label={t("siloRequests.requestedOn")}>
                   <p className="font-medium text-foreground">
                     {new Date(selected.created_at).toLocaleString()}
                   </p>
                 </DetailRow>
 
                 {selected.notes && (
-                  <DetailRow icon={<MessageSquare className="h-4 w-4" />} label="Notes from tenant">
+                  <DetailRow icon={<MessageSquare className="h-4 w-4" />} label={t("siloRequests.notesFromTenant")}>
                     <p className="text-foreground whitespace-pre-wrap">{selected.notes}</p>
                   </DetailRow>
                 )}
@@ -450,7 +459,7 @@ function SiloRequestsPage() {
                 {selected.cancel_reason && (
                   <DetailRow
                     icon={<XCircle className="h-4 w-4 text-red-500" />}
-                    label="Rejection reason"
+                    label={t("siloRequests.rejectionReason")}
                   >
                     <p className="text-red-700 whitespace-pre-wrap">{selected.cancel_reason}</p>
                   </DetailRow>
@@ -481,12 +490,17 @@ function SiloRequestsPage() {
                           className="w-full border-amber-300 text-amber-700 hover:bg-amber-50"
                           onClick={() => {
                             setUpgradeNote(
-                              `Your plan (${siloInfo.planName}) allows up to ${siloInfo.limit} silos and you currently have ${siloInfo.used}. Please upgrade your plan before we can approve this silo request.`,
+                              t("siloRequests.upgradeNoteDefault", {
+                                plan: siloInfo.planName,
+                                limit: siloInfo.limit,
+                                used: siloInfo.used,
+                              }),
                             );
                             setMode("upgrade");
                           }}
                         >
-                          <ArrowUpCircle className="h-4 w-4 mr-2" /> Request plan upgrade
+                          <ArrowUpCircle className="h-4 w-4 mr-2" />{" "}
+                          {t("siloRequests.requestPlanUpgrade")}
                         </Button>
                       )}
                       <div className="flex gap-2">
@@ -495,7 +509,7 @@ function SiloRequestsPage() {
                           className="flex-1 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
                           onClick={() => setMode("reject")}
                         >
-                          <XCircle className="h-4 w-4 mr-2" /> Reject
+                          <XCircle className="h-4 w-4 mr-2" /> {t("siloRequests.reject")}
                         </Button>
                         <Button
                           className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
@@ -503,17 +517,19 @@ function SiloRequestsPage() {
                           disabled={!!(siloInfo && !siloInfo.withinLimit && !siloInfo.unlimited)}
                           title={
                             siloInfo && !siloInfo.withinLimit && !siloInfo.unlimited
-                              ? "Tenant is at plan limit — request upgrade first"
+                              ? t("siloRequests.atLimitTitle")
                               : undefined
                           }
                         >
-                          <CheckCircle2 className="h-4 w-4 mr-2" /> Approve
+                          <CheckCircle2 className="h-4 w-4 mr-2" /> {t("siloRequests.approve")}
                         </Button>
                       </div>
                       {siloInfo && !siloInfo.withinLimit && !siloInfo.unlimited && (
                         <p className="text-[11px] text-amber-600 text-center">
-                          Tenant is at their plan limit ({siloInfo.used}/{siloInfo.limit} silos).
-                          Approve is disabled until they upgrade.
+                          {t("siloRequests.limitNote", {
+                            used: siloInfo.used,
+                            limit: siloInfo.limit,
+                          })}
                         </p>
                       )}
                     </div>
@@ -522,20 +538,24 @@ function SiloRequestsPage() {
                   {/* Approve panel */}
                   {mode === "approve" && (
                     <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 p-4 space-y-3">
-                      <p className="text-sm font-semibold text-emerald-900">Approving request</p>
+                      <p className="text-sm font-semibold text-emerald-900">
+                        {t("siloRequests.approveTitle")}
+                      </p>
                       <div>
                         <Label
                           htmlFor="approve-notes"
                           className="text-xs font-medium text-foreground"
                         >
-                          Notes for the tenant{" "}
-                          <span className="text-muted-foreground">(optional)</span>
+                          {t("siloRequests.notesForTenant")}{" "}
+                          <span className="text-muted-foreground">
+                            {t("siloRequests.optional")}
+                          </span>
                         </Label>
                         <Textarea
                           id="approve-notes"
                           value={approveNotes}
                           onChange={(e) => setApproveNotes(e.target.value)}
-                          placeholder="e.g. Technician will contact you within 48 h to schedule the install."
+                          placeholder={t("siloRequests.notesPlaceholder")}
                           className="mt-1.5 text-sm min-h-[72px]"
                         />
                       </div>
@@ -546,14 +566,16 @@ function SiloRequestsPage() {
                           onClick={() => setMode("view")}
                           disabled={updateMut.isPending}
                         >
-                          Back
+                          {t("siloRequests.back")}
                         </Button>
                         <Button
                           className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
                           onClick={submitApprove}
                           disabled={updateMut.isPending}
                         >
-                          {updateMut.isPending ? "Approving…" : "Confirm approval"}
+                          {updateMut.isPending
+                            ? t("siloRequests.approving")
+                            : t("siloRequests.confirmApproval")}
                         </Button>
                       </div>
                     </div>
@@ -562,19 +584,21 @@ function SiloRequestsPage() {
                   {/* Reject panel */}
                   {mode === "reject" && (
                     <div className="rounded-lg border border-red-200 bg-red-50/50 p-4 space-y-3">
-                      <p className="text-sm font-semibold text-red-900">Rejecting request</p>
+                      <p className="text-sm font-semibold text-red-900">
+                        {t("siloRequests.rejectTitle")}
+                      </p>
                       <div>
                         <Label
                           htmlFor="reject-reason"
                           className="text-xs font-medium text-foreground"
                         >
-                          Reason <span className="text-red-500">*</span>
+                          {t("siloRequests.reason")} <span className="text-red-500">*</span>
                         </Label>
                         <Textarea
                           id="reject-reason"
                           value={rejectReason}
                           onChange={(e) => setRejectReason(e.target.value)}
-                          placeholder="e.g. Install location outside our service area. Please contact support."
+                          placeholder={t("siloRequests.reasonPlaceholder")}
                           className="mt-1.5 text-sm min-h-[72px]"
                         />
                       </div>
@@ -585,7 +609,7 @@ function SiloRequestsPage() {
                           onClick={() => setMode("view")}
                           disabled={updateMut.isPending}
                         >
-                          Back
+                          {t("siloRequests.back")}
                         </Button>
                         <Button
                           variant="destructive"
@@ -593,7 +617,9 @@ function SiloRequestsPage() {
                           onClick={submitReject}
                           disabled={updateMut.isPending || !rejectReason.trim()}
                         >
-                          {updateMut.isPending ? "Rejecting…" : "Confirm rejection"}
+                          {updateMut.isPending
+                            ? t("siloRequests.rejecting")
+                            : t("siloRequests.confirmRejection")}
                         </Button>
                       </div>
                     </div>
@@ -603,14 +629,14 @@ function SiloRequestsPage() {
                   {mode === "upgrade" && (
                     <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-4 space-y-3">
                       <p className="text-sm font-semibold text-amber-900">
-                        Send plan upgrade request to tenant
+                        {t("siloRequests.upgradeTitle")}
                       </p>
                       <div>
                         <Label
                           htmlFor="upgrade-note"
                           className="text-xs font-medium text-foreground"
                         >
-                          Message to tenant
+                          {t("siloRequests.messageToTenant")}
                         </Label>
                         <Textarea
                           id="upgrade-note"
@@ -626,14 +652,16 @@ function SiloRequestsPage() {
                           onClick={() => setMode("view")}
                           disabled={msgMut.isPending}
                         >
-                          Back
+                          {t("siloRequests.back")}
                         </Button>
                         <Button
                           className="flex-1 bg-amber-600 hover:bg-amber-700 text-white"
                           onClick={() => msgMut.mutate()}
                           disabled={msgMut.isPending || !upgradeNote.trim()}
                         >
-                          {msgMut.isPending ? "Sending…" : "Send upgrade request"}
+                          {msgMut.isPending
+                            ? t("siloRequests.sending")
+                            : t("siloRequests.sendUpgrade")}
                         </Button>
                       </div>
                     </div>
@@ -661,6 +689,7 @@ function PlanLimitBar({
     tenantName: string;
   };
 }) {
+  const { t } = useTranslation();
   const pct = info.unlimited
     ? 0
     : info.limit > 0
@@ -683,15 +712,15 @@ function PlanLimitBar({
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 text-[12px] font-medium text-foreground">
           <TrendingUp className="h-3.5 w-3.5" />
-          Plan usage — {info.planName}
+          {t("siloRequests.planUsage", { plan: info.planName })}
         </div>
         {overLimit ? (
           <span className="flex items-center gap-1 text-[11px] font-medium text-severity-critical">
-            <AlertTriangle className="h-3 w-3" /> Over limit
+            <AlertTriangle className="h-3 w-3" /> {t("siloRequests.overLimit")}
           </span>
         ) : atLimit ? (
           <span className="flex items-center gap-1 text-[11px] font-medium text-warning">
-            <AlertTriangle className="h-3 w-3" /> At limit
+            <AlertTriangle className="h-3 w-3" /> {t("siloRequests.atLimit")}
           </span>
         ) : null}
       </div>
@@ -709,13 +738,14 @@ function PlanLimitBar({
           </div>
         )}
         <span className="text-[12px] font-medium text-foreground tabular-nums shrink-0">
-          {info.unlimited ? "Unlimited silos" : `${info.used} / ${info.limit} silos`}
+          {info.unlimited
+            ? t("siloRequests.unlimitedSilos")
+            : t("siloRequests.silosCount", { used: info.used, limit: info.limit })}
         </span>
       </div>
       {(overLimit || atLimit) && (
         <p className="text-[11px] text-muted-foreground">
-          Approving this request would exceed {info.tenantName}'s plan limit. Use{" "}
-          <strong>Request plan upgrade</strong> below to ask them to upgrade first.
+          {t("siloRequests.exceedNote", { tenant: info.tenantName })}
         </p>
       )}
     </div>
@@ -732,6 +762,7 @@ function RequestRow({
   tabColor: string;
   onOpen: () => void;
 }) {
+  const { t } = useTranslation();
   const cfg = STATUS_CFG[order.status] ?? STATUS_CFG.new;
   const isPending = PENDING_STATUSES.has(order.status);
   void tabColor;
@@ -758,10 +789,12 @@ function RequestRow({
               variant="outline"
               className={cn("capitalize text-[10px] px-2 py-0.5", cfg.badge)}
             >
-              {cfg.label}
+              {t(`siloRequests.${cfg.label}`)}
             </Badge>
             {isPending && (
-              <p className="text-[9px] text-amber-500 font-medium">● Awaiting review</p>
+              <p className="text-[9px] text-amber-500 font-medium">
+                ● {t("siloRequests.awaitingReview")}
+              </p>
             )}
           </div>
         </div>
@@ -772,7 +805,7 @@ function RequestRow({
             </span>
             <span>
               {" "}
-              · {order.hardware_quantity ?? 1} unit{(order.hardware_quantity ?? 1) !== 1 ? "s" : ""}
+              · {order.hardware_quantity ?? 1} {t("siloRequests.siloUnits")}
             </span>
           </div>
           <div className="shrink-0">
@@ -801,7 +834,7 @@ function RequestRow({
           {order.plan_name ?? order.plan_id ?? "—"}
         </div>
         <div className="text-sm text-muted-foreground">
-          {order.hardware_quantity ?? 1} unit{(order.hardware_quantity ?? 1) !== 1 ? "s" : ""}
+          {order.hardware_quantity ?? 1} {t("siloRequests.siloUnits")}
         </div>
         <div className="text-xs text-muted-foreground flex items-center gap-1">
           <MapPin className="w-3 h-3 shrink-0" />
@@ -811,10 +844,12 @@ function RequestRow({
         </div>
         <div>
           <Badge variant="outline" className={cn("capitalize text-xs", cfg.badge)}>
-            {cfg.label}
+            {t(`siloRequests.${cfg.label}`)}
           </Badge>
           {isPending && (
-            <p className="text-[10px] text-amber-500 font-medium mt-1">● Awaiting review</p>
+            <p className="text-[10px] text-amber-500 font-medium mt-1">
+              ● {t("siloRequests.awaitingReview")}
+            </p>
           )}
         </div>
         <div className="text-xs text-muted-foreground text-right pl-4 shrink-0">

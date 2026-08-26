@@ -23,6 +23,7 @@ import {
   Legend,
 } from "recharts";
 import { Eye, X } from "lucide-react";
+import { useTranslation } from "@/i18n";
 
 function SiloCapacityChart({
   selectedSilo,
@@ -205,6 +206,7 @@ export function ManagerKpiSummary({
 }) {
   const [selectedSilo, setSelectedSilo] = useState<string>("");
   const [factorPeriod, setFactorPeriod] = useState<"weekly" | "monthly" | "yearly">("monthly");
+  const { t } = useTranslation();
 
   // Debug: Log silos data
   console.log("ManagerKpiSummary - Silos:", silos?.length || 0, "silos available");
@@ -231,7 +233,7 @@ export function ManagerKpiSummary({
     <section className="rounded-xl border bg-card/60 p-3 backdrop-blur-sm">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-1.5">
-          <h2 className="text-sm font-semibold text-foreground">Operations Summary</h2>
+          <h2 className="text-sm font-semibold text-foreground">{t("grainOps.title")}</h2>
           <InfoDot text="Live silo utilisation and operational queues. Use the dropdown to view individual silo details." />
         </div>
         <div className="flex items-center gap-2">
@@ -284,7 +286,7 @@ export function ManagerKpiSummary({
         {/* Grain Factors Impact - Bar Chart */}
         <div className="rounded-lg border bg-card overflow-hidden">
           <div className="px-3 py-2 border-b bg-card/60 flex items-center justify-between">
-            <h3 className="text-xs font-semibold">Grain Storage Factors Impact</h3>
+            <h3 className="text-xs font-semibold">{t("hardware.heading1")}</h3>
             <select
               value={factorPeriod}
               onChange={(e) => setFactorPeriod(e.target.value as "weekly" | "monthly" | "yearly")}

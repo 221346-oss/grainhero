@@ -13,32 +13,38 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { ThemeInit } from "@/components/app/ThemeInit";
 import { Toaster } from "@/components/ui/sonner";
+import { I18nProvider, useTranslation } from "@/i18n";
 
-function NotFoundComponent() {
+function NotFoundComponentInner() {
+  const { t } = useTranslation();
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
+        <h2 className="mt-4 text-xl font-semibold text-foreground">{t("errors.notFound")}</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
+          {t("errors.notFoundDesc")}
         </p>
         <div className="mt-6">
           <Link
             to="/"
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Go home
+            {t("errors.goHome")}
           </Link>
         </div>
       </div>
     </div>
   );
 }
+function NotFoundComponent() {
+  return <NotFoundComponentInner />;
+}
 
-function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+function ErrorComponentInner({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
+  const { t } = useTranslation();
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
@@ -47,10 +53,10 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          This page didn't load
+          {t("errors.pageDidntLoad")}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. You can try refreshing or head back home.
+          {t("errors.pageDidntLoadDesc")}
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
@@ -60,18 +66,21 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
             }}
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Try again
+            {t("errors.tryAgain")}
           </button>
           <a
             href="/"
             className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
           >
-            Go home
+            {t("errors.goHome")}
           </a>
         </div>
       </div>
     </div>
   );
+}
+function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+  return <ErrorComponentInner error={error} reset={reset} />;
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
@@ -120,7 +129,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Figtree:wght@400;500;600;700&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Figtree:wght@400;500;600;700&family=Noto+Sans:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Nastaliq+Urdu:wght@400;500;600;700&display=swap",
       },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
@@ -136,7 +145,7 @@ function RootShell({ children }: { children: ReactNode }) {
     <html lang="en">
       <head>
         <HeadContent />
-        {/* Apply dark mode before paint to prevent flash */}
+        {/* Apply dark mode and locale before paint to prevent flash */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -144,6 +153,14 @@ function RootShell({ children }: { children: ReactNode }) {
             var m = localStorage.getItem('gh-theme-mode');
             if (m === 'dark' || (!m && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
               document.documentElement.classList.add('dark');
+            }
+            var locale = localStorage.getItem('gh-locale');
+            var rtlLocales = ['ur', 'sd', 'pa', 'ps', 'bi'];
+            if (rtlLocales.indexOf(locale) !== -1) {
+              // Set the language (font + translations) but keep dir LTR so the
+              // layout stays identical to the English design in every language.
+              document.documentElement.lang = locale;
+              document.documentElement.dir = 'ltr';
             }
           } catch(e) {}
         `,
@@ -165,11 +182,13 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeInit />
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
-      {/* App-wide toast host — every toast.success/error() call in the app renders through this one instance. */}
-      <Toaster richColors closeButton position="top-right" />
+      <I18nProvider>
+        <ThemeInit />
+        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+        <Outlet />
+        {/* App-wide toast host — every toast.success/error() call in the app renders through this one instance. */}
+        <Toaster richColors closeButton position="top-right" />
+      </I18nProvider>
     </QueryClientProvider>
   );
 }

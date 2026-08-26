@@ -1,7 +1,9 @@
 import { Wheat, Mail, Phone, MapPin, Facebook, Twitter, Linkedin, Instagram } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { useTranslation } from "@/i18n";
 
 export function NewFooter() {
+  const { t } = useTranslation();
   return (
     <footer className="bg-[#111512] text-[#FAFAF7] pt-16 pb-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
@@ -14,8 +16,7 @@ export function NewFooter() {
               <span className="text-xl font-bold text-[#FAFAF7]">GrainHero</span>
             </div>
             <p className="text-[#FAFAF7]/70 text-sm leading-relaxed">
-              AI-powered grain storage management platform helping farmers protect their harvest and
-              maximize profits with intelligent monitoring and predictive analytics.
+              {t("footer.tagline")}
             </p>
             {/* Social Media */}
             <div className="flex gap-3 pt-2">
@@ -60,14 +61,14 @@ export function NewFooter() {
 
           {/* Product Column */}
           <div>
-            <h3 className="text-[#FAFAF7] font-bold text-lg mb-4">Solutions</h3>
+            <h3 className="text-[#FAFAF7] font-bold text-lg mb-4">{t("footer.solutions")}</h3>
             <ul className="space-y-3">
               <li>
                 <Link
                   to="/solutions/grain-storage-monitoring"
                   className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm"
                 >
-                  Grain storage monitoring
+                  {t("footer.grainStorageMonitoring")}
                 </Link>
               </li>
               <li>
@@ -75,7 +76,7 @@ export function NewFooter() {
                   to="/solutions/silo-monitoring-system"
                   className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm"
                 >
-                  Silo monitoring system
+                  {t("footer.siloMonitoringSystem")}
                 </Link>
               </li>
               <li>
@@ -83,7 +84,7 @@ export function NewFooter() {
                   to="/solutions/grain-management-software"
                   className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm"
                 >
-                  Grain management software
+                  {t("footer.grainManagementSoftware")}
                 </Link>
               </li>
               <li>
@@ -92,7 +93,7 @@ export function NewFooter() {
                   hash="features"
                   className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm"
                 >
-                  Features
+                  {t("footer.features")}
                 </Link>
               </li>
               <li>
@@ -101,7 +102,7 @@ export function NewFooter() {
                   hash="how-it-works"
                   className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm"
                 >
-                  How It Works
+                  {t("footer.howItWorks")}
                 </Link>
               </li>
             </ul>
@@ -109,14 +110,14 @@ export function NewFooter() {
 
           {/* Company Column */}
           <div>
-            <h3 className="text-[#FAFAF7] font-bold text-lg mb-4">Company</h3>
+            <h3 className="text-[#FAFAF7] font-bold text-lg mb-4">{t("footer.company")}</h3>
             <ul className="space-y-3">
               <li>
                 <Link
                   to="/about"
                   className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm"
                 >
-                  About Us
+                  {t("footer.aboutUs")}
                 </Link>
               </li>
               <li>
@@ -124,7 +125,7 @@ export function NewFooter() {
                   to="/team"
                   className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm"
                 >
-                  Team
+                  {t("footer.team")}
                 </Link>
               </li>
               <li>
@@ -132,7 +133,7 @@ export function NewFooter() {
                   to="/blog"
                   className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm"
                 >
-                  Resources
+                  {t("footer.resources")}
                 </Link>
               </li>
               <li>
@@ -140,7 +141,7 @@ export function NewFooter() {
                   to="/guides/grain-storage"
                   className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm"
                 >
-                  Grain storage guide
+                  {t("footer.grainStorageGuide")}
                 </Link>
               </li>
               <li>
@@ -148,7 +149,7 @@ export function NewFooter() {
                   to="/contact"
                   className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm"
                 >
-                  Contact
+                  {t("footer.contact")}
                 </Link>
               </li>
             </ul>
@@ -156,14 +157,14 @@ export function NewFooter() {
 
           {/* Support & Contact Column */}
           <div>
-            <h3 className="text-[#FAFAF7] font-bold text-lg mb-4">Support</h3>
+            <h3 className="text-[#FAFAF7] font-bold text-lg mb-4">{t("footer.support")}</h3>
             <ul className="space-y-3 mb-6">
               <li>
                 <Link
                   to="/help"
                   className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm"
                 >
-                  Help Center
+                  {t("footer.helpCenter")}
                 </Link>
               </li>
               <li>
@@ -171,7 +172,7 @@ export function NewFooter() {
                   to="/docs"
                   className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm"
                 >
-                  Documentation
+                  {t("footer.documentation")}
                 </Link>
               </li>
               <li>
@@ -179,7 +180,7 @@ export function NewFooter() {
                   to="/privacy"
                   className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm"
                 >
-                  Privacy Policy
+                  {t("footer.privacyPolicy")}
                 </Link>
               </li>
               <li>
@@ -187,7 +188,7 @@ export function NewFooter() {
                   to="/terms"
                   className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm"
                 >
-                  Terms of Service
+                  {t("footer.termsOfService")}
                 </Link>
               </li>
             </ul>
@@ -217,26 +218,26 @@ export function NewFooter() {
         <div className="border-t border-[#FAFAF7]/10 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-[#FAFAF7]/50 text-sm text-center md:text-left">
-              © {new Date().getFullYear()} GrainHero. All rights reserved.
+              © {new Date().getFullYear()} GrainHero. {t("common.copyRight")}
             </p>
             <div className="flex gap-6 text-sm">
               <Link
                 to="/privacy"
                 className="text-[#FAFAF7]/50 hover:text-[#2FA84F] transition-colors"
               >
-                Privacy
+                {t("footer.privacy")}
               </Link>
               <Link
                 to="/terms"
                 className="text-[#FAFAF7]/50 hover:text-[#2FA84F] transition-colors"
               >
-                Terms
+                {t("footer.terms")}
               </Link>
               <Link
                 to="/cookies"
                 className="text-[#FAFAF7]/50 hover:text-[#2FA84F] transition-colors"
               >
-                Cookies
+                {t("footer.cookies")}
               </Link>
             </div>
           </div>

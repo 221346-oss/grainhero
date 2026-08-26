@@ -1,8 +1,10 @@
 import { motion } from "framer-motion";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
+import { useTranslation } from "@/i18n";
 
 export function ContactCTA() {
+  const { t } = useTranslation();
   return (
     <section className="gh-grain relative bg-[#A8E6A1] px-5 py-24 sm:px-8 sm:py-32">
       <motion.div
@@ -13,19 +15,19 @@ export function ContactCTA() {
         className="mx-auto max-w-4xl text-center"
       >
         <h2 className="text-4xl font-black leading-[0.95] tracking-tight text-[#111512] sm:text-6xl lg:text-7xl">
-          Let&apos;s put sensors
+          {t("contactCTA.heading1")}
           <br />
-          in your silos.
+          {t("contactCTA.heading2")}
         </h2>
         <p className="mx-auto mt-6 max-w-md text-base font-medium text-[#111512]/70">
-          Tell us how many silos you run. We&apos;ll size the kit and get you live this season.
+          {t("contactCTA.subtitle")}
         </p>
         <div className="mt-10 flex justify-center">
           <Link
             to="/contact"
             className="group inline-flex items-center justify-center gap-2 rounded-full bg-[#111512] px-9 py-4 text-base font-bold text-[#FAFAF7] transition-all duration-300 hover:bg-[#2FA84F]"
           >
-            Let&apos;s talk
+            {t("contactCTA.cta")}
             <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
           </Link>
         </div>

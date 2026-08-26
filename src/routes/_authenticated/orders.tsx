@@ -11,6 +11,7 @@ import {
 import { getPlatformSettings } from "@/lib/platform-settings.functions";
 import { advanceInstallStage } from "@/lib/installations.functions";
 import { usePlanGate } from "@/lib/plan-gate";
+import { useTranslation } from "@/i18n";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -111,17 +112,18 @@ function formatPakPhone(raw: string): string {
   if (d.length === 10) return `+92${d}`;
   return raw;
 }
-function validatePakPhone(val: string): string | null {
-  if (!val.trim()) return "Phone number is required";
+function validatePakPhone(val: string, t: (key: string) => string): string | null {
+  if (!val.trim()) return t("myOrdersPage.errorMessages.phoneRequired");
   const f = formatPakPhone(val.trim());
   if (/^\+92\d{10}$/.test(f)) return null;
-  return "Enter a valid Pakistani number: +92XXXXXXXXXX";
+  return t("myOrdersPage.errorMessages.invalidPhone");
 }
 
 const emptyDraftForm = { address: "", city: "", country: "", phone: "", notes: "" };
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 function MyOrdersPage() {
+  const { t } = useTranslation();
   const fetchFn = useServerFn(listMyHardwareOrders);
   const settingsFn = useServerFn(getPlatformSettings);
   const payFn = useServerFn(payApprovedSiloOrder);
@@ -151,10 +153,10 @@ function MyOrdersPage() {
     onSuccess: () => {
       setRequestOpen(false);
       setDraftForm(emptyDraftForm);
-      toast.success("Silo request submitted — awaiting approval");
+      toast.success(t("myOrdersPage.requestSubmitted"));
       qc.invalidateQueries({ queryKey: ["my-hardware-orders"] });
     },
-    onError: (e: Error) => toast.error(e.message || "Could not submit request"),
+    onError: (e: Error) => toast.error(e.message || t("common.error")),
   });
 
   // Load IoT pricing set by super admin
@@ -186,7 +188,7 @@ function MyOrdersPage() {
     if (paymentStatus === "success") {
       window.history.replaceState({}, "", window.location.pathname);
       // Stripe webhook will update the order status. Just refetch and notify.
-      toast.success("🎉 Payment received! Your silo install order is now active.");
+      toast.success(t("myOrdersPage.errorMessages.paymentConfirmed"));
       qc.invalidateQueries({ queryKey: ["my-hardware-orders"] });
       qc.invalidateQueries({ queryKey: ["plan-gate"] });
 
@@ -205,7 +207,7 @@ function MyOrdersPage() {
       return () => clearInterval(pollInterval);
     } else if (paymentStatus === "cancelled") {
       window.history.replaceState({}, "", window.location.pathname);
-      toast.info("Payment cancelled — your request is still saved. You can pay later.");
+      toast.info(t("myOrdersPage.paymentCancelled"));
     }
   }, [siloGate.data]);
 
@@ -214,14 +216,14 @@ function MyOrdersPage() {
     mutationFn: (orderId: string) => payFn({ data: { orderId } }),
     onSuccess: (res) => {
       if (!res?.url) {
-        toast.error("Could not initiate payment");
+        toast.error(t("myOrdersPage.errorMessages.couldNotInitiatePayment"));
         return;
       }
       // Redirect to Stripe Checkout
       window.location.href = res.url;
     },
     onError: (e: Error) => {
-      toast.error(e.message || "Could not initiate payment");
+      toast.error(e.message || t("myOrdersPage.errorMessages.couldNotInitiatePayment"));
     },
   });
 
@@ -230,14 +232,14 @@ function MyOrdersPage() {
     mutationFn: (orderId: string) => checkAndUpdatePaymentStatus({ data: { orderId } }),
     onSuccess: (result) => {
       if (result.success) {
-        toast.success("✅ Payment confirmed! Order updated.");
+        toast.success(t("myOrdersPage.errorMessages.paymentConfirmed"));
       } else {
-        toast.info(`Payment status: ${result.status}`);
+        toast.info(t("myOrdersPage.errorMessages.paymentStatus", { status: result.status }));
       }
       qc.invalidateQueries({ queryKey: ["my-hardware-orders"] });
     },
     onError: (e: Error) => {
-      toast.error(e.message || "Could not check payment status");
+      toast.error(e.message || t("myOrdersPage.errorMessages.couldNotCheckPayment"));
     },
   });
 
@@ -245,7 +247,7 @@ function MyOrdersPage() {
   const completeMut = useMutation({
     mutationFn: (orderId: string) => advanceFn({ data: { orderId, next: "completed" } }),
     onSuccess: () => {
-      toast.success("Sign-off recorded. Silos & warehouse will appear in your Silos page shortly.");
+      toast.success(t("myOrdersPage.errorMessages.signOffRecorded"));
       qc.invalidateQueries({ queryKey: ["my-hardware-orders"] });
       qc.invalidateQueries({ queryKey: ["installation"] });
       // Delay so the DB trigger (hardware_order_provision_silo) has time to commit
@@ -256,7 +258,7 @@ function MyOrdersPage() {
         qc.invalidateQueries({ queryKey: ["dashboard-extras"] });
       }, 1500);
     },
-    onError: (e: Error) => toast.error(e.message ?? "Could not complete install"),
+    onError: (e: Error) => toast.error(e.message ?? t("myOrdersPage.errorMessages.couldNotCompleteInstall")),
   });
 
   const { data, isLoading } = useQuery({
@@ -306,15 +308,15 @@ function MyOrdersPage() {
         to="/dashboard"
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-3"
       >
-        <ArrowLeft className="h-4 w-4" /> Dashboard
+        <ArrowLeft className="h-4 w-4" /> {t("myOrdersPage.dashboard")}
       </Link>
 
       {/* Header */}
       <div className="flex items-start justify-between gap-2 flex-wrap mb-3">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">My install orders</h1>
+          <h1 className="text-xl font-bold text-slate-900">{t("myOrdersPage.title")}</h1>
           <p className="text-xs text-slate-500">
-            Track the technician install for each subscription you purchased.
+            {t("myOrdersPage.trackTechnicianInstall")}
           </p>
         </div>
         <div className="flex gap-2">
@@ -325,7 +327,7 @@ function MyOrdersPage() {
             className="h-8 text-xs"
             size="sm"
           >
-            Refresh
+            {t("common.refresh")}
           </Button>
           <Button
             onClick={() => {
@@ -341,7 +343,7 @@ function MyOrdersPage() {
             className="gap-2 h-8 text-sm"
             size="sm"
           >
-            <PlusCircle className="h-3.5 w-3.5" /> Request new silo
+            <PlusCircle className="h-3.5 w-3.5" /> {t("myOrdersPage.requestNewSilo")}
           </Button>
         </div>
       </div>
@@ -352,11 +354,10 @@ function MyOrdersPage() {
           <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold text-emerald-900">
-              Your silo request has been approved!
+              {t("myOrdersPage.yourSiloRequestApproved")}
             </p>
             <p className="text-[11px] text-emerald-700 mt-0.5">
-              Click <strong>Pay now</strong> on the order card below to complete payment and
-              schedule your installation.
+              {t("myOrdersPage.clickPayNow")}
             </p>
           </div>
         </div>
@@ -369,16 +370,16 @@ function MyOrdersPage() {
         ) : orders.length === 0 ? (
           <Card>
             <CardContent className="p-6 text-center text-slate-500 text-sm space-y-2">
-              <p>No install orders yet.</p>
+              <p>{t("myOrdersPage.noOrdersYet")}</p>
               <p className="text-xs text-slate-400">
-                If you recently submitted a silo request, it may take a moment to appear.
+                {t("myOrdersPage.orderMayAppear")}
               </p>
               <button
                 type="button"
                 onClick={() => qc.invalidateQueries({ queryKey: ["my-hardware-orders"] })}
                 className="text-xs text-emerald-600 hover:text-emerald-700 underline underline-offset-2"
               >
-                Refresh orders
+                {t("myOrdersPage.refreshOrders")}
               </button>
             </CardContent>
           </Card>
@@ -399,7 +400,7 @@ function MyOrdersPage() {
                             variant="outline"
                             className="text-[10px] px-1.5 py-0 h-5 text-amber-600 border-amber-300 bg-amber-50"
                           >
-                            Awaiting payment
+                            {t("myOrdersPage.paymentPendingWaiting")}
                           </Badge>
                         )}
                         {o.status === "new" && !o.stripe_payment_intent && (
@@ -407,7 +408,7 @@ function MyOrdersPage() {
                             variant="outline"
                             className="text-[10px] px-1.5 py-0 h-5 text-blue-600 border-blue-300 bg-blue-50"
                           >
-                            Awaiting approval
+                            {t("myOrdersPage.awaitingApprovalBadge")}
                           </Badge>
                         )}
                       </div>
@@ -448,7 +449,7 @@ function MyOrdersPage() {
                         {o.technician_phone ? ` · ${o.technician_phone}` : ""}
                       </span>
                     ) : (
-                      <span className="text-slate-500">Technician not yet assigned</span>
+                      <span className="text-slate-500">{t("myOrdersPage.techAssigned")}</span>
                     )}
                   </div>
                   <div className="flex items-center gap-1.5">
@@ -458,7 +459,7 @@ function MyOrdersPage() {
                         ? new Date(o.scheduled_install_date as string).toLocaleString()
                         : o.preferred_install_date
                           ? `Preferred: ${o.preferred_install_date}`
-                          : "Awaiting schedule"}
+                          : t("myOrdersPage.awaitingSchedule")}
                     </span>
                   </div>
                   <div className="md:col-span-2 text-[11px] text-slate-500 border-t border-slate-100 pt-1.5 mt-1">
@@ -519,7 +520,7 @@ function MyOrdersPage() {
       >
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Silo limit reached</DialogTitle>
+            <DialogTitle>{t("myOrdersPage.siloLimitReached")}</DialogTitle>
             <DialogDescription>
               Your current plan (<strong>{siloGate.data?.planId ?? "starter"}</strong>) allows up to{" "}
               <strong>
@@ -538,7 +539,7 @@ function MyOrdersPage() {
           </p>
           <DialogFooter className="mt-2 flex gap-2">
             <Button variant="outline" onClick={() => setLimitOpen(false)}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
@@ -547,7 +548,7 @@ function MyOrdersPage() {
                 navigate({ to: "/plan-management" });
               }}
             >
-              Upgrade plan
+              {t("myOrdersPage.upgradePlan")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -566,24 +567,23 @@ function MyOrdersPage() {
       >
         <SheetContent className="w-full sm:max-w-md overflow-y-auto">
           <SheetHeader>
-            <SheetTitle>Request a new silo</SheetTitle>
+            <SheetTitle>{t("myOrdersPage.requestNewSiloForm")}</SheetTitle>
             <SheetDescription>
-              Fill in your install details. Our team will review and approve — you'll be notified
-              once it's ready for payment.
+              {t("myOrdersPage.fillInstallDetails")}
             </SheetDescription>
           </SheetHeader>
           <form
             className="mt-6 grid gap-4"
             onSubmit={(e) => {
               e.preventDefault();
-              const err = validatePakPhone(draftForm.phone);
+              const err = validatePakPhone(draftForm.phone, t);
               setPhoneError(err);
               if (err) return;
               draftMut.mutate();
             }}
           >
             <div className="grid gap-1.5">
-              <Label htmlFor="addon-address">Install address *</Label>
+              <Label htmlFor="addon-address">{t("myOrdersPage.installAddress")} *</Label>
               <Input
                 id="addon-address"
                 value={draftForm.address}
@@ -593,7 +593,7 @@ function MyOrdersPage() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-1.5">
-                <Label htmlFor="addon-city">City *</Label>
+                <Label htmlFor="addon-city">{t("myOrdersPage.city")} *</Label>
                 <Input
                   id="addon-city"
                   value={draftForm.city}
@@ -602,7 +602,7 @@ function MyOrdersPage() {
                 />
               </div>
               <div className="grid gap-1.5">
-                <Label htmlFor="addon-country">Country *</Label>
+                <Label htmlFor="addon-country">{t("myOrdersPage.country")} *</Label>
                 <Input
                   id="addon-country"
                   value={draftForm.country}
@@ -612,7 +612,7 @@ function MyOrdersPage() {
               </div>
             </div>
             <div className="grid gap-1.5">
-              <Label htmlFor="addon-phone">Contact phone *</Label>
+              <Label htmlFor="addon-phone">{t("myOrdersPage.contactPhone")} *</Label>
               <Input
                 id="addon-phone"
                 type="tel"
@@ -625,7 +625,7 @@ function MyOrdersPage() {
                 }}
                 onBlur={() => {
                   // Validate on blur (when user leaves the field)
-                  const err = validatePakPhone(draftForm.phone);
+                  const err = validatePakPhone(draftForm.phone, t);
                   setPhoneError(err);
                 }}
                 required
@@ -635,28 +635,28 @@ function MyOrdersPage() {
               <p className="text-[11px] text-slate-400">e.g. +923001234567 or 03001234567</p>
             </div>
             <div className="grid gap-1.5">
-              <Label htmlFor="s-notes">Notes (optional)</Label>
+              <Label htmlFor="s-notes">{t("myOrdersPage.notes")} (optional)</Label>
               <Textarea
                 id="s-notes"
                 rows={3}
                 value={draftForm.notes}
                 onChange={(e) => setDraftForm((f) => ({ ...f, notes: e.target.value }))}
-                placeholder="Preferred install time, access instructions…"
+                placeholder={t("myOrdersPage.preferredTime")}
               />
             </div>
             <div className="rounded-lg bg-slate-50 border border-slate-200 p-3 text-xs text-slate-600 space-y-1">
-              <p className="font-semibold text-slate-700">What happens next</p>
+              <p className="font-semibold text-slate-700">{t("myOrdersPage.whatHappensNext")}</p>
               <ol className="list-decimal pl-4 space-y-0.5">
-                <li>Our team reviews your request (usually within 24 h).</li>
-                <li>You'll get a notification once approved.</li>
+                <li>{t("myOrdersPage.reviewRequest")}</li>
+                <li>{t("myOrdersPage.getNotification")}</li>
                 <li>
-                  Click <strong>Pay now</strong> on this page to complete payment.
+                  {t("myOrdersPage.clickPay")}
                 </li>
               </ol>
             </div>
             <div className="flex justify-end gap-3 pt-1">
               <Button type="button" variant="outline" onClick={() => setRequestOpen(false)}>
-                Cancel
+                {t("common.cancel")}
               </Button>
               <Button
                 type="submit"
@@ -668,7 +668,7 @@ function MyOrdersPage() {
                 ) : (
                   <PlusCircle className="h-4 w-4" />
                 )}
-                {draftMut.isPending ? "Submitting…" : "Submit request"}
+                {draftMut.isPending ? t("myOrdersPage.submitting") : t("myOrdersPage.submitRequest")}
               </Button>
             </div>
           </form>
@@ -679,15 +679,15 @@ function MyOrdersPage() {
       <AlertDialog open={confirmationOpen} onOpenChange={setConfirmationOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Request Submitted</AlertDialogTitle>
+            <AlertDialogTitle>{t("myOrdersPage.requestSubmitted")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Your silo request has been sent to the admin for approval. Once approved, you will be
-              notified to proceed with payment. Please wait for admin confirmation before
-              continuing.
+              {t("myOrdersPage.siloRequestSent")} {t("myOrdersPage.awaitingApproval")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setConfirmationOpen(false)}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setConfirmationOpen(false)}>
+              {t("common.cancel")}
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 draftMut.mutate();
@@ -697,10 +697,10 @@ function MyOrdersPage() {
               {draftMut.isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Submitting...
+                  {t("common.submitting")}...
                 </>
               ) : (
-                "OK"
+                t("common.confirm")
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -726,6 +726,7 @@ function CardActions({
   onPay?: () => void;
   paying?: boolean;
 }) {
+  const { t } = useTranslation();
   const derived = deriveStage(
     order as any,
     (order as any).installation ?? null,
@@ -749,12 +750,12 @@ function CardActions({
           disabled={paying}
         >
           <CreditCard className="h-3 w-3 mr-1" />
-          {paying ? "Processing…" : "Pay now"}
+          {paying ? t("myOrdersPage.processing") : t("myOrdersPage.payNow")}
         </Button>
       )}
 
       <Button size="sm" variant="outline" onClick={onTrack} className="h-7 text-xs">
-        <Truck className="h-3 w-3 mr-1" /> Track
+        <Truck className="h-3 w-3 mr-1" /> {t("myOrdersPage.track")}
       </Button>
 
       {canComplete && (
@@ -766,39 +767,37 @@ function CardActions({
               disabled={completing}
             >
               <CheckCircle2 className="h-3 w-3 mr-1" />
-              {completing ? "Signing off…" : "Sign off"}
+              {completing ? t("myOrdersPage.signingOff") : t("myOrdersPage.signOff")}
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Admin sign-off required</AlertDialogTitle>
+              <AlertDialogTitle>{t("myOrdersPage.adminSignOff")}</AlertDialogTitle>
               <AlertDialogDescription>
-                By signing off, you confirm every sensor is physically installed and working at your
-                site. GrainHero will automatically:
+                {t("myOrdersPage.bySigningOff")}
                 <ul className="list-disc pl-5 mt-2 space-y-1 text-xs">
-                  <li>Provision a warehouse for this install (if none exists).</li>
-                  <li>Create one silo per installed device serial.</li>
+                  <li>{t("myOrdersPage.provisionWarehouse")}</li>
+                  <li>{t("myOrdersPage.createOneSiloPerDevice")}</li>
                   <li>
-                    Record your Admin sign-off and move the order to <strong>Completed</strong> —
-                    this step cannot be reversed.
+                    {t("myOrdersPage.recordAdminSignOff")}
                   </li>
                 </ul>
               </AlertDialogDescription>
             </AlertDialogHeader>
             <div className="space-y-2 px-1 pb-1 text-xs text-slate-600">
-              <p>GrainHero will automatically:</p>
+              <p>{t("myOrdersPage.grainHeroWillAutomatically")}</p>
               <ul className="list-disc pl-5 space-y-1">
-                <li>Provision a warehouse for this install (if none exists yet).</li>
+                <li>{t("myOrdersPage.provisionWarehouseIfNone")}</li>
                 <li>
-                  Create one silo per device serial the technician recorded ({deviceCount} ordered).
+                  {t("myOrdersPage.createSiloPerDevice", { count: deviceCount })}
                 </li>
                 <li>
-                  Move the order to <strong>Completed</strong> — this cannot be reversed.
+                  {t("myOrdersPage.moveOrderToCompleted")}
                 </li>
               </ul>
               <p className="text-amber-700 bg-amber-50 rounded p-2 border border-amber-200">
-                Silos don't appear instantly — if they're missing after a minute, open
-                <strong> Track installation</strong> and confirm the technician saved device
+                {t("myOrdersPage.silosDoNotAppear")}
+                <strong> {t("myOrdersPage.track")}</strong> and confirm the technician saved device
                 serials. Each serial provisions one silo.
               </p>
             </div>

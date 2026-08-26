@@ -22,6 +22,7 @@ import {
   DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import { downloadCsv, downloadPdf, type ExportColumn } from "@/lib/csv-pdf-export";
+import { useTranslation } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/business")({
   head: () => ({
@@ -41,9 +42,9 @@ export const Route = createFileRoute("/_authenticated/business")({
 
 type Tab = "revenue";
 
-const TABS: { key: Tab; label: string; icon: ComponentType<{ className?: string }> }[] = [
-  { key: "revenue", label: "Revenue", icon: Wallet },
-];
+function getTabs(t: (key: string) => string): { key: Tab; label: string; icon: ComponentType<{ className?: string }> }[] {
+  return [{ key: "revenue", label: t("business.revenue"), icon: Wallet }];
+}
 
 function money(n: number) {
   return `PKR ${Number(n ?? 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
@@ -51,6 +52,8 @@ function money(n: number) {
 
 function BusinessWorkspace() {
   const [activeTab, setActiveTab] = useState<Tab>("revenue");
+  const { t } = useTranslation();
+  const TABS = getTabs(t);
 
   const fetchRevenue = useServerFn(getRevenueOverview);
   const fetchSub = useServerFn(getMySubscription);
@@ -214,7 +217,7 @@ function BusinessWorkspace() {
 
   const stats = [
     {
-      label: "Invoiced",
+      label: t("business.invoiced"),
       value: money(totals.invoiced),
       pct: totals.invoiced > 0 ? "100%" : "0.0%",
       width: totals.invoiced > 0 ? 100 : 0,
@@ -225,7 +228,7 @@ function BusinessWorkspace() {
         downloadPdf("invoiced-revenue", "Invoiced Revenue Report", invoices, invoicedExportColumns),
     },
     {
-      label: "Collected",
+      label: t("business.collected"),
       value: money(totals.collected),
       pct: `${collectedPct.toFixed(1)}%`,
       width: collectedPct,
@@ -241,7 +244,7 @@ function BusinessWorkspace() {
         ),
     },
     {
-      label: "Outstanding",
+      label: t("business.outstanding"),
       value: money(totals.outstanding),
       pct: `${outstandingPct.toFixed(1)}%`,
       width: outstandingPct,
@@ -258,7 +261,7 @@ function BusinessWorkspace() {
         ),
     },
     {
-      label: "Due",
+      label: t("business.due"),
       value: `${totals.overdue}`,
       pct: `${overduePct.toFixed(1)}%`,
       width: overduePct,
@@ -287,15 +290,15 @@ function BusinessWorkspace() {
       <div className="max-w-7xl mx-auto space-y-8">
         <div>
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-foreground">
-            <VariableFontText text="Business" base={650} hover={900} staggerMs={20} />
+            <span dir="ltr" className="inline-block"><VariableFontText text={t("business.title")} base={650} hover={900} staggerMs={20} /></span>
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">Revenue and financial overview</p>
+          <p className="mt-1 text-sm text-muted-foreground">{t("business.subtitle")}</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2 bg-card border border-border rounded-2xl p-6">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-5">
-              Business Overview
+              {t("business.businessOverview")}
             </p>
             <RevenueChart invoices={invoices} payments={payments} />
           </div>
@@ -303,7 +306,7 @@ function BusinessWorkspace() {
           <div className="bg-card border border-border rounded-[2rem] p-6 lg:p-8 flex flex-col justify-between relative h-full">
             <div className="flex justify-between items-center mb-6 gap-2">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
-                Key Metrics
+                {t("business.keyMetrics")}
               </p>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -313,12 +316,12 @@ function BusinessWorkspace() {
                     className="h-7 text-xs gap-1.5 border-border shadow-xs"
                   >
                     <Download className="h-3 w-3" />
-                    <span>Export</span>
+                    <span>{t("common.export")}</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56 text-xs p-1.5">
                   <DropdownMenuLabel className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-2 py-1">
-                    Export All Together
+                    {t("business.exportAllTogether")}
                   </DropdownMenuLabel>
 
                   {/* All Metrics Summary */}
@@ -326,7 +329,7 @@ function BusinessWorkspace() {
                     <DropdownMenuSubTrigger className="flex items-center justify-between gap-2 cursor-pointer text-xs px-2 py-1.5 rounded-sm">
                       <div className="flex items-center gap-2">
                         <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />
-                        <span className="font-medium">All Metrics Summary</span>
+                        <span className="font-medium">{t("business.allMetricsSummary")}</span>
                       </div>
                       <MoreHorizontal className="h-3.5 w-3.5 text-muted-foreground mr-1" />
                     </DropdownMenuSubTrigger>
@@ -364,7 +367,7 @@ function BusinessWorkspace() {
                   <DropdownMenuSeparator className="my-1.5" />
 
                   <DropdownMenuLabel className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-2 py-1">
-                    Export Datasets
+                    {t("business.exportDatasets")}
                   </DropdownMenuLabel>
 
                   {/* Invoiced */}
@@ -372,7 +375,7 @@ function BusinessWorkspace() {
                     <DropdownMenuSubTrigger className="flex items-center justify-between gap-2 cursor-pointer text-xs px-2 py-1.5 rounded-sm">
                       <div className="flex items-center gap-2">
                         <FileText className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
-                        <span className="font-medium">Invoiced</span>
+                        <span className="font-medium">{t("business.invoiced")}</span>
                       </div>
                       <MoreHorizontal className="h-3.5 w-3.5 text-muted-foreground mr-1" />
                     </DropdownMenuSubTrigger>
@@ -408,7 +411,7 @@ function BusinessWorkspace() {
                     <DropdownMenuSubTrigger className="flex items-center justify-between gap-2 cursor-pointer text-xs px-2 py-1.5 rounded-sm">
                       <div className="flex items-center gap-2">
                         <FileText className="h-3.5 w-3.5 text-emerald-600" />
-                        <span className="font-medium">Collected</span>
+                        <span className="font-medium">{t("business.collected")}</span>
                       </div>
                       <MoreHorizontal className="h-3.5 w-3.5 text-muted-foreground mr-1" />
                     </DropdownMenuSubTrigger>
@@ -448,7 +451,7 @@ function BusinessWorkspace() {
                     <DropdownMenuSubTrigger className="flex items-center justify-between gap-2 cursor-pointer text-xs px-2 py-1.5 rounded-sm">
                       <div className="flex items-center gap-2">
                         <FileText className="h-3.5 w-3.5 text-amber-600" />
-                        <span className="font-medium">Outstanding</span>
+                        <span className="font-medium">{t("business.outstanding")}</span>
                       </div>
                       <MoreHorizontal className="h-3.5 w-3.5 text-muted-foreground mr-1" />
                     </DropdownMenuSubTrigger>
@@ -488,7 +491,7 @@ function BusinessWorkspace() {
                     <DropdownMenuSubTrigger className="flex items-center justify-between gap-2 cursor-pointer text-xs px-2 py-1.5 rounded-sm">
                       <div className="flex items-center gap-2">
                         <FileText className="h-3.5 w-3.5 text-red-600" />
-                        <span className="font-medium">Due / Overdue</span>
+                        <span className="font-medium">{t("business.due")} / {t("business.overdue")}</span>
                       </div>
                       <MoreHorizontal className="h-3.5 w-3.5 text-muted-foreground mr-1" />
                     </DropdownMenuSubTrigger>

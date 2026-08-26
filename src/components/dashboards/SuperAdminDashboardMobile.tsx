@@ -636,7 +636,7 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
                 <Ticket className="w-4 h-4 text-muted-foreground" />
               </div>
               <div className="text-2xl font-bold text-foreground">{allTickets.length}</div>
-              <div className="text-xs text-muted-foreground mt-1">Support Tickets</div>
+              <div className="text-xs text-muted-foreground mt-1">Incidents</div>
               <div className="text-xs text-muted-foreground mt-0.5">Open tickets</div>
             </div>
           </RouterLink>

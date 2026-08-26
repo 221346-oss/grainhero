@@ -8,6 +8,7 @@
 import { useState, useEffect, useId } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { useTranslation } from "@/i18n";
 import { Link } from "@tanstack/react-router";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -30,6 +31,7 @@ const INSTALL_STATUS_COLOR: Record<string, string> = {
 export function SuperAdminTechnicianDashboard() {
   const channelId = useId();
   const qc = useQueryClient();
+  const { t } = useTranslation();
   const fetchFn = useServerFn(listAllInstallations);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -122,30 +124,30 @@ export function SuperAdminTechnicianDashboard() {
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         {[
           {
-            label: "Fleet",
+            label: t("technicians.fleet"),
             value: techCount,
-            sub: `${sc.available} available`,
+            sub: `${sc.available} ${t("technicians.available")}`,
             color: "border-emerald-200 bg-emerald-50/50",
             icon: Users,
           },
           {
-            label: "Busy",
+            label: t("technicians.busy"),
             value: sc.busy,
-            sub: "on active jobs",
+            sub: t("technicians.onActiveJobs"),
             color: "border-amber-200 bg-amber-50/50",
             icon: Wrench,
           },
           {
-            label: "In transit",
+            label: t("technicians.inTransit"),
             value: inTransit,
-            sub: "silos on trucks",
+            sub: t("technicians.silosOnTrucks"),
             color: "border-indigo-200 bg-indigo-50/50",
             icon: Truck,
           },
           {
-            label: "Total installs",
+            label: t("technicians.totalInstalls"),
             value: allInstalls.length,
-            sub: `${statusCounts.completed ?? 0} completed`,
+            sub: `${statusCounts.completed ?? 0} ${t("technicians.completed")}`,
             color: "border-slate-200 bg-slate-50/50",
             icon: MapPin,
           },
@@ -166,12 +168,12 @@ export function SuperAdminTechnicianDashboard() {
       {/* Install status KPI strip */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
         {[
-          { key: "all", label: "Total", value: allInstalls.length },
-          { key: "scheduled", label: "Scheduled", value: statusCounts.scheduled ?? 0 },
-          { key: "en_route", label: "En route", value: statusCounts.en_route ?? 0 },
-          { key: "onsite", label: "On site", value: statusCounts.onsite ?? 0 },
-          { key: "completed", label: "Completed", value: statusCounts.completed ?? 0 },
-          { key: "blocked", label: "Blocked", value: statusCounts.blocked ?? 0 },
+          { key: "all", label: t("technicians.total"), value: allInstalls.length },
+          { key: "scheduled", label: t("technicians.scheduled"), value: statusCounts.scheduled ?? 0 },
+          { key: "en_route", label: t("technicians.enRoute"), value: statusCounts.en_route ?? 0 },
+          { key: "onsite", label: t("technicians.onSite"), value: statusCounts.onsite ?? 0 },
+          { key: "completed", label: t("technicians.completed"), value: statusCounts.completed ?? 0 },
+          { key: "blocked", label: t("platformUsers.blocked"), value: statusCounts.blocked ?? 0 },
         ].map((kpi) => (
           <button
             key={kpi.key}
@@ -197,7 +199,7 @@ export function SuperAdminTechnicianDashboard() {
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search order, city, customer, tech…"
+            placeholder={t("technicians.searchPlaceholder")}
             className="pl-8 h-8 text-xs"
           />
         </div>
@@ -209,7 +211,7 @@ export function SuperAdminTechnicianDashboard() {
           <RefreshCw className={`w-3 h-3 ${isFetching ? "animate-spin" : ""}`} />
         </button>
         <span className="text-xs text-muted-foreground ml-auto">
-          {filtered.length} install{filtered.length !== 1 ? "s" : ""}
+          {t("technicians.installsCount", { count: filtered.length })}
         </span>
       </div>
 
@@ -222,7 +224,7 @@ export function SuperAdminTechnicianDashboard() {
         </div>
       ) : filtered.length === 0 ? (
         <div className="rounded-lg border border-dashed border-border p-12 text-center text-sm text-muted-foreground">
-          No installations found.
+          {t("technicians.noInstallations")}
         </div>
       ) : (
         <div className="rounded-lg border border-border bg-background overflow-hidden">
@@ -231,22 +233,22 @@ export function SuperAdminTechnicianDashboard() {
               <thead className="border-b border-border bg-muted/30">
                 <tr>
                   <th className="px-4 py-3 text-left font-semibold text-xs uppercase text-muted-foreground">
-                    Order
+                    {t("technicians.headerOrder")}
                   </th>
                   <th className="px-4 py-3 text-left font-semibold text-xs uppercase text-muted-foreground">
-                    Customer
+                    {t("technicians.headerCustomer")}
                   </th>
                   <th className="px-4 py-3 text-left font-semibold text-xs uppercase text-muted-foreground">
-                    City
+                    {t("technicians.headerCity")}
                   </th>
                   <th className="px-4 py-3 text-left font-semibold text-xs uppercase text-muted-foreground">
-                    Technician
+                    {t("technicians.headerTechnician")}
                   </th>
                   <th className="px-4 py-3 text-left font-semibold text-xs uppercase text-muted-foreground">
-                    Status
+                    {t("technicians.headerStatus")}
                   </th>
                   <th className="px-4 py-3 text-left font-semibold text-xs uppercase text-muted-foreground">
-                    Scheduled
+                    {t("technicians.headerScheduled")}
                   </th>
                 </tr>
               </thead>
@@ -281,14 +283,26 @@ export function SuperAdminTechnicianDashboard() {
                         {tech.name ? (
                           <span className="text-sm font-medium">{tech.name}</span>
                         ) : (
-                          <span className="text-xs text-muted-foreground">Unassigned</span>
+                          <span className="text-xs text-muted-foreground">
+                            {t("technicians.unassigned")}
+                          </span>
                         )}
                       </td>
                       <td className="px-4 py-3">
                         <Badge
                           className={`text-[10px] ${INSTALL_STATUS_COLOR[i.status as string] ?? "bg-slate-200 text-slate-700"}`}
                         >
-                          {(i.status as string).replace(/_/g, " ")}
+                          {i.status === "scheduled"
+                            ? t("technicians.scheduledStatus")
+                            : i.status === "en_route"
+                              ? t("technicians.enRoute")
+                              : i.status === "onsite"
+                                ? t("technicians.onsite")
+                                : i.status === "completed"
+                                  ? t("technicians.statusCompleted")
+                                  : i.status === "blocked"
+                                    ? t("technicians.blockedStatus")
+                                    : (i.status as string)}
                         </Badge>
                       </td>
                       <td className="px-4 py-3 text-xs text-muted-foreground">

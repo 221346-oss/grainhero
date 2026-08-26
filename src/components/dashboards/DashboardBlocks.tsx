@@ -17,6 +17,7 @@ import { DispatchDialog } from "@/components/app/silos/DispatchDialog";
 import { siloStatusBadge } from "@/components/grain-operations/SiloOperationsCard";
 import { listBuyers } from "@/lib/operations.functions";
 import { listDispatches } from "@/lib/dispatches.functions";
+import { useTranslation } from "@/i18n";
 
 // range must match whatever AdminDashboard.tsx's own useQuery is keyed on —
 // same queryKey means react-query dedupes this into the SAME network call
@@ -92,12 +93,13 @@ export function RecentBatchesCard({ range }: { range?: string } = {}) {
   const rows = data?.recentBatches ?? [];
   const visible = rows.slice(0, 3);
   const overflow = rows.slice(3);
+  const { t } = useTranslation();
   return (
     <Card className="border-border/60 shadow-sm">
       <CardHeaderLink
         to="/grain-operations"
         search={{ tab: "batches" }}
-        title="Batches"
+        title={t("grainOps.grainBatches")}
         count={rows.length}
       />
       <CardContent className="p-2 pt-0">
@@ -344,17 +346,18 @@ export function ActuatorsCard() {
 
 export function SilosOccupancyCard() {
   const { data } = useExtras();
+  const { t } = useTranslation();
   const rows = data?.silos ?? [];
   return (
     <Card className="border-border/60 shadow-sm">
       <CardHeaderLink
         to="/grain-operations"
         search={{ tab: "silos" }}
-        title="Silos"
+        title={t("grainOps.silos")}
         count={rows.length}
       />
       <CardContent className="p-3 pt-0 space-y-1.5">
-        {rows.length === 0 && <p className="text-xs text-muted-foreground py-2">No silos</p>}
+        {rows.length === 0 && <p className="text-xs text-muted-foreground py-2">{t("grainOps.noSilos")}</p>}
         {rows.slice(0, 6).map((s) => {
           const cap = Number(s.capacity_kg ?? 0);
           const occ = Number(s.current_occupancy_kg ?? 0);
@@ -408,6 +411,7 @@ export function DashboardSiloCards({ range }: { range?: string } = {}) {
   const listSilosFn = useServerFn(listSilos);
   const listBatchesFn = useServerFn(listGrainBatches);
   const { data: extras } = useExtras(range);
+  const { t } = useTranslation();
   const { data: silos } = useQuery({
     queryKey: ["silos"],
     queryFn: () => listSilosFn() as Promise<DashSilo[]>,
@@ -445,7 +449,7 @@ export function DashboardSiloCards({ range }: { range?: string } = {}) {
       <CardHeaderLink
         to="/grain-operations"
         search={{ tab: "silos" }}
-        title="Silos"
+        title={t("grainOps.silos")}
         count={rows.length}
       />
       <CardContent className="p-3 pt-0 space-y-1.5">
@@ -473,21 +477,18 @@ export function DashboardSiloCards({ range }: { range?: string } = {}) {
                       style={{ width: `${Math.min(100, pct)}%` }}
                     />
                   </div>
-                  <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                    <div className={`h-full ${bar}`} style={{ width: `${Math.min(100, pct)}%` }} />
-                  </div>
                   <p className="text-[10px] text-muted-foreground tabular-nums">
                     {occ.toLocaleString()} / {cap.toLocaleString()} kg ({pct}%)
                   </p>
                   <div className="grid grid-cols-2 gap-1 text-[10px]">
                     <div className="rounded border border-border/50 bg-muted/30 px-1.5 py-1">
-                      <p className="text-muted-foreground">In</p>
+                        <p className="text-muted-foreground">{t("grainOps.incoming")}</p>
                       <p className="font-semibold tabular-nums">
                         {(incomingBySilo[s.id] ?? 0).toLocaleString()}kg
                       </p>
                     </div>
                     <div className="rounded border border-border/50 bg-muted/30 px-1.5 py-1">
-                      <p className="text-muted-foreground">Out</p>
+                        <p className="text-muted-foreground">{t("grainOps.outgoing")}</p>
                       <p className="font-semibold tabular-nums">
                         {(outgoingBySilo[s.id] ?? 0).toLocaleString()}kg
                       </p>
@@ -500,11 +501,11 @@ export function DashboardSiloCards({ range }: { range?: string } = {}) {
                     className="h-6 flex-1 text-[10px] bg-emerald-600 hover:bg-emerald-700 text-white"
                     onClick={() => setDispatchSilo(s)}
                   >
-                    Sell
+                    {t("grainOps.sell")}
                   </Button>
                   <Button size="sm" variant="outline" className="h-6 px-1.5 text-[10px]" asChild>
                     <Link to="/silos/$siloId" params={{ siloId: s.id }}>
-                      View
+                      {t("grainOps.view")}
                     </Link>
                   </Button>
                 </div>
@@ -513,7 +514,7 @@ export function DashboardSiloCards({ range }: { range?: string } = {}) {
                   onClick={handleRequestMore}
                   className="w-full text-[10px] text-emerald-700 dark:text-emerald-400 hover:underline"
                 >
-                  Request more capacity
+                  {t("grainOps.requestMoreCapacity")}
                 </button>
               </div>
             </div>
@@ -535,6 +536,7 @@ export function DashboardSiloCards({ range }: { range?: string } = {}) {
 // et al.) rather than a new query.
 export function IncomingQueueCard({ range }: { range?: string } = {}) {
   const { data } = useExtras(range);
+  const { t } = useTranslation();
   const incoming = (data?.allBatches ?? []).filter((b) =>
     ["pending_qc", "qc_submitted"].includes(String(b.status)),
   );
@@ -543,7 +545,7 @@ export function IncomingQueueCard({ range }: { range?: string } = {}) {
       <CardHeaderLink
         to="/grain-operations"
         search={{ tab: "batches" }}
-        title="Incoming Queue"
+        title={t("grainOps.pendingApprovals")}
         count={incoming.length}
       />
       <CardContent className="p-2 pt-0">
@@ -592,12 +594,13 @@ export function FieldIncidentsCard() {
   const { data } = useQuery({ queryKey: ["field-incidents"], queryFn: () => fn() });
   const incidents = (data?.incidents ?? []) as unknown as FieldIncidentRow[];
   const open = incidents.filter((i) => i.status !== "closed");
+  const { t } = useTranslation();
   return (
     <Card className="border-border/60 shadow-sm">
       <CardHeaderLink
         to="/administration"
         search={{ tab: "field" }}
-        title="Field Incidents"
+        title={t("sidebar.incidents")}
         count={open.length}
       />
       <CardContent className="p-2 pt-0">
@@ -649,9 +652,10 @@ export function RecentActivityCard() {
     queryFn: () => fn({ data: { page: 1, limit: 8 } }),
   });
   const logs = data?.logs ?? [];
+  const { t } = useTranslation();
   return (
     <Card className="border-border/60 shadow-sm">
-      <CardHeaderLink to="/activity-logs" title="Recent Activity" count={logs.length} />
+      <CardHeaderLink to="/activity-logs" title={t("superAdmin.recentEvents")} count={logs.length} />
       <CardContent className="p-2 pt-0">
         {logs.length === 0 ? (
           <p className="text-xs text-muted-foreground p-4 text-center">No recent activity</p>
@@ -720,12 +724,12 @@ function fmtShort(iso: string) {
 }
 
 /**
- * Support ticket queue (field_tickets via tickets.functions.ts) — despite its
+ * Open-field incident queue (field_tickets via tickets.functions.ts) — despite its
  * old name, this has nothing to do with the mobile field_incidents system or
  * the newer auto-routing Field Incidents feature (Administration tab,
  * grain_alerts). Renamed from `OpenFieldIncidentsCard` to stop the confusion.
  */
-export function SupportTicketsCard({
+export function IncidentsCard({
   onViewAll,
   ticketPanelOpen,
   onTicketPanelClose,
@@ -763,6 +767,7 @@ export function SupportTicketsCard({
   }, [tickets, currentUserId]);
 
   const { unreadFor, markRead } = useTicketUnread(currentUserId);
+  const { t } = useTranslation();
 
   function handleFormSuccess() {
     setShowNewTicket(false);
@@ -785,7 +790,7 @@ export function SupportTicketsCard({
         {/* Header — no icon, just text + count + actions */}
         <CardHeader className="p-3 flex flex-row items-center justify-between space-y-0 shrink-0">
           <CardTitle className="text-sm flex items-center gap-2">
-            Support Tickets
+            {t("sidebar.incidents")}
             <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-mono tabular-nums">
               {tickets.length}
             </Badge>
@@ -876,7 +881,7 @@ export function SupportTicketsCard({
         <DialogContent className="w-full max-w-lg p-0 overflow-hidden">
           <DialogHeader className="px-5 pt-5 pb-3 border-b border-slate-200">
             <DialogTitle className="text-sm font-bold text-slate-900">
-              New support ticket
+              New incident report
             </DialogTitle>
           </DialogHeader>
           <div className="px-5 py-4">

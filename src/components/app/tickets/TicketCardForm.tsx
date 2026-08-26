@@ -1,14 +1,15 @@
 /**
  * TicketCardForm
- * Open-field incident card. Title is chosen from a predefined list of
+ * Incident report card. Title is chosen from a predefined list of
  * issue types relevant to the GrainHero platform. Description placeholder
  * updates based on the selected type to guide the admin.
  */
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { createTicket } from "@/lib/tickets.functions";
+import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Paperclip, X } from "lucide-react";
 
 type Priority = "low" | "medium" | "high";
 type ReporterRole = "admin" | "manager" | "technician";
@@ -222,6 +224,9 @@ export function TicketCardForm({ onSuccess, onCancel }: Props) {
   const [priority, setPriority] = useState<Priority>("medium");
   const [reporterName, setReporterName] = useState("");
   const [description, setDescription] = useState("");
+  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Derived: the selected IssueType object
   const selected = ISSUE_TYPES.find((i) => i.value === issueValue) ?? null;
@@ -236,23 +241,75 @@ export function TicketCardForm({ onSuccess, onCancel }: Props) {
     }
   }
 
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // Check file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File size must be less than 10MB");
+      return;
+    }
+    
+    setAttachmentFile(file);
+  }
+
+  function removeAttachment() {
+    setAttachmentFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
   const mut = useMutation({
-    mutationFn: () =>
-      createFn({
-        data: {
-          title: issueValue,
-          priority,
-          reporter_name: reporterName.trim(),
-          reporter_role: "admin" as ReporterRole,
-          description: description.trim(),
-        },
-      }),
+    mutationFn: async () => {
+      setUploading(true);
+      let attachmentUrl: string | null = null;
+      
+      try {
+        // Upload file if attached
+        if (attachmentFile) {
+          const filePath = `ticket-attachments/initial/${Date.now()}-${attachmentFile.name}`;
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from("ticket-attachments")
+            .upload(filePath, attachmentFile, {
+              cacheControl: "3600",
+              upsert: false,
+            });
+          
+          if (uploadError) throw uploadError;
+          
+          const { data: { publicUrl } } = supabase.storage
+            .from("ticket-attachments")
+            .getPublicUrl(filePath);
+          
+          attachmentUrl = publicUrl;
+        }
+        
+        // Create ticket with attachment URL in description if present
+        const finalDescription = attachmentUrl
+          ? `${description.trim()}\n\n[Attachment: ${attachmentFile!.name}](${attachmentUrl})`
+          : description.trim();
+        
+        return await createFn({
+          data: {
+            title: issueValue,
+            priority,
+            reporter_name: reporterName.trim(),
+            reporter_role: "admin" as ReporterRole,
+            description: finalDescription,
+          },
+        });
+      } finally {
+        setUploading(false);
+      }
+    },
     onSuccess: () => {
       toast.success("Ticket sent to super admin");
       setIssueValue("");
       setReporterName("");
       setDescription("");
       setPriority("medium");
+      setAttachmentFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
       qc.invalidateQueries({ queryKey: ["field-tickets"] });
       onSuccess?.();
     },
@@ -263,7 +320,8 @@ export function TicketCardForm({ onSuccess, onCancel }: Props) {
     issueValue.length > 0 &&
     reporterName.trim().length >= 1 &&
     description.trim().length >= 1 &&
-    !mut.isPending;
+    !mut.isPending &&
+    !uploading;
 
   return (
     <div className="relative rounded-xl border border-slate-200 bg-white shadow-sm p-5 space-y-4">
@@ -288,7 +346,7 @@ export function TicketCardForm({ onSuccess, onCancel }: Props) {
 
       {/* Header */}
       <div className="pr-24">
-        <p className="text-sm font-semibold text-slate-900">Open-field incident</p>
+        <p className="text-sm font-semibold text-slate-900">Incident report</p>
         <p className="text-xs text-slate-500 mt-0.5">Sent to super admin only.</p>
       </div>
 
@@ -348,6 +406,53 @@ export function TicketCardForm({ onSuccess, onCancel }: Props) {
           maxLength={4000}
         />
         <p className="text-[10px] text-slate-400 text-right">{description.length}/4000</p>
+      </div>
+
+      {/* File attachment — optional */}
+      <div className="space-y-1.5">
+        <Label className="text-xs text-slate-600 font-medium">
+          Attachment <span className="text-muted-foreground font-normal">(optional — max 10MB)</span>
+        </Label>
+        {!attachmentFile ? (
+          <label
+            htmlFor="ticket-attachment"
+            className={cn(
+              "flex items-center justify-center gap-2 h-10 rounded-md border border-dashed border-border bg-muted/20 hover:bg-muted/40 transition-colors cursor-pointer text-xs text-muted-foreground",
+              uploading && "opacity-50 cursor-not-allowed"
+            )}
+          >
+            <Paperclip className="h-3.5 w-3.5" />
+            {uploading ? "Uploading…" : "Choose image, screenshot, or document"}
+            <input
+              ref={fileInputRef}
+              id="ticket-attachment"
+              type="file"
+              accept="image/*,.pdf,.doc,.docx,.txt"
+              onChange={handleFileSelect}
+              className="sr-only"
+              disabled={uploading}
+            />
+          </label>
+        ) : (
+          <div className="flex items-center justify-between gap-2 p-2 rounded-md border border-border bg-emerald-50/50 dark:bg-emerald-900/10">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <Paperclip className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+              <span className="text-xs truncate font-medium">{attachmentFile.name}</span>
+              <span className="text-[10px] text-muted-foreground shrink-0">
+                ({(attachmentFile.size / 1024).toFixed(0)} KB)
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={removeAttachment}
+              className="text-muted-foreground hover:text-red-600 shrink-0"
+              aria-label="Remove file"
+              disabled={uploading}
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Actions */}

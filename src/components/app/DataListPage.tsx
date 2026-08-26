@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/dashboards/_shared";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getBatchStageLabel } from "@/lib/batch-stage.utils";
+import { useTranslation } from "@/i18n";
 
 export type Column<T> = {
   key: string;
@@ -95,6 +96,7 @@ export function StatusBadge({
   value: string | null | undefined;
   qcPassedAt?: string | null;
 }) {
+  const { t } = useTranslation();
   if (!value) return <span className="text-slate-400">—</span>;
 
   // Get user-friendly stage label
@@ -123,5 +125,22 @@ export function StatusBadge({
     sold: "bg-violet-100 text-violet-700",
   };
   const cls = colors[value.toLowerCase()] ?? "bg-slate-100 text-slate-700";
-  return <Badge className={`${cls} hover:${cls}`}>{stageLabel}</Badge>;
+  const statusKey: Record<string, string> = {
+    pending_qc: "grainOps.pending",
+    qc_submitted: "grainOps.qc",
+    qc_passed: "grainOps.confirmed",
+    qc_failed: "grainOps.issue",
+    admin_rejected: "grainOps.issue",
+    pending_approval: "grainOps.pending",
+    stored: "grainOps.stored",
+    processing: "grainOps.processing",
+    dispatched: "grainOps.dispatched",
+    sold: "grainOps.sold",
+    active: "silos.active",
+    offline: "silos.offline",
+    error: "silos.error",
+    maintenance: "silos.maintenance",
+  };
+  const translated = statusKey[value.toLowerCase()] ? t(statusKey[value.toLowerCase()]) : stageLabel;
+  return <Badge className={`${cls} hover:${cls}`}>{translated}</Badge>;
 }

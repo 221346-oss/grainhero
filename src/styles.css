@@ -678,11 +678,35 @@ html {
     font-weight 0.35s cubic-bezier(0.4, 0, 0.2, 1),
     font-variation-settings 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
+/* Sidebar/animated labels are split into per-letter spans for the hover
+   animation. Force LTR on the container so the letters can NEVER render in
+   reverse ("snalP") even if some ancestor sets an RTL direction. Urdu
+   labels are a single joined span (.vfh-urdu) and shape correctly inside
+   an LTR context via the Unicode bidi algorithm. */
+.vfh {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+.vfh-urdu {
+  unicode-bidi: isolate;
+}
 .vfh:hover .vfh-letter,
 a:hover > .vfh .vfh-letter,
 button:hover > .vfh .vfh-letter {
   font-weight: var(--vfh-hover, 900);
   font-variation-settings: "wght" var(--vfh-hover, 900);
+}
+
+/* Urdu/Arabic script variant: text is a single span (letters must stay
+   joined), so the whole word bolds on hover instead of per letter. */
+.vfh-urdu {
+  font-weight: var(--vfh-base, 500);
+  transition: font-weight 0.2s ease;
+}
+.vfh-urdu:hover,
+a:hover > .vfh-urdu,
+button:hover > .vfh-urdu {
+  font-weight: var(--vfh-hover, 900);
 }
 
 /* Skeleton shimmer — LinkedIn / YouTube / GitHub style */
@@ -827,4 +851,103 @@ button:hover > .vfh .vfh-letter {
 .landing-type .font-extrabold {
   font-family: "Outfit", ui-sans-serif, system-ui, sans-serif;
   letter-spacing: -0.02em;
+}
+
+/* ── Urdu layout ───────────────────────────────────────────────────────── */
+/* Layout stays LTR in every language — only fonts, line-height and text
+   wrapping change for Urdu. Flipping direction mirrored the whole design
+   and reversed per-letter animated labels (e.g. sidebar "snalP" bug). */
+html[lang="ur"] body {
+  line-height: 1.75;
+  font-family: "Noto Nastaliq Urdu", "Noto Sans Arabic", "Noto Sans", system-ui, sans-serif;
+  font-feature-settings: "liga" 1, "calt" 1, "rlig" 1;
+  text-rendering: optimizeLegibility;
+}
+
+/* Keep technical/English-only surfaces readable in their natural order. */
+
+/* Keep technical/English-only surfaces readable in their natural page order. */
+html[lang="ur"] .gh-english-surface,
+html[lang="ur"] [dir="ltr"] {
+  direction: ltr;
+  text-align: left;
+  font-family: "Noto Sans", system-ui, sans-serif;
+  line-height: 1.5;
+}
+
+html[lang="ur"] .gh-english-surface * {
+  font-family: inherit;
+}
+
+html[lang="ur"] .app-scope h1,
+html[lang="ur"] .app-scope h2,
+html[lang="ur"] .app-scope h3,
+html[lang="ur"] .app-scope h4,
+html[lang="ur"] .app-scope h5,
+html[lang="ur"] .app-scope h6 {
+  line-height: 1.9;
+  overflow-wrap: anywhere;
+  /* Nastaliq ascenders/descenders are tall — give headings room so words
+     are never clipped to half their height. */
+  overflow: visible;
+  padding-top: 0.2em;
+  padding-bottom: 0.3em;
+  min-height: 1.6em;
+}
+
+/* Same anti-clipping rule for headings outside .app-scope (landing etc.) */
+html[lang="ur"] h1,
+html[lang="ur"] h2,
+html[lang="ur"] h3 {
+  overflow: visible;
+  padding-top: 0.15em;
+  padding-bottom: 0.25em;
+}
+
+/* Small Urdu text (labels, badges, tiles) also clips easily — add breathing
+   room without changing layout in English. */
+html[lang="ur"] .app-scope button,
+html[lang="ur"] .app-scope label,
+html[lang="ur"] .app-scope .uppercase {
+  line-height: 2;
+}
+
+html[lang="ur"] .app-scope p,
+html[lang="ur"] .app-scope li,
+html[lang="ur"] .app-scope button,
+html[lang="ur"] .app-scope a {
+  overflow-wrap: anywhere;
+}
+
+/* Preserve intentional truncation and scrolling; only opt out where a
+   component explicitly marks an English surface. */
+html[lang="ur"] .app-scope .truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html[lang="ur"] .app-scope .whitespace-nowrap {
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+
+/* The problem marquee keeps its LTR track; Urdu phrases inside render
+   right-to-left naturally via the Unicode bidi algorithm. */
+
+/* The questions remain animated in Urdu, but the moving track itself must
+   travel left-to-right. Each question keeps RTL shaping and nowrap so the
+   Nastaliq phrase cannot split into broken words while it moves. */
+html[lang="ur"] .gh-urdu-marquee {
+  direction: ltr;
+  unicode-bidi: isolate;
+  font-family: "Noto Nastaliq Urdu", "Noto Sans Arabic", "Noto Sans", system-ui, sans-serif;
+}
+
+html[lang="ur"] .gh-urdu-marquee > span > span[dir="rtl"] {
+  direction: rtl;
+  unicode-bidi: plaintext;
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: normal;
 }

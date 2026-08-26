@@ -39,6 +39,7 @@ import { InstallationDrawer } from "@/components/app/orders/InstallationDrawer";
 import { InstallStageTracker, deriveStage } from "@/components/app/orders/InstallStageTracker";
 import { TechnicianAssignmentDialog } from "@/components/app/orders/TechnicianAssignmentDialog";
 import { Truck, MoreHorizontal, Users, Search, RefreshCw, MapPin, Phone } from "lucide-react";
+import { useTranslation } from "@/i18n";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -65,37 +66,33 @@ const STATUSES = [
 ] as const;
 type OrderStatus = (typeof STATUSES)[number];
 
-const STATUS_CFG: Record<string, { badge: string; label: string }> = {
-  pending_payment: {
-    badge: "bg-muted text-muted-foreground border-border",
-    label: "Pending payment",
-  },
-  paid: { badge: "bg-blue-100 text-blue-800 border-blue-200", label: "Paid" },
-  packing: { badge: "bg-amber-100 text-amber-800 border-amber-200", label: "Packing" },
-  shipped: { badge: "bg-indigo-100 text-indigo-800 border-indigo-200", label: "Shipped" },
-  in_transit: { badge: "bg-indigo-100 text-indigo-800 border-indigo-200", label: "In transit" },
-  installing: { badge: "bg-cyan-100 text-cyan-800 border-cyan-200", label: "Installing" },
-  completed: { badge: "bg-emerald-100 text-emerald-800 border-emerald-200", label: "Completed" },
-  cancelled: { badge: "bg-red-100 text-red-700 border-red-200", label: "Cancelled" },
-  refunded: { badge: "bg-muted text-muted-foreground border-border", label: "Refunded" },
-  // legacy aliases kept for display
-  new: { badge: "bg-amber-100 text-amber-800 border-amber-200", label: "New" },
-  approved: { badge: "bg-blue-100 text-blue-800 border-blue-200", label: "Approved" },
-  tech_assigned: {
-    badge: "bg-indigo-100 text-indigo-800 border-indigo-200",
-    label: "Tech assigned",
-  },
-  installed: { badge: "bg-emerald-100 text-emerald-800 border-emerald-200", label: "Installed" },
-  live: { badge: "bg-emerald-600 text-white border-emerald-600", label: "Live" },
-};
+function getStatusCfg(t: (key: string) => string): Record<string, { badge: string; label: string }> {
+  return {
+    pending_payment: { badge: "bg-muted text-muted-foreground border-border", label: t("orders.pendingPayment") },
+    paid: { badge: "bg-blue-100 text-blue-800 border-blue-200", label: t("orders.paid") },
+    packing: { badge: "bg-amber-100 text-amber-800 border-amber-200", label: t("orders.packing") },
+    shipped: { badge: "bg-indigo-100 text-indigo-800 border-indigo-200", label: t("orders.shipped") },
+    in_transit: { badge: "bg-indigo-100 text-indigo-800 border-indigo-200", label: t("orders.inTransit") },
+    installing: { badge: "bg-cyan-100 text-cyan-800 border-cyan-200", label: t("orders.installing") },
+    completed: { badge: "bg-emerald-100 text-emerald-800 border-emerald-200", label: t("orders.statusCompleted") },
+    cancelled: { badge: "bg-red-100 text-red-700 border-red-200", label: t("orders.statusCancelled") },
+    refunded: { badge: "bg-muted text-muted-foreground border-border", label: t("orders.refunded") },
+    new: { badge: "bg-amber-100 text-amber-800 border-amber-200", label: "New" },
+    approved: { badge: "bg-blue-100 text-blue-800 border-blue-200", label: "Approved" },
+    tech_assigned: { badge: "bg-indigo-100 text-indigo-800 border-indigo-200", label: "Tech assigned" },
+    installed: { badge: "bg-emerald-100 text-emerald-800 border-emerald-200", label: "Installed" },
+    live: { badge: "bg-emerald-600 text-white border-emerald-600", label: "Live" },
+  };
+}
 
-// Plan normaliser — maps raw plan_name / plan_id → tab key
-const PLAN_TABS = [
-  { key: "all", label: "All plans", color: "#64748b" },
-  { key: "starter", label: "Starter", color: "#2FAC0C" },
-  { key: "professional", label: "Professional", color: "#0e7490" },
-  { key: "enterprise", label: "Enterprise", color: "#7c3aed" },
-] as const;
+function getPlanTabs(t: (key: string) => string) {
+  return [
+    { key: "all", label: t("orders.allPlans"), color: "#64748b" },
+    { key: "starter", label: "Starter", color: "#2FAC0C" },
+    { key: "professional", label: "Professional", color: "#0e7490" },
+    { key: "enterprise", label: "Enterprise", color: "#7c3aed" },
+  ] as const;
+}
 type PlanKey = (typeof PLAN_TABS)[number]["key"];
 
 function normalisePlan(raw: string | null | undefined): PlanKey {
@@ -197,12 +194,14 @@ function KpiStrip({
   onFilter,
   allOrders,
   planTab,
+  t,
 }: {
   kpis: { total: number; completed: any[]; pending: any[]; cancelled: any[]; count: number };
   activeFilter: string;
   onFilter: (s: string) => void;
   allOrders: any[];
   planTab: string;
+  t: (key: string) => string;
 }) {
   const week = 7 * 86_400_000;
   const src =
@@ -238,9 +237,9 @@ function KpiStrip({
 
   const cells = [
     {
-      label: "Total revenue",
+      label: t("orders.totalRevenue"),
       value: `PKR ${fmt(kpis.total)}`,
-      sub: `${kpis.count} orders${trendPct !== null ? ` · ${trendUp ? "+" : ""}${trendPct}% WoW` : ""}`,
+      sub: `${kpis.count} ${t("orders.orders")}${trendPct !== null ? ` · ${trendUp ? "+" : ""}${trendPct}% WoW` : ""}`,
       subClass:
         trendPct !== null
           ? trendUp
@@ -253,7 +252,7 @@ function KpiStrip({
       onClick: () => onFilter("all"),
     },
     {
-      label: "Completed",
+      label: t("orders.completed"),
       value: String(completedCount),
       sub: `PKR ${fmt(completedRev)} · ${completePct}% of active`,
       subClass: "text-success",
@@ -263,9 +262,9 @@ function KpiStrip({
       onClick: () => onFilter(isCompleteActive ? "all" : "completed"),
     },
     {
-      label: "In progress",
+      label: t("orders.inProgress"),
       value: String(kpis.pending.length),
-      sub: `PKR ${fmt(pendingRev)} · ${pendingPct}% of active${kpis.pending.length > 0 ? " · needs attention" : ""}`,
+      sub: `PKR ${fmt(pendingRev)} · ${pendingPct}% of active${kpis.pending.length > 0 ? ` · ${t("orders.needsAttention")}` : ""}`,
       subClass: kpis.pending.length > 0 ? "text-warning" : "text-muted-foreground",
       barPct: pendingPct,
       barColor: "hsl(var(--warning))",
@@ -273,12 +272,12 @@ function KpiStrip({
       onClick: () => onFilter(isPendingActive ? "all" : "installing"),
     },
     {
-      label: "Cancelled",
+      label: t("orders.cancelled"),
       value: String(kpis.cancelled.length),
       sub:
         kpis.cancelled.length > 0
           ? `PKR ${fmt(cancelledRev)} lost · ${cancelPct}%`
-          : "No cancellations",
+          : t("orders.noCancellations"),
       subClass: kpis.cancelled.length > 0 ? "text-severity-critical" : "text-success",
       barPct: cancelPct,
       barColor: "hsl(var(--severity-critical))",
@@ -319,6 +318,9 @@ function PlatformOrdersPage() {
   const qc = useQueryClient();
   const fetchFn = useServerFn(listAllHardwareOrders);
   const updateFn = useServerFn(updateHardwareOrder);
+  const { t } = useTranslation();
+  const STATUS_CFG = getStatusCfg(t);
+  const PLAN_TABS = getPlanTabs(t);
 
   // Plan tab + status filter + search
   const [planTab, setPlanTab] = useState<PlanKey>("all");
@@ -404,7 +406,7 @@ function PlatformOrdersPage() {
     mutationFn: (v: any) => updateFn({ data: v }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["platform-orders"] });
-      toast.success("Order updated");
+      toast.success(t("orders.orderUpdated"));
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -413,8 +415,8 @@ function PlatformOrdersPage() {
 
   return (
     <AdminPageShell
-      title="Install orders"
-      subtitle="Hardware installation requests from customers, grouped by plan"
+      title={t("orders.title")}
+      subtitle={t("orders.subtitle")}
       actions={
         <div className="flex items-center gap-2">
           <ExportRow
@@ -427,7 +429,7 @@ function PlatformOrdersPage() {
             disabled={isFetching}
             className="inline-flex items-center gap-1.5 rounded border border-border px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted/30 disabled:opacity-50"
           >
-            <RefreshCw className={`w-3 h-3 ${isFetching ? "animate-spin" : ""}`} /> Refresh
+            <RefreshCw className={`w-3 h-3 ${isFetching ? "animate-spin" : ""}`} /> {t("orders.refresh")}
           </button>
         </div>
       }
@@ -479,6 +481,7 @@ function PlatformOrdersPage() {
           onFilter={setStatus}
           allOrders={allOrders}
           planTab={planTab}
+          t={t}
         />
       )}
 
@@ -491,7 +494,7 @@ function PlatformOrdersPage() {
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search buyer, city, plan…"
+              placeholder={t("orders.search")}
               className="pl-8 h-8 text-xs w-56"
             />
           </div>
@@ -501,7 +504,7 @@ function PlatformOrdersPage() {
               <SelectValue placeholder="All statuses" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="all">{t("orders.allStatuses")}</SelectItem>
               {STATUSES.map((s) => (
                 <SelectItem key={s} value={s}>
                   {STATUS_CFG[s]?.label ?? s}
@@ -530,19 +533,19 @@ function PlatformOrdersPage() {
         <OrdersSkeleton />
       ) : filtered.length === 0 ? (
         <div className="rounded-lg border border-border bg-background py-12 text-center text-sm text-muted-foreground">
-          No orders match your filters
+          {t("orders.noOrders")}
         </div>
       ) : (
         <div className="rounded-lg border border-border bg-background overflow-hidden">
           <div className="overflow-x-auto">
             {/* Column headers */}
             <div className="hidden md:grid grid-cols-[1.8fr_1.8fr_1fr_1fr_2fr_1fr_auto] gap-0 border-b border-border px-5 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider bg-muted/30 min-w-[900px]">
-              <span>Order</span>
-              <span>Buyer</span>
-              <span>Location</span>
-              <span>Total</span>
-              <span>Status</span>
-              <span>Placed</span>
+              <span>{t("orders.headerOrder")}</span>
+              <span>{t("orders.headerBuyer")}</span>
+              <span>{t("orders.headerLocation")}</span>
+              <span>{t("orders.headerTotal")}</span>
+              <span>{t("orders.headerStatus")}</span>
+              <span>{t("orders.headerPlaced")}</span>
               <span />
             </div>
             <div className="divide-y divide-border">
@@ -555,13 +558,15 @@ function PlatformOrdersPage() {
                   busy={update.isPending}
                   onOpenInstall={() => setInstall(o.id as string)}
                   onAssign={() => setAssign(o)}
+                  STATUS_CFG={STATUS_CFG}
+                  t={t}
                 />
               ))}
             </div>
           </div>
           <div className="px-5 py-2.5 border-t border-border text-xs text-muted-foreground flex items-center justify-between">
             <span>
-              {filtered.length} order{filtered.length !== 1 ? "s" : ""}
+              {filtered.length} {filtered.length === 1 ? t("orders.order") : t("orders.orders")}
             </span>
             <span className="font-medium text-muted-foreground">
               PKR {fmt(filtered.reduce((s, o) => s + Number(o.hardware_total ?? 0), 0))}
@@ -595,6 +600,8 @@ function OrderRow({
   busy,
   onOpenInstall,
   onAssign,
+  STATUS_CFG,
+  t,
 }: {
   order: any;
   tabColor: string;
@@ -608,6 +615,8 @@ function OrderRow({
   busy: boolean;
   onOpenInstall: () => void;
   onAssign: () => void;
+  STATUS_CFG: Record<string, { badge: string; label: string }>;
+  t: (key: string) => string;
 }) {
   const [detailOpen, setDetailOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
@@ -651,19 +660,19 @@ function OrderRow({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-52">
                 <DropdownMenuItem onClick={() => setDetailOpen(true)}>
-                  View &amp; edit details
+                  {t("orders.viewEditDetails")}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={onAssign}>
-                  <Users className="w-3.5 h-3.5 mr-1.5" /> Assign technician
+                  <Users className="w-3.5 h-3.5 mr-1.5" /> {t("orders.assignTechnician")}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={onOpenInstall}>
-                  <Truck className="w-3.5 h-3.5 mr-1.5" /> Track installation
+                  <Truck className="w-3.5 h-3.5 mr-1.5" /> {t("orders.trackInstallation")}
                 </DropdownMenuItem>
                 {order.status !== "cancelled" && (
                   <>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem className="text-red-600" onClick={() => setCancelOpen(true)}>
-                      Cancel order
+                      {t("orders.cancelOrder")}
                     </DropdownMenuItem>
                   </>
                 )}
@@ -755,20 +764,20 @@ function OrderRow({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-52">
             <DropdownMenuItem onClick={() => setDetailOpen(true)}>
-              View &amp; edit details
+              {t("orders.viewEditDetails")}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={onAssign}>
-              <Users className="w-3.5 h-3.5 mr-1.5" /> Assign technician
+              <Users className="w-3.5 h-3.5 mr-1.5" /> {t("orders.assignTechnician")}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={onOpenInstall}>
-              <Truck className="w-3.5 h-3.5 mr-1.5" /> Track installation
+              <Truck className="w-3.5 h-3.5 mr-1.5" /> {t("orders.trackInstallation")}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             {order.status !== "cancelled" && (
               <>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem className="text-red-600" onClick={() => setCancelOpen(true)}>
-                  Cancel order
+                  {t("orders.cancelOrder")}
                 </DropdownMenuItem>
               </>
             )}
@@ -795,14 +804,14 @@ function OrderRow({
           {/* Read-only info block */}
           <div className="mt-4 rounded-lg bg-muted/30 border border-border p-3 text-xs space-y-1.5 text-muted-foreground">
             <div className="flex items-center gap-2">
-              <span className="font-semibold w-20">Buyer</span>
+              <span className="font-semibold w-20">{t("orders.buyer")}</span>
               <span>
                 {order.buyer?.name ?? order.customer_name ?? "—"} ·{" "}
                 {order.buyer?.email ?? order.customer_email ?? "—"}
               </span>
             </div>
             <div className="flex items-start gap-2">
-              <span className="font-semibold w-20 shrink-0">Address</span>
+              <span className="font-semibold w-20 shrink-0">{t("orders.address")}</span>
               <span>
                 {[order.install_address, order.install_city, order.install_country]
                   .filter(Boolean)
@@ -811,7 +820,7 @@ function OrderRow({
             </div>
             {order.contact_phone && (
               <div className="flex items-center gap-2">
-                <span className="font-semibold w-20">Phone</span>
+                <span className="font-semibold w-20">{t("orders.phone")}</span>
                 <span className="flex items-center gap-1">
                   <Phone className="w-3 h-3" />
                   {order.contact_phone}
@@ -819,9 +828,9 @@ function OrderRow({
               </div>
             )}
             <div className="flex items-center gap-2">
-              <span className="font-semibold w-20">Hardware</span>
+              <span className="font-semibold w-20">{t("orders.hardware")}</span>
               <span>
-                {order.hardware_quantity} unit{Number(order.hardware_quantity) !== 1 ? "s" : ""} ·
+                {order.hardware_quantity} {Number(order.hardware_quantity) !== 1 ? t("orders.units") : t("orders.unit")} ·
                 PKR {fmt(Number(order.hardware_total ?? 0))}
               </span>
             </div>
@@ -830,7 +839,7 @@ function OrderRow({
           {/* Editable fields */}
           <div className="mt-4 grid grid-cols-2 gap-3">
             <div className="col-span-2">
-              <Label className="text-xs">Status</Label>
+              <Label className="text-xs">{t("orders.status")}</Label>
               <Select value={editStatus} onValueChange={(v) => setEditStatus(v as OrderStatus)}>
                 <SelectTrigger className="h-8 text-xs mt-1">
                   <SelectValue />
@@ -845,16 +854,16 @@ function OrderRow({
               </Select>
             </div>
             <div>
-              <Label className="text-xs">Technician name</Label>
+              <Label className="text-xs">{t("orders.technicianName")}</Label>
               <Input
                 className="h-8 text-xs mt-1"
                 value={techName}
                 onChange={(e) => setTechName(e.target.value)}
-                placeholder="Full name"
+                placeholder={t("orders.fullName")}
               />
             </div>
             <div>
-              <Label className="text-xs">Technician phone</Label>
+              <Label className="text-xs">{t("orders.technicianPhone")}</Label>
               <Input
                 className="h-8 text-xs mt-1"
                 value={techPhone}
@@ -863,7 +872,7 @@ function OrderRow({
               />
             </div>
             <div className="col-span-2">
-              <Label className="text-xs">Scheduled install date</Label>
+              <Label className="text-xs">{t("orders.scheduledInstallDate")}</Label>
               <Input
                 type="datetime-local"
                 className="h-8 text-xs mt-1"
@@ -875,7 +884,7 @@ function OrderRow({
 
           <SheetFooter className="mt-6">
             <Button variant="outline" size="sm" onClick={() => setDetailOpen(false)}>
-              Close
+              {t("common.close")}
             </Button>
             <Button
               size="sm"
@@ -890,7 +899,7 @@ function OrderRow({
                 setDetailOpen(false);
               }}
             >
-              Save changes
+              {t("orders.saveChanges")}
             </Button>
           </SheetFooter>
         </SheetContent>
@@ -900,9 +909,9 @@ function OrderRow({
       <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Cancel this order?</DialogTitle>
+            <DialogTitle>{t("orders.cancelTitle")}</DialogTitle>
             <DialogDescription>
-              The buyer will be notified in-app. Refunds are handled in Stripe.
+              {t("orders.cancelDescription")}
             </DialogDescription>
           </DialogHeader>
           <div className="mt-2">
@@ -910,12 +919,12 @@ function OrderRow({
               rows={4}
               value={cancelReason}
               onChange={(e) => setCancelReason(e.target.value)}
-              placeholder="Reason (optional)"
+              placeholder={t("orders.reasonOptional")}
             />
           </div>
           <DialogFooter className="mt-6">
             <Button variant="outline" size="sm" onClick={() => setCancelOpen(false)}>
-              Back
+              {t("orders.back")}
             </Button>
             <Button
               variant="destructive"
@@ -926,7 +935,7 @@ function OrderRow({
                 setCancelOpen(false);
               }}
             >
-              Confirm cancel
+              {t("orders.confirmCancel")}
             </Button>
           </DialogFooter>
         </DialogContent>

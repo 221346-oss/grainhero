@@ -1,22 +1,11 @@
 import { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
-
-const faqs = [
-  {
-    q: "How does the AI predict spoilage?",
-    a: "It flags the pattern that comes before spoilage, 24–48 hours early.",
-  },
-  { q: "Do I need new silos?", a: "No. The kit retro-fits onto silos you already own." },
-  {
-    q: "What if the internet drops?",
-    a: "The controller buffers 7 days locally and syncs on reconnect.",
-  },
-  { q: "Can my whole team use it?", a: "Yes — each role gets its own view and alerts." },
-  { q: "What does it cost to start?", a: "Start with hardware. The dashboard is included." },
-];
+import { useTranslation } from "@/i18n";
 
 export function HorizontalFAQ() {
   const ref = useRef<HTMLDivElement>(null);
+  const { t, raw } = useTranslation();
+  const faqs = raw.faq.items.map((f) => ({ q: f.q, a: f.a }));
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
   const x = useTransform(scrollYProgress, [0, 1], ["2%", "-68%"]);
   const bar = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
@@ -26,7 +15,7 @@ export function HorizontalFAQ() {
       <div className="sticky top-0 flex h-screen flex-col justify-center overflow-hidden">
         <div className="mx-auto mb-10 w-full max-w-7xl px-5 sm:px-8">
           <h2 className="text-[1.75rem] font-black tracking-tight text-[#FAFAF7] sm:text-4xl">
-            Everything worth asking.
+            {t("faq.heading")}
           </h2>
         </div>
 

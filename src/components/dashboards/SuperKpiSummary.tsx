@@ -3,6 +3,7 @@ import { InfoDot } from "@/components/ui/InfoDot";
 import { HairlineGrid, NeonPanel } from "@/components/charts/neon";
 import { ResponsiveContainer, AreaChart, Area } from "recharts";
 import { TrendingUp, TrendingDown } from "lucide-react";
+import { useTranslation } from "@/i18n";
 
 const fmtPKR = new Intl.NumberFormat("en-PK", {
   style: "currency",
@@ -48,24 +49,26 @@ export function SuperKpiSummary({
       : healthScore >= 60
         ? "text-warning"
         : "text-severity-critical";
+  const { t } = useTranslation();
+
   const healthLabel =
     healthScore >= 90
-      ? "Excellent"
+      ? t("superAdmin.excellent")
       : healthScore >= 80
-        ? "Very Good"
+        ? t("superAdmin.veryGood")
         : healthScore >= 70
-          ? "Good"
+          ? t("superAdmin.good")
           : healthScore >= 60
-            ? "Fair"
-            : "Needs Attention";
+            ? t("superAdmin.fair")
+            : t("superAdmin.needsAttention");
 
   const rows: Row[] = [
-    { label: "Tenants", value: totalTenants, to: "/platform/users" },
-    { label: "Users", value: totalUsers, to: "/platform/users" },
-    { label: "Active subs", value: activeSubs, to: "/platform/plans" },
-    { label: "Install orders", value: ordersOpen, to: "/platform/orders" },
+    { label: t("superAdmin.tenants"), value: totalTenants, to: "/platform/users" },
+    { label: t("superAdmin.users"), value: totalUsers, to: "/platform/users" },
+    { label: t("superAdmin.activeSubs"), value: activeSubs, to: "/platform/plans" },
+    { label: t("superAdmin.installOrders"), value: ordersOpen, to: "/platform/orders" },
     {
-      label: "Critical alerts",
+      label: t("superAdmin.criticalAlerts"),
       value: criticalAlerts,
       to: "/platform/health",
       danger: criticalAlerts > 0,
@@ -78,8 +81,8 @@ export function SuperKpiSummary({
   return (
     <section className="rounded-xl border border-border bg-card/60 p-3 backdrop-blur-sm">
       <div className="flex items-center gap-1.5 mb-2">
-        <h2 className="text-sm font-semibold text-foreground">Platform Performance</h2>
-        <InfoDot text="MRR, platform health, and key metrics." />
+        <h2 className="text-sm font-semibold text-foreground">{t("superAdmin.platformPerformance")}</h2>
+        <InfoDot text={t("superAdmin.platformPerformanceHint")} />
       </div>
 
       {/* Platform Health Score - Compact */}
@@ -87,7 +90,7 @@ export function SuperKpiSummary({
         <div className="flex items-center justify-between">
           <div className="flex items-baseline gap-1.5">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Health
+              {t("superAdmin.health")}
             </span>
             <span className={`text-2xl font-bold tabular-nums ${healthColor}`}>{healthScore}</span>
             <span className="text-sm text-muted-foreground">/100</span>
@@ -127,17 +130,17 @@ export function SuperKpiSummary({
         >
           <div className="flex items-center justify-between mb-1">
             <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-              Monthly Revenue
+              {t("superAdmin.monthlyRevenue")}
             </span>
             <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-success/10 text-success">
-              {activeSubs} active
+              {activeSubs} {t("superAdmin.active")}
             </span>
           </div>
 
           <div className="text-3xl font-bold tabular-nums text-success leading-tight">
             {fmtPKR.format(mrr)}
           </div>
-          <p className="text-[10px] text-muted-foreground mt-0.5">Total Platform Revenue</p>
+          <p className="text-[10px] text-muted-foreground mt-0.5">{t("superAdmin.totalPlatformRevenue")}</p>
 
           {/* Compact Growth with Sparkline */}
           <div className="mt-2">
@@ -147,7 +150,7 @@ export function SuperKpiSummary({
               {positive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
               <span>
                 {positive ? "+" : ""}
-                {mrrDeltaPct ?? 0}% vs last month
+                {mrrDeltaPct ?? 0}% {t("superAdmin.vsLastMonth")}
               </span>
             </div>
 

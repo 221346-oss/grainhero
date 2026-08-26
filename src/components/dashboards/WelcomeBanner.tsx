@@ -1,23 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslation } from "@/i18n";
 
 const LAST_ACTIVE_KEY = "gh_last_active_ts";
 const INACTIVITY_MS = 2 * 60 * 1000; // 2 minutes
 
-const RETURN_MESSAGES = [
-  "Ready to dive back in",
-  "Let's pick up where you left off",
-  "Back at it",
-  "Ready when you are",
-  "Good to see you again",
-];
-
-function pickReturnMessage(name?: string) {
-  const base = RETURN_MESSAGES[Math.floor(Math.random() * RETURN_MESSAGES.length)];
-  return name ? `${base}, ${name}` : base;
-}
-
 export function WelcomeBanner({ name }: { name?: string }) {
+  const { t } = useTranslation();
   const [greeting, setGreeting] = useState<string>("");
   const [visible, setVisible] = useState<boolean>(false);
   const [typed, setTyped] = useState("");
@@ -40,12 +29,14 @@ export function WelcomeBanner({ name }: { name?: string }) {
       if (playingRef.current) return;
       playingRef.current = true;
       setGreeting(
-        mode === "welcome" ? `Welcome back${name ? `, ${name}` : ""}` : pickReturnMessage(name),
+        mode === "welcome" 
+          ? (name ? t("dashboard.welcome", { name }) : t("dashboard.welcomeDefault")) 
+          : (name ? t("dashboard.welcome", { name }) : t("dashboard.welcomeDefault")),
       );
       setTyped("");
       setVisible(true);
     },
-    [name],
+    [name, t],
   );
 
   // Initial mount: first visit of session → welcome; otherwise check inactivity.

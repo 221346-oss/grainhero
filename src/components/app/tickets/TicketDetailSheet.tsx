@@ -35,7 +35,7 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { TicketDiscussion } from "./TicketDiscussion";
-import { CheckCircle2, User, CalendarClock, MessageSquare, X, Info, Trash2 } from "lucide-react";
+import { CheckCircle2, User, CalendarClock, MessageSquare, X, Info, Trash2, Download, FileText } from "lucide-react";
 import { useEffect, useRef } from "react";
 
 const PRIORITY_BADGE: Record<string, string> = {
@@ -49,6 +49,19 @@ const STATUS_BADGE: Record<string, string> = {
   resolved: "border-emerald-300 text-emerald-700 bg-emerald-50",
   closed: "bg-slate-100 text-slate-500 border-slate-200",
 };
+
+// Helper to extract attachment from markdown-formatted description
+function extractAttachment(description: string) {
+  const match = description.match(/\[Attachment: ([^\]]+)\]\(([^)]+)\)/);
+  if (match) {
+    return {
+      name: match[1],
+      url: match[2],
+      cleanDescription: description.replace(/\n\n\[Attachment: [^\]]+\]\([^)]+\)/, ""),
+    };
+  }
+  return { name: null, url: null, cleanDescription: description };
+}
 
 interface Props {
   ticket: TicketRow | null;
@@ -127,7 +140,7 @@ export function TicketDetailSheet({ ticket, open, onClose }: Props) {
   return (
     <>
       <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
-        <SheetContent className="w-full sm:max-w-lg flex flex-col p-0 overflow-hidden data-[state=open]:slide-in-from-right data-[state=closed]:slide-out-to-right">
+        <SheetContent className="gh-english-surface w-full sm:max-w-lg flex flex-col p-0 overflow-hidden data-[state=open]:slide-in-from-right data-[state=closed]:slide-out-to-right">
           {/* Header — title + id on left, Discussion button below the X (not next to it) */}
           <SheetHeader className="px-5 pt-5 pb-4 border-b border-slate-200 shrink-0">
             <SheetTitle className="text-base font-bold text-slate-900 leading-snug pr-8">
@@ -229,9 +242,33 @@ export function TicketDetailSheet({ ticket, open, onClose }: Props) {
                 Description
               </div>
               <div className="whitespace-pre-wrap text-slate-700 leading-relaxed rounded-md border border-slate-200 bg-white p-3 text-xs">
-                {ticket.description}
+                {extractAttachment(ticket.description).cleanDescription}
               </div>
             </div>
+
+            {/* Attachment */}
+            {extractAttachment(ticket.description).url && (
+              <div className="space-y-1.5">
+                <div className="text-xs text-slate-500 font-medium uppercase tracking-wide">
+                  Attachment
+                </div>
+                <a
+                  href={extractAttachment(ticket.description).url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-3 rounded-lg border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 transition-colors"
+                >
+                  <FileText className="h-4 w-4 text-emerald-600 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-emerald-900 truncate">
+                      {extractAttachment(ticket.description).name}
+                    </p>
+                    <p className="text-[10px] text-emerald-700">Click to download</p>
+                  </div>
+                  <Download className="h-4 w-4 text-emerald-600 shrink-0" />
+                </a>
+              </div>
+            )}
 
             {/* Timestamps */}
             <div className="rounded-lg border border-slate-200 bg-white p-3 space-y-2 text-xs">

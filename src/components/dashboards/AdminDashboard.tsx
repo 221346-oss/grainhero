@@ -11,14 +11,16 @@ import {
   FieldIncidentsCard,
   RecentActivityCard,
   RecentBatchesCard,
-  SupportTicketsCard,
+  IncidentsCard,
 } from "./DashboardBlocks";
 import type { RangeKey } from "./RangeChip";
 import { getDashboardExtras } from "@/lib/dashboard-extras.functions";
+import { useTranslation } from "@/i18n";
 
 export function AdminDashboard({ name }: { name?: string }) {
   const [range, setRange] = useState<RangeKey>("mtd");
   const [ticketPanelOpen, setTicketPanelOpen] = useState(false);
+  const { t } = useTranslation();
 
   const fn = useServerFn(getDashboardExtras);
   const { data: extras } = useQuery({
@@ -57,7 +59,7 @@ export function AdminDashboard({ name }: { name?: string }) {
           </div>
           <div className="grid gap-3 lg:grid-cols-2">
             <RecentBatchesCard range={range} />
-            <SupportTicketsCard
+            <IncidentsCard
               onViewAll={() => setTicketPanelOpen(true)}
               ticketPanelOpen={ticketPanelOpen}
               onTicketPanelClose={() => setTicketPanelOpen(false)}
@@ -81,10 +83,10 @@ export function AdminDashboard({ name }: { name?: string }) {
             {/* Health Gauge Card - 4 columns */}
             <div className="col-span-12 lg:col-span-4">
               <div className="bg-white dark:bg-neutral-800 rounded-lg p-6 shadow-md h-full">
-                <h3 className="text-lg font-semibold mb-4 text-foreground">System Health</h3>
+                <h3 className="text-lg font-semibold mb-4 text-foreground">{t("adminDash.systemHealth")}</h3>
                 {/* Placeholder for health gauge component */}
                 <div className="flex items-center justify-center h-40 bg-neutral-50 dark:bg-neutral-700 rounded text-muted-foreground">
-                  Health Gauge Visualization
+                  {t("adminDash.healthGauge")}
                 </div>
               </div>
             </div>
@@ -92,10 +94,10 @@ export function AdminDashboard({ name }: { name?: string }) {
             {/* Revenue Trend Metrics - 8 columns */}
             <div className="col-span-12 lg:col-span-8">
               <div className="bg-white dark:bg-neutral-800 rounded-lg p-6 shadow-md h-full">
-                <h3 className="text-lg font-semibold mb-4 text-foreground">Revenue Trends</h3>
+                <h3 className="text-lg font-semibold mb-4 text-foreground">{t("adminDash.revenueTrends")}</h3>
                 {/* Placeholder for revenue metrics component */}
                 <div className="flex items-center justify-center h-40 bg-neutral-50 dark:bg-neutral-700 rounded text-muted-foreground">
-                  Revenue Trend Visualization
+                  {t("adminDash.revenueTrendViz")}
                 </div>
               </div>
             </div>
@@ -109,7 +111,7 @@ export function AdminDashboard({ name }: { name?: string }) {
             <div className="col-span-12 lg:col-span-6">
               <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-md overflow-hidden h-full flex flex-col">
                 <div className="p-6 border-b border-neutral-200 dark:border-neutral-700">
-                  <h3 className="text-lg font-semibold text-foreground">Silos</h3>
+                  <h3 className="text-lg font-semibold text-foreground">{t("adminDash.silos")}</h3>
                 </div>
                 <div className="flex-1 overflow-auto">
                   <DashboardSiloCards range={range} />
@@ -121,23 +123,21 @@ export function AdminDashboard({ name }: { name?: string }) {
             <div className="col-span-12 lg:col-span-6">
               <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-md overflow-hidden h-full flex flex-col">
                 <div className="p-6 border-b border-neutral-200 dark:border-neutral-700">
-                  <h3 className="text-lg font-semibold text-foreground">Recent Batches</h3>
+                  <h3 className="text-lg font-semibold text-foreground">{t("adminDash.recentBatches")}</h3>
                 </div>
                 <div className="flex-1 overflow-auto">
                   <RecentBatchesCard range={range} />
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* Row 5: Support Tickets */}
+          </div>            {/* Row 5: Incidents */}
           <div className="w-full">
             <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-md overflow-hidden">
               <div className="p-6 border-b border-neutral-200 dark:border-neutral-700">
-                <h3 className="text-lg font-semibold text-foreground">Support Tickets</h3>
+                <h3 className="text-lg font-semibold text-foreground">{t("adminDash.incidents")}</h3>
               </div>
               <div className="p-6">
-                <SupportTicketsCard
+                <IncidentsCard
                   onViewAll={() => setTicketPanelOpen(true)}
                   ticketPanelOpen={ticketPanelOpen}
                   onTicketPanelClose={() => setTicketPanelOpen(false)}

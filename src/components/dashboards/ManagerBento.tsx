@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { attachTicketForUser } from "@/lib/ticketMessages";
 import { useTicketUnread } from "@/hooks/useTicketUnread";
 import { ManagerTeamStrip } from "./ManagerTeamStrip";
+import { useTranslation } from "@/i18n";
 
 function formatRelativeTime(iso: string) {
   const now = new Date();
@@ -190,6 +191,7 @@ export function ManagerBento({
   const [activeDiscussionTicket, setActiveDiscussionTicket] =
     useState<MonitoringIncidentItem | null>(null);
   const [currentUserId, setCurrentUserId] = useState("");
+  const { t } = useTranslation();
 
   // Get current user ID
   useEffect(() => {
@@ -300,7 +302,7 @@ export function ManagerBento({
       {/* ── Top Row: Key Metrics (Silos and QC Queue) ── */}
       <div className="grid gap-4 md:grid-cols-2">
         <BentoCard
-          title="Silos"
+          title={t("sidebar.silos")}
           count={silos.length}
           to="/grain-operations"
           search={{ tab: "silos" }}
@@ -309,7 +311,7 @@ export function ManagerBento({
           empty="No silos yet — provision from install orders."
         />
         <BentoCard
-          title="QC queue"
+          title={t("grainOps.batchStatusBreakdown")}
           count={qcQueue.length}
           to="/grain-operations"
           search={{ tab: "batches" }}
@@ -322,7 +324,7 @@ export function ManagerBento({
       {/* ── Middle Row: Operations & Incidents ── */}
       <div className="grid gap-4 md:grid-cols-3">
         <BentoCard
-          title="Dispatch queue"
+          title={t("grainOps.dispatched")}
           count={dispatchQueue.length}
           to="/grain-operations"
           search={{ tab: "silos" }}
@@ -331,7 +333,7 @@ export function ManagerBento({
           empty="Nothing ready to ship."
         />
         <BentoCard
-          title="Buyer orders"
+          title={t("sidebar.buyers")}
           count={buyers.length}
           to="/grain-operations"
           search={{ tab: "buyers" }}
@@ -340,7 +342,7 @@ export function ManagerBento({
           empty="No buyers created yet."
         />
         <BentoCard
-          title="Actuators"
+          title={t("sidebar.actuators")}
           count={actuators.length}
           to="/actuators"
           tooltip="Latest actuator state. Click through to toggle from the Actuators page."
@@ -355,7 +357,7 @@ export function ManagerBento({
         <div className="rounded-xl border bg-card/60 flex flex-col h-[200px]">
           <header className="flex items-center justify-between px-3 py-2 border-b bg-card/40 rounded-t-xl shrink-0">
             <div className="flex items-center gap-2 min-w-0">
-              <h3 className="text-xs font-semibold truncate">Open field incidents</h3>
+              <h3 className="text-xs font-semibold truncate">{t("sidebar.incidents")}</h3>
               <InfoDot text="Active field incidents — click the message icon to open discussion." />
               {incList.length > 0 && (
                 <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
@@ -370,7 +372,7 @@ export function ManagerBento({
                 className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 hover:bg-amber-500/20 transition-colors"
                 title="Report a new field incident ticket"
               >
-                <Plus className="h-3 w-3" /> New Ticket
+                <Plus className="h-3 w-3" /> {t("common.create")}
               </button>
               <Link
                 to="/monitoring"

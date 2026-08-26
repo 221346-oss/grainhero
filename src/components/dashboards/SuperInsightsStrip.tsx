@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { InfoDot } from "@/components/ui/InfoDot";
 import { HairlineGrid, NeonPanel } from "@/components/charts/neon";
 import { TrendingUp, TrendingDown } from "lucide-react";
+import { useTranslation } from "@/i18n";
 
 export function SuperInsightsStrip({
   signupsTotal,
@@ -19,11 +20,12 @@ export function SuperInsightsStrip({
   onCriticalAlertsClick?: () => void;
 }) {
   const signPositive = wowDelta >= 0;
+  const { t } = useTranslation();
 
   const tiles = [
     {
       key: "signups",
-      label: "Signups (30d)",
+      label: t("superAdmin.signups30d"),
       value: signupsTotal,
       hint: `${signPositive ? "+" : ""}${wowDelta}% WoW`,
       to: "/platform/users",
@@ -32,27 +34,27 @@ export function SuperInsightsStrip({
     },
     {
       key: "tickets",
-      label: "Support Tickets",
+      label: t("superAdmin.incidents"),
       value: ticketsTotal,
-      hint: ticketsTotal === 0 ? "All resolved" : "Need attention",
+      hint: ticketsTotal === 0 ? t("superAdmin.allResolved") : t("superAdmin.needAttention"),
       to: "/platform/reporting",
       positive: ticketsTotal === 0,
       hasChange: false,
     },
     {
       key: "pipeline",
-      label: "Pipeline",
+      label: t("superAdmin.pipeline"),
       value: pipelineTotal,
-      hint: "CRM contacts",
+      hint: t("superAdmin.crmContacts"),
       to: "/platform/pipeline",
       positive: true,
       hasChange: false,
     },
     {
       key: "alerts",
-      label: "Critical Alerts",
+      label: t("superAdmin.criticalAlerts"),
       value: criticalAlerts,
-      hint: criticalAlerts === 0 ? "System healthy" : "Action required",
+      hint: criticalAlerts === 0 ? t("superAdmin.systemHealthy") : t("superAdmin.actionRequired"),
       to: "/platform/health",
       positive: criticalAlerts === 0,
       hasChange: false,
@@ -64,8 +66,8 @@ export function SuperInsightsStrip({
   return (
     <section className="rounded-xl border border-border bg-card/60 p-3 backdrop-blur-sm">
       <div className="flex items-center gap-1.5 mb-2">
-        <h2 className="text-sm font-semibold text-foreground">Platform Insights</h2>
-        <InfoDot text="Key platform metrics at a glance" />
+        <h2 className="text-sm font-semibold text-foreground">{t("superAdmin.platformInsights")}</h2>
+        <InfoDot text={t("superAdmin.platformInsightsHint")} />
       </div>
 
       <HairlineGrid cols="grid-cols-2 lg:grid-cols-4">

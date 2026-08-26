@@ -9,6 +9,7 @@ import { ExportMenu } from "@/components/app/ExportMenu";
 import { InfoDot } from "@/components/ui/InfoDot";
 import type { ExportColumn } from "@/lib/csv-pdf-export";
 import { toast } from "sonner";
+import { useTranslation } from "@/i18n";
 import {
   BarChart,
   Bar,
@@ -67,14 +68,12 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
 const monthLabel = (iso: string) => MONTHS[parseInt(iso.slice(5, 7), 10) - 1] ?? iso.slice(5);
 
 // Plan colours — green-adjacent palette
-const PLAN_META: Record<string, { color: string; label: string }> = {
-  starter: { color: NEON.brand, label: "Starter" },
-  professional: { color: NEON.brand2, label: "Professional" },
-  enterprise: { color: NEON.accent, label: "Enterprise" },
+const PLAN_META: Record<string, { color: string }> = {
+  starter: { color: NEON.brand },
+  professional: { color: NEON.brand2 },
+  enterprise: { color: NEON.accent },
 };
 const planColor = (p: string) => PLAN_META[p.toLowerCase()]?.color ?? NEON.neutral;
-const planLabel = (p: string) =>
-  PLAN_META[p.toLowerCase()]?.label ?? p.charAt(0).toUpperCase() + p.slice(1);
 
 const ALL_PLANS = ["starter", "professional", "enterprise"] as const;
 
@@ -125,6 +124,14 @@ function Tile({
 
 // ── Main page ────────────────────────────────────────────────────────────────
 function PlatformBusinessPage() {
+  const { t } = useTranslation();
+  const planLabel = (p: string) => {
+    const k = p.toLowerCase();
+    if (k === "starter") return t("platformBusiness.planStarter");
+    if (k === "professional") return t("platformBusiness.planProfessional");
+    if (k === "enterprise") return t("platformBusiness.planEnterprise");
+    return p.charAt(0).toUpperCase() + p.slice(1);
+  };
   const revenueFn = useServerFn(getSaasRevenueAnalytics);
   const notifyFn = useServerFn(sendExpiryReminder);
   const qc = useQueryClient();
@@ -136,11 +143,12 @@ function PlatformBusinessPage() {
   const notifyMut = useMutation({
     mutationFn: (adminId: string) => notifyFn({ data: { adminId } }),
     onSuccess: (_data, adminId) => {
-      toast.success("Renewal reminder sent");
+      toast.success(t("platformBusiness.reminderSent"));
       setNotified((prev) => new Set([...prev, adminId]));
       qc.invalidateQueries({ queryKey: ["platform-revenue"] });
     },
-    onError: (e: Error) => toast.error(e.message || "Failed to send reminder"),
+    onError: (e: Error) =>
+      toast.error(e.message || t("platformBusiness.reminderFailed")),
   });
 
   const revenueQ = useQuery({
@@ -210,7 +218,7 @@ function PlatformBusinessPage() {
         : adminSubs.filter((a) => a.plan.toLowerCase() === planFilter);
 
   const planTabs = [
-    { id: "all", label: "All" },
+    { id: "all", label: t("platformBusiness.all") },
     ...ALL_PLANS.map((id) => ({ id, label: planLabel(id) })),
   ];
 
@@ -370,21 +378,23 @@ function PlatformBusinessPage() {
   if (revenueQ.isError) {
     return (
       <AdminPageShell
-        title="Business"
-        subtitle="Subscription revenue and hardware sales across every tenant"
+        title={t("platformBusiness.title")}
+        subtitle={t("platformBusiness.subtitle")}
       >
         <div className="border border-severity-critical/20 bg-severity-critical/5 rounded-md p-4 flex items-start gap-3">
           <AlertCircle className="w-4 h-4 text-severity-critical mt-0.5 shrink-0" />
           <div>
-            <p className="text-[13px] font-medium text-foreground">Failed to load analytics</p>
+            <p className="text-[13px] font-medium text-foreground">{t("platformBusiness.loadFailed")}</p>
             <p className="text-[12px] text-muted-foreground mt-0.5">
-              {revenueQ.error instanceof Error ? revenueQ.error.message : "Unknown error"}
+              {revenueQ.error instanceof Error
+                ? revenueQ.error.message
+                : t("platformBusiness.unknownError")}
             </p>
             <button
               onClick={() => revenueQ.refetch()}
               className="mt-2 inline-flex items-center gap-1 text-[12px] text-severity-critical hover:underline"
             >
-              <RefreshCw className="w-3 h-3" /> Retry
+              <RefreshCw className="w-3 h-3" /> {t("platformBusiness.retry")}
             </button>
           </div>
         </div>
@@ -394,15 +404,15 @@ function PlatformBusinessPage() {
 
   return (
     <AdminPageShell
-      title="Business"
-      subtitle="Subscription revenue and hardware sales across every tenant"
+      title={t("platformBusiness.title")}
+      subtitle={t("platformBusiness.subtitle")}
       actions={
         revenueQ.isLoading ? undefined : (
           <button
             onClick={() => revenueQ.refetch()}
             className="inline-flex items-center gap-1.5 rounded border border-border px-3 py-1.5 text-[13px] text-muted-foreground hover:bg-muted transition-colors"
           >
-            <RefreshCw className="w-3 h-3" /> Refresh
+            <RefreshCw className="w-3 h-3" /> {t("platformBusiness.refresh")}
           </button>
         )
       }
@@ -414,26 +424,26 @@ function PlatformBusinessPage() {
         <>
           {/* ── Flat stat strip — neon hairline grid ─────────────────── */}
           <div className="grid rounded-md overflow-hidden grid-cols-3 sm:grid-cols-4 lg:grid-cols-7">
-            <Tile label="MRR" value={`PKR ${fmt(kpis?.mrr ?? 0)}`} />
-            <Tile label="ARR" value={`PKR ${fmt(kpis?.arr ?? 0)}`} />
+            <Tile label={t("platformBusiness.mrr")} value={`PKR ${fmt(kpis?.mrr ?? 0)}`} />
+            <Tile label={t("platformBusiness.arr")} value={`PKR ${fmt(kpis?.arr ?? 0)}`} />
             <Tile
-              label="Active subs"
+              label={t("platformBusiness.activeSubs")}
               value={kpis?.activeCount ?? 0}
-              sub={`${kpis?.totalAdmins ?? 0} total admins`}
+              sub={t("platformBusiness.totalAdmins", { n: kpis?.totalAdmins ?? 0 })}
             />
-            <Tile label="Trial" value={kpis?.trialCount ?? 0} />
+            <Tile label={t("platformBusiness.trial")} value={kpis?.trialCount ?? 0} />
             <Tile
-              label="Hardware"
+              label={t("platformBusiness.hardware")}
               value={`PKR ${fmt(kpis?.hardwareRevenue ?? 0)}`}
-              sub={`${kpis?.hardwareOrders ?? 0} orders`}
+              sub={t("platformBusiness.ordersCount", { n: kpis?.hardwareOrders ?? 0 })}
             />
             <Tile
-              label="Churn (30d)"
+              label={t("platformBusiness.churn30d")}
               value={`${kpis?.churnRate ?? 0}%`}
               accent={kpis && kpis.churnRate > 5 ? "text-severity-critical" : "text-foreground"}
             />
             <Tile
-              label="Expiring /7d"
+              label={t("platformBusiness.expiring7d")}
               value={kpis?.expiringCount ?? 0}
               accent={kpis && (kpis.expiringCount ?? 0) > 0 ? "text-warning" : "text-foreground"}
             />
@@ -446,9 +456,9 @@ function PlatformBusinessPage() {
                 <div className="flex items-center gap-2">
                   <HardDrive className="w-3.5 h-3.5 text-muted-foreground" />
                   <span className="text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider">
-                    Hardware / IoT Revenue
+                    {t("platformBusiness.hwRevenue")}
                   </span>
-                  <InfoDot text="Revenue from silo hardware orders, tracked separately from subscription MRR" />
+                  <InfoDot text={t("platformBusiness.hwRevenueInfo")} />
                 </div>
                 <ExportRow
                   data={[
@@ -474,14 +484,14 @@ function PlatformBusinessPage() {
                   <div className="flex items-center gap-1.5 mb-1">
                     <Package2 className="w-3 h-3 text-muted-foreground" />
                     <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
-                      Hardware Revenue
+                      {t("platformBusiness.hwRevenue")}
                     </span>
                   </div>
                   <div className="text-xl font-bold text-foreground tabular-nums">
                     PKR {fmt(kpis?.hardwareRevenue ?? 0)}
                   </div>
                   <div className="text-[10px] text-muted-foreground mt-0.5">
-                    one-time device sales
+                    {t("platformBusiness.oneTimeSales")}
                   </div>
                 </div>
                 {/* Orders */}
@@ -489,14 +499,14 @@ function PlatformBusinessPage() {
                   <div className="flex items-center gap-1.5 mb-1">
                     <HardDrive className="w-3 h-3 text-muted-foreground" />
                     <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
-                      Orders
+                      {t("platformBusiness.orders")}
                     </span>
                   </div>
                   <div className="text-xl font-bold text-foreground tabular-nums">
                     {kpis?.hardwareOrders ?? 0}
                   </div>
                   <div className="text-[10px] text-muted-foreground mt-0.5">
-                    approved hardware orders
+                    {t("platformBusiness.approvedOrders")}
                   </div>
                 </div>
                 {/* Avg order value */}
@@ -504,7 +514,7 @@ function PlatformBusinessPage() {
                   <div className="flex items-center gap-1.5 mb-1">
                     <TrendingUp className="w-3 h-3 text-muted-foreground" />
                     <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
-                      Avg per Order
+                      {t("platformBusiness.avgPerOrder")}
                     </span>
                   </div>
                   <div className="text-xl font-bold text-foreground tabular-nums">
@@ -513,14 +523,14 @@ function PlatformBusinessPage() {
                       : "—"}
                   </div>
                   <div className="text-[10px] text-muted-foreground mt-0.5">
-                    average order value
+                    {t("platformBusiness.avgOrderValue")}
                   </div>
                 </div>
                 {/* Share of total revenue */}
                 <div className="px-5 py-4">
                   <div className="flex items-center gap-1.5 mb-1">
                     <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
-                      % of Total Revenue
+                      {t("platformBusiness.pctTotalRevenue")}
                     </span>
                   </div>
                   {(() => {
@@ -544,11 +554,11 @@ function PlatformBusinessPage() {
                         <div className="flex gap-3 mt-1">
                           <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
                             <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#2FAC0C]" />{" "}
-                            Subs {subPct}%
+                            {t("platformBusiness.subsShare", { pct: subPct })}
                           </span>
                           <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
                             <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#0e7490]" />{" "}
-                            HW {pct}%
+                            {t("platformBusiness.hwShare", { pct })}
                           </span>
                         </div>
                       </div>
@@ -564,7 +574,7 @@ function PlatformBusinessPage() {
             {/* ── Revenue Insights — neon redesign ───────────────────────── */}
             <NeonPanel
               className="lg:col-span-3"
-              title="Revenue Insights"
+              title={t("platformBusiness.revenueInsights")}
               action={
                 <div className="flex items-center rounded-md border border-border overflow-hidden text-[10px] font-medium">
                   <button
@@ -576,7 +586,7 @@ function PlatformBusinessPage() {
                         : { background: "transparent", color: "var(--muted-foreground)" }
                     }
                   >
-                    Monthly
+                    {t("platformBusiness.monthly")}
                   </button>
                   <button
                     onClick={() => setRevenueView("yearly")}
@@ -587,7 +597,7 @@ function PlatformBusinessPage() {
                         : { background: "transparent", color: "var(--muted-foreground)" }
                     }
                   >
-                    Yearly
+                    {t("platformBusiness.yearly")}
                   </button>
                 </div>
               }
@@ -603,7 +613,7 @@ function PlatformBusinessPage() {
                     <>
                       <div className="bg-background px-3 py-3">
                         <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-                          Total Revenue
+                          {t("platformBusiness.totalRevenue")}
                         </p>
                         <p
                           className="text-[22px] font-bold tabular-nums leading-none"
@@ -621,29 +631,31 @@ function PlatformBusinessPage() {
                                 : "color-mix(in oklab, var(--severity-critical) 12%, transparent)",
                             }}
                           >
-                            {up ? "▲" : "▼"} {up ? "+" : ""}
-                            {pct}% vs prev
+                            {up ? "▲" : "▼"}{" "}
+                            {t("platformBusiness.vsPrev", { pct: `${up ? "+" : ""}${pct}` })}
                           </span>
                         )}
                       </div>
                       <div className="bg-background px-3 py-3">
                         <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-                          MRR
+                          {t("platformBusiness.mrr")}
                         </p>
                         <p className="text-[22px] font-bold tabular-nums leading-none text-foreground">
                           PKR {fmt(kpis?.mrr ?? 0)}
                         </p>
-                        <p className="text-[10px] text-muted-foreground mt-1">monthly recurring</p>
+                        <p className="text-[10px] text-muted-foreground mt-1">
+                          {t("platformBusiness.monthlyRecurring")}
+                        </p>
                       </div>
                       <div className="bg-background px-3 py-3">
                         <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-                          ARR
+                          {t("platformBusiness.arr")}
                         </p>
                         <p className="text-[22px] font-bold tabular-nums leading-none text-foreground">
                           PKR {fmt(kpis?.arr ?? 0)}
                         </p>
                         <p className="text-[10px] text-muted-foreground mt-1">
-                          annualised run rate
+                          {t("platformBusiness.annualised")}
                         </p>
                       </div>
                     </>
@@ -653,7 +665,7 @@ function PlatformBusinessPage() {
 
               {/* ── Neon area + bar combo chart ─────────────────────── */}
               {revenueBarData.every((d) => !d.revenue) ? (
-                <ChartEmpty label="No revenue data yet" height={170} />
+                <ChartEmpty label={t("platformBusiness.noRevenueData")} height={170} />
               ) : (
                 <ResponsiveContainer width="100%" height={170}>
                   <BarChart
@@ -682,7 +694,7 @@ function PlatformBusinessPage() {
                     />
                     <Tooltip
                       {...neonTooltipStyle}
-                      formatter={(v: number) => [`PKR ${fmt(v)}`, "Revenue"]}
+                      formatter={(v: number) => [`PKR ${fmt(v)}`, t("platformBusiness.revenue")]}
                     />
                     <Bar dataKey="revenue" radius={0} maxBarSize={28}>
                       {revenueBarData.map((d, i) => {
@@ -709,7 +721,11 @@ function PlatformBusinessPage() {
                   <div className="mt-4 pt-3 border-t border-border/60">
                     <div className="flex items-center justify-between mb-1.5">
                       <span className="text-[11px] text-muted-foreground">
-                        Growth vs {revenueView === "monthly" ? "last month" : "last year"}
+                        {t("platformBusiness.growthVs", {
+                          period: t(revenueView === "monthly"
+                            ? "platformBusiness.lastMonth"
+                            : "platformBusiness.lastYear"),
+                        })}
                       </span>
                       <span
                         className="text-[12px] font-bold tabular-nums"
@@ -748,7 +764,7 @@ function PlatformBusinessPage() {
             </NeonPanel>
 
             {/* Sales Overview — donut */}
-            <NeonPanel className="lg:col-span-2" title="Sales Overview">
+            <NeonPanel className="lg:col-span-2" title={t("platformBusiness.salesOverview")}>
               {donutData.length > 0 ? (
                 <div className="flex flex-col items-center pb-1">
                   {/* Fixed square container so the chart is always a perfect circle */}
@@ -776,7 +792,9 @@ function PlatformBusinessPage() {
                       <span className="text-2xl font-bold text-foreground tabular-nums">
                         {donutTotal}
                       </span>
-                      <span className="text-[10px] text-muted-foreground">subscribers</span>
+                      <span className="text-[10px] text-muted-foreground">
+                        {t("platformBusiness.subscribers")}
+                      </span>
                     </div>
                   </div>
                   <NeonLegend
@@ -788,7 +806,7 @@ function PlatformBusinessPage() {
                   />
                   <div className="mt-4 w-full border-t border-border pt-3">
                     <div className="flex justify-between text-[12px] mb-1.5">
-                      <span className="text-muted-foreground">ARR vs target</span>
+                      <span className="text-muted-foreground">{t("platformBusiness.arrVsTarget")}</span>
                       <span className="font-semibold" style={{ color: NEON.brand }}>
                         {salesPct}%
                       </span>
@@ -802,7 +820,7 @@ function PlatformBusinessPage() {
                   </div>
                 </div>
               ) : (
-                <ChartEmpty label="No plan data yet" height={160} />
+                <ChartEmpty label={t("platformBusiness.noPlanData")} height={160} />
               )}
             </NeonPanel>
           </HairlineGrid>
@@ -811,8 +829,10 @@ function PlatformBusinessPage() {
           <div className="rounded-md border border-border bg-background overflow-hidden">
             <div className="px-5 py-3.5 border-b border-border flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-[13px] font-medium text-foreground">Plan Breakdown</span>
-                <InfoDot text="Click a plan row to filter and show its subscribers below" />
+                <span className="text-[13px] font-medium text-foreground">
+                  {t("platformBusiness.planBreakdown")}
+                </span>
+                <InfoDot text={t("platformBusiness.planBreakdownInfo")} />
               </div>
               <ExportRow
                 data={planExport}
@@ -823,13 +843,13 @@ function PlatformBusinessPage() {
             <table className="w-full text-[13px]">
               <thead>
                 <tr className="border-b border-border bg-muted/30">
-                  <th className="text-left font-medium text-muted-foreground px-3 py-2">Plan</th>
-                  <th className="text-right font-medium text-muted-foreground px-3 py-2">Subs</th>
+                  <th className="text-left font-medium text-muted-foreground px-3 py-2">{t("platformBusiness.planCol")}</th>
+                  <th className="text-right font-medium text-muted-foreground px-3 py-2">{t("platformBusiness.subsCol")}</th>
                   <th className="text-right font-medium text-muted-foreground px-3 py-2 hidden sm:table-cell">
-                    MRR
+                    {t("platformBusiness.mrr")}
                   </th>
                   <th className="text-right font-medium text-muted-foreground px-3 py-2 hidden sm:table-cell">
-                    Share
+                    {t("platformBusiness.shareCol")}
                   </th>
                 </tr>
               </thead>
@@ -868,7 +888,7 @@ function PlatformBusinessPage() {
                                 color: col,
                               }}
                             >
-                              selected
+                              {t("platformBusiness.selected")}
                             </span>
                           )}
                         </span>
@@ -913,7 +933,7 @@ function PlatformBusinessPage() {
               <div className="px-5 py-3.5 border-b border-border flex items-center justify-between gap-3 flex-wrap">
                 <div className="flex items-center gap-2.5 flex-wrap">
                   <span className="text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider">
-                    Active Subscribers
+                    {t("platformBusiness.activeSubscribers")}
                   </span>
                   {/* Plan filter pills */}
                   <div className="flex gap-1.5">
@@ -945,7 +965,7 @@ function PlatformBusinessPage() {
                 <ExportRow
                   data={subExport}
                   filename={`subscribers-${planFilter}`}
-                  title={`Active Subscribers — ${planFilter === "all" ? "All Plans" : planLabel(planFilter)} — GrainHero`}
+                  title={`Active Subscribers — ${planFilter === "all" ? t("platformBusiness.allPlans") : planLabel(planFilter)} — GrainHero`}
                 />
               </div>
 
@@ -983,8 +1003,9 @@ function PlatformBusinessPage() {
                 })}
                 {filteredSubs.length === 0 && (
                   <div className="col-span-full text-center text-sm text-muted-foreground py-8">
-                    No subscribers on {planFilter === "all" ? "any" : planLabel(planFilter)} plan
-                    yet.
+                    {t("platformBusiness.noSubscribers", {
+                      plan: planFilter === "all" ? t("platformBusiness.all") : planLabel(planFilter),
+                    })}
                   </div>
                 )}
               </div>
@@ -993,11 +1014,13 @@ function PlatformBusinessPage() {
               {filteredSubs.length > 0 && (
                 <div className="px-5 py-2.5 border-t border-border flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">
-                    {filteredSubs.length} subscriber{filteredSubs.length !== 1 ? "s" : ""}
+                    {t("platformBusiness.subscribersCount", { n: filteredSubs.length })}
                     {planFilter !== "all" ? ` · ${planLabel(planFilter)}` : ""}
                   </span>
                   <span className="text-xs font-semibold text-muted-foreground tabular-nums">
-                    PKR {fmt(filteredSubs.reduce((s, a) => s + a.mrr, 0))} / mo
+                    {t("platformBusiness.perMo", {
+                      amt: fmt(filteredSubs.reduce((s, a) => s + a.mrr, 0)),
+                    })}
                   </span>
                 </div>
               )}
@@ -1008,7 +1031,7 @@ function PlatformBusinessPage() {
           <div className="rounded-md border border-border bg-background overflow-hidden">
             <div className="px-5 py-3.5 border-b border-border flex items-center justify-between">
               <span className="text-[13px] font-medium" style={{ color: NEON.warning }}>
-                Expiring within 7 days
+                {t("platformBusiness.expiringWithin7")}
                 {expiring.length > 0 && ` · ${expiring.length}`}
               </span>
               {expiring.length > 0 && (
@@ -1031,21 +1054,21 @@ function PlatformBusinessPage() {
             <table className="w-full text-[13px]">
               <thead>
                 <tr className="border-b border-border bg-muted/30">
-                  <th className="text-left font-medium text-muted-foreground px-3 py-2">Tenant</th>
+                  <th className="text-left font-medium text-muted-foreground px-3 py-2">{t("platformBusiness.tenantCol")}</th>
                   <th className="text-left font-medium text-muted-foreground px-3 py-2 hidden sm:table-cell">
-                    Plan
+                    {t("platformBusiness.planCol")}
                   </th>
                   <th className="text-right font-medium text-muted-foreground px-3 py-2 hidden sm:table-cell">
-                    Expires
+                    {t("platformBusiness.expiresCol")}
                   </th>
-                  <th className="text-right font-medium text-muted-foreground px-3 py-2">Action</th>
+                  <th className="text-right font-medium text-muted-foreground px-3 py-2">{t("platformBusiness.actionCol")}</th>
                 </tr>
               </thead>
               <tbody>
                 {expiring.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="px-3 py-6 text-center text-muted-foreground">
-                      No subscriptions expiring in the next 7 days.
+                      {t("platformBusiness.noneExpiring")}
                     </td>
                   </tr>
                 ) : (
@@ -1067,7 +1090,10 @@ function PlatformBusinessPage() {
                           <div className="sm:hidden text-[11px] text-muted-foreground mt-0.5">
                             {s.plan_name ?? "—"}
                             {days !== null && (
-                              <span style={{ color: NEON.warning }}> · {days}d left</span>
+                              <span style={{ color: NEON.warning }}>
+                                {" · "}
+                                {t("platformBusiness.daysLeft", { n: days })}
+                              </span>
                             )}
                           </div>
                         </td>
@@ -1080,7 +1106,7 @@ function PlatformBusinessPage() {
                           </div>
                           {days !== null && (
                             <div className="text-[10px]" style={{ color: NEON.warning }}>
-                              {days} day{days !== 1 ? "s" : ""} left
+                              {t("platformBusiness.daysLeft", { n: days })}
                             </div>
                           )}
                         </td>
@@ -1096,7 +1122,9 @@ function PlatformBusinessPage() {
                           >
                             <Bell className="w-3 h-3" />
                             <span className="hidden sm:inline">
-                              {alreadyNotified ? "Sent" : "Notify"}
+                              {alreadyNotified
+                                ? t("platformBusiness.sent")
+                                : t("platformBusiness.notify")}
                             </span>
                           </button>
                         </td>

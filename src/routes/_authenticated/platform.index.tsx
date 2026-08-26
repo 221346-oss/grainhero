@@ -40,6 +40,7 @@ import { TrendingUp, TrendingDown } from "lucide-react";
 import React from "react";
 import { CriticalAlertDetailSheet } from "@/components/dashboards/CriticalAlertDetailSheet";
 import { useTicketCount } from "@/hooks/useTicketCount";
+import { useTranslation } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/platform/")({
   head: () => ({
@@ -175,10 +176,11 @@ function HealthPill({
   status: "healthy" | "degraded" | "down";
   latencyMs: number;
 }) {
+  const { t } = useTranslation();
   const cfg = {
-    healthy: { dot: "bg-success", text: "text-success", badge: "Healthy" },
-    degraded: { dot: "bg-warning", text: "text-warning", badge: "Slow" },
-    down: { dot: "bg-severity-critical", text: "text-severity-critical", badge: "Down" },
+    healthy: { dot: "bg-success", text: "text-success", badge: "hpHealthy" },
+    degraded: { dot: "bg-warning", text: "text-warning", badge: "hpSlow" },
+    down: { dot: "bg-severity-critical", text: "text-severity-critical", badge: "hpDown" },
   }[status];
   return (
     <div className="flex items-center justify-between rounded border border-border px-2.5 py-1.5 bg-muted/30">
@@ -188,7 +190,9 @@ function HealthPill({
       </div>
       <div className="flex items-center gap-2">
         <span className="text-[11px] text-muted-foreground tabular-nums">{latencyMs}ms</span>
-        <span className={`text-[11px] font-medium ${cfg.text}`}>{cfg.badge}</span>
+        <span className={`text-[11px] font-medium ${cfg.text}`}>
+          {t(`platformOverview.${cfg.badge}`)}
+        </span>
       </div>
     </div>
   );
@@ -196,6 +200,7 @@ function HealthPill({
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 function PlatformOverviewPage() {
+  const { t } = useTranslation();
   const fetchMetrics = useServerFn(getPlatformMetrics);
   const fetchWidgets = useServerFn(getPlatformOverviewWidgets);
   const ticketCount = useTicketCount();
@@ -250,27 +255,27 @@ function PlatformOverviewPage() {
         to="/platform/plans"
         className="text-[12px] px-2.5 py-1 rounded border border-border text-muted-foreground hover:bg-muted transition-colors"
       >
-        Plans
+        {t("platformOverview.plans")}
       </Link>
       <Link
         to="/platform/tenants"
         className="text-[12px] px-2.5 py-1 rounded border border-border text-muted-foreground hover:bg-muted transition-colors"
       >
-        Tenants
+        {t("platformOverview.tenants")}
       </Link>
       <Link
         to="/platform/health"
         className="text-[12px] px-2.5 py-1 rounded border border-border text-muted-foreground hover:bg-muted transition-colors"
       >
-        Health
+        {t("platformOverview.health")}
       </Link>
     </div>
   );
 
   return (
     <AdminPageShell
-      title="Platform overview"
-      subtitle="Tenants, revenue, devices, and health across every account"
+      title={t("platformOverview.title")}
+      subtitle={t("platformOverview.subtitle")}
       actions={actions}
     >
       {isLoading ? (
@@ -283,7 +288,7 @@ function PlatformOverviewPage() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-                    Signups (30d)
+                    {t("platformOverview.signups30d")}
                   </span>
                   <UserPlus className="w-3.5 h-3.5 text-muted-foreground/60" />
                 </div>
@@ -294,8 +299,9 @@ function PlatformOverviewPage() {
                 </div>
                 {w && (
                   <div className="text-[11px] text-muted-foreground">
-                    {w.wowDelta >= 0 ? "+" : ""}
-                    {w.wowDelta}% WoW
+                    {t("platformOverview.wowChange", {
+                      delta: `${w.wowDelta >= 0 ? "+" : ""}${w.wowDelta}`,
+                    })}
                   </div>
                 )}
               </div>
@@ -304,21 +310,23 @@ function PlatformOverviewPage() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-                    Support tickets
+                    {t("platformOverview.openFieldIncidents")}
                   </span>
                   <TicketCheck className="w-3.5 h-3.5 text-muted-foreground/60" />
                 </div>
                 <div className="text-2xl font-bold tabular-nums text-foreground">
                   {m?.totalAlerts ?? "—"}
                 </div>
-                <div className="text-[11px] text-muted-foreground">open incidents</div>
+                <div className="text-[11px] text-muted-foreground">
+                  {t("platformOverview.openIncidents")}
+                </div>
               </div>
             </NeonPanel>
             <NeonPanel>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-                    Pipeline
+                    {t("platformOverview.pipeline")}
                   </span>
                   <GitBranch className="w-3.5 h-3.5 text-muted-foreground/60" />
                 </div>
@@ -327,7 +335,9 @@ function PlatformOverviewPage() {
                     ? Object.values(w.pipeline as Record<string, number>).reduce((a, b) => a + b, 0)
                     : "—"}
                 </div>
-                <div className="text-[11px] text-muted-foreground">HubSpot syncs</div>
+                <div className="text-[11px] text-muted-foreground">
+                  {t("platformOverview.hubspotSyncs")}
+                </div>
               </div>
             </NeonPanel>
             <NeonPanel
@@ -337,7 +347,7 @@ function PlatformOverviewPage() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-                    Critical alerts
+                    {t("platformOverview.criticalAlerts")}
                   </span>
                   <div className="flex items-center gap-1.5">
                     {m && m.criticalAlerts > 0 && (
@@ -355,7 +365,9 @@ function PlatformOverviewPage() {
                   {m?.criticalAlerts ?? "—"}
                 </div>
                 {m && (
-                  <div className="text-[11px] text-muted-foreground">of {m.totalAlerts} total</div>
+                  <div className="text-[11px] text-muted-foreground">
+                    {t("platformOverview.ofTotal", { total: m.totalAlerts })}
+                  </div>
                 )}
               </div>
             </NeonPanel>
@@ -368,7 +380,7 @@ function PlatformOverviewPage() {
               <div className="flex items-center justify-between mb-2">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Platform Health Score
+                    {t("platformOverview.healthScore")}
                   </p>
                   <div className="flex items-baseline gap-2 mt-1">
                     {(() => {
@@ -399,16 +411,16 @@ function PlatformOverviewPage() {
                             : "text-severity-critical";
                       const healthLabel =
                         healthScore >= 90
-                          ? "Excellent"
+                          ? t("platformOverview.excellent")
                           : healthScore >= 80
-                            ? "Very Good"
+                            ? t("platformOverview.veryGood")
                             : healthScore >= 70
-                              ? "Good"
+                              ? t("platformOverview.good")
                               : healthScore >= 60
-                                ? "Fair"
+                                ? t("platformOverview.fair")
                                 : healthScore >= 50
-                                  ? "Needs Attention"
-                                  : "Critical";
+                                  ? t("platformOverview.needsAttention")
+                                  : t("platformOverview.critical");
 
                       return (
                         <>
@@ -473,7 +485,7 @@ function PlatformOverviewPage() {
               <NeonPanel>
                 <div className="space-y-2">
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    MRR
+                    {t("platformOverview.mrr")}
                   </p>
                   <p className="text-xl font-bold tabular-nums text-foreground leading-none">
                     Rs {Math.round(m?.mrr ?? w?.revenue?.mrr ?? 0).toLocaleString()}
@@ -549,7 +561,7 @@ function PlatformOverviewPage() {
               <NeonPanel>
                 <div className="space-y-2">
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    ARR
+                    {t("platformOverview.arr")}
                   </p>
                   <p className="text-xl font-bold tabular-nums text-foreground leading-none">
                     Rs {Math.round((m?.mrr ?? w?.revenue?.mrr ?? 0) * 12).toLocaleString()}
@@ -625,7 +637,7 @@ function PlatformOverviewPage() {
               <NeonPanel>
                 <div className="space-y-2">
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Churn Rate
+                    {t("platformOverview.churnRate")}
                   </p>
                   <p className="text-xl font-bold tabular-nums text-foreground leading-none">
                     2.3%
@@ -685,7 +697,7 @@ function PlatformOverviewPage() {
               <NeonPanel>
                 <div className="space-y-2">
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    NPS Score
+                    {t("platformOverview.npsScore")}
                   </p>
                   <p className="text-xl font-bold tabular-nums text-foreground leading-none">+42</p>
                   {(() => {
@@ -750,7 +762,7 @@ function PlatformOverviewPage() {
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-                    Tenants
+                    {t("platformOverview.tenants")}
                   </span>
                   <Users className="w-3.5 h-3.5 text-muted-foreground/60" />
                 </div>
@@ -763,7 +775,7 @@ function PlatformOverviewPage() {
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-                    Total users
+                    {t("platformOverview.totalUsers")}
                   </span>
                   <Users className="w-3.5 h-3.5 text-muted-foreground/60" />
                 </div>
@@ -776,7 +788,7 @@ function PlatformOverviewPage() {
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-                    Total silos
+                    {t("platformOverview.totalSilos")}
                   </span>
                   <Database className="w-3.5 h-3.5 text-muted-foreground/60" />
                 </div>
@@ -789,7 +801,7 @@ function PlatformOverviewPage() {
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-                    Active subs
+                    {t("platformOverview.activeSubs")}
                   </span>
                   <Activity className="w-3.5 h-3.5 text-muted-foreground/60" />
                 </div>
@@ -811,10 +823,12 @@ function PlatformOverviewPage() {
                 ) : (
                   <AlertCircle className="w-3 h-3 text-warning" />
                 )}
-                <span className="text-[12px] font-medium">API Health</span>
+                <span className="text-[12px] font-medium">{t("platformOverview.apiHealth")}</span>
                 {apiHealthQ.data?.checkedAt && (
                   <span className="text-[11px] text-muted-foreground">
-                    checked {new Date(apiHealthQ.data.checkedAt).toLocaleTimeString()}
+                    {t("platformOverview.checkedAt", {
+                      time: new Date(apiHealthQ.data.checkedAt).toLocaleTimeString(),
+                    })}
                   </span>
                 )}
               </div>
@@ -822,7 +836,7 @@ function PlatformOverviewPage() {
                 to="/platform/health"
                 className="text-[11px] text-muted-foreground hover:text-foreground flex items-center gap-0.5 transition-colors"
               >
-                Full report <ChevronRight className="w-3 h-3" />
+                {t("platformOverview.fullReport")} <ChevronRight className="w-3 h-3" />
               </Link>
             </div>
             <div className="p-2 grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -837,7 +851,7 @@ function PlatformOverviewPage() {
               ))}
               {apiHealthQ.isError && (
                 <div className="col-span-3 text-[12px] text-muted-foreground text-center py-2">
-                  Health check unavailable
+                  {t("platformOverview.healthUnavailable")}
                 </div>
               )}
             </div>
@@ -849,24 +863,24 @@ function PlatformOverviewPage() {
               [
                 {
                   val: ordersQ.isLoading ? "—" : totalOrdered,
-                  label: "Devices sold",
+                  label: t("platformOverview.devicesSold"),
                   cls: "text-foreground",
                 },
-                { val: healthQ.isLoading ? "—" : deployed, label: "Deployed", cls: "text-success" },
+                { val: healthQ.isLoading ? "—" : deployed, label: t("platformOverview.deployed"), cls: "text-success" },
                 {
                   val: ordersQ.isLoading || healthQ.isLoading ? "—" : remaining,
-                  label: "Awaiting install",
+                  label: t("platformOverview.awaitingInstall"),
                   cls: "text-warning",
                 },
-                { val: healthQ.data?.totals?.online ?? "—", label: "Live", cls: "text-success" },
+                { val: healthQ.data?.totals?.online ?? "—", label: t("platformOverview.live"), cls: "text-success" },
                 {
                   val: healthQ.data?.totals?.offline ?? "—",
-                  label: "Down",
+                  label: t("platformOverview.down"),
                   cls: "text-severity-critical",
                 },
                 {
                   val: healthQ.data?.totals?.lowBattery ?? "—",
-                  label: "Low battery",
+                  label: t("platformOverview.lowBattery"),
                   cls: "text-warning",
                 },
               ] as Array<{ val: string | number; label: string; cls: string }>
@@ -885,13 +899,16 @@ function PlatformOverviewPage() {
             {/* Recent signups */}
             <div className="rounded-lg border border-border bg-card overflow-hidden">
               <div className="px-3 h-9 border-b border-border flex items-center justify-between">
-                <span className="text-[12px] font-medium">Recent signups</span>
+                <span className="text-[12px] font-medium">
+                  {t("platformOverview.recentSignups")}
+                </span>
                 {w && (
                   <span className="text-[11px] text-muted-foreground">
-                    {w.signupsTotal} in 30d ·{" "}
+                    {t("platformOverview.in30d", { n: w.signupsTotal })} ·{" "}
                     <span className={w.wowDelta >= 0 ? "text-success" : "text-severity-critical"}>
-                      {w.wowDelta >= 0 ? "+" : ""}
-                      {w.wowDelta}% WoW
+                      {t("platformOverview.wowChange", {
+                        delta: `${w.wowDelta >= 0 ? "+" : ""}${w.wowDelta}`,
+                      })}
                     </span>
                   </span>
                 )}
@@ -900,13 +917,13 @@ function PlatformOverviewPage() {
                 <table className="w-full text-[12px]">
                   <thead className="sticky top-0 bg-muted/40 border-b border-border">
                     <tr className="text-[10px] text-muted-foreground uppercase tracking-wider">
-                      <th className="text-left px-3 py-1.5 font-medium">Name</th>
+                      <th className="text-left px-3 py-1.5 font-medium">{t("platformOverview.name")}</th>
                       <th className="text-left px-2 py-1.5 font-medium hidden sm:table-cell">
-                        Business
+                        {t("platformOverview.business")}
                       </th>
-                      <th className="text-left px-2 py-1.5 font-medium">Plan</th>
+                      <th className="text-left px-2 py-1.5 font-medium">{t("platformOverview.plan")}</th>
                       <th className="text-right px-3 py-1.5 font-medium hidden sm:table-cell">
-                        Joined
+                        {t("platformOverview.joined")}
                       </th>
                     </tr>
                   </thead>
@@ -954,7 +971,7 @@ function PlatformOverviewPage() {
                           colSpan={4}
                           className="text-center text-muted-foreground py-6 text-[12px]"
                         >
-                          No recent signups
+                          {t("platformOverview.noRecentSignups")}
                         </td>
                       </tr>
                     )}
@@ -962,7 +979,7 @@ function PlatformOverviewPage() {
                 </table>
               </div>
               <div className="px-3 py-1.5 border-t border-border text-[10px] text-muted-foreground/50">
-                Click a row to view tenant details
+                {t("platformOverview.clickRowHint")}
               </div>
             </div>
 
@@ -973,11 +990,14 @@ function PlatformOverviewPage() {
                   className="text-[12px] font-medium cursor-pointer hover:text-foreground transition-colors"
                   onClick={() => setAlertsSheetOpen(true)}
                 >
-                  System alerts
+                  {t("platformOverview.systemAlerts")}
                 </span>
                 {m && (
                   <span className="text-[11px] text-muted-foreground">
-                    {m.criticalAlerts} critical of {m.totalAlerts} total
+                    {t("platformOverview.criticalOfTotal", {
+                      critical: m.criticalAlerts,
+                      total: m.totalAlerts,
+                    })}
                   </span>
                 )}
               </div>
@@ -985,10 +1005,10 @@ function PlatformOverviewPage() {
                 <table className="w-full text-[12px]">
                   <thead className="sticky top-0 bg-muted/40 border-b border-border">
                     <tr className="text-[10px] text-muted-foreground uppercase tracking-wider">
-                      <th className="text-left px-3 py-1.5 font-medium">Alert</th>
-                      <th className="text-left px-2 py-1.5 font-medium">Priority</th>
+                      <th className="text-left px-3 py-1.5 font-medium">{t("platformOverview.alert")}</th>
+                      <th className="text-left px-2 py-1.5 font-medium">{t("platformOverview.priority")}</th>
                       <th className="text-right px-3 py-1.5 font-medium hidden sm:table-cell">
-                        When
+                        {t("platformOverview.when")}
                       </th>
                     </tr>
                   </thead>
@@ -1028,7 +1048,7 @@ function PlatformOverviewPage() {
                           colSpan={3}
                           className="text-center text-muted-foreground py-6 text-[12px]"
                         >
-                          No system alerts
+                          {t("platformOverview.noSystemAlerts")}
                         </td>
                       </tr>
                     )}

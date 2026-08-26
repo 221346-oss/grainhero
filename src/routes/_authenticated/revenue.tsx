@@ -19,6 +19,18 @@ import {
 } from "lucide-react";
 import { getRevenueOverview, markInvoicePaid } from "@/lib/billing.functions";
 import { KpiChartHubSkeleton } from "@/components/app/skeletons";
+import {
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 
 export const Route = createFileRoute("/_authenticated/revenue")({
   head: () => ({
@@ -55,6 +67,70 @@ function money(n: number, ccy: string | null | undefined) {
   return `${ccy ?? "PKR"} ${Number(n ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+// Helper to aggregate revenue data by month
+function aggregateByMonth(invoices: any[]) {
+  const monthMap = new Map<string, { invoiced: number; collected: number; count: number }>();
+
+  for (const inv of invoices) {
+    const date = new Date(inv.created_at);
+    const yearMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+    const existing = monthMap.get(yearMonth) || { invoiced: 0, collected: 0, count: 0 };
+
+    existing.invoiced += Number(inv.total_amount ?? 0);
+    existing.count += 1;
+    if (inv.payment_status === "paid") {
+      existing.collected += Number(inv.total_amount ?? 0);
+    }
+
+    monthMap.set(yearMonth, existing);
+  }
+
+  // Sort and format for chart
+  return Array.from(monthMap.entries())
+    .sort()
+    .map(([month, data]) => {
+      const [year, monthNum] = month.split("-");
+      const date = new Date(Number(year), Number(monthNum) - 1);
+      const label = date.toLocaleDateString("en-US", { year: "numeric", month: "short" });
+      return {
+        month: label,
+        invoiced: Math.round(data.invoiced),
+        collected: Math.round(data.collected),
+        count: data.count,
+      };
+    });
+}
+
+// Helper to aggregate revenue data by year
+function aggregateByYear(invoices: any[]) {
+  const yearMap = new Map<string, { invoiced: number; collected: number; count: number }>();
+
+  for (const inv of invoices) {
+    const date = new Date(inv.created_at);
+    const year = String(date.getFullYear());
+    const existing = yearMap.get(year) || { invoiced: 0, collected: 0, count: 0 };
+
+    existing.invoiced += Number(inv.total_amount ?? 0);
+    existing.count += 1;
+    if (inv.payment_status === "paid") {
+      existing.collected += Number(inv.total_amount ?? 0);
+    }
+
+    yearMap.set(year, existing);
+  }
+
+  // Sort and format for chart
+  return Array.from(yearMap.entries())
+    .sort()
+    .map(([year, data]) => ({
+      year,
+      invoiced: Math.round(data.invoiced),
+      collected: Math.round(data.collected),
+      count: data.count,
+    }));
+}
+
+
 function RevenuePage() {
   const fn = useServerFn(getRevenueOverview);
   const markFn = useServerFn(markInvoicePaid);
@@ -62,6 +138,7 @@ function RevenuePage() {
   const { data, isLoading } = useQuery({ queryKey: ["revenue"], queryFn: () => fn() });
 
   const [q, setQ] = useState("");
+  const [chartPeriod, setChartPeriod] = useState<"month" | "year">("month");
 
   const markM = useMutation({
     mutationFn: (id: string) => markFn({ data: { id } }),
@@ -96,6 +173,12 @@ function RevenuePage() {
         i.batch_ref?.toLowerCase().includes(term),
     );
   }, [invoices, q]);
+
+  // Compute chart data
+  const monthlyData = useMemo(() => aggregateByMonth(invoices), [invoices]);
+  const yearlyData = useMemo(() => aggregateByYear(invoices), [invoices]);
+  const chartData = chartPeriod === "month" ? monthlyData : yearlyData;
+  const xAxisKey = chartPeriod === "month" ? "month" : "year";
 
   if (isLoading) return <KpiChartHubSkeleton />;
 
@@ -167,6 +250,158 @@ function RevenuePage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Revenue Analytics Charts */}
+      {chartData.length > 0 && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900">Revenue Analytics</h2>
+              <p className="text-sm text-slate-500 mt-1">
+                Invoiced vs collected revenue over time
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant={chartPeriod === "month" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setChartPeriod("month")}
+                className="text-xs"
+              >
+                Monthly
+              </Button>
+              <Button
+                variant={chartPeriod === "year" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setChartPeriod("year")}
+                className="text-xs"
+              >
+                Yearly
+              </Button>
+            </div>
+          </div>
+
+          {/* Bar Chart - Invoiced vs Collected */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">Invoiced vs Collected</CardTitle>
+              <CardDescription>Revenue comparison by {chartPeriod}</CardDescription>
+            </CardHeader>
+            <CardContent className="pl-0 pr-4">
+              <ResponsiveContainer width="100%" height={350}>
+                <BarChart
+                  data={chartData}
+                  margin={{ top: 20, right: 30, left: 0, bottom: 60 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis 
+                    dataKey={xAxisKey} 
+                    angle={-45}
+                    textAnchor="end"
+                    height={100}
+                    tick={{ fontSize: 12 }}
+                  />
+                  <YAxis 
+                    tick={{ fontSize: 12 }}
+                    tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`}
+                  />
+                  <Tooltip
+                    formatter={(value: any) => [
+                      `PKR ${Number(value).toLocaleString(undefined, {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0,
+                      })}`,
+                      value === "invoiced" ? "Invoiced" : "Collected",
+                    ]}
+                    labelFormatter={(label) => `${chartPeriod === "month" ? "Month" : "Year"}: ${label}`}
+                    contentStyle={{
+                      backgroundColor: "#f8fafc",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: "6px",
+                    }}
+                  />
+                  <Legend 
+                    wrapperStyle={{ paddingTop: "20px" }}
+                    iconType="square"
+                  />
+                  <Bar 
+                    dataKey="invoiced" 
+                    fill="#10b981" 
+                    name="Invoiced"
+                    radius={[4, 4, 0, 0]}
+                  />
+                  <Bar 
+                    dataKey="collected" 
+                    fill="#059669" 
+                    name="Collected"
+                    radius={[4, 4, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Line Chart - Revenue Trend */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">Revenue Trend</CardTitle>
+              <CardDescription>Total invoiced amount trend over time</CardDescription>
+            </CardHeader>
+            <CardContent className="pl-0 pr-4">
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart
+                  data={chartData}
+                  margin={{ top: 20, right: 30, left: 0, bottom: 60 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis 
+                    dataKey={xAxisKey} 
+                    angle={-45}
+                    textAnchor="end"
+                    height={100}
+                    tick={{ fontSize: 12 }}
+                  />
+                  <YAxis 
+                    tick={{ fontSize: 12 }}
+                    tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`}
+                  />
+                  <Tooltip
+                    formatter={(value: any) => `PKR ${Number(value).toLocaleString(undefined, {
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 0,
+                    })}`}
+                    labelFormatter={(label) => `${chartPeriod === "month" ? "Month" : "Year"}: ${label}`}
+                    contentStyle={{
+                      backgroundColor: "#f8fafc",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: "6px",
+                    }}
+                  />
+                  <Legend wrapperStyle={{ paddingTop: "20px" }} />
+                  <Line 
+                    type="monotone" 
+                    dataKey="invoiced" 
+                    stroke="#10b981" 
+                    strokeWidth={2}
+                    dot={{ fill: "#10b981", r: 4 }}
+                    activeDot={{ r: 6 }}
+                    name="Invoiced"
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="collected" 
+                    stroke="#059669" 
+                    strokeWidth={2}
+                    dot={{ fill: "#059669", r: 4 }}
+                    activeDot={{ r: 6 }}
+                    name="Collected"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       <Tabs defaultValue="invoices">
         <TabsList>

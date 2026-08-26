@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from "@/i18n";
 import {
   Line,
   LineChart,
@@ -82,7 +83,7 @@ function extractGrainType(inv: any): GrainConfig["key"] | null {
   return null;
 }
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = ({ active, payload, label, t }: any) => {
   if (!active || !payload || !payload.length) return null;
 
   const dataPoint = payload[0]?.payload;
@@ -92,7 +93,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
       <div className="border-b border-border/70 pb-1.5 flex items-center justify-between">
         <p className="text-xs font-bold text-foreground">{label}</p>
         <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-          Grain Revenue
+          {t("business.grainRevenue")}
         </span>
       </div>
       <div className="space-y-1.5">
@@ -108,7 +109,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
                   className="h-2 w-2 rounded-full shrink-0 shadow-sm"
                   style={{ backgroundColor: grain.color }}
                 />
-                <span className="font-medium text-foreground">{grain.label}</span>
+                <span className="font-medium text-foreground">{t(`business.${grain.key}`)}</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="font-mono font-semibold text-foreground">
@@ -139,6 +140,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 export function RevenueChart({ invoices = [], payments = [] }: RevenueChartProps) {
   const [timeRange, setTimeRange] = useState<TimeRange>("month");
+  const { t } = useTranslation();
 
   const processedData = useMemo(() => {
     const now = new Date();
@@ -427,12 +429,12 @@ export function RevenueChart({ invoices = [], payments = [] }: RevenueChartProps
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-emerald-600" />
-            <h3 className="text-sm font-semibold text-foreground">Revenue Tracking</h3>
+            <h3 className="text-sm font-semibold text-foreground">{t("business.revenueTracking")}</h3>
           </div>
           <p className="text-xs text-muted-foreground">
-            {timeRange === "week" && "Last 4 weeks"}
-            {timeRange === "month" && "Last 6 months"}
-            {timeRange === "year" && "Last 5 years"}
+            {timeRange === "week" && t("business.last4Weeks")}
+            {timeRange === "month" && t("business.last6Months")}
+            {timeRange === "year" && t("business.last5Years")}
           </p>
         </div>
 
@@ -442,13 +444,13 @@ export function RevenueChart({ invoices = [], payments = [] }: RevenueChartProps
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="week" className="text-xs">
-              Weekly
+              {t("business.weekly")}
             </SelectItem>
             <SelectItem value="month" className="text-xs">
-              Monthly
+              {t("business.monthly")}
             </SelectItem>
             <SelectItem value="year" className="text-xs">
-              Yearly
+              {t("business.yearly")}
             </SelectItem>
           </SelectContent>
         </Select>
@@ -458,7 +460,7 @@ export function RevenueChart({ invoices = [], payments = [] }: RevenueChartProps
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-primary/5 rounded-lg p-3 border border-primary/10">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-            Total Revenue
+            {t("business.totalRevenue")}
           </p>
           <div className="flex items-baseline gap-2 flex-wrap">
             <p className="text-lg font-bold text-foreground">
@@ -478,7 +480,7 @@ export function RevenueChart({ invoices = [], payments = [] }: RevenueChartProps
         </div>
         <div className="bg-amber-500/10 rounded-lg p-3 border border-amber-500/20">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-            Collected
+            {t("business.collected")}
           </p>
           <p className="text-lg font-bold text-amber-700 dark:text-amber-400">
             PKR {processedData.currentTotalCollected.toLocaleString()}
@@ -521,7 +523,7 @@ export function RevenueChart({ invoices = [], payments = [] }: RevenueChartProps
               dx={-5}
             />
             <Tooltip
-              content={<CustomTooltip />}
+              content={<CustomTooltip t={t} />}
               cursor={{ stroke: "hsl(var(--muted))", strokeWidth: 1, strokeDasharray: "3 3" }}
             />
 
@@ -531,7 +533,7 @@ export function RevenueChart({ invoices = [], payments = [] }: RevenueChartProps
                 key={grain.key}
                 type="monotone"
                 dataKey={grain.key}
-                name={grain.label}
+                name={t(`business.${grain.key}`)}
                 stroke={grain.color}
                 strokeWidth={2.2}
                 dot={{
@@ -561,7 +563,7 @@ export function RevenueChart({ invoices = [], payments = [] }: RevenueChartProps
               className="h-2.5 w-2.5 rounded-full shrink-0 shadow-xs"
               style={{ backgroundColor: grain.color }}
             />
-            <span className="text-muted-foreground font-medium">{grain.label}</span>
+            <span className="text-muted-foreground font-medium">{t(`business.${grain.key}`)}</span>
           </div>
         ))}
       </div>

@@ -9,6 +9,7 @@ import {
   AlertOctagon,
   type LucideIcon,
 } from "lucide-react";
+import { useTranslation } from "@/i18n";
 
 type Tile = {
   key: string;
@@ -74,11 +75,12 @@ export function InsightsStrip({
   const qcTotal = Math.max(1, i.pendingQC + i.rejectedQC + i.readyToShip);
   const qcHealth = Math.round((i.readyToShip / qcTotal) * 100);
   const actRatio = i.actuatorsTotal ? i.actuatorsOn / i.actuatorsTotal : 0;
+  const { t } = useTranslation();
 
   const tiles: Tile[] = [
     {
       key: "qc",
-      label: "QC Health",
+      label: t("adminDash.qcHealth"),
       value: `${qcHealth}%`,
       hint: `${i.readyToShip} ready · ${i.pendingQC} pending`,
       to: "/grain-operations",
@@ -90,9 +92,9 @@ export function InsightsStrip({
     },
     {
       key: "risk",
-      label: "Storage Risk",
+      label: t("adminDash.storageRisk"),
       value: String(i.atRisk),
-      hint: `${alertsOpen ?? 0} open alerts`,
+      hint: `${alertsOpen ?? 0} ${t("adminDash.openAlerts")}`,
       to: "/dashboard",
       info: "Batches with risk score ≥ 70, cross-checked with open alerts.",
       icon: AlertTriangle,
@@ -101,9 +103,9 @@ export function InsightsStrip({
     },
     {
       key: "fulfil",
-      label: "Fulfillment",
+      label: t("adminDash.fulfillment"),
       value: String(i.readyToShip),
-      hint: `${ordersOpen ?? 0} orders open`,
+      hint: `${ordersOpen ?? 0} ${t("adminDash.ordersOpen")}`,
       to: "/orders",
       info: "Batches ready to ship and orders awaiting dispatch.",
       icon: Truck,
@@ -112,7 +114,7 @@ export function InsightsStrip({
     },
     {
       key: "auto",
-      label: "Automation",
+      label: t("adminDash.automation"),
       value: `${i.actuatorsOn}/${i.actuatorsTotal}`,
       to: "/actuators",
       info: "Live actuators reporting an 'on' state versus total provisioned.",
@@ -126,8 +128,8 @@ export function InsightsStrip({
     <section className="rounded-xl border bg-card/60 p-3 backdrop-blur-sm">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5">
-          <h2 className="text-sm font-semibold text-foreground">Insights & Performance</h2>
-          <InfoDot text="Cross-cutting signals across quality, risk, fulfillment and automation." />
+          <h2 className="text-sm font-semibold text-foreground">{t("adminDash.insightsPerformance")}</h2>
+          <InfoDot text={t("adminDash.insightsHint")} />
         </div>
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
@@ -171,7 +173,7 @@ export function InsightsStrip({
           <div className="mt-2 pt-2 border-t border-border/60">
             <div className="flex items-center gap-1.5 mb-1.5">
               <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Why it's stuck
+                {t("adminDash.whyStuck")}
               </span>
               <InfoDot text="Grain batches currently flagged, at risk, or unusable — with the reason and weight involved, not just a count." />
             </div>
@@ -185,7 +187,7 @@ export function InsightsStrip({
                   <PauseCircle className="h-3.5 w-3.5 text-amber-600 shrink-0" />
                   <span className="flex-1 text-foreground">
                     <span className="font-semibold tabular-nums">{fmtKg(pipeline.onHold.kg)}</span>{" "}
-                    on hold, flagged for review
+                    {t("adminDash.onHoldReview")}
                   </span>
                   <span className="text-muted-foreground tabular-nums">
                     {pipeline.onHold.count}
@@ -201,7 +203,7 @@ export function InsightsStrip({
                   <AlertTriangle className="h-3.5 w-3.5 text-amber-600 shrink-0" />
                   <span className="flex-1 text-foreground">
                     <span className="font-semibold tabular-nums">{fmtKg(pipeline.atRisk.kg)}</span>{" "}
-                    at risk (score ≥ 70)
+                    {t("adminDash.atRisk")}
                   </span>
                   <span className="text-muted-foreground tabular-nums">
                     {pipeline.atRisk.count}
@@ -217,7 +219,7 @@ export function InsightsStrip({
                   <AlertOctagon className="h-3.5 w-3.5 text-red-600 shrink-0" />
                   <span className="flex-1 text-foreground">
                     <span className="font-semibold tabular-nums">{fmtKg(pipeline.damaged.kg)}</span>{" "}
-                    damaged or expired
+                    {t("adminDash.damagedExpired")}
                   </span>
                   <span className="text-muted-foreground tabular-nums">
                     {pipeline.damaged.count}

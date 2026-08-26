@@ -63,6 +63,7 @@ import { MoreHorizontal } from "lucide-react";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { AdminDataCard } from "@/components/app/admin/AdminDataCard";
 import { SubscriptionSkeleton } from "@/components/app/skeletons";
+import { useTranslation } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/subscription")({
   head: () => ({
@@ -126,6 +127,7 @@ function UsageRow({
 }
 
 function SubscriptionPage() {
+  const { t } = useTranslation();
   const fn = useServerFn(getMySubscription);
   const cancelFn = useServerFn(cancelMySubscription);
   const portalFn = useServerFn(createStripeBillingPortalSession);
@@ -162,18 +164,18 @@ function SubscriptionPage() {
       toast.success(successMsg);
       qc.invalidateQueries({ queryKey: ["all-subscriptions"] });
     } catch (e: any) {
-      toast.error(e?.message ?? "Action failed");
+      toast.error(e?.message ?? t("subscription.actionFailed"));
     }
   }
 
   const cancelM = useMutation({
     mutationFn: () => cancelFn({ data: { reason: reason || undefined } }),
     onSuccess: () => {
-      toast.success("Subscription cancelled");
+      toast.success(t("subscription.cancelledToast"));
       setConfirmOpen(false);
       qc.invalidateQueries({ queryKey: ["my-subscription"] });
     },
-    onError: (e: any) => toast.error(e.message ?? "Failed to cancel"),
+    onError: (e: any) => toast.error(e.message ?? t("subscription.failedToCancel")),
   });
 
   const portalM = useMutation({
@@ -181,33 +183,33 @@ function SubscriptionPage() {
     onSuccess: ({ url }: { url: string }) => {
       window.location.href = url;
     },
-    onError: (e: any) => toast.error(e.message ?? "Could not open billing portal"),
+    onError: (e: any) => toast.error(e.message ?? t("subscription.couldNotOpenPortal")),
   });
 
   const changeM = useMutation({
     mutationFn: () => changeFn({ data: { planId: newPlan } }),
     onSuccess: () => {
-      toast.success("Plan updated");
+      toast.success(t("subscription.planUpdatedToast"));
       setChangeOpen(false);
       qc.invalidateQueries({ queryKey: ["my-subscription"] });
     },
-    onError: (e: any) => toast.error(e.message ?? "Failed to change plan"),
+    onError: (e: any) => toast.error(e.message ?? t("subscription.failedToChangePlan")),
   });
   const cancelPeriodM = useMutation({
     mutationFn: () => cancelPeriodFn(),
     onSuccess: () => {
-      toast.success("Will cancel at period end");
+      toast.success(t("subscription.willCancelToast"));
       qc.invalidateQueries({ queryKey: ["my-subscription"] });
     },
-    onError: (e: any) => toast.error(e.message ?? "Failed"),
+    onError: (e: any) => toast.error(e.message ?? t("subscription.actionFailed")),
   });
   const resumeM = useMutation({
     mutationFn: () => resumeFn(),
     onSuccess: () => {
-      toast.success("Subscription resumed");
+      toast.success(t("subscription.resumedToast"));
       qc.invalidateQueries({ queryKey: ["my-subscription"] });
     },
-    onError: (e: any) => toast.error(e.message ?? "Failed"),
+    onError: (e: any) => toast.error(e.message ?? t("subscription.actionFailed")),
   });
 
   const role = data?.role ?? "pending";
@@ -221,8 +223,8 @@ function SubscriptionPage() {
 
   return (
     <AdminPageShell
-      title="My subscription"
-      subtitle="Manage your plan, usage and billing history"
+      title={t("subscription.title")}
+      subtitle={t("subscription.subtitle")}
       actions={
         <>
           {sub && (
@@ -232,7 +234,7 @@ function SubscriptionPage() {
               onClick={() => portalM.mutate()}
               disabled={portalM.isPending}
             >
-              {portalM.isPending ? "Opening…" : "Manage billing"}
+              {portalM.isPending ? t("subscription.opening") : t("subscription.manageBilling")}
             </Button>
           )}
           {sub && canManage && sub.status !== "cancelled" && (
@@ -250,20 +252,22 @@ function SubscriptionPage() {
                 setChangeOpen(true);
               }}
             >
-              <ArrowUpRight className="h-4 w-4 mr-2" /> Change plan
+              <ArrowUpRight className="h-4 w-4 mr-2" /> {t("subscription.changePlan")}
             </Button>
           )}
           {isSuperAdmin && (
             <Button
               variant="outline"
               size="sm"
-              onClick={() => runAdmin(() => adminReconcileFn(), "Reconciled from Stripe")}
+              onClick={() =>
+                runAdmin(() => adminReconcileFn(), t("subscription.reconciledToast"))
+              }
             >
-              <RotateCcw className="h-4 w-4 mr-2" /> Sync all from Stripe
+              <RotateCcw className="h-4 w-4 mr-2" /> {t("subscription.syncAll")}
             </Button>
           )}
           <Button asChild variant="outline" size="sm">
-            <Link to="/plans">Browse plans</Link>
+            <Link to="/plans">{t("subscription.browsePlans")}</Link>
           </Button>
         </>
       }
@@ -271,13 +275,14 @@ function SubscriptionPage() {
       {!sub && (
         <Card>
           <CardContent className="p-8 text-center space-y-3">
-            <div className="text-lg font-semibold text-slate-900">No active subscription</div>
+            <div className="text-lg font-semibold text-slate-900">
+              {t("subscription.noActiveSubscription")}
+            </div>
             <p className="text-sm text-slate-500 max-w-md mx-auto">
-              You&apos;re not on a paid plan yet. Pick one to unlock warehouses, silos and AI
-              predictions at scale.
+              {t("subscription.noSubDesc")}
             </p>
             <Button asChild>
-              <Link to="/plans">Choose a plan</Link>
+              <Link to="/plans">{t("subscription.choosePlan")}</Link>
             </Button>
           </CardContent>
         </Card>
@@ -289,7 +294,9 @@ function SubscriptionPage() {
             <div className="rounded-md border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-900 px-4 py-3 text-sm flex items-center justify-between gap-3">
               <div className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
                 <Calendar className="h-4 w-4" />
-                Scheduled to cancel on {new Date((sub as any).cancel_at).toLocaleDateString()}
+                {t("subscription.scheduledToCancel", {
+                  date: new Date((sub as any).cancel_at).toLocaleDateString(),
+                })}
               </div>
               {canManage && (
                 <Button
@@ -298,7 +305,7 @@ function SubscriptionPage() {
                   onClick={() => resumeM.mutate()}
                   disabled={resumeM.isPending}
                 >
-                  <RotateCcw className="h-4 w-4 mr-2" /> Resume
+                  <RotateCcw className="h-4 w-4 mr-2" /> {t("subscription.resume")}
                 </Button>
               )}
             </div>
@@ -309,7 +316,7 @@ function SubscriptionPage() {
                 <div>
                   <CardTitle className="text-xl">{sub.plan_name}</CardTitle>
                   <CardDescription className="mt-1">
-                    {sub.plan_description ?? "Your current plan"}
+                    {sub.plan_description ?? t("subscription.yourCurrentPlan")}
                   </CardDescription>
                 </div>
                 <Badge className={statusBadge(sub.status)}>{sub.status}</Badge>
@@ -317,20 +324,20 @@ function SubscriptionPage() {
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-4 text-sm">
               <div>
-                <div className="text-xs uppercase text-slate-500 font-semibold">Price</div>
+                <div className="text-xs uppercase text-slate-500 font-semibold">{t("subscription.price")}</div>
                 <div className="text-lg font-bold">
                   {sub.currency ?? "PKR"} {Number(sub.price_per_month).toFixed(2)}
-                  <span className="text-xs text-slate-500">/mo</span>
+                  <span className="text-xs text-slate-500">{t("subscription.perMonth")}</span>
                 </div>
               </div>
               <div>
-                <div className="text-xs uppercase text-slate-500 font-semibold">Billing cycle</div>
+                <div className="text-xs uppercase text-slate-500 font-semibold">{t("subscription.billingCycle")}</div>
                 <div className="text-lg font-bold capitalize">{sub.billing_cycle ?? "monthly"}</div>
               </div>
               <div>
                 <div className="text-xs uppercase text-slate-500 font-semibold flex items-center gap-1">
                   <Calendar className="h-3 w-3" />
-                  Renews
+                  {t("subscription.renews")}
                 </div>
                 <div className="text-lg font-bold">
                   {sub.next_payment_date
@@ -339,8 +346,10 @@ function SubscriptionPage() {
                 </div>
               </div>
               <div>
-                <div className="text-xs uppercase text-slate-500 font-semibold">Auto-renew</div>
-                <div className="text-lg font-bold">{sub.auto_renew ? "On" : "Off"}</div>
+                <div className="text-xs uppercase text-slate-500 font-semibold">{t("subscription.autoRenew")}</div>
+                <div className="text-lg font-bold">
+                  {sub.auto_renew ? t("subscription.on") : t("subscription.off")}
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -348,21 +357,21 @@ function SubscriptionPage() {
           <div className="grid gap-4 lg:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle>Usage</CardTitle>
-                <CardDescription>Current consumption vs plan limits</CardDescription>
+                <CardTitle>{t("subscription.usage")}</CardTitle>
+                <CardDescription>{t("subscription.usageDesc")}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <UsageRow
                   icon={Package}
-                  label="Batches"
+                  label={t("subscription.batches")}
                   used={usage.batches}
                   max={sub.max_batches}
                 />
-                <UsageRow icon={Warehouse} label="Silos" used={usage.silos} max={null} />
-                <UsageRow icon={Cpu} label="Devices" used={usage.devices} max={sub.max_devices} />
+                <UsageRow icon={Warehouse} label={t("subscription.silos")} used={usage.silos} max={null} />
+                <UsageRow icon={Cpu} label={t("subscription.devices")} used={usage.devices} max={sub.max_devices} />
                 <UsageRow
                   icon={Users}
-                  label="Team members"
+                  label={t("subscription.teamMembers")}
                   used={usage.users}
                   max={sub.max_users}
                 />
@@ -371,14 +380,14 @@ function SubscriptionPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Included features</CardTitle>
+                <CardTitle>{t("subscription.includedFeatures")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
                 {[
-                  ["AI features", sub.ai_features],
-                  ["Advanced analytics", sub.advanced_analytics],
-                  ["Priority support", sub.priority_support],
-                  ["Custom integrations", sub.custom_integrations],
+                  [t("subscription.featAi"), sub.ai_features],
+                  [t("subscription.featAnalytics"), sub.advanced_analytics],
+                  [t("subscription.featSupport"), sub.priority_support],
+                  [t("subscription.featIntegrations"), sub.custom_integrations],
                 ].map(([label, on]) => (
                   <div key={label as string} className="flex justify-between">
                     <span className="text-slate-700">{label as string}</span>
@@ -386,7 +395,7 @@ function SubscriptionPage() {
                       variant="outline"
                       className={on ? "border-emerald-200 text-emerald-700" : "text-slate-500"}
                     >
-                      {on ? "Enabled" : "—"}
+                      {on ? t("subscription.enabled") : "—"}
                     </Badge>
                   </div>
                 ))}
@@ -395,9 +404,10 @@ function SubscriptionPage() {
           </div>
 
           <Card>
-            <CardHeader>
-              <CardTitle>Billing history</CardTitle>
-              <CardDescription>{invoices.length} recent invoice(s)</CardDescription>
+            <CardHeader>                <CardTitle>{t("subscription.billingHistory")}</CardTitle>
+              <CardDescription>
+                {t("subscription.recentInvoices", { count: invoices.length })}
+              </CardDescription>
             </CardHeader>
             <CardContent className="p-0">
               <div className="divide-y">
@@ -418,7 +428,9 @@ function SubscriptionPage() {
                   </div>
                 ))}
                 {invoices.length === 0 && (
-                  <div className="p-8 text-center text-sm text-slate-500">No invoices yet.</div>
+                  <div className="p-8 text-center text-sm text-slate-500">
+                    {t("subscription.noInvoices")}
+                  </div>
                 )}
               </div>
             </CardContent>
@@ -432,7 +444,7 @@ function SubscriptionPage() {
                   onClick={() => resumeM.mutate()}
                   disabled={resumeM.isPending}
                 >
-                  <RotateCcw className="h-4 w-4 mr-2" /> Resume subscription
+                  <RotateCcw className="h-4 w-4 mr-2" /> {t("subscription.resumeSubscription")}
                 </Button>
               ) : (
                 <Button
@@ -440,11 +452,11 @@ function SubscriptionPage() {
                   onClick={() => cancelPeriodM.mutate()}
                   disabled={cancelPeriodM.isPending}
                 >
-                  <Calendar className="h-4 w-4 mr-2" /> Cancel at period end
+                  <Calendar className="h-4 w-4 mr-2" /> {t("subscription.cancelAtPeriodEnd")}
                 </Button>
               )}
               <Button variant="destructive" onClick={() => setConfirmOpen(true)}>
-                <XCircle className="h-4 w-4 mr-2" /> Cancel now
+                <XCircle className="h-4 w-4 mr-2" /> {t("subscription.cancelNow")}
               </Button>
             </div>
           )}
@@ -454,12 +466,12 @@ function SubscriptionPage() {
       {/* Super Admin: Show all subscriptions */}
       {isSuperAdmin && (
         <AdminDataCard
-          title="All platform subscriptions"
-          description={`${allSubs.length} subscription${allSubs.length === 1 ? "" : "s"} · manage plans, cancel or resume from here`}
+          title={t("subscription.allPlatformSubscriptions")}
+          description={t("subscription.subsCount", { count: allSubs.length })}
         >
           {allSubs.length === 0 && (
             <div className="p-8 text-center text-sm text-slate-500">
-              No tenant subscriptions yet.
+              {t("subscription.noTenantSubs")}
             </div>
           )}
           <div className="divide-y divide-slate-100">
@@ -470,7 +482,11 @@ function SubscriptionPage() {
                   )
                 : null;
               const expiryText =
-                daysLeft !== null ? (daysLeft > 0 ? `${daysLeft} days` : "Expired") : "N/A";
+                daysLeft !== null
+                  ? daysLeft > 0
+                    ? t("subscription.days", { count: daysLeft })
+                    : t("subscription.expired")
+                  : "N/A";
               const expiryColor =
                 daysLeft !== null && daysLeft <= 7
                   ? "text-red-600"
@@ -498,7 +514,7 @@ function SubscriptionPage() {
                       <span className="text-xs text-slate-500">/mo</span>
                     </span>
                     <div className={`text-[10px] font-medium ${expiryColor}`}>
-                      Expires: {expiryText}
+                      {t("subscription.expires", { text: expiryText })}
                     </div>
                   </div>
                   <DropdownMenu>
@@ -508,19 +524,22 @@ function SubscriptionPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-52">
-                      <DropdownMenuLabel className="text-[11px]">Change plan</DropdownMenuLabel>
+                      <DropdownMenuLabel className="text-[11px]">
+                        {t("subscription.changePlan")}
+                      </DropdownMenuLabel>
                       {pricingData.map((p: any) => (
                         <DropdownMenuItem
                           key={p.id}
                           onClick={() =>
                             runAdmin(
                               () => adminChangeFn({ data: { subscriptionId: s.id, planId: p.id } }),
-                              `Moved ${s.user_name} to ${p.name}`,
+                              t("subscription.movedTo", { name: s.user_name, plan: p.name }),
                             )
                           }
                         >
                           <ArrowUpRight className="h-3.5 w-3.5 mr-2" /> {p.name} —{" "}
-                          {p.currency ?? "PKR"} {p.price}/mo
+                          {p.currency ?? "PKR"} {p.price}
+                          {t("subscription.perMonth")}
                         </DropdownMenuItem>
                       ))}
                       <DropdownMenuSeparator />
@@ -529,21 +548,21 @@ function SubscriptionPage() {
                           runAdmin(
                             () =>
                               adminCancelFn({ data: { subscriptionId: s.id, immediate: false } }),
-                            "Will cancel at period end",
+                            t("subscription.willCancelToast"),
                           )
                         }
                       >
-                        <Calendar className="h-3.5 w-3.5 mr-2" /> Cancel at period end
+                        <Calendar className="h-3.5 w-3.5 mr-2" /> {t("subscription.cancelAtPeriodEnd")}
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() =>
                           runAdmin(
                             () => adminResumeFn({ data: { subscriptionId: s.id } }),
-                            "Subscription resumed",
+                            t("subscription.resumedToast"),
                           )
                         }
                       >
-                        <RotateCcw className="h-3.5 w-3.5 mr-2" /> Resume
+                        <RotateCcw className="h-3.5 w-3.5 mr-2" /> {t("subscription.resume")}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
@@ -552,22 +571,22 @@ function SubscriptionPage() {
                           runAdmin(
                             () =>
                               adminCancelFn({ data: { subscriptionId: s.id, immediate: true } }),
-                            "Subscription cancelled",
+                            t("subscription.cancelledToast"),
                           )
                         }
                       >
-                        <XCircle className="h-3.5 w-3.5 mr-2" /> Cancel immediately
+                        <XCircle className="h-3.5 w-3.5 mr-2" /> {t("subscription.cancelImmediately")}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         onClick={() =>
                           runAdmin(
                             () => adminSyncFn({ data: { subscriptionId: s.id } }),
-                            "Synced from Stripe",
+                            t("subscription.syncedToast"),
                           )
                         }
                       >
-                        <RotateCcw className="h-3.5 w-3.5 mr-2" /> Sync from Stripe
+                        <RotateCcw className="h-3.5 w-3.5 mr-2" /> {t("subscription.syncFromStripe")}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -581,27 +600,26 @@ function SubscriptionPage() {
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Cancel subscription</DialogTitle>
+            <DialogTitle>{t("subscription.cancelSubscriptionTitle")}</DialogTitle>
             <DialogDescription>
-              Your plan will stay active until the end of the current period. Optionally tell us
-              why:
+              {t("subscription.cancelSubscriptionDesc")}
             </DialogDescription>
           </DialogHeader>
           <Textarea
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder="Reason (optional)"
+            placeholder={t("subscription.reasonPlaceholder")}
           />
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfirmOpen(false)}>
-              Keep plan
+              {t("subscription.keepPlan")}
             </Button>
             <Button
               variant="destructive"
               onClick={() => cancelM.mutate()}
               disabled={cancelM.isPending}
             >
-              Confirm cancel
+              {t("subscription.confirmCancel")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -610,9 +628,9 @@ function SubscriptionPage() {
       <Dialog open={changeOpen} onOpenChange={setChangeOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Change plan</DialogTitle>
+            <DialogTitle>{t("subscription.changePlan")}</DialogTitle>
             <DialogDescription>
-              The change applies immediately with prorated billing on your next invoice.
+              {t("subscription.changePlanDesc")}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
@@ -623,7 +641,8 @@ function SubscriptionPage() {
               <SelectContent>
                 {pricingData.map((p: any) => (
                   <SelectItem key={p.id} value={p.id}>
-                    {p.name} — {p.currency ?? "PKR"} {p.price}/mo
+                    {p.name} — {p.currency ?? "PKR"} {p.price}
+                    {t("subscription.perMonth")}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -631,11 +650,11 @@ function SubscriptionPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setChangeOpen(false)}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button onClick={() => changeM.mutate()} disabled={changeM.isPending}>
               {changeM.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Confirm change
+              {t("subscription.confirmChange")}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -28,6 +28,7 @@ import { LocationMap } from "@/components/app/LocationMap";
 import { VariableFontText } from "@/components/app/VariableFontText";
 import { THEMES, applyTheme, getStoredTheme, type ThemeId } from "@/lib/theme";
 import { cn } from "@/lib/utils";
+import { useI18n, LOCALES, type Locale, useTranslation } from "@/i18n";
 import { initialsOf } from "@/hooks/useMyProfile";
 import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
 import {
@@ -104,6 +105,7 @@ function SettingsPage() {
   const getFn = useServerFn(getMySettings);
   const saveFn = useServerFn(updateMySettings);
   const isSuperAdmin = useIsSuperAdmin();
+  const { t } = useTranslation();
 
   const { data, isLoading } = useQuery({ queryKey: ["my-settings"], queryFn: () => getFn() });
 
@@ -222,8 +224,8 @@ function SettingsPage() {
 
   return (
     <AdminPageShell
-      title="Settings"
-      subtitle="Manage your profile, location and appearance"
+      title={t("settingsPage.title")}
+      subtitle={t("settingsPage.subtitle")}
       actions={
         <Button
           onClick={() => save.mutate()}
@@ -235,7 +237,7 @@ function SettingsPage() {
           ) : (
             <Save className="h-4 w-4 mr-2" />
           )}
-          Save changes
+          {t("settingsPage.saveChanges")}
         </Button>
       }
     >
@@ -245,25 +247,26 @@ function SettingsPage() {
           <div className="flex items-center gap-8 px-1">
             {(
               [
-                { value: "profile", label: "Profile" },
-                { value: "location", label: "Location" },
-                { value: "appearance", label: "Appearance" },
-                ...(isSuperAdmin ? [{ value: "platform", label: "Platform" }] : []),
+                { value: "profile", label: t("settingsPage.profile") },
+                { value: "location", label: t("settingsPage.location") },
+                { value: "appearance", label: t("settingsPage.appearance") },
+                { value: "language", label: t("settingsPage.language") },
+                ...(isSuperAdmin ? [{ value: "platform", label: t("settingsPage.platform") }] : []),
               ] as { value: string; label: string }[]
-            ).map((t) => {
-              const isActive = tab === t.value;
+            ).map((tabItem) => {
+              const isActive = tab === tabItem.value;
               return (
                 <button
-                  key={t.value}
+                  key={tabItem.value}
                   type="button"
-                  onClick={() => setTab(t.value)}
+                  onClick={() => setTab(tabItem.value)}
                   className={cn(
                     "relative py-3 text-sm uppercase tracking-[0.15em] whitespace-nowrap transition-colors",
                     isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground",
                   )}
                 >
                   <VariableFontText
-                    text={t.label}
+                    text={tabItem.label}
                     base={isActive ? 850 : 350}
                     hover={850}
                     staggerMs={30}
@@ -478,6 +481,10 @@ function SettingsPage() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="language">
+          <LanguageSettingsCard />
+        </TabsContent>
+
         {isSuperAdmin && (
           <TabsContent value="platform">
             <PlatformSettingsSection />
@@ -485,6 +492,54 @@ function SettingsPage() {
         )}
       </Tabs>
     </AdminPageShell>
+  );
+}
+
+function LanguageSettingsCard() {
+  const { locale, setLocale } = useI18n();
+  const { t } = useTranslation();
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{t("settingsPage.language")}</CardTitle>
+        <CardDescription>{t("settingsPage.languageDescription")}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {LOCALES.map((l) => {
+            const active = l.id === locale;
+            return (
+              <button
+                key={l.id}
+                type="button"
+                onClick={() => setLocale(l.id)}
+                className={cn(
+                  "group relative rounded-2xl border p-4 text-left transition-all",
+                  active
+                    ? "border-[--fusion-grape] ring-2 ring-[--fusion-grape]/40"
+                    : "border-border hover:border-foreground/20",
+                )}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-semibold text-sm text-foreground">{l.nativeLabel}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      {l.dir === "rtl" ? t("settingsPage.rightToLeft") : t("settingsPage.leftToRight")}
+                    </div>
+                  </div>
+                  {active && (
+                    <span className="h-6 w-6 rounded-full bg-[--fusion-grape] text-white grid place-items-center">
+                      <Check className="h-3.5 w-3.5" strokeWidth={3} />
+                    </span>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 

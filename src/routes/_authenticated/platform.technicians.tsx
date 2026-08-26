@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { useTranslation } from "@/i18n";
 import { toast } from "sonner";
 import {
   listGlobalTechnicians,
@@ -80,6 +81,7 @@ const STATUS_CONFIG = {
 
 function PlatformTechniciansPage() {
   const qc = useQueryClient();
+  const { t } = useTranslation();
   const listFn = useServerFn(listGlobalTechnicians);
   const createFn = useServerFn(createGlobalTechnician);
   const deleteFn = useServerFn(deleteGlobalTechnician);
@@ -178,11 +180,11 @@ function PlatformTechniciansPage() {
 
   return (
     <AdminPageShell
-      title="Company Technicians"
-      subtitle="Create and manage global technicians for installation assignments"
+      title={t("technicians.title")}
+      subtitle={t("technicians.subtitle")}
       actions={
         <Button onClick={() => setCreateOpen(true)} size="sm">
-          <Plus className="w-4 h-4 mr-1" /> Add Technician
+          <Plus className="w-4 h-4 mr-1" /> {t("technicians.addTechnician")}
         </Button>
       }
     >

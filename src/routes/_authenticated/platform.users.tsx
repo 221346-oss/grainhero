@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState, useEffect } from "react";
+import { useTranslation } from "@/i18n";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -158,6 +159,7 @@ function ChangeRoleSheet({
 function UsersPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { t } = useTranslation();
   const fn = useServerFn(listAllUsers);
   const toggleFn = useServerFn(toggleUserBlocked);
   const impersonateFn = useServerFn(startImpersonation);
@@ -239,7 +241,7 @@ function UsersPage() {
   // ── Full layout skeleton while loading ─────────────────────────────────
   if (isLoading) {
     return (
-      <AdminPageShell title="Platform users" subtitle="All users across tenants and organizations">
+      <AdminPageShell title={t("platformUsers.title")} subtitle={t("platformUsers.title")}>
         <div className="space-y-4">
           {/* 3-tile summary */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -290,7 +292,7 @@ function UsersPage() {
   }
 
   return (
-    <AdminPageShell title="Platform users" subtitle="All users across tenants and organizations">
+    <AdminPageShell title={t("platformUsers.title")} subtitle={t("platformUsers.title")}>
       <AdminSummaryTiles
         columns={3}
         tiles={[

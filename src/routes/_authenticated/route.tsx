@@ -19,11 +19,13 @@ import { TicketSidePanel } from "@/components/app/tickets/TicketSidePanel";
 import { MobileAdminNav } from "@/components/app/mobile/MobileAdminNav";
 import { TicketChannelKeepAlive } from "@/components/app/tickets/TicketChannelKeepAlive";
 import { getStoredThemeMode, toggleThemeMode, type ThemeMode } from "@/lib/theme";
+import { LanguageSwitcher } from "@/components/app/LanguageSwitcher";
 import TextShimmer from "@/components/ui/text-shimmer";
 import { AppShellSkeleton } from "@/components/app/AppShellSkeleton";
 import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
 import { useIsGlobalTechnician } from "@/hooks/useIsGlobalTechnician";
 import { logSecurityEvent } from "@/lib/security-events.functions";
+import { useTranslation } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated")({
   head: () => ({
@@ -146,6 +148,7 @@ function AuthenticatedLayout() {
   };
   const [headerVisible, setHeaderVisible] = useState(true);
   const { isTechnician } = useIsGlobalTechnician();
+  const { t } = useTranslation();
 
   useEffect(() => {
     const stored = getStoredThemeMode();
@@ -232,7 +235,7 @@ function AuthenticatedLayout() {
                 type="button"
                 onClick={() => setSidebarOpen((o) => !o)}
                 className="p-1.5 hover:bg-muted rounded-lg transition-colors text-foreground"
-                aria-label="Open navigation menu"
+                aria-label={t("nav.openNavigationMenu")}
               >
                 <Menu className="h-5 w-5" />
               </button>
@@ -258,7 +261,7 @@ function AuthenticatedLayout() {
                   }
                 >
                   <LayoutDashboard className="h-3.5 w-3.5" />
-                  Overview
+                  {t("tabs.overview")}
                 </Link>
                 <Link
                   to="/technician/installs"
@@ -270,7 +273,7 @@ function AuthenticatedLayout() {
                   }
                 >
                   <Package className="h-3.5 w-3.5" />
-                  My Installs
+                  {t("tabs.myInstalls")}
                 </Link>
               </nav>
             ) : (
@@ -287,6 +290,8 @@ function AuthenticatedLayout() {
             >
               {mode === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
+            {/* Language Switcher */}
+            <LanguageSwitcher />
             <NotificationBell />
             <ProfileMenu />
           </motion.header>
@@ -303,6 +308,7 @@ function AuthenticatedLayout() {
 // Only tenant admins see the Upgrade shortcut in the topbar.
 function AdminUpgradeLink() {
   const { role } = useIsSuperAdmin();
+  const { t } = useTranslation();
   if (role !== "admin") return null;
   return (
     <Link
@@ -310,7 +316,7 @@ function AdminUpgradeLink() {
       className="shrink-0 h-9 inline-flex items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold text-[#2FAC0C] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:text-emerald-400"
     >
       <TextShimmer duration={2.2} baseColor="#2FAC0C99" peakColor="#4ade80">
-        Upgrade
+        {t("nav.upgrade")}
       </TextShimmer>
     </Link>
   );

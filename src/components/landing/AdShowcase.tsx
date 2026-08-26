@@ -3,11 +3,13 @@ import { motion } from "framer-motion";
 import { Play, Volume2, VolumeX } from "lucide-react";
 import brandAd from "@/assets/brand-ad.mp4.asset.json";
 import { getAssetUrl } from "@/lib/utils";
+import { useTranslation } from "@/i18n";
 
 export function AdShowcase() {
   const ref = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(true);
+  const { t } = useTranslation();
 
   const start = () => {
     const v = ref.current;
@@ -30,7 +32,7 @@ export function AdShowcase() {
           className="mb-6 flex flex-wrap items-center justify-between gap-4"
         >
           <h2 className="text-2xl font-black tracking-tight text-[#FAFAF7] sm:text-3xl">
-            Sixty seconds. Whole story.
+            {t("brandFilm.heading")}
           </h2>
           <button
             onClick={() => {

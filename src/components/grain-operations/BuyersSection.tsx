@@ -38,6 +38,7 @@ import {
 import { listBuyers, upsertBuyer, deleteBuyer } from "@/lib/operations.functions";
 import { ExportMenu } from "@/components/app/ExportMenu";
 import type { ExportColumn } from "@/lib/csv-pdf-export";
+import { useTranslation } from "@/i18n";
 
 const BUYER_TYPES = ["local_mill", "exporter", "wholesaler", "retailer", "government"] as const;
 const GRAIN_TYPES = ["Wheat", "Rice", "Maize", "Barley", "Sorghum"] as const;
@@ -127,6 +128,7 @@ const STATUS_CLASS: Record<Status, string> = {
 };
 
 export function BuyersSection() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const listFn = useServerFn(listBuyers);
   const upsertFn = useServerFn(upsertBuyer);
@@ -190,23 +192,23 @@ export function BuyersSection() {
         },
       }),
     onSuccess: () => {
-      toast.success(form.id ? "Buyer updated" : "Buyer created");
+      toast.success(form.id ? t("buyers.updated") : t("buyers.created"));
       qc.invalidateQueries({ queryKey: ["buyers"] });
       qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
       setEditOpen(false);
       setForm(empty);
     },
-    onError: (e: Error) => toast.error(e.message || "Save failed"),
+    onError: (e: Error) => toast.error(e.message || t("common.error")),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteFn({ data: { id } }),
     onSuccess: () => {
-      toast.success("Buyer deleted");
+      toast.success(t("buyers.deleted"));
       qc.invalidateQueries({ queryKey: ["buyers"] });
       setDeleteId(null);
     },
-    onError: (e: Error) => toast.error(e.message || "Delete failed"),
+    onError: (e: Error) => toast.error(e.message || t("common.error")),
   });
 
   function openCreate() {
@@ -245,34 +247,34 @@ export function BuyersSection() {
           <Input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search buyer, contact…"
+            placeholder={t("buyers.searchPlaceholder")}
             className="pl-9 h-9"
           />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-full sm:w-40 h-9">
-            <SelectValue placeholder="Status" />
+            <SelectValue placeholder={t("common.status")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="paused">Paused</SelectItem>
-            <SelectItem value="inactive">Inactive</SelectItem>
+            <SelectItem value="all">{t("buyers.allStatuses")}</SelectItem>
+            <SelectItem value="active">{t("buyers.active")}</SelectItem>
+            <SelectItem value="paused">{t("buyers.paused")}</SelectItem>
+            <SelectItem value="inactive">{t("buyers.inactive")}</SelectItem>
           </SelectContent>
         </Select>
-        <ExportMenu filename="buyers" title="Buyers" rows={rows} columns={buyerExportColumns} />
+        <ExportMenu filename="buyers" title={t("buyers.title")} rows={rows} columns={buyerExportColumns} />
         <Button onClick={openCreate} className="gap-2 h-9 whitespace-nowrap">
-          <Plus className="w-4 h-4" /> New buyer
+          <Plus className="w-4 h-4" /> {t("buyers.newBuyer")}
         </Button>
       </div>
 
       {isLoading ? (
         <div className="flex items-center justify-center py-8 text-muted-foreground">
-          <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading…
+          <Loader2 className="w-5 h-5 animate-spin mr-2" /> {t("common.loading")}
         </div>
       ) : rows.length === 0 ? (
         <div className="py-8 text-center text-muted-foreground">
-          <p className="text-sm">No buyers yet.</p>
+          <p className="text-sm">{t("buyers.noBuyers")}</p>
         </div>
       ) : (
         // Fixed height container for 4 entries with vertical scroll
@@ -281,22 +283,22 @@ export function BuyersSection() {
             <thead className="bg-muted/50 border-b border-border">
               <tr>
                 <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">
-                  Buyer
+                  {t("buyers.buyer")}
                 </th>
                 <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">
-                  Contact
+                  {t("buyers.contact")}
                 </th>
                 <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">
-                  Company
+                  {t("buyers.company")}
                 </th>
                 <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">
-                  Type
+                  {t("buyers.type")}
                 </th>
                 <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">
-                  Status
+                  {t("common.status")}
                 </th>
                 <th className="px-3 py-2 text-center font-semibold text-muted-foreground text-xs uppercase tracking-wider">
-                  Actions
+                  {t("common.actions")}
                 </th>
               </tr>
             </thead>
@@ -314,7 +316,7 @@ export function BuyersSection() {
                     {b.company_name ?? "—"}
                   </td>
                   <td className="px-3 py-2 text-muted-foreground text-xs">
-                    {b.buyer_type?.replace("_", " ") ?? "—"}
+                    {b.buyer_type ? t(`buyers.${b.buyer_type}`) : "—"}
                   </td>
                   <td className="px-3 py-2">
                     <StatusBadgeCustom value={b.status} />
@@ -367,9 +369,9 @@ export function BuyersSection() {
       >
         <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{form.id ? "Edit buyer" : "New buyer"}</DialogTitle>
+          <DialogTitle>{form.id ? t("buyers.editBuyer") : t("buyers.newBuyer")}</DialogTitle>
             <DialogDescription>
-              {form.id ? "Update buyer details." : "Add a new grain buyer."}
+              {form.id ? t("buyers.updateBuyerDetails") : t("buyers.addBuyerDescription")}
             </DialogDescription>
           </DialogHeader>
           <form
@@ -382,7 +384,7 @@ export function BuyersSection() {
           >
             <div className="grid sm:grid-cols-2 gap-3">
               <div>
-                <Label>Name *</Label>
+                <Label>{t("common.name")} *</Label>
                 <Input
                   required
                   value={form.name}
@@ -390,7 +392,7 @@ export function BuyersSection() {
                 />
               </div>
               <div>
-                <Label>Contact name *</Label>
+                <Label>{t("buyers.contactName")} *</Label>
                 <Input
                   required
                   value={form.contact_name}
@@ -398,21 +400,21 @@ export function BuyersSection() {
                 />
               </div>
               <div>
-                <Label>Company</Label>
+                <Label>{t("buyers.company")}</Label>
                 <Input
                   value={form.company_name}
                   onChange={(e) => setForm({ ...form, company_name: e.target.value })}
                 />
               </div>
               <div>
-                <Label>Designation</Label>
+                <Label>{t("buyers.designation")}</Label>
                 <Input
                   value={form.contact_designation}
                   onChange={(e) => setForm({ ...form, contact_designation: e.target.value })}
                 />
               </div>
               <div>
-                <Label>Phone</Label>
+                <Label>{t("common.phone")}</Label>
                 <Input
                   type="tel"
                   value={form.contact_phone}
@@ -420,7 +422,7 @@ export function BuyersSection() {
                 />
               </div>
               <div>
-                <Label>Email</Label>
+                <Label>{t("common.email")}</Label>
                 <Input
                   type="email"
                   value={form.contact_email}
@@ -428,25 +430,25 @@ export function BuyersSection() {
                 />
               </div>
               <div>
-                <Label>Type</Label>
+                <Label>{t("buyers.type")}</Label>
                 <Select
                   value={form.buyer_type}
                   onValueChange={(v) => setForm({ ...form, buyer_type: v as BuyerType })}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select type" />
+                    <SelectValue placeholder={t("buyers.selectType")} />
                   </SelectTrigger>
                   <SelectContent>
-                    {BUYER_TYPES.map((t) => (
-                      <SelectItem key={t} value={t}>
-                        {t.replace("_", " ")}
+                    {BUYER_TYPES.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {t(`buyers.${type}`)}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>Status</Label>
+                <Label>{t("common.status")}</Label>
                 <Select
                   value={form.status}
                   onValueChange={(v) => setForm({ ...form, status: v as Status })}
@@ -455,42 +457,42 @@ export function BuyersSection() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="paused">Paused</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectItem value="active">{t("buyers.active")}</SelectItem>
+                    <SelectItem value="paused">{t("buyers.paused")}</SelectItem>
+                    <SelectItem value="inactive">{t("buyers.inactive")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>Address</Label>
+                <Label>{t("common.address")}</Label>
                 <Input
                   value={form.address}
                   onChange={(e) => setForm({ ...form, address: e.target.value })}
                 />
               </div>
               <div>
-                <Label>City</Label>
+                <Label>{t("buyers.city")}</Label>
                 <Input
                   value={form.city}
                   onChange={(e) => setForm({ ...form, city: e.target.value })}
                 />
               </div>
               <div>
-                <Label>State</Label>
+                <Label>{t("buyers.state")}</Label>
                 <Input
                   value={form.state}
                   onChange={(e) => setForm({ ...form, state: e.target.value })}
                 />
               </div>
               <div>
-                <Label>Country</Label>
+                <Label>{t("buyers.country")}</Label>
                 <Input
                   value={form.country}
                   onChange={(e) => setForm({ ...form, country: e.target.value })}
                 />
               </div>
               <div className="sm:col-span-2">
-                <Label>Preferred grains</Label>
+                <Label>{t("buyers.preferredGrains")}</Label>
                 <div className="flex flex-wrap gap-2">
                   {GRAIN_TYPES.map((g) => (
                     <label key={g} className="flex items-center gap-2 cursor-pointer">
@@ -513,21 +515,21 @@ export function BuyersSection() {
                           }
                         }}
                       />
-                      <span className="text-sm">{g}</span>
+                      <span className="text-sm">{t(`business.${g.toLowerCase()}`)}</span>
                     </label>
                   ))}
                 </div>
               </div>
               <div className="sm:col-span-2">
-                <Label>Payment terms</Label>
+                <Label>{t("buyers.paymentTerms")}</Label>
                 <Input
                   value={form.preferred_payment_terms}
                   onChange={(e) => setForm({ ...form, preferred_payment_terms: e.target.value })}
-                  placeholder="e.g. Net 30"
+                  placeholder={t("buyers.paymentTermsPlaceholder")}
                 />
               </div>
               <div>
-                <Label>Rating (0-5)</Label>
+                <Label>{t("buyers.rating")}</Label>
                 <Input
                   type="number"
                   min={0}
@@ -538,15 +540,15 @@ export function BuyersSection() {
                 />
               </div>
               <div>
-                <Label>Tags</Label>
+                <Label>{t("buyers.tags")}</Label>
                 <Input
                   value={form.tags}
                   onChange={(e) => setForm({ ...form, tags: e.target.value })}
-                  placeholder="Comma-separated"
+                  placeholder={t("buyers.tagsPlaceholder")}
                 />
               </div>
               <div className="sm:col-span-2">
-                <Label>Notes</Label>
+                <Label>{t("buyers.notes")}</Label>
                 <Textarea
                   rows={2}
                   value={form.notes}
@@ -557,7 +559,7 @@ export function BuyersSection() {
           </form>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setEditOpen(false)}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               form="buyer-form"
@@ -567,9 +569,9 @@ export function BuyersSection() {
               {saveMutation.isPending ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : form.id ? (
-                "Save changes"
+                t("common.save")
               ) : (
-                "Create buyer"
+                t("buyers.create")
               )}
             </Button>
           </DialogFooter>
@@ -586,25 +588,27 @@ export function BuyersSection() {
                 <DialogDescription>{selected.contact_name}</DialogDescription>
               </DialogHeader>
               <div className="space-y-2 text-sm py-2">
-                {selected.company_name && <Row label="Company">{selected.company_name}</Row>}
-                {selected.contact_phone && <Row label="Phone">{selected.contact_phone}</Row>}
-                {selected.contact_email && <Row label="Email">{selected.contact_email}</Row>}
+                {selected.company_name && <Row label={t("buyers.company")}>{selected.company_name}</Row>}
+                {selected.contact_phone && <Row label={t("common.phone")}>{selected.contact_phone}</Row>}
+                {selected.contact_email && <Row label={t("common.email")}>{selected.contact_email}</Row>}
                 {selected.buyer_type && (
-                  <Row label="Type">{selected.buyer_type.replace("_", " ")}</Row>
+                  <Row label={t("buyers.type")}>{t(`buyers.${selected.buyer_type}`)}</Row>
                 )}
-                <Row label="Status">
+                <Row label={t("common.status")}>
                   <StatusBadgeCustom value={selected.status} />
                 </Row>
-                {selected.address && <Row label="Address">{selected.address}</Row>}
-                {selected.city && <Row label="City">{selected.city}</Row>}
+                {selected.address && <Row label={t("common.address")}>{selected.address}</Row>}
+                {selected.city && <Row label={t("buyers.city")}>{selected.city}</Row>}
                 {selected.preferred_grain_types && selected.preferred_grain_types.length > 0 && (
-                  <Row label="Prefers">{selected.preferred_grain_types.join(", ")}</Row>
+                  <Row label={t("buyers.preferredGrains")}>
+                    {selected.preferred_grain_types.map((grain) => t(`business.${grain.toLowerCase()}`)).join(", ")}
+                  </Row>
                 )}
                 {selected.rating != null && (
-                  <Row label="Rating">{selected.rating.toFixed(1)}/5</Row>
+                  <Row label={t("buyers.rating")}>{selected.rating.toFixed(1)}/5</Row>
                 )}
                 {selected.notes && (
-                  <Row label="Notes">
+                  <Row label={t("buyers.notes")}>
                     <span className="whitespace-pre-wrap">{selected.notes}</span>
                   </Row>
                 )}
@@ -619,7 +623,7 @@ export function BuyersSection() {
                   }}
                   className="gap-1"
                 >
-                  <Edit2 className="w-4 h-4" /> Edit
+                  <Edit2 className="w-4 h-4" /> {t("common.edit")}
                 </Button>
               </DialogFooter>
             </>
@@ -631,18 +635,18 @@ export function BuyersSection() {
       <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete buyer?</AlertDialogTitle>
+            <AlertDialogTitle>{t("buyers.deleteBuyer")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This permanently removes the buyer record.
+              {t("buyers.deleteBuyerDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deleteId && deleteMutation.mutate(deleteId)}
               className="bg-rose-600 hover:bg-rose-700"
             >
-              {deleteMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Delete"}
+              {deleteMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : t("common.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -661,7 +665,8 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 }
 
 function StatusBadgeCustom({ value }: { value: string | null | undefined }) {
+  const { t } = useTranslation();
   if (!value) return <span className="text-slate-400">—</span>;
   const cls = STATUS_CLASS[value as Status] ?? "bg-slate-100 text-slate-700";
-  return <Badge className={`${cls} hover:${cls}`}>{value}</Badge>;
+  return <Badge className={`${cls} hover:${cls}`}>{t(`buyers.${value}`)}</Badge>;
 }

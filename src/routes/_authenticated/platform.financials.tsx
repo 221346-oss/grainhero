@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { useTranslation } from "@/i18n";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -99,11 +100,13 @@ function FinancialsPage() {
     }
   }
 
+  const { t } = useTranslation();
+
   if (isLoading || !data)
     return (
       <AdminPageShell
-        title="Financials"
-        subtitle="Platform-wide revenue, profit, and subscription health"
+        title={t("financials.title")}
+        subtitle={t("financials.title")}
       >
         <FinancialsSkeleton />
       </AdminPageShell>
@@ -112,18 +115,18 @@ function FinancialsPage() {
 
   return (
     <AdminPageShell
-      title="Financials"
-      subtitle="Platform-wide revenue, profit, and subscription health"
+      title={t("financials.title")}
+      subtitle={t("financials.title")}
       actions={
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => downloadPdf("pnl")}>
-            <FileDown className="h-4 w-4 mr-1.5" /> P&L PDF
+            <FileDown className="h-4 w-4 mr-1.5" /> {t("financials.plPdf")}
           </Button>
           <Button variant="outline" size="sm" onClick={() => downloadPdf("revenue")}>
-            <FileDown className="h-4 w-4 mr-1.5" /> Revenue PDF
+            <FileDown className="h-4 w-4 mr-1.5" /> {t("financials.revenuePdf")}
           </Button>
           <Button variant="outline" size="sm" onClick={() => downloadPdf("mrr")}>
-            <FileDown className="h-4 w-4 mr-1.5" /> MRR PDF
+            <FileDown className="h-4 w-4 mr-1.5" /> {t("financials.mrrPdf")}
           </Button>
         </div>
       }
@@ -134,12 +137,12 @@ function FinancialsPage() {
         {/* Cost assumptions */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Cost assumptions</CardTitle>
+            <CardTitle className="text-base">{t("financials.costAssumptions")}</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-3 items-end">
             <div>
               <Label className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">
-                IoT cost per unit (% of hardware revenue)
+                {t("financials.iotCostPerUnit")}
               </Label>
               <Input
                 type="number"
@@ -153,12 +156,12 @@ function FinancialsPage() {
                 className="mt-1.5"
               />
               <p className="text-[11px] text-muted-foreground mt-1">
-                Cost of one device as a percentage of its sale price.
+                {t("financials.costOfDevice")}
               </p>
             </div>
             <div>
               <Label className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">
-                Operating expenses (% of total revenue)
+                {t("financials.operatingExpenses")}
               </Label>
               <Input
                 type="number"
@@ -172,11 +175,11 @@ function FinancialsPage() {
                 className="mt-1.5"
               />
               <p className="text-[11px] text-muted-foreground mt-1">
-                Servers, salaries, marketing, etc.
+                {t("financials.serversSalaries")}
               </p>
             </div>
             <div className="text-xs text-muted-foreground">
-              <div>Applied to profit calculations and PDF reports.</div>
+              <div>{t("financials.appliedToProfit")}</div>
               <Button
                 size="sm"
                 variant="outline"
@@ -184,7 +187,7 @@ function FinancialsPage() {
                 onClick={() => refetch()}
                 disabled={isFetching}
               >
-                {isFetching ? "Recalculating…" : "Recalculate"}
+                {isFetching ? t("common.loading") : t("financials.recalculate")}
               </Button>
             </div>
           </CardContent>
@@ -194,7 +197,7 @@ function FinancialsPage() {
         <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
           <KpiCard
             icon={<DollarSign className="h-4 w-4" />}
-            label="Total revenue"
+            label={t("financials.totalRevenue")}
             value={money(kpis.totalRevenue)}
             accent="text-primary"
           />
@@ -207,25 +210,25 @@ function FinancialsPage() {
           />
           <KpiCard
             icon={null}
-            label="IoT hardware"
+            label={t("financials.iotHardware")}
             value={money(kpis.iotRevenue)}
-            sub={`${kpis.totalOrders} orders`}
+            sub={`${kpis.totalOrders} ${t("financials.orders")}`}
           />
           <KpiCard
             icon={<Shield className="h-4 w-4" />}
-            label="Insurance comm."
+            label={t("financials.insuranceComm")}
             value={money(kpis.insuranceCommission)}
-            sub={`${kpis.totalPolicies} policies`}
+            sub={`${kpis.totalPolicies} ${t("financials.policies")}`}
           />
           <KpiCard
             icon={<TrendingUp className="h-4 w-4" />}
-            label="Gross profit"
+            label={t("financials.grossProfit")}
             value={money(kpis.grossProfit)}
             accent="text-emerald-600 dark:text-emerald-400"
           />
           <KpiCard
             icon={<LineIcon className="h-4 w-4" />}
-            label="Net profit %"
+            label={t("financials.netProfit")}
             value={`${kpis.netProfitPct}%`}
             accent={
               kpis.netProfitPct >= 0
@@ -237,23 +240,23 @@ function FinancialsPage() {
 
         <HairlineGrid cols="grid-cols-1 lg:grid-cols-3">
           {/* P&L Summary */}
-          <NeonPanel title="P&L summary">
+          <NeonPanel title={t("financials.plSummary")}>
             <div className="space-y-2 text-sm">
-              <PnlRow label="Total sales" value={money(pnl.sales)} />
-              <PnlRow label="Cost of goods sold" value={`- ${money(pnl.cogs)}`} negative />
+              <PnlRow label={t("financials.totalSales")} value={money(pnl.sales)} />
+              <PnlRow label={t("financials.costOfGoodsSold")} value={`- ${money(pnl.cogs)}`} negative />
               <div className="border-t border-border pt-2">
                 <PnlRow
-                  label="Gross profit"
+                  label={t("financials.grossProfit")}
                   value={money(pnl.grossProfit)}
                   bold
                   accent="text-primary"
                 />
               </div>
-              <PnlRow label="Operating expenses" value={`- ${money(pnl.opex)}`} negative />
-              <PnlRow label="Other income" value={money(pnl.otherIncome)} />
+              <PnlRow label={t("financials.operatingExpLabel")} value={`- ${money(pnl.opex)}`} negative />
+              <PnlRow label={t("financials.otherIncome")} value={money(pnl.otherIncome)} />
               <div className="border-t border-border pt-2">
                 <PnlRow
-                  label="Net profit"
+                  label={t("financials.netProfitLabel")}
                   value={money(pnl.netProfit)}
                   bold
                   accent={
@@ -263,14 +266,14 @@ function FinancialsPage() {
                   }
                 />
               </div>
-              <PnlRow label="Net profit %" value={`${pnl.netProfitPct}%`} bold />
+              <PnlRow label={t("financials.netProfitPercent")} value={`${pnl.netProfitPct}%`} bold />
             </div>
           </NeonPanel>
 
           {/* Revenue mix donut */}
-          <NeonPanel title="Revenue mix">
+          <NeonPanel title={t("financials.revenueMix")}>
             {mix.length === 0 ? (
-              <ChartEmpty label="No revenue mix data yet" height={240} />
+              <ChartEmpty label={t("financials.noRevenueMix")} height={240} />
             ) : (
               <div className="h-[240px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -305,9 +308,9 @@ function FinancialsPage() {
           </NeonPanel>
 
           {/* MRR trend */}
-          <NeonPanel title="MRR trend" subtitle="Last 12 months">
+          <NeonPanel title={t("financials.mrrTrend")} subtitle={t("financials.last12Months")}>
             {trend.length === 0 ? (
-              <ChartEmpty label="No MRR trend data yet" height={280} />
+              <ChartEmpty label={t("financials.noMrrTrend")} height={280} />
             ) : (
               <div className="h-[280px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -333,10 +336,10 @@ function FinancialsPage() {
 
         {/* Plan split */}
         <HairlineGrid cols="grid-cols-1">
-          <NeonPanel title="Revenue by plan">
+          <NeonPanel title={t("financials.revenueByPlan")}>
             {planSplit.length === 0 ? (
               <ChartEmpty
-                label="No active paid subscriptions yet — plan breakdown will appear here once tenants subscribe."
+                label={t("financials.noPlanData")}
                 height={160}
               />
             ) : (

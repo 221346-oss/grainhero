@@ -49,6 +49,7 @@ import {
 } from "@/components/charts/neon";
 import { geocodeCity, getWeatherBundle } from "@/lib/openweather.functions";
 import { useFirebaseAllSensors } from "@/hooks/use-firebase-sensor";
+import { useTranslation } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/environmental")({
   head: () => ({
@@ -134,8 +135,14 @@ function fmtTime(unix?: number) {
     ? new Date(unix * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
     : "--";
 }
-function aqiLabel(v: number | null) {
-  return v === null ? "--" : (["", "Good", "Fair", "Moderate", "Poor", "Very Poor"][v] ?? "--");
+// AQI labels are translated at render time (needs the active language).
+function useAqiLabel() {
+  const { t } = useTranslation();
+  return (v: number | null) => {
+    if (v === null) return "--";
+    const keys = ["", "aqiGood", "aqiFair", "aqiModerate", "aqiPoor", "aqiVeryPoor"];
+    return keys[v] ? t(`environmental.${keys[v]}`) : "--";
+  };
 }
 function aqiColor(v: number | null) {
   return v === null
@@ -151,6 +158,8 @@ function aqiColor(v: number | null) {
 }
 
 function EnvironmentalPage() {
+  const { t } = useTranslation();
+  const aqiLabel = useAqiLabel();
   const geoFn = useServerFn(geocodeCity);
   const bundleFn = useServerFn(getWeatherBundle);
 
@@ -212,10 +221,10 @@ function EnvironmentalPage() {
   if (isInitialLoading) return <KpiChartHubSkeleton />;
 
   const useMyLocation = () => {
-    if (!navigator.geolocation) return toast.error("Geolocation not available");
+    if (!navigator.geolocation) return toast.error(t("environmental.geolocationUnavailable"));
     navigator.geolocation.getCurrentPosition(
       (pos) => setCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
-      (err) => toast.error(`Location error: ${err.message}`),
+      (err) => toast.error(`${t("environmental.locationError")}: ${err.message}`),
     );
   };
   const firstDeviceId = Object.keys(liveSensors)[0];
@@ -227,10 +236,10 @@ function EnvironmentalPage() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
           <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent">
-            Environmental Data
+            {t("environmental.title")}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            OpenWeather snapshot · AQI · 5-day forecast · Live silo microclimate
+            {t("environmental.subtitle")}
           </p>
         </div>
       </div>
@@ -238,14 +247,14 @@ function EnvironmentalPage() {
       <Card className="bg-gradient-to-br from-sky-50 to-blue-50/40">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-sky-600" /> Select Location
+            <MapPin className="h-5 w-5 text-sky-600" /> {t("environmental.selectLocation")}
           </CardTitle>
-          <CardDescription>Type a city or use your current location</CardDescription>
+          <CardDescription>{t("environmental.selectLocationDesc")}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap items-center gap-3">
           <Input
             className="w-[260px]"
-            placeholder="e.g. Lahore"
+            placeholder={t("environmental.cityPlaceholder")}
             value={cityQuery}
             onChange={(e) => setCityQuery(e.target.value)}
             onKeyDown={(e) => {
@@ -253,10 +262,10 @@ function EnvironmentalPage() {
             }}
           />
           <Button onClick={() => geo.mutate(cityQuery)} disabled={geo.isPending}>
-            Search
+            {t("environmental.search")}
           </Button>
           <Button variant="outline" onClick={useMyLocation}>
-            Use My Location
+            {t("environmental.useMyLocation")}
           </Button>
           {coords && (
             <Badge variant="outline" className="gap-1">
@@ -272,12 +281,12 @@ function EnvironmentalPage() {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2">
-                <Sun className="h-5 w-5 text-yellow-500" /> Current Weather
+                <Sun className="h-5 w-5 text-yellow-500" /> {t("environmental.currentWeather")}
               </CardTitle>
               <CardDescription>
                 {current
-                  ? `${current.name ?? "Selected"}${current.sys?.country ? ", " + current.sys.country : ""} • ${new Date().toLocaleString()}`
-                  : "Waiting for data"}
+                  ? `${current.name ?? t("environmental.selected")}${current.sys?.country ? ", " + current.sys.country : ""} • ${new Date().toLocaleString()}`
+                  : t("environmental.waitingForData")}
               </CardDescription>
             </div>
             {current?.weather?.[0]?.icon && (
@@ -299,39 +308,39 @@ function EnvironmentalPage() {
           <div className="grid gap-3 grid-cols-2 md:grid-cols-4 lg:grid-cols-6 text-sm">
             <Metric
               icon={Thermometer}
-              label="Temp"
+              label={t("environmental.temp")}
               value={current?.main?.temp !== undefined ? `${current.main.temp.toFixed(1)}°C` : "--"}
-              sub={`Feels ${current?.main?.feels_like?.toFixed(1) ?? "--"}°C`}
+              sub={`${t("environmental.feels")} ${current?.main?.feels_like?.toFixed(1) ?? "--"}°C`}
               color="orange"
             />
             <Metric
               icon={Droplets}
-              label="Humidity"
+              label={t("environmental.humidity")}
               value={`${current?.main?.humidity ?? "--"}%`}
               color="blue"
             />
             <Metric
               icon={Gauge}
-              label="Pressure"
+              label={t("environmental.pressure")}
               value={`${current?.main?.pressure ?? "--"} hPa`}
               color="purple"
             />
             <Metric
               icon={Wind}
-              label="Wind"
+              label={t("environmental.wind")}
               value={`${current?.wind?.speed ?? "--"} m/s`}
               sub={windDir(current?.wind?.deg)}
               color="cyan"
             />
             <Metric
               icon={CloudRain}
-              label="Rain"
+              label={t("environmental.rain")}
               value={`${current?.rain?.["1h"] ?? 0} mm/h`}
               color="indigo"
             />
             <Metric
               icon={Snowflake}
-              label="Snow"
+              label={t("environmental.snow")}
               value={`${current?.snow?.["1h"] ?? 0} mm/h`}
               color="slate"
             />
@@ -339,7 +348,7 @@ function EnvironmentalPage() {
           <div className="grid gap-3 grid-cols-2 md:grid-cols-5 mt-3 text-sm">
             <MiniMetric
               icon={Eye}
-              label="Visibility"
+              label={t("environmental.visibility")}
               value={
                 current?.visibility !== undefined
                   ? `${(current.visibility / 1000).toFixed(1)} km`
@@ -348,16 +357,16 @@ function EnvironmentalPage() {
             />
             <MiniMetric
               icon={Cloud}
-              label="Cloudiness"
+              label={t("environmental.cloudiness")}
               value={`${current?.clouds?.all ?? "--"}%`}
             />
             <MiniMetric
               icon={Thermometer}
-              label="Min / Max"
+              label={t("environmental.minMax")}
               value={`${current?.main?.temp_min?.toFixed(1) ?? "--"}° / ${current?.main?.temp_max?.toFixed(1) ?? "--"}°`}
             />
-            <MiniMetric icon={Sunrise} label="Sunrise" value={fmtTime(current?.sys?.sunrise)} />
-            <MiniMetric icon={Sunset} label="Sunset" value={fmtTime(current?.sys?.sunset)} />
+            <MiniMetric icon={Sunrise} label={t("environmental.sunrise")} value={fmtTime(current?.sys?.sunrise)} />
+            <MiniMetric icon={Sunset} label={t("environmental.sunset")} value={fmtTime(current?.sys?.sunset)} />
           </div>
         </CardContent>
       </Card>
@@ -365,16 +374,16 @@ function EnvironmentalPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <CloudLightning className="h-5 w-5 text-emerald-600" /> Air Quality Index
+            <CloudLightning className="h-5 w-5 text-emerald-600" /> {t("environmental.airQuality")}
           </CardTitle>
-          <CardDescription>Real-time pollutants from OpenWeather</CardDescription>
+          <CardDescription>{t("environmental.airQualityDesc")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-4 mb-4">
             <div className={`text-4xl font-bold ${aqiColor(aqi)}`}>{aqi ?? "--"}</div>
             <div>
               <div className={`text-lg font-semibold ${aqiColor(aqi)}`}>{aqiLabel(aqi)}</div>
-              <div className="text-xs text-slate-500">1 = Good … 5 = Very Poor</div>
+              <div className="text-xs text-slate-500">{t("environmental.aqiScale")}</div>
             </div>
           </div>
           {aqiComp && (
@@ -405,14 +414,14 @@ function EnvironmentalPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4" /> 5-Day Forecast (3-hourly)
+            <BarChart3 className="h-4 w-4" /> {t("environmental.forecastTitle")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {forecastSeries.length > 0 ? (
             <HairlineGrid cols="grid-cols-1" className="!bg-transparent !border-0">
               <NeonPanel
-                title="Temperature & Feels-like"
+                title={t("environmental.chartTempFeels")}
                 className="border border-border rounded-md"
               >
                 <ForecastChart>
@@ -431,7 +440,7 @@ function EnvironmentalPage() {
                       stroke={NEON.brand}
                       strokeWidth={2}
                       dot={false}
-                      name="Temp (°C)"
+                      name={t("environmental.chartTemp")}
                     />
                     <Line
                       type="monotone"
@@ -440,12 +449,12 @@ function EnvironmentalPage() {
                       strokeWidth={1.5}
                       strokeDasharray="4 4"
                       dot={false}
-                      name="Feels (°C)"
+                      name={t("environmental.chartFeels")}
                     />
                   </LineChart>
                 </ForecastChart>
               </NeonPanel>
-              <NeonPanel title="Precipitation" className="border border-border rounded-md">
+              <NeonPanel title={t("environmental.chartPrecipitation")} className="border border-border rounded-md">
                 <ForecastChart>
                   <AreaChart data={forecastSeries}>
                     <CartesianGrid {...neonGrid} />
@@ -459,19 +468,19 @@ function EnvironmentalPage() {
                     <Area
                       type="monotone"
                       dataKey="rain"
-                      name="Rain mm/3h"
+                      name={t("environmental.chartRain")}
                       {...neonFill(NEON.info)}
                     />
                     <Area
                       type="monotone"
                       dataKey="snow"
-                      name="Snow mm/3h"
+                      name={t("environmental.chartSnow")}
                       {...neonFill(NEON.brand2)}
                     />
                   </AreaChart>
                 </ForecastChart>
               </NeonPanel>
-              <NeonPanel title="Humidity & Wind" className="border border-border rounded-md">
+              <NeonPanel title={t("environmental.chartHumidityWind")} className="border border-border rounded-md">
                 <ForecastChart>
                   <LineChart data={forecastSeries}>
                     <CartesianGrid {...neonGrid} />
@@ -490,7 +499,7 @@ function EnvironmentalPage() {
                       stroke={NEON.brand}
                       strokeWidth={2}
                       dot={false}
-                      name="Humidity %"
+                      name={t("environmental.chartHumidityPct")}
                     />
                     <Line
                       yAxisId="right"
@@ -499,7 +508,7 @@ function EnvironmentalPage() {
                       stroke={NEON.info}
                       strokeWidth={2}
                       dot={false}
-                      name="Wind m/s"
+                      name={t("environmental.chartWindMs")}
                     />
                   </LineChart>
                 </ForecastChart>
@@ -508,7 +517,9 @@ function EnvironmentalPage() {
           ) : (
             <ChartEmpty
               label={
-                weather.isFetching ? "Loading forecast…" : "Search for a city to see forecast."
+                weather.isFetching
+                  ? t("environmental.loadingForecast")
+                  : t("environmental.searchForCity")
               }
               height={200}
             />
@@ -519,49 +530,48 @@ function EnvironmentalPage() {
       <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100/30">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Activity className="h-5 w-5 text-emerald-600" /> Indoor Silo Microclimate
+            <Activity className="h-5 w-5 text-emerald-600" /> {t("environmental.siloMicroclimate")}
             {liveSilo && (
               <Badge variant="outline" className="text-emerald-600 border-emerald-300 ml-auto">
-                ● Live
+                ● {t("environmental.live")}
               </Badge>
             )}
           </CardTitle>
           <CardDescription>
             {liveSilo
               ? `Firebase RTDB · ${firstDeviceId} · ${new Date(liveSilo.ts ?? Date.now()).toLocaleString()}`
-              : "Waiting for silo data…"}
+              : t("environmental.waitingForSilo")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {liveSilo ? (
             <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6 text-sm">
               <TileStat
-                label="Temp"
+                label={t("environmental.temp")}
                 value={`${(liveSilo.temperature ?? 0).toFixed(1)}°C`}
                 tone="red"
               />
               <TileStat
-                label="Humidity"
+                label={t("environmental.humidity")}
                 value={`${(liveSilo.humidity ?? 0).toFixed(1)}%`}
                 tone="cyan"
               />
               <TileStat label="TVOC" value={`${liveSilo.voc ?? 0} ppb`} tone="violet" />
               <TileStat label="CO₂" value={`${liveSilo.co2 ?? 0} ppm`} tone="slate" />
               <TileStat
-                label="Fan"
+                label={t("environmental.fan")}
                 value={String(liveSilo.fan_state ?? "off").toUpperCase()}
                 tone="amber"
               />
               <TileStat
-                label="Lid"
+                label={t("environmental.lid")}
                 value={String(liveSilo.lid_state ?? "closed").toUpperCase()}
                 tone="sky"
               />
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">
-              No live device data yet. Ensure device is streaming to Firebase RTDB /devices/
-              {"{deviceId}"}/live.
+              {t("environmental.noLiveData")}
             </p>
           )}
         </CardContent>

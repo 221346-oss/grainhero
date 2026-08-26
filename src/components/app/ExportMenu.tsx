@@ -7,6 +7,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { downloadCsv, downloadPdf, type ExportColumn } from "@/lib/csv-pdf-export";
+import { useTranslation } from "@/i18n";
 
 /** Drop this on any table header — CSV + PDF export, reusing one shared implementation. */
 export function ExportMenu<T>({
@@ -22,19 +23,20 @@ export function ExportMenu<T>({
   columns: ExportColumn<T>[];
   size?: "sm" | "default";
 }) {
+  const { t } = useTranslation();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size={size} className="gap-1.5 h-8">
-          <Download className="h-3.5 w-3.5" /> Export
+          <Download className="h-3.5 w-3.5" /> {t("common.export")}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem onClick={() => downloadCsv(filename, rows, columns)}>
-          Export CSV
+          {t("common.exportCsv")}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => downloadPdf(filename, title, rows, columns)}>
-          Export PDF
+          {t("common.exportPdf")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

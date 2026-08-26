@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
+import { useTranslation } from "@/i18n";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -491,6 +492,7 @@ function EditDrawer({
 // ── Main Page ────────────────────────────────────────────────────────────────
 function PlatformPlansPage() {
   const qc = useQueryClient();
+  const { t } = useTranslation();
   const [editPlanId, setEditPlanId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<"all" | "pending">("pending");
   const [activeView, setActiveView] = useState<"plans" | "pending" | "auto_applied" | "active">(
@@ -632,8 +634,8 @@ function PlatformPlansPage() {
 
   return (
     <AdminPageShell
-      title="Plans & Thresholds"
-      subtitle="Configure plan limits — changes propagate to all tenants on that plan instantly."
+      title={t("plans.title")}
+      subtitle={t("plans.title")}
     >
       <StatStrip />
 
@@ -641,8 +643,7 @@ function PlatformPlansPage() {
       {(activeView === "plans" || activeView === "active") && (
         <div>
           <p className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider mb-3">
-            {activeView === "active" ? "Active Plan Tiers" : "Plan Tiers"} — click "Edit plan" to
-            configure limits
+            {t("plans.planTiers")}
           </p>
           {plansQ.isLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 px-1">

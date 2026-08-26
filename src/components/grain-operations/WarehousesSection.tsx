@@ -57,6 +57,7 @@ import { parsePlanLimitError } from "@/lib/plan-gate";
 import { getMyRole } from "@/lib/roles.functions";
 import { MultiRegionWarehousesView } from "@/components/grain-operations/MultiRegionWarehousesView";
 import type { ExportColumn } from "@/lib/csv-pdf-export";
+import { useTranslation } from "@/i18n";
 
 function friendlySaveError(e: Error): string {
   const limit = parsePlanLimitError(e);
@@ -111,6 +112,7 @@ const emptyForm: FormState = {
 };
 
 export function WarehousesSection() {
+  const { t } = useTranslation();
   const list = useServerFn(listWarehouses);
   const listByCity = useServerFn(listWarehousesByCity);
   const upsert = useServerFn(upsertWarehouse);
@@ -174,7 +176,7 @@ export function WarehousesSection() {
       });
     },
     onSuccess: () => {
-      toast.success(form.id ? "Warehouse updated" : "Warehouse created");
+      toast.success(form.id ? t("warehouses.updated") : t("warehouses.created"));
       qc.invalidateQueries({ queryKey: ["warehouses"] });
       qc.invalidateQueries({ queryKey: ["warehouses-by-city"] });
       qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
@@ -187,24 +189,24 @@ export function WarehousesSection() {
   const renameMutation = useMutation({
     mutationFn: (payload: { id: string; name: string }) => rename({ data: payload }),
     onSuccess: () => {
-      toast.success("Warehouse renamed");
+      toast.success(t("warehouses.renamed"));
       qc.invalidateQueries({ queryKey: ["warehouses"] });
       qc.invalidateQueries({ queryKey: ["warehouses-by-city"] });
       qc.invalidateQueries({ queryKey: ["dashboard-extras"] });
     },
-    onError: (e: Error) => toast.error(e.message || "Rename failed"),
+    onError: (e: Error) => toast.error(e.message || t("common.error")),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => del({ data: { id } }),
     onSuccess: () => {
-      toast.success("Warehouse deleted");
+      toast.success(t("warehouses.deleted"));
       qc.invalidateQueries({ queryKey: ["warehouses"] });
       qc.invalidateQueries({ queryKey: ["warehouses-by-city"] });
       qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
       setDeleteId(null);
     },
-    onError: (e: Error) => toast.error(e.message || "Delete failed"),
+    onError: (e: Error) => toast.error(e.message || t("common.error")),
   });
 
   function openCreate() {
@@ -231,22 +233,22 @@ export function WarehousesSection() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold">My Warehouses</h2>
+            <h2 className="text-lg font-semibold">{t("warehouses.myWarehouses")}</h2>
             <p className="text-sm text-muted-foreground">
-              {isManager ? "Warehouses you manage" : "Your assigned warehouse"}
+              {isManager ? t("warehouses.youManage") : t("warehouses.assignedWarehouse")}
             </p>
           </div>
         </div>
 
         {isLoading ? (
           <div className="flex items-center justify-center py-8 text-muted-foreground">
-            <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading warehouses...
+            <Loader2 className="w-5 h-5 animate-spin mr-2" /> {t("warehouses.loading")}
           </div>
         ) : !warehousesByCity?.byCity || Object.keys(warehousesByCity.byCity).length === 0 ? (
           <div className="py-8 text-center text-muted-foreground">
             <Building2 className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p className="text-sm">No warehouses assigned to you.</p>
-            <p className="text-xs mt-1">Contact your administrator to get warehouse access.</p>
+            <p className="text-sm">{t("warehouses.noAssigned")}</p>
+            <p className="text-xs mt-1">{t("warehouses.contactAdmin")}</p>
           </div>
         ) : (
           <div className="space-y-6">
@@ -256,7 +258,7 @@ export function WarehousesSection() {
                   <MapPin className="w-4 h-4 text-primary" />
                   <h3 className="font-medium text-foreground">{city}</h3>
                   <span className="text-xs text-muted-foreground">
-                    {warehouses.length} warehouse{warehouses.length !== 1 ? "s" : ""}
+                    {warehouses.length} {t("warehouses.count")}
                   </span>
                 </div>
 
@@ -276,17 +278,17 @@ export function WarehousesSection() {
 
                       <div className="space-y-2 text-xs">
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Silos:</span>
+                          <span className="text-muted-foreground">{t("grainOps.silos")}:</span>
                           <span className="font-medium">{warehouse.siloCount}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Capacity:</span>
+                          <span className="text-muted-foreground">{t("warehouses.capacity")}:</span>
                           <span className="font-medium">
                             {Math.round((warehouse.totalCapacity || 0) / 1000).toLocaleString()}t
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Current Fill:</span>
+                          <span className="text-muted-foreground">{t("warehouses.currentFill")}:</span>
                           <span className="font-medium">
                             {warehouse.totalCapacity
                               ? `${Math.round(((warehouse.currentOccupancy || 0) / warehouse.totalCapacity) * 100)}%`
@@ -305,7 +307,7 @@ export function WarehousesSection() {
                           }}
                           className="flex-1"
                         >
-                          <Eye className="w-3 h-3 mr-1" />
+                          <Eye className="w-3 h-3 mr-1" /> {t("grainOps.view")}
                           View
                         </Button>
                         {!isTechnician && (
@@ -357,32 +359,32 @@ export function WarehousesSection() {
                 </DialogHeader>
                 <div className="space-y-2 text-sm py-2">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Status:</span>
+                    <span className="text-muted-foreground">{t("common.status")}:</span>
                     <StatusBadge value={selected.status} />
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Total Capacity:</span>
+                    <span className="text-muted-foreground">{t("warehouses.totalCapacity")}:</span>
                     <span>{(selected.total_capacity_kg ?? 0).toLocaleString()} kg</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Silos:</span>
+                    <span className="text-muted-foreground">{t("grainOps.silos")}:</span>
                     <span>{selected.silos?.length ?? 0}</span>
                   </div>
                   {selected.location?.description && (
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Location:</span>
+                      <span className="text-muted-foreground">{t("silos.location")}:</span>
                       <span>{selected.location.description}</span>
                     </div>
                   )}
                   {selected.location?.address && (
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Address:</span>
+                      <span className="text-muted-foreground">{t("common.address")}:</span>
                       <span>{selected.location.address}</span>
                     </div>
                   )}
                   {selected.notes && (
                     <div className="space-y-1">
-                      <span className="text-muted-foreground">Notes:</span>
+                      <span className="text-muted-foreground">{t("silos.notes")}:</span>
                       <div className="text-sm whitespace-pre-wrap bg-muted/30 p-2 rounded">
                         {selected.notes}
                       </div>
@@ -419,8 +421,8 @@ export function WarehousesSection() {
         >
           <DialogContent className="max-w-md max-h-[92vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Edit Warehouse</DialogTitle>
-              <DialogDescription>Update warehouse details (limited access).</DialogDescription>
+              <DialogTitle>{t("warehouses.editWarehouse")}</DialogTitle>
+              <DialogDescription>{t("warehouses.updateDetails")}</DialogDescription>
             </DialogHeader>
             <form
               id="warehouse-form"
@@ -431,32 +433,32 @@ export function WarehousesSection() {
               }}
             >
               <div>
-                <Label>Name</Label>
+                <Label>{t("common.name")}</Label>
                 <Input
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="Warehouse name"
+                  placeholder={t("warehouses.namePlaceholder")}
                   disabled={true} // Managers cannot change name
                 />
               </div>
               <div>
-                <Label>Address</Label>
+                <Label>{t("common.address")}</Label>
                 <Input
                   value={form.address}
                   onChange={(e) => setForm({ ...form, address: e.target.value })}
-                  placeholder="City, State, Country"
+                  placeholder={t("warehouses.addressPlaceholder")}
                 />
               </div>
               <div>
-                <Label>Location Description</Label>
+                <Label>{t("warehouses.locationDescription")}</Label>
                 <Input
                   value={form.location_description}
                   onChange={(e) => setForm({ ...form, location_description: e.target.value })}
-                  placeholder="e.g. Industrial Zone A"
+                  placeholder={t("warehouses.locationPlaceholder")}
                 />
               </div>
               <div>
-                <Label>Status</Label>
+                <Label>{t("common.status")}</Label>
                 <Select
                   value={form.status}
                   onValueChange={(v) => setForm({ ...form, status: v as FormState["status"] })}
@@ -465,14 +467,14 @@ export function WarehousesSection() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="offline">Offline</SelectItem>
-                    <SelectItem value="maintenance">Maintenance</SelectItem>
+                    <SelectItem value="active">{t("silos.active")}</SelectItem>
+                    <SelectItem value="offline">{t("silos.offline")}</SelectItem>
+                    <SelectItem value="maintenance">{t("silos.maintenance")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>Notes</Label>
+                <Label>{t("silos.notes")}</Label>
                 <Textarea
                   rows={3}
                   value={form.notes}
@@ -492,7 +494,7 @@ export function WarehousesSection() {
                 {saveMutation.isPending ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
-                  "Save Changes"
+                  t("common.save")
                 )}
               </Button>
             </DialogFooter>
@@ -510,49 +512,49 @@ export function WarehousesSection() {
           <Input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search warehouse…"
+            placeholder={t("warehouses.searchPlaceholder")}
             className="pl-9 h-9"
           />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-full sm:w-40 h-9">
-            <SelectValue placeholder="Status" />
+            <SelectValue placeholder={t("common.status")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="offline">Offline</SelectItem>
-            <SelectItem value="error">Error</SelectItem>
-            <SelectItem value="maintenance">Maintenance</SelectItem>
+            <SelectItem value="all">{t("silos.allStatuses")}</SelectItem>
+            <SelectItem value="active">{t("silos.active")}</SelectItem>
+            <SelectItem value="offline">{t("silos.offline")}</SelectItem>
+            <SelectItem value="error">{t("silos.error")}</SelectItem>
+            <SelectItem value="maintenance">{t("silos.maintenance")}</SelectItem>
           </SelectContent>
         </Select>
 
         {/* View-mode toggle with info badge */}
         <div
           className="flex rounded-md border border-slate-200 overflow-hidden h-9 shrink-0"
-          title="Switch between list and regional views"
+            title={t("warehouses.switchView")}
         >
           <button
             onClick={() => setViewMode("list")}
-            title="List view — traditional grid layout"
+            title={t("warehouses.listViewHelp")}
             className={`px-3 flex items-center gap-1.5 text-xs font-medium transition-colors ${
               viewMode === "list"
                 ? "bg-[#2FAC0C] text-white"
                 : "bg-white text-slate-500 hover:bg-slate-50"
             }`}
           >
-            <LayoutList className="w-3.5 h-3.5" /> List
+            <LayoutList className="w-3.5 h-3.5" /> {t("warehouses.listView")}
           </button>
           <button
             onClick={() => setViewMode("region")}
-            title="By region — group warehouses by location (recommended for multiple locations)"
+            title={t("warehouses.regionViewHelp")}
             className={`px-3 flex items-center gap-1.5 text-xs font-medium border-l border-slate-200 transition-colors ${
               viewMode === "region"
                 ? "bg-[#2FAC0C] text-white"
                 : "bg-white text-slate-500 hover:bg-slate-50"
             }`}
           >
-            <MapPin className="w-3.5 h-3.5" /> By Region
+            <MapPin className="w-3.5 h-3.5" /> {t("warehouses.regionView")}
           </button>
         </div>
 
@@ -561,7 +563,7 @@ export function WarehousesSection() {
           className="gap-2 h-9 whitespace-nowrap"
           disabled={!canCreateWarehouse}
         >
-          <Plus className="w-4 h-4" /> New warehouse
+          <Plus className="w-4 h-4" /> {t("warehouses.newWarehouse")}
         </Button>
       </div>
 
@@ -580,7 +582,7 @@ export function WarehousesSection() {
           </div>
         ) : rows.length === 0 ? (
           <div className="py-8 text-center text-muted-foreground">
-            <p className="text-sm">No warehouses yet.</p>
+            <p className="text-sm">{t("warehouses.noWarehouses")}</p>
           </div>
         ) : (
           <div className="max-h-[72vh] overflow-y-auto pr-0.5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
@@ -635,14 +637,14 @@ export function WarehousesSection() {
                 {/* Stats row */}
                 <div className="mx-3 mb-2 rounded-md bg-slate-50 border border-slate-100 px-2.5 py-1.5 flex items-center justify-between">
                   <div className="text-center">
-                    <p className="text-[10px] text-slate-400 leading-3">Capacity</p>
+                    <p className="text-[10px] text-slate-400 leading-3">{t("warehouses.capacity")}</p>
                     <p className="text-[11px] font-semibold text-slate-700 tabular-nums">
                       {(w.total_capacity_kg ?? 0).toLocaleString()} kg
                     </p>
                   </div>
                   <div className="w-px h-6 bg-slate-200" />
                   <div className="text-center">
-                    <p className="text-[10px] text-slate-400 leading-3">Silos</p>
+                    <p className="text-[10px] text-slate-400 leading-3">{t("grainOps.silos")}</p>
                     <p className="text-[11px] font-semibold text-slate-700">
                       {w.silos?.length ?? 0}
                     </p>
@@ -660,7 +662,7 @@ export function WarehousesSection() {
                     }}
                     className="h-6 flex-1 text-[10px] text-slate-500 hover:text-slate-800 gap-0.5 rounded-md"
                   >
-                    <Eye className="w-3 h-3" /> View
+                    <Eye className="w-3 h-3" /> {t("grainOps.view")}
                   </Button>
                   <Button
                     variant="ghost"
@@ -694,9 +696,9 @@ export function WarehousesSection() {
       >
         <DialogContent className="max-w-md max-h-[92vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{form.id ? "Edit warehouse" : "New warehouse"}</DialogTitle>
+            <DialogTitle>{form.id ? t("warehouses.editWarehouse") : t("warehouses.newWarehouse")}</DialogTitle>
             <DialogDescription>
-              {form.id ? "Update warehouse details." : "Create a new warehouse location."}
+              {form.id ? t("warehouses.updateDetails") : t("warehouses.createDescription")}
             </DialogDescription>
           </DialogHeader>
           <form
@@ -708,7 +710,7 @@ export function WarehousesSection() {
             }}
           >
             <div>
-              <Label>Name *</Label>
+              <Label>{t("common.name")} *</Label>
               {form.id && !canRename ? (
                 <div className="h-9 flex items-center px-3 rounded-md border bg-muted text-sm text-muted-foreground">
                   {form.name || "—"}
@@ -718,12 +720,12 @@ export function WarehousesSection() {
                   required
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="e.g. Main Storage"
+                  placeholder={t("warehouses.namePlaceholder")}
                 />
               )}
             </div>
             <div>
-              <Label>Capacity (kg) *</Label>
+              <Label>{t("warehouses.capacity")} (kg) *</Label>
               <Input
                 type="number"
                 min={1}
@@ -733,23 +735,23 @@ export function WarehousesSection() {
               />
             </div>
             <div>
-              <Label>Location</Label>
+              <Label>{t("silos.location")}</Label>
               <Input
                 value={form.location_description}
                 onChange={(e) => setForm({ ...form, location_description: e.target.value })}
-                placeholder="e.g. Building A"
+                placeholder={t("warehouses.locationPlaceholder")}
               />
             </div>
             <div>
-              <Label>Address</Label>
+              <Label>{t("common.address")}</Label>
               <Input
                 value={form.address}
                 onChange={(e) => setForm({ ...form, address: e.target.value })}
-                placeholder="Street address"
+                placeholder={t("warehouses.streetAddressPlaceholder")}
               />
             </div>
             <div>
-              <Label>Status</Label>
+              <Label>{t("common.status")}</Label>
               <Select
                 value={form.status}
                 onValueChange={(v) => setForm({ ...form, status: v as FormState["status"] })}
@@ -758,15 +760,15 @@ export function WarehousesSection() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="offline">Offline</SelectItem>
-                  <SelectItem value="error">Error</SelectItem>
-                  <SelectItem value="maintenance">Maintenance</SelectItem>
+                  <SelectItem value="active">{t("silos.active")}</SelectItem>
+                  <SelectItem value="offline">{t("silos.offline")}</SelectItem>
+                  <SelectItem value="error">{t("silos.error")}</SelectItem>
+                  <SelectItem value="maintenance">{t("silos.maintenance")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label>Notes</Label>
+              <Label>{t("silos.notes")}</Label>
               <Textarea
                 rows={2}
                 value={form.notes}
@@ -786,9 +788,9 @@ export function WarehousesSection() {
               {saveMutation.isPending ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : form.id ? (
-                "Save changes"
+                t("common.save")
               ) : (
-                "Create warehouse"
+                t("warehouses.create")
               )}
             </Button>
           </DialogFooter>
@@ -814,19 +816,19 @@ export function WarehousesSection() {
                 <DialogDescription>{selected.warehouse_id}</DialogDescription>
               </DialogHeader>
               <div className="space-y-2 text-sm py-2">
-                <Row label="Capacity">{(selected.total_capacity_kg ?? 0).toLocaleString()} kg</Row>
+                <Row label={t("warehouses.capacity")}>{(selected.total_capacity_kg ?? 0).toLocaleString()} kg</Row>
                 {selected.location?.description && (
-                  <Row label="Location">{selected.location.description}</Row>
+                  <Row label={t("silos.location")}>{selected.location.description}</Row>
                 )}
                 {selected.location?.address && (
-                  <Row label="Address">{selected.location.address}</Row>
+                  <Row label={t("common.address")}>{selected.location.address}</Row>
                 )}
-                <Row label="Status">
+                <Row label={t("common.status")}>
                   <StatusBadge value={selected.status} />
                 </Row>
-                {selected.silos && <Row label="Silos">{selected.silos.length}</Row>}
+                {selected.silos && <Row label={t("grainOps.silos")}>{selected.silos.length}</Row>}
                 {selected.notes && (
-                  <Row label="Notes">
+                  <Row label={t("silos.notes")}>
                     <span className="whitespace-pre-wrap">{selected.notes}</span>
                   </Row>
                 )}
@@ -853,19 +855,18 @@ export function WarehousesSection() {
       <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete warehouse?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This permanently removes the warehouse. Any silos it contains must be reassigned
-              first.
+            <AlertDialogTitle>{t("warehouses.deleteWarehouse")}</AlertDialogTitle>
+              <AlertDialogDescription>
+              {t("warehouses.deleteDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deleteId && deleteMutation.mutate(deleteId)}
               className="bg-rose-600 hover:bg-rose-700"
             >
-              {deleteMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Delete"}
+              {deleteMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : t("common.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

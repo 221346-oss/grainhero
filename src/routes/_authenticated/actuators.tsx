@@ -72,6 +72,7 @@ import {
   controlActuator,
   listSilos,
 } from "@/lib/operations.functions";
+import { useTranslation } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/actuators")({
   head: () => ({
@@ -177,8 +178,20 @@ const typeIcon = (t: string) => {
   }
 };
 
+// Maps a device type to its dictionary key so type names show in the
+// active language instead of raw lowercase ids like "fan".
+const TYPE_LABEL_KEYS: Record<ActType, string> = {
+  fan: "typeFan",
+  vent: "typeVent",
+  heater: "typeHeater",
+  cooler: "typeCooler",
+  alarm: "typeAlarm",
+  light: "typeLight",
+};
+
 function ActuatorsPage() {
   const qc = useQueryClient();
+  const { t } = useTranslation();
   const listFn = useServerFn(listActuators);
   const silosFn = useServerFn(listSilos);
   const saveFn = useServerFn(upsertActuator);
@@ -229,7 +242,7 @@ function ActuatorsPage() {
   const save = useMutation({
     mutationFn: (payload: unknown) => saveFn({ data: payload } as never),
     onSuccess: () => {
-      toast.success("Actuator saved");
+      toast.success(t("actuators.savedToast"));
       qc.invalidateQueries({ queryKey: ["actuators"] });
       qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
       setDlgOpen(false);
@@ -240,7 +253,7 @@ function ActuatorsPage() {
   const remove = useMutation({
     mutationFn: (id: string) => delFn({ data: { id } } as never),
     onSuccess: () => {
-      toast.success("Actuator deleted");
+      toast.success(t("actuators.deletedToast"));
       qc.invalidateQueries({ queryKey: ["actuators"] });
       setToDelete(null);
     },
@@ -281,7 +294,7 @@ function ActuatorsPage() {
   };
   const submit = () => {
     if (!form.name || !form.actuator_id || !form.silo_id) {
-      toast.error("Name, ID and silo are required");
+      toast.error(t("actuators.requiredFieldsToast"));
       return;
     }
     save.mutate({
@@ -312,22 +325,22 @@ function ActuatorsPage() {
     rows
       .filter((r) => r.is_on)
       .forEach((r) => control.mutate({ id: r.id, action: "emergency_stop" }));
-    toast.warning("🚨 Emergency stop broadcast to all active actuators");
+    toast.warning(`🚨 ${t("actuators.emergencyStopToast")}`);
   };
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-4 md:space-y-6">
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
         <PageHeader
-          title="Actuator Control Center"
-          subtitle="Fans, vents, heaters, coolers, alarms & lights — direct hardware control"
+          title={t("actuators.title")}
+          subtitle={t("actuators.subtitle")}
         />
         <div className="flex flex-wrap gap-2">
           <Button variant="destructive" size="sm" className="gap-1.5" onClick={emergency}>
-            <AlertTriangle className="h-4 w-4" /> Emergency Stop
+            <AlertTriangle className="h-4 w-4" /> {t("actuators.emergencyStop")}
           </Button>
           <Button size="sm" onClick={openCreate} className="gap-1.5">
-            <Plus className="h-4 w-4" /> New Actuator
+            <Plus className="h-4 w-4" /> {t("actuators.newActuator")}
           </Button>
         </div>
       </div>
@@ -335,25 +348,25 @@ function ActuatorsPage() {
       {/* Stats strip */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatCard
-          label="Total Devices"
+          label={t("actuators.totalDevices")}
           value={stats.total}
           icon={<Activity className="h-4 w-4" />}
           tone="indigo"
         />
         <StatCard
-          label="Currently On"
+          label={t("actuators.currentlyOn")}
           value={stats.on}
           icon={<Power className="h-4 w-4" />}
           tone="emerald"
         />
         <StatCard
-          label="Auto Mode"
+          label={t("actuators.autoMode")}
           value={stats.auto}
           icon={<Shield className="h-4 w-4" />}
           tone="blue"
         />
         <StatCard
-          label="Offline / Error"
+          label={t("actuators.offlineOrError")}
           value={stats.err}
           icon={<AlertTriangle className="h-4 w-4" />}
           tone="rose"
@@ -367,34 +380,34 @@ function ActuatorsPage() {
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by name, ID or silo"
+            placeholder={t("actuators.searchPlaceholder")}
             className="pl-9"
           />
         </div>
         <div className="flex gap-2">
           <Select value={typeFilter} onValueChange={setTypeFilter}>
             <SelectTrigger className="w-full sm:w-40">
-              <SelectValue placeholder="Type" />
+              <SelectValue placeholder={t("actuators.type")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All types</SelectItem>
-              {TYPES.map((t) => (
-                <SelectItem key={t} value={t}>
-                  {t}
+              <SelectItem value="all">{t("actuators.allTypes")}</SelectItem>
+              {TYPES.map((tp) => (
+                <SelectItem key={tp} value={tp}>
+                  {t(`actuators.${TYPE_LABEL_KEYS[tp]}`)}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-full sm:w-40">
-              <SelectValue placeholder="Status" />
+              <SelectValue placeholder={t("common.status")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All status</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="offline">Offline</SelectItem>
-              <SelectItem value="error">Error</SelectItem>
-              <SelectItem value="maintenance">Maintenance</SelectItem>
+              <SelectItem value="all">{t("actuators.allStatus")}</SelectItem>
+              <SelectItem value="active">{t("actuators.active")}</SelectItem>
+              <SelectItem value="offline">{t("actuators.offline")}</SelectItem>
+              <SelectItem value="error">{t("actuators.error")}</SelectItem>
+              <SelectItem value="maintenance">{t("actuators.maintenance")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -407,8 +420,8 @@ function ActuatorsPage() {
         <Card>
           <CardContent className="py-16 text-center text-muted-foreground">
             <Inbox className="h-8 w-8 mx-auto mb-3 opacity-50" />
-            <div className="font-medium">No actuators found</div>
-            <div className="text-sm">Create one to start controlling hardware.</div>
+            <div className="font-medium">{t("actuators.noActuatorsFound")}</div>
+            <div className="text-sm">{t("actuators.createOne")}</div>
           </CardContent>
         </Card>
       ) : (
@@ -447,12 +460,12 @@ function ActuatorsPage() {
                       variant={on ? "default" : "secondary"}
                       className={on ? "bg-emerald-500" : ""}
                     >
-                      {on ? "Running" : "Idle"}
+                      {on ? t("actuators.running") : t("actuators.idle")}
                     </Badge>
                   </CardTitle>
                   <CardDescription className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
                     <span className="font-mono">{r.actuator_id}</span>
-                    <span className="capitalize">{r.actuator_type}</span>
+                    <span>{t(`actuators.${TYPE_LABEL_KEYS[r.actuator_type]}`)}</span>
                     {r.silos && <span>· {r.silos.name}</span>}
                     <StatusBadge value={r.status} />
                   </CardDescription>
@@ -460,24 +473,24 @@ function ActuatorsPage() {
                 <CardContent className="space-y-3">
                   <div className="grid grid-cols-3 gap-2 text-center">
                     <div className="rounded-lg border p-2 bg-muted/30">
-                      <div className="text-[10px] uppercase text-muted-foreground">Power</div>
+                      <div className="text-[10px] uppercase text-muted-foreground">{t("actuators.power")}</div>
                       <div className="font-bold flex items-center justify-center gap-1">
                         <Gauge className="h-3 w-3" />
                         {r.power_level ?? 0}%
                       </div>
                     </div>
                     <div className="rounded-lg border p-2 bg-muted/30">
-                      <div className="text-[10px] uppercase text-muted-foreground">Mode</div>
+                      <div className="text-[10px] uppercase text-muted-foreground">{t("actuators.mode")}</div>
                       <div className="font-bold text-xs">
                         {authority === "HUMAN"
-                          ? "🧑 Manual"
+                          ? `🧑 ${t("actuators.manual")}`
                           : authority === "FAILSAFE"
-                            ? "🛡️ Safe"
-                            : "🤖 Auto"}
+                            ? `🛡️ ${t("actuators.safe")}`
+                            : `🤖 ${t("actuators.auto")}`}
                       </div>
                     </div>
                     <div className="rounded-lg border p-2 bg-muted/30">
-                      <div className="text-[10px] uppercase text-muted-foreground">ML</div>
+                      <div className="text-[10px] uppercase text-muted-foreground">{t("actuators.ml")}</div>
                       <div className="font-bold text-xs capitalize truncate">
                         {r.ml_decision ?? "—"}
                       </div>
@@ -491,7 +504,7 @@ function ActuatorsPage() {
                       disabled={control.isPending}
                       onClick={() => control.mutate({ id: r.id, action: "turn_on", value: pwm })}
                     >
-                      <Power className="h-4 w-4" /> Start ({pwm}%)
+                      <Power className="h-4 w-4" /> {t("actuators.start")} ({pwm}%)
                     </Button>
                     <Button
                       size="sm"
@@ -500,13 +513,13 @@ function ActuatorsPage() {
                       disabled={control.isPending}
                       onClick={() => control.mutate({ id: r.id, action: "turn_off" })}
                     >
-                      <PowerOff className="h-4 w-4" /> Stop
+                      <PowerOff className="h-4 w-4" /> {t("actuators.stop")}
                     </Button>
                   </div>
 
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between text-xs">
-                      <Label className="text-muted-foreground">Power Level</Label>
+                      <Label className="text-muted-foreground">{t("actuators.powerLevel")}</Label>
                       <span className="font-bold">{pwm}%</span>
                     </div>
                     <Slider
@@ -550,24 +563,24 @@ function ActuatorsPage() {
                       }
                     >
                       <Activity className="h-3 w-3" />
-                      {r.control_mode === "auto" ? "Take Manual" : "Return to Auto"}
+                      {r.control_mode === "auto" ? t("actuators.takeManual") : t("actuators.returnToAuto")}
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => setViewing(r)}
-                      title="Details"
+                      title={t("actuators.details")}
                     >
                       <Eye className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(r)} title="Edit">
+                    <Button variant="ghost" size="icon" onClick={() => openEdit(r)} title={t("common.edit")}>
                       <Edit2 className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => setToDelete(r)}
-                      title="Delete"
+                      title={t("common.delete")}
                     >
                       <Trash2 className="h-4 w-4 text-rose-500" />
                     </Button>
@@ -583,7 +596,7 @@ function ActuatorsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Shield className="h-4 w-4 text-indigo-600" /> Control Rules & Safety
+            <Shield className="h-4 w-4 text-indigo-600" /> {t("actuators.controlRules")}
           </CardTitle>
         </CardHeader>
         <CardContent className="grid gap-2 md:grid-cols-2 text-xs text-muted-foreground">
@@ -591,32 +604,32 @@ function ActuatorsPage() {
             <CheckCircle className="h-3.5 w-3.5 text-blue-500 mt-0.5 flex-shrink-0" />
             <span>
               <strong className="text-blue-700 dark:text-blue-300">
-                Lid opens before fan starts
+                {t("actuators.ruleLid")}
               </strong>{" "}
-              — ESP32 opens lid, waits 3s, then starts the fan.
+              — {t("actuators.ruleLidDesc")}
             </span>
           </div>
           <div className="flex items-start gap-2 p-2 rounded bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900">
             <Timer className="h-3.5 w-3.5 text-amber-500 mt-0.5 flex-shrink-0" />
             <span>
               <strong className="text-amber-700 dark:text-amber-300">
-                Manual override expires
+                {t("actuators.ruleOverride")}
               </strong>{" "}
-              — After 10 minutes, control returns to Auto/ML.
+              — {t("actuators.ruleOverrideDesc")}
             </span>
           </div>
           <div className="flex items-start gap-2 p-2 rounded bg-rose-50 dark:bg-rose-950/30 border border-rose-100 dark:border-rose-900">
             <AlertTriangle className="h-3.5 w-3.5 text-rose-500 mt-0.5 flex-shrink-0" />
             <span>
-              <strong className="text-rose-700 dark:text-rose-300">Guardrails</strong> — Fan blocked
-              if RH &gt; 80%, dew-point gap &lt; 1°C, or rainfall.
+              <strong className="text-rose-700 dark:text-rose-300">{t("actuators.ruleGuardrails")}</strong> —{" "}
+              {t("actuators.ruleGuardrailsDesc")}
             </span>
           </div>
           <div className="flex items-start gap-2 p-2 rounded bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900">
             <ThermometerSun className="h-3.5 w-3.5 text-emerald-500 mt-0.5 flex-shrink-0" />
             <span>
-              <strong className="text-emerald-700 dark:text-emerald-300">Min run time</strong> — Fan
-              runs 15s minimum to protect the motor.
+              <strong className="text-emerald-700 dark:text-emerald-300">{t("actuators.ruleMinRun")}</strong> —{" "}
+              {t("actuators.ruleMinRunDesc")}
             </span>
           </div>
         </CardContent>
@@ -626,14 +639,14 @@ function ActuatorsPage() {
       <Dialog open={dlgOpen} onOpenChange={setDlgOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{form.id ? "Edit Actuator" : "New Actuator"}</DialogTitle>
+            <DialogTitle>{form.id ? t("actuators.editActuator") : t("actuators.newActuatorForm")}</DialogTitle>
             <DialogDescription>
-              Register a controllable device attached to a silo.
+              {t("actuators.registerDevice")}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="sm:col-span-1">
-              <Label>Device ID *</Label>
+              <Label>{t("actuators.deviceId")} *</Label>
               <Input
                 value={form.actuator_id}
                 onChange={(e) => setForm({ ...form, actuator_id: e.target.value })}
@@ -641,7 +654,7 @@ function ActuatorsPage() {
               />
             </div>
             <div className="sm:col-span-1">
-              <Label>Name *</Label>
+              <Label>{t("actuators.name")} *</Label>
               <Input
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -649,7 +662,7 @@ function ActuatorsPage() {
               />
             </div>
             <div>
-              <Label>Type *</Label>
+              <Label>{t("actuators.type")} *</Label>
               <Select
                 value={form.actuator_type}
                 onValueChange={(v: ActType) => setForm({ ...form, actuator_type: v })}
@@ -658,19 +671,19 @@ function ActuatorsPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {TYPES.map((t) => (
-                    <SelectItem key={t} value={t}>
-                      {t}
+                  {TYPES.map((tp) => (
+                    <SelectItem key={tp} value={tp}>
+                      {t(`actuators.${TYPE_LABEL_KEYS[tp]}`)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label>Silo *</Label>
+              <Label>{t("actuators.silo")} *</Label>
               <Select value={form.silo_id} onValueChange={(v) => setForm({ ...form, silo_id: v })}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select silo" />
+                  <SelectValue placeholder={t("actuators.selectSilo")} />
                 </SelectTrigger>
                 <SelectContent>
                   {silos.map((s) => (
@@ -682,21 +695,21 @@ function ActuatorsPage() {
               </Select>
             </div>
             <div>
-              <Label>Manufacturer</Label>
+              <Label>{t("actuators.manufacturer")}</Label>
               <Input
                 value={form.manufacturer}
                 onChange={(e) => setForm({ ...form, manufacturer: e.target.value })}
               />
             </div>
             <div>
-              <Label>Model</Label>
+              <Label>{t("actuators.model")}</Label>
               <Input
                 value={form.model}
                 onChange={(e) => setForm({ ...form, model: e.target.value })}
               />
             </div>
             <div>
-              <Label>MAC Address</Label>
+              <Label>{t("actuators.macAddress")}</Label>
               <Input
                 value={form.mac_address}
                 onChange={(e) => setForm({ ...form, mac_address: e.target.value })}
@@ -704,7 +717,7 @@ function ActuatorsPage() {
               />
             </div>
             <div>
-              <Label>Status</Label>
+              <Label>{t("common.status")}</Label>
               <Select
                 value={form.status}
                 onValueChange={(v: Actuator["status"]) => setForm({ ...form, status: v })}
@@ -713,15 +726,15 @@ function ActuatorsPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="offline">Offline</SelectItem>
-                  <SelectItem value="error">Error</SelectItem>
-                  <SelectItem value="maintenance">Maintenance</SelectItem>
+                  <SelectItem value="active">{t("actuators.active")}</SelectItem>
+                  <SelectItem value="offline">{t("actuators.offline")}</SelectItem>
+                  <SelectItem value="error">{t("actuators.error")}</SelectItem>
+                  <SelectItem value="maintenance">{t("actuators.maintenance")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label>Control Mode</Label>
+              <Label>{t("actuators.controlMode")}</Label>
               <Select
                 value={form.control_mode}
                 onValueChange={(v: Form["control_mode"]) => setForm({ ...form, control_mode: v })}
@@ -730,14 +743,14 @@ function ActuatorsPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="auto">Auto (ML)</SelectItem>
-                  <SelectItem value="manual">Manual</SelectItem>
-                  <SelectItem value="failsafe">Failsafe</SelectItem>
+                  <SelectItem value="auto">🤖 {t("actuators.auto")} (ML)</SelectItem>
+                  <SelectItem value="manual">🧑 {t("actuators.manual")}</SelectItem>
+                  <SelectItem value="failsafe">🛡️ {t("actuators.safe")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label>Default Power %</Label>
+              <Label>{t("actuators.defaultPower")}</Label>
               <Input
                 type="number"
                 min={0}
@@ -747,7 +760,7 @@ function ActuatorsPage() {
               />
             </div>
             <div>
-              <Label>Target Speed %</Label>
+              <Label>{t("actuators.targetSpeed")}</Label>
               <Input
                 type="number"
                 min={0}
@@ -757,14 +770,14 @@ function ActuatorsPage() {
               />
             </div>
             <div className="sm:col-span-2">
-              <Label>Tags (comma-separated)</Label>
+              <Label>{t("actuators.tags")}</Label>
               <Input
                 value={form.tags}
                 onChange={(e) => setForm({ ...form, tags: e.target.value })}
               />
             </div>
             <div className="sm:col-span-2">
-              <Label>Notes</Label>
+              <Label>{t("actuators.notes")}</Label>
               <Textarea
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
@@ -777,16 +790,16 @@ function ActuatorsPage() {
                 onCheckedChange={(v) => setForm({ ...form, is_enabled: !!v })}
               />
               <Label htmlFor="ena" className="cursor-pointer">
-                Enabled
+                {t("actuators.enabled")}
               </Label>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDlgOpen(false)}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button onClick={submit} disabled={save.isPending}>
-              {save.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} Save
+              {save.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} {t("common.save")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -807,32 +820,32 @@ function ActuatorsPage() {
                 </DialogTitle>
                 <DialogDescription>
                   {viewing.actuator_id} ·{" "}
-                  <span className="capitalize">{viewing.actuator_type}</span>
+                  <span>{t(`actuators.${TYPE_LABEL_KEYS[viewing.actuator_type]}`)}</span>
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-2 text-sm">
-                <Row label="Silo" val={viewing.silos?.name ?? "—"} />
-                <Row label="Warehouse" val={viewing.silos?.warehouses?.name ?? "—"} />
-                <Row label="Status" val={<StatusBadge value={viewing.status} />} />
-                <Row label="Control mode" val={viewing.control_mode ?? "—"} />
-                <Row label="On" val={viewing.is_on ? "Yes" : "No"} />
-                <Row label="Power" val={`${viewing.power_level ?? 0}%`} />
-                <Row label="Target speed" val={`${viewing.target_fan_speed ?? 0}%`} />
-                <Row label="ML decision" val={viewing.ml_decision ?? "—"} />
-                <Row label="Manufacturer" val={viewing.manufacturer ?? "—"} />
-                <Row label="Model" val={viewing.model ?? "—"} />
+                <Row label={t("actuators.silo")} val={viewing.silos?.name ?? "—"} />
+                <Row label={t("actuators.warehouse")} val={viewing.silos?.warehouses?.name ?? "—"} />
+                <Row label={t("common.status")} val={<StatusBadge value={viewing.status} />} />
+                <Row label={t("actuators.controlMode")} val={viewing.control_mode ?? "—"} />
+                <Row label={t("actuators.on")} val={viewing.is_on ? t("common.yes") : t("common.no")} />
+                <Row label={t("actuators.power")} val={`${viewing.power_level ?? 0}%`} />
+                <Row label={t("actuators.targetSpeedLabel")} val={`${viewing.target_fan_speed ?? 0}%`} />
+                <Row label={t("actuators.mlDecision")} val={viewing.ml_decision ?? "—"} />
+                <Row label={t("actuators.manufacturer")} val={viewing.manufacturer ?? "—"} />
+                <Row label={t("actuators.model")} val={viewing.model ?? "—"} />
                 <Row label="MAC" val={viewing.mac_address ?? "—"} />
-                {viewing.notes && <Row label="Notes" val={viewing.notes} />}
+                {viewing.notes && <Row label={t("actuators.notes")} val={viewing.notes} />}
                 {viewing.current_operation && (
                   <div className="p-2 rounded border bg-muted/30 text-xs">
-                    <div className="font-medium mb-1">Last operation</div>
+                    <div className="font-medium mb-1">{t("actuators.lastOperation")}</div>
                     <pre className="whitespace-pre-wrap">
                       {JSON.stringify(viewing.current_operation, null, 2)}
                     </pre>
                   </div>
                 )}
                 <div className="pt-2">
-                  <div className="text-sm font-medium mb-2">Command queue</div>
+                  <div className="text-sm font-medium mb-2">{t("actuators.commandQueue")}</div>
                   <CommandConsole actuatorId={viewing.id} />
                 </div>
               </div>
@@ -844,19 +857,19 @@ function ActuatorsPage() {
       <AlertDialog open={!!toDelete} onOpenChange={(o) => !o && setToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete actuator?</AlertDialogTitle>
+            <AlertDialogTitle>{t("actuators.deleteActuator")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This permanently removes <strong>{toDelete?.name}</strong>. This action cannot be
-              undone.
+              {t("actuators.permanentlyRemoves")} <strong>{toDelete?.name}</strong>.{" "}
+              {t("actuators.cantUndo")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => toDelete && remove.mutate(toDelete.id)}
               className="bg-rose-600 hover:bg-rose-700"
             >
-              Delete
+              {t("common.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

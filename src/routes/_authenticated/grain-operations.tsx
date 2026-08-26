@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState, type ComponentType } from "react";
+import { useTranslation } from "@/i18n";
 import { BatchesSection } from "@/components/grain-operations/BatchesSection";
 import { SilosSection } from "@/components/grain-operations/SilosSection";
 import { WarehousesSection } from "@/components/grain-operations/WarehousesSection";
@@ -68,17 +69,20 @@ export const Route = createFileRoute("/_authenticated/grain-operations")({
   component: GrainOperationsWorkspace,
 });
 
-const ALL_TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
-  { key: "batches", label: "Grain Batches", icon: Package },
-  { key: "silos", label: "Silos", icon: Warehouse },
-  { key: "warehouses", label: "Warehouses", icon: Building2 },
-  { key: "buyers", label: "Buyers", icon: Users },
-];
+
 
 function GrainOperationsWorkspace() {
   const { tab, status } = Route.useSearch();
   const navigate = Route.useNavigate();
   const [activeTab, setActiveTabState] = useState<Tab>(tab);
+  const { t } = useTranslation();
+
+  const ALL_TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
+    { key: "batches", label: t("grainOps.grainBatches"), icon: Package },
+    { key: "silos", label: t("grainOps.silos"), icon: Warehouse },
+    { key: "warehouses", label: t("grainOps.warehouses"), icon: Building2 },
+    { key: "buyers", label: t("grainOps.buyers"), icon: Users },
+  ];
 
   // Fetch user role to determine which tabs to show
   const roleFn = useServerFn(getMyRole);
@@ -195,10 +199,10 @@ function GrainOperationsWorkspace() {
         {/* Header */}
         <div>
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-foreground">
-            <VariableFontText text="Grain Operations" base={650} hover={900} staggerMs={20} />
+            <VariableFontText text={t("grainOps.title")} base={650} hover={900} staggerMs={20} />
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Manage batches, silos, warehouses, and buyers from one workspace
+            {t("grainOps.subtitle")}
           </p>
         </div>
 
@@ -214,7 +218,7 @@ function GrainOperationsWorkspace() {
           {/* Batch status breakdown — pie chart, replacing the old plain bar list */}
           <div className="lg:col-span-2 bg-card border border-border rounded-2xl p-6">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2">
-              Batch Status Breakdown
+              {t("grainOps.batchStatusBreakdown")}
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] items-center gap-4">
               <SiloStatusPie data={statusPieData} />
@@ -236,10 +240,10 @@ function GrainOperationsWorkspace() {
           <div className="bg-card border border-border rounded-[2rem] p-6 lg:p-8 flex flex-col justify-between relative h-full">
             <div className="flex justify-between items-start mb-6">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
-                Key Metrics
+                {t("grainOps.keyMetrics")}
               </p>
               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest bg-muted px-2 py-1 rounded-md">
-                Last 12 Cycles
+                {t("grainOps.lastCycles")}
               </p>
             </div>
 
@@ -248,7 +252,7 @@ function GrainOperationsWorkspace() {
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center w-[45%] min-w-[120px]">
                   <div className="truncate">
-                    <p className="text-xs font-medium text-muted-foreground">Total Grain</p>
+                    <p className="text-xs font-medium text-muted-foreground">{t("grainOps.totalGrain")}</p>
                     <p className="text-base font-black text-foreground truncate">
                       {totalKg.toLocaleString()} kg
                     </p>
@@ -275,9 +279,9 @@ function GrainOperationsWorkspace() {
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center w-[45%] min-w-[120px]">
                   <div className="truncate">
-                    <p className="text-xs font-medium text-muted-foreground">Active Silos</p>
+                    <p className="text-xs font-medium text-muted-foreground">{t("grainOps.activeSilos")}</p>
                     <p className="text-base font-black text-foreground truncate">
-                      {activeSilos} online
+                      {activeSilos} {t("grainOps.online")}
                     </p>
                   </div>
                 </div>
@@ -301,7 +305,7 @@ function GrainOperationsWorkspace() {
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center w-[45%] min-w-[120px]">
                   <div className="truncate">
-                    <p className="text-xs font-medium text-muted-foreground">Dispatched</p>
+                    <p className="text-xs font-medium text-muted-foreground">{t("grainOps.dispatched")}</p>
                     <p className="text-base font-black text-foreground truncate">
                       {dispatchedKg.toLocaleString()} kg
                     </p>

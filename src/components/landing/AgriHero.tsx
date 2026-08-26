@@ -5,9 +5,11 @@ import { Link } from "@tanstack/react-router";
 import heroLoop from "@/assets/silo-ai-loop-v3-web.mp4.asset.json";
 import heroPoster from "@/assets/landing/hero-poster.jpg";
 import { getAssetUrl } from "@/lib/utils";
+import { useTranslation } from "@/i18n";
 
 export function AgriHero() {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const v = videoRef.current;
@@ -44,10 +46,10 @@ export function AgriHero() {
             transition={{ delay: 0.1, duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
             className="text-[2.75rem] font-black leading-[0.92] tracking-tight text-[#FAFAF7] sm:text-6xl lg:text-7xl"
           >
-            The Future of
+            {t("hero.title1")}
             <br />
             <span className="bg-gradient-to-r from-[#A8E6A1] to-[#2FA84F] bg-clip-text text-transparent">
-              Grain Storage
+              {t("hero.title2")}
             </span>
           </motion.h1>
 
@@ -61,7 +63,7 @@ export function AgriHero() {
               to="/contact"
               className="gh-keep-light group inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#FAFAF7] px-7 py-3.5 text-sm font-bold text-[#111512] transition-all duration-300 hover:bg-[#2FA84F] hover:text-white"
             >
-              Let&apos;s talk
+              {t("hero.cta")}
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Link>
           </motion.div>

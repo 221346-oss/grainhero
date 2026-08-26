@@ -62,6 +62,7 @@ import { listSilos, listGrainBatches } from "@/lib/operations.functions";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { AdminSummaryTiles } from "@/components/app/admin/AdminSummaryTiles";
 import { AdminDataCard } from "@/components/app/admin/AdminDataCard";
+import { useTranslation } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/team-management")({
   head: () => ({
@@ -105,7 +106,27 @@ const ROLE_BADGE: Record<string, string> = {
   pending: "bg-amber-100 text-amber-700 border-amber-200",
 };
 
+// Role ids → dictionary keys so role names follow the active language.
+const ROLE_LABEL_KEYS: Record<string, string> = {
+  super_admin: "superAdmin",
+  admin: "admin",
+  manager: "manager",
+  technician: "technician",
+  pending: "pending",
+};
+
+const DAY_LABEL_KEYS: Record<string, string> = {
+  Monday: "monday",
+  Tuesday: "tuesday",
+  Wednesday: "wednesday",
+  Thursday: "thursday",
+  Friday: "friday",
+  Saturday: "saturday",
+  Sunday: "sunday",
+};
+
 function TeamPage() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const roleFn = useServerFn(getMyRole);
   const listFn = useServerFn(listTeamMembers);
@@ -248,7 +269,7 @@ function TeamPage() {
       data: { email: string; name?: string; role: "admin" | "manager" | "technician" };
     }) => inviteFn(v),
     onSuccess: () => {
-      toast.success("Invitation sent");
+      toast.success(t("team.inviteSentToast"));
       setInviteOpen(false);
       setInviteForm({ email: "", name: "", role: "technician" });
       qc.invalidateQueries({ queryKey: ["team-members"] });
@@ -260,7 +281,7 @@ function TeamPage() {
       data: { id: string; name?: string; email?: string; phone?: string; role?: Role };
     }) => updateFn(v),
     onSuccess: (_, variables) => {
-      toast.success("Member updated");
+      toast.success(t("team.memberUpdatedToast"));
       setEditing(null);
       qc.invalidateQueries({ queryKey: ["team-members"] });
       qc.invalidateQueries({ queryKey: ["member-detail", variables.data.id] });
@@ -273,7 +294,7 @@ function TeamPage() {
   const assignBatch = useMutation({
     mutationFn: (v: { data: { batchId: string; technicianId: string } }) => assignBatchFn(v),
     onSuccess: () => {
-      toast.success("Batch assigned successfully");
+      toast.success(t("team.batchAssignedToast"));
       setAssignBatchId("none");
       setAssignSiloId("none");
       qc.invalidateQueries({ queryKey: ["member-detail", viewing?.id] });
@@ -284,7 +305,7 @@ function TeamPage() {
   const remove = useMutation({
     mutationFn: (v: { data: { id: string } }) => removeFn(v),
     onSuccess: (_, variables) => {
-      toast.success("Member removed");
+      toast.success(t("team.memberRemovedToast"));
       setDeleting(null);
       if (viewing?.id === variables.data.id) {
         setViewing(null);
@@ -317,15 +338,15 @@ function TeamPage() {
 
   return (
     <AdminPageShell
-      title="Team management"
-      subtitle="Invite teammates and manage roles across your tenant"
+      title={t("team.title")}
+      subtitle={t("team.subtitle")}
       actions={
         canInvite ? (
           <Button
             onClick={() => setInviteOpen(true)}
             className="bg-emerald-600 hover:bg-emerald-700"
           >
-            <Plus className="h-4 w-4 mr-2" /> Invite member
+            <Plus className="h-4 w-4 mr-2" /> {t("team.inviteMember")}
           </Button>
         ) : undefined
       }
@@ -335,57 +356,55 @@ function TeamPage() {
         active={activeSection}
         onSelect={(k) => setActiveSection(k as SectionTab)}
         tiles={[
-          { key: "all", label: "Total", value: stats.all },
-          { key: "active", label: "Active", value: stats.active },
-          { key: "pending", label: "Pending", value: stats.pending },
+          { key: "all", label: t("team.total"), value: stats.all },
+          { key: "active", label: t("team.active"), value: stats.active },
+          { key: "pending", label: t("team.pending"), value: stats.pending },
         ]}
       />
 
       <Card>
         <CardContent className="p-3 grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
           <div className="relative">
-            <Label className="text-xs font-medium text-slate-500 mb-1 block">Name</Label>
+            <Label className="text-xs font-medium text-slate-500 mb-1 block">{t("team.name")}</Label>
             <Search className="absolute left-3 top-[calc(50%+8px)] -translate-y-1/2 h-4 w-4 text-slate-400" />
             <Input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Search name/email"
+              placeholder={t("team.searchNameEmail")}
               className="pl-9"
             />
           </div>
           <div>
-            <Label className="text-xs font-medium text-slate-500 mb-1 block">Role</Label>
+            <Label className="text-xs font-medium text-slate-500 mb-1 block">{t("team.role")}</Label>
             <Select value={roleFilter} onValueChange={setRoleFilter}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All roles</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="manager">Manager</SelectItem>
-                <SelectItem value="technician">Technician</SelectItem>
+                <SelectItem value="all">{t("team.allRoles")}</SelectItem>
+                <SelectItem value="admin">{t("team.admin")}</SelectItem>
+                <SelectItem value="manager">{t("team.manager")}</SelectItem>
+                <SelectItem value="technician">{t("team.technician")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div>
-            <Label className="text-xs font-medium text-slate-500 mb-1 block">Date Joined</Label>
+            <Label className="text-xs font-medium text-slate-500 mb-1 block">{t("team.dateJoined")}</Label>
             <Input type="date" value={dateFilter} onChange={(e) => setDateFilter(e.target.value)} />
           </div>
           <div>
-            <Label className="text-xs font-medium text-slate-500 mb-1 block">Day Joined</Label>
+            <Label className="text-xs font-medium text-slate-500 mb-1 block">{t("team.dayJoined")}</Label>
             <Select value={dayFilter} onValueChange={setDayFilter}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All days</SelectItem>
-                <SelectItem value="Monday">Monday</SelectItem>
-                <SelectItem value="Tuesday">Tuesday</SelectItem>
-                <SelectItem value="Wednesday">Wednesday</SelectItem>
-                <SelectItem value="Thursday">Thursday</SelectItem>
-                <SelectItem value="Friday">Friday</SelectItem>
-                <SelectItem value="Saturday">Saturday</SelectItem>
-                <SelectItem value="Sunday">Sunday</SelectItem>
+                <SelectItem value="all">{t("team.allDays")}</SelectItem>
+                {Object.entries(DAY_LABEL_KEYS).map(([value, key]) => (
+                  <SelectItem key={value} value={value}>
+                    {t(`team.${key}`)}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -394,9 +413,9 @@ function TeamPage() {
 
       <div className="flex items-center gap-2 overflow-x-auto pb-1">
         {[
-          { key: "all", label: "All members", count: stats.all },
-          { key: "active", label: "Active", count: stats.active },
-          { key: "pending", label: "Pending", count: stats.pending },
+          { key: "all", label: t("team.allMembers"), count: stats.all },
+          { key: "active", label: t("team.active"), count: stats.active },
+          { key: "pending", label: t("team.pending"), count: stats.pending },
         ].map((tab) => (
           <Button
             key={tab.key}
@@ -429,16 +448,16 @@ function TeamPage() {
         <AdminDataCard
           title={
             activeSection === "all"
-              ? "All members"
+              ? t("team.allMembers")
               : activeSection === "active"
-                ? "Active members"
-                : "Pending invitations"
+                ? t("team.activeMembers")
+                : t("team.pendingInvitations")
           }
-          description={`Showing ${filtered.length} of ${members.length}`}
+          description={t("team.showingOf", { showing: filtered.length, total: members.length })}
         >
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-14 text-slate-400">
-              <p className="text-sm">No team members found</p>
+              <p className="text-sm">{t("team.noTeamMembers")}</p>
             </div>
           ) : (
             <div>
@@ -470,11 +489,15 @@ function TeamPage() {
                       }
                       variant="outline"
                     >
-                      {isPendingMember(m) ? "Pending" : m.role}
+                      {isPendingMember(m)
+                        ? t("team.pending")
+                        : ROLE_LABEL_KEYS[m.role]
+                          ? t(`team.${ROLE_LABEL_KEYS[m.role]}`)
+                          : m.role}
                     </Badge>
                     {m.blocked && (
                       <Badge className="bg-red-100 text-red-700 border-red-200" variant="outline">
-                        Deleted
+                        {t("team.deleted")}
                       </Badge>
                     )}
                   </div>
@@ -482,7 +505,7 @@ function TeamPage() {
                     <Button
                       size="sm"
                       variant="ghost"
-                      title="View details"
+                      title={t("team.viewDetails")}
                       onClick={(e) => {
                         e.stopPropagation();
                         setViewing(m);
@@ -519,7 +542,7 @@ function TeamPage() {
               {/* Header with Edit + Close */}
               <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
                 <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-                  Member details
+                  {t("team.memberDetails")}
                 </h3>
                 <div className="flex items-center gap-1">
                   {viewing.role === "technician" && canManageMember(viewing.role) && (
@@ -537,7 +560,7 @@ function TeamPage() {
                         });
                       }}
                     >
-                      <Edit2 className="h-3.5 w-3.5" /> Edit
+                      <Edit2 className="h-3.5 w-3.5" /> {t("common.edit")}
                     </Button>
                   )}
                   <button
@@ -553,7 +576,7 @@ function TeamPage() {
               <div className="max-h-[calc(100vh-220px)] overflow-y-auto">
                 {detailLoading ? (
                   <div className="flex items-center justify-center py-20 text-slate-400">
-                    <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading…
+                    <Loader2 className="w-5 h-5 animate-spin mr-2" /> {t("team.loading")}
                   </div>
                 ) : memberDetail ? (
                   <div className="p-5 space-y-5">
@@ -572,7 +595,9 @@ function TeamPage() {
                           className={ROLE_BADGE[memberDetail.role as string] ?? ROLE_BADGE.pending}
                           variant="outline"
                         >
-                          {memberDetail.role as string}
+                          {ROLE_LABEL_KEYS[memberDetail.role as string]
+                            ? t(`team.${ROLE_LABEL_KEYS[memberDetail.role as string]}`)
+                            : (memberDetail.role as string)}
                         </Badge>
                       </div>
                     </div>
@@ -594,10 +619,11 @@ function TeamPage() {
                       <div className="flex items-center gap-3 text-sm">
                         <Calendar className="w-4 h-4 text-slate-400 shrink-0" />
                         <span className="text-slate-600 dark:text-slate-400">
-                          Joined{" "}
-                          {memberDetail.created_at
-                            ? new Date(memberDetail.created_at as string).toLocaleString()
-                            : "—"}
+                          {t("team.joined", {
+                            date: memberDetail.created_at
+                              ? new Date(memberDetail.created_at as string).toLocaleString()
+                              : "—",
+                          })}
                         </span>
                       </div>
                     </div>
@@ -605,10 +631,10 @@ function TeamPage() {
                     {/* Assigned work */}
                     <div>
                       <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">
-                        Assigned Work
+                        {t("team.assignedWork")}
                       </p>
                       {memberDetail.assignedBatches.length === 0 ? (
-                        <p className="text-sm text-slate-400">No active batches assigned.</p>
+                        <p className="text-sm text-slate-400">{t("team.noActiveBatches")}</p>
                       ) : (
                         <div className="space-y-2">
                           {memberDetail.assignedBatches.map((b) => (
@@ -642,12 +668,12 @@ function TeamPage() {
                     {isManagerOrAdmin && viewing?.role === "technician" && (
                       <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
                         <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">
-                          Assign Work
+                          {t("team.assignWork")}
                         </p>
                         <div className="space-y-3">
                           <div>
                             <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                              Silo
+                              {t("team.silo")}
                             </Label>
                             <Select
                               value={assignSiloId}
@@ -657,10 +683,10 @@ function TeamPage() {
                               }}
                             >
                               <SelectTrigger className="mt-1">
-                                <SelectValue placeholder="Select a silo" />
+                                <SelectValue placeholder={t("team.selectSilo")} />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="none">— Select silo —</SelectItem>
+                                <SelectItem value="none">{t("team.selectSiloOpt")}</SelectItem>
                                 {((allSilos as any[]) ?? []).map((s: any) => (
                                   <SelectItem key={s.id} value={s.id}>
                                     {s.name} ({s.silo_id})
@@ -671,14 +697,14 @@ function TeamPage() {
                           </div>
                           <div>
                             <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                              Batch
+                              {t("team.batch")}
                             </Label>
                             <Select value={assignBatchId} onValueChange={setAssignBatchId}>
                               <SelectTrigger className="mt-1">
-                                <SelectValue placeholder="Select batch" />
+                                <SelectValue placeholder={t("team.selectBatch")} />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="none">— Select batch —</SelectItem>
+                                <SelectItem value="none">{t("team.selectBatchOpt")}</SelectItem>
                                 {activeBatches.map((b: any) => (
                                   <SelectItem key={b.id} value={b.id}>
                                     {b.batch_id} · {b.grain_type ?? b.status}
@@ -701,7 +727,7 @@ function TeamPage() {
                             {assignBatch.isPending ? (
                               <Loader2 className="h-4 w-4 animate-spin mr-2" />
                             ) : null}
-                            Assign
+                            {t("team.assign")}
                           </Button>
                         </div>
                       </div>
@@ -718,12 +744,12 @@ function TeamPage() {
       <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Invite team member</DialogTitle>
-            <DialogDescription>Send an email invitation to join your tenant.</DialogDescription>
+            <DialogTitle>{t("team.inviteTitle")}</DialogTitle>
+            <DialogDescription>{t("team.inviteDesc")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <Label>Email</Label>
+              <Label>{t("team.email")}</Label>
               <Input
                 type="email"
                 value={inviteForm.email}
@@ -731,14 +757,14 @@ function TeamPage() {
               />
             </div>
             <div>
-              <Label>Name (optional)</Label>
+              <Label>{t("team.nameOptional")}</Label>
               <Input
                 value={inviteForm.name}
                 onChange={(e) => setInviteForm({ ...inviteForm, name: e.target.value })}
               />
             </div>
             <div>
-              <Label>Role</Label>
+              <Label>{t("team.role")}</Label>
               <Select
                 value={inviteForm.role}
                 onValueChange={(v) => setInviteForm({ ...inviteForm, role: v as Role })}
@@ -749,7 +775,7 @@ function TeamPage() {
                 <SelectContent>
                   {availableRoles.map((r) => (
                     <SelectItem key={r} value={r}>
-                      {r}
+                      {t(`team.${ROLE_LABEL_KEYS[r]}`)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -758,7 +784,7 @@ function TeamPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setInviteOpen(false)}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               onClick={() => {
@@ -782,7 +808,7 @@ function TeamPage() {
               ) : (
                 <Mail className="h-4 w-4 mr-2" />
               )}
-              Send invite
+              {t("team.sendInvite")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -792,38 +818,38 @@ function TeamPage() {
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit member</DialogTitle>
-            <DialogDescription>Update team member profile details.</DialogDescription>
+            <DialogTitle>{t("team.editMember")}</DialogTitle>
+            <DialogDescription>{t("team.editMemberDesc")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <Label>Name</Label>
+              <Label>{t("team.name")}</Label>
               <Input
                 value={editForm.name}
                 onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                placeholder="Full name"
+                placeholder={t("team.fullName")}
               />
             </div>
             <div>
-              <Label>Email</Label>
+              <Label>{t("team.email")}</Label>
               <Input
                 type="email"
                 value={editForm.email}
                 onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                placeholder="Email address"
+                placeholder={t("team.emailPlaceholder")}
               />
             </div>
             <div>
-              <Label>Phone</Label>
+              <Label>{t("team.phone")}</Label>
               <Input
                 value={editForm.phone}
                 onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                placeholder="Phone number"
+                placeholder={t("team.phonePlaceholder")}
               />
             </div>
             {availableRoles.length > 1 && (
               <div>
-                <Label>Role</Label>
+                <Label>{t("team.role")}</Label>
                 <Select
                   value={editForm.role}
                   onValueChange={(v) => setEditForm({ ...editForm, role: v as Role })}
@@ -834,7 +860,7 @@ function TeamPage() {
                   <SelectContent>
                     {availableRoles.map((r) => (
                       <SelectItem key={r} value={r}>
-                        {r}
+                        {t(`team.${ROLE_LABEL_KEYS[r]}`)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -844,7 +870,7 @@ function TeamPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditing(null)}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               onClick={() =>
@@ -863,7 +889,7 @@ function TeamPage() {
               className="bg-emerald-600 hover:bg-emerald-700"
             >
               {update.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Save
+              {t("team.save")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -873,18 +899,22 @@ function TeamPage() {
       <AlertDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove team member?</AlertDialogTitle>
+            <AlertDialogTitle>{t("team.removeTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {deleting?.email} will lose access permanently.
+              {t("team.removeDesc", { email: deleting?.email ?? "" })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deleting && remove.mutate({ data: { id: deleting.id } })}
               className="bg-red-600 hover:bg-red-700"
             >
-              {remove.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Remove"}
+              {remove.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                t("team.remove")
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

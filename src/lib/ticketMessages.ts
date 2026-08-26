@@ -21,6 +21,12 @@ export type ChatMessage = {
   text: string;
   ts: number;
   edited?: boolean;
+  attachment?: {
+    name: string;
+    url: string;
+    type: string;
+    size: number;
+  };
 };
 
 type Listener = () => void;

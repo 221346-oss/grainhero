@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Search, ArrowRight, Command, CornerDownLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getMyRole } from "@/lib/roles.functions";
+import { useTranslation } from "@/i18n";
 
 type NavTarget = {
   label: string;
@@ -145,6 +146,7 @@ export function AppSearch() {
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const [highlight, setHighlight] = useState(0);
+  const { t } = useTranslation();
 
   // Same query key AppSidebar/useIsSuperAdmin use — shares the cache, no
   // extra request. "Pure" super_admin (no other role) matches the
@@ -238,7 +240,7 @@ export function AppSearch() {
         onFocus={() => setOpen(true)}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
         onKeyDown={onInputKeyDown}
-        placeholder="Search anything or jump to a page…"
+        placeholder={t("search.placeholder")}
         aria-label="Search anything or jump to a page"
         className={cn(
           "w-full h-9 pl-9 pr-16 rounded-full text-sm bg-transparent hover:bg-muted focus:bg-background",
@@ -252,7 +254,7 @@ export function AppSearch() {
       {open && q.trim() && (
         <div className="absolute left-0 right-0 top-full mt-2 rounded-xl border border-border bg-background shadow-lg overflow-hidden z-40">
           {matches.length === 0 ? (
-            <div className="p-4 text-sm text-muted-foreground">No matching pages.</div>
+            <div className="p-4 text-sm text-muted-foreground">{t("search.noResults")}</div>
           ) : (
             <>
               <ul className="max-h-80 overflow-y-auto">

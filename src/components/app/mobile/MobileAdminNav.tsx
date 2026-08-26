@@ -27,6 +27,7 @@ import {
 import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
 import { useIsGlobalTechnician } from "@/hooks/useIsGlobalTechnician";
 import { Sparkles, ShieldCheck, CreditCard, Inbox } from "lucide-react";
+import { useTranslation } from "@/i18n";
 
 type NavItem = {
   id: string;
@@ -43,166 +44,140 @@ type NavGroup = {
   defaultOpen?: boolean;
 };
 
-// ── Admin / Manager groups ────────────────────────────────────────────
-const workspaceGroups: NavGroup[] = [
-  {
-    id: "main",
-    label: "Main",
-    icon: Home,
-    defaultOpen: true,
-    items: [
-      { id: "dashboard", label: "Dashboard", icon: Home, link: "/dashboard" },
-      { id: "grain-operations", label: "Grain Operations", icon: Wheat, link: "/grain-operations" },
-      { id: "monitoring", label: "Monitoring", icon: Activity, link: "/monitoring" },
-      { id: "intelligence", label: "Intelligence", icon: Sparkles, link: "/intelligence" },
-      { id: "business", label: "Business", icon: Briefcase, link: "/business" },
-      { id: "administration", label: "Administration", icon: ShieldCheck, link: "/administration" },
-    ],
-  },
-];
+function getNavGroups(t: (key: string) => string): {
+  workspaceGroups: NavGroup[];
+  tenantTechnicianGroups: NavGroup[];
+  globalTechnicianGroups: NavGroup[];
+  superAdminGroups: NavGroup[];
+} {
+  const workspaceGroups: NavGroup[] = [
+    {
+      id: "main",
+      label: t("tabs.main"),
+      icon: Home,
+      defaultOpen: true,
+      items: [
+        { id: "dashboard", label: t("tabs.overview"), icon: Home, link: "/dashboard" },
+        { id: "grain-operations", label: t("tabs.grainOperations"), icon: Wheat, link: "/grain-operations" },
+        { id: "monitoring", label: t("tabs.monitoring"), icon: Activity, link: "/monitoring" },
+        { id: "intelligence", label: t("tabs.intelligence"), icon: Sparkles, link: "/intelligence" },
+        { id: "business", label: t("tabs.business"), icon: Briefcase, link: "/business" },
+        { id: "administration", label: t("tabs.administration"), icon: ShieldCheck, link: "/administration" },
+      ],
+    },
+  ];
 
-// ── Tenant (admin) technician groups — field tools, no installs ─────────
-const tenantTechnicianGroups: NavGroup[] = [
-  {
-    id: "my-work",
-    label: "My Work",
-    icon: Home,
-    defaultOpen: true,
-    items: [
-      { id: "dashboard", label: "Dashboard", icon: Home, link: "/dashboard" },
-      { id: "sensors", label: "Sensors", icon: Radio, link: "/sensors" },
-      { id: "actuators", label: "Actuators", icon: ToggleRight, link: "/actuators" },
-      { id: "alerts", label: "Alerts", icon: Bell, link: "/grain-alerts" },
-    ],
-  },
-];
+  const tenantTechnicianGroups: NavGroup[] = [
+    {
+      id: "my-work",
+      label: t("tabs.myWork"),
+      icon: Home,
+      defaultOpen: true,
+      items: [
+        { id: "dashboard", label: t("tabs.overview"), icon: Home, link: "/dashboard" },
+        { id: "sensors", label: t("tabs.sensors"), icon: Radio, link: "/sensors" },
+        { id: "actuators", label: t("tabs.actuators"), icon: ToggleRight, link: "/actuators" },
+        { id: "alerts", label: t("tabs.alerts"), icon: Bell, link: "/grain-alerts" },
+      ],
+    },
+  ];
 
-// ── Global (superadmin) technician groups — installs only (Overview tab on
-//    /dashboard already serves as the overview) ────────────────────────────
-const globalTechnicianGroups: NavGroup[] = [
-  {
-    id: "my-work",
-    label: "My Work",
-    icon: Home,
-    defaultOpen: true,
-    items: [
-      { id: "my-installs", label: "My Installs", icon: Wrench, link: "/technician/installs" },
-    ],
-  },
-];
+  const globalTechnicianGroups: NavGroup[] = [
+    {
+      id: "my-work",
+      label: t("tabs.myWork"),
+      icon: Home,
+      defaultOpen: true,
+      items: [
+        { id: "my-installs", label: t("tabs.myInstalls"), icon: Wrench, link: "/technician/installs" },
+      ],
+    },
+  ];
 
-// ── Super-admin groups ─────────────────────────────────────────────────
-const superAdminGroups: NavGroup[] = [
-  {
-    id: "overview",
-    label: "Overview",
-    icon: Home,
-    defaultOpen: true,
-    items: [
-      { id: "platform-overview", label: "Overview", icon: Home, link: "/dashboard" },
-      { id: "platform", label: "Platform", icon: Building2, link: "/platform" },
-    ],
-  },
-  {
-    id: "users-mgmt",
-    label: "Users & Management",
-    icon: Users,
-    items: [
-      { id: "platform-tenants", label: "Tenants", icon: Building2, link: "/platform/tenants" },
-      { id: "platform-users", label: "Users", icon: Users, link: "/platform/users" },
-      { id: "platform-leads", label: "Leads", icon: Users, link: "/platform/leads" },
-      { id: "platform-pipeline", label: "Pipeline", icon: TrendingUp, link: "/platform/pipeline" },
-      {
-        id: "platform-technicians",
-        label: "Company Technicians",
-        icon: Wrench,
-        link: "/platform/technicians",
-      },
-    ],
-  },
-  {
-    id: "business-finance",
-    label: "Business & Finance",
-    icon: Briefcase,
-    items: [
-      { id: "platform-business", label: "Business", icon: Briefcase, link: "/platform/business" },
-      {
-        id: "platform-financials",
-        label: "Financials",
-        icon: DollarSign,
-        link: "/platform/financials",
-      },
-      { id: "platform-plans", label: "Plans", icon: CreditCard, link: "/platform/plans" },
-      {
-        id: "platform-subscriptions",
-        label: "Subscriptions",
-        icon: Grid3x3,
-        link: "/platform/subscriptions",
-      },
-      { id: "platform-orders", label: "Install Orders", icon: Package, link: "/platform/orders" },
-    ],
-  },
-  {
-    id: "monitoring-health",
-    label: "Monitoring & Health",
-    icon: Activity,
-    items: [
-      {
-        id: "platform-monitoring",
-        label: "Monitoring",
-        icon: Activity,
-        link: "/platform/monitoring",
-      },
-      { id: "platform-health", label: "Health", icon: Activity, link: "/platform/health" },
-      {
-        id: "platform-silo-requests",
-        label: "Silo Requests",
-        icon: Inbox,
-        link: "/platform/silo-requests",
-      },
-    ],
-  },
-  {
-    id: "reporting-analytics",
-    label: "Reporting & Analytics",
-    icon: BarChart3,
-    items: [
-      {
-        id: "platform-reporting",
-        label: "Reporting",
-        icon: BarChart3,
-        link: "/platform/reporting",
-      },
-      {
-        id: "platform-audit-logs",
-        label: "Audit Logs",
-        icon: FileText,
-        link: "/platform/audit-logs",
-      },
-      { id: "platform-system-logs", label: "System Logs", icon: FileText, link: "/platform/logs" },
-    ],
-  },
-  {
-    id: "security-compliance",
-    label: "Security & Compliance",
-    icon: Shield,
-    items: [
-      { id: "platform-security", label: "Security", icon: Shield, link: "/platform/security" },
-      {
-        id: "platform-insurance",
-        label: "Insurance",
-        icon: HeartHandshake,
-        link: "/platform/insurance",
-      },
-      {
-        id: "platform-launch",
-        label: "Launch Readiness",
-        icon: Rocket,
-        link: "/platform/launch-readiness",
-      },
-    ],
-  },
-];
+  const superAdminGroups: NavGroup[] = [
+    {
+      id: "overview",
+      label: t("tabs.overview"),
+      icon: Home,
+      defaultOpen: true,
+      items: [
+        { id: "platform-overview", label: t("tabs.overview"), icon: Home, link: "/dashboard" },
+        { id: "platform", label: t("tabs.platform"), icon: Building2, link: "/platform" },
+      ],
+    },
+    {
+      id: "users-mgmt",
+      label: t("tabs.usersAndManagement"),
+      icon: Users,
+      items: [
+        { id: "platform-tenants", label: t("tabs.tenants"), icon: Building2, link: "/platform/tenants" },
+        { id: "platform-users", label: t("tabs.users"), icon: Users, link: "/platform/users" },
+        { id: "platform-leads", label: t("tabs.leads"), icon: Users, link: "/platform/leads" },
+        { id: "platform-pipeline", label: t("tabs.pipeline"), icon: TrendingUp, link: "/platform/pipeline" },
+        {
+          id: "platform-technicians",
+          label: t("tabs.companyTechnicians"),
+          icon: Wrench,
+          link: "/platform/technicians",
+        },
+      ],
+    },
+    {
+      id: "business-finance",
+      label: t("tabs.businessAndFinance"),
+      icon: Briefcase,
+      items: [
+        { id: "platform-business", label: t("tabs.business"), icon: Briefcase, link: "/platform/business" },
+        { id: "platform-financials", label: t("tabs.financials"), icon: DollarSign, link: "/platform/financials" },
+        { id: "platform-plans", label: t("tabs.plans"), icon: CreditCard, link: "/platform/plans" },
+        { id: "platform-subscriptions", label: t("tabs.subscriptions"), icon: Grid3x3, link: "/platform/subscriptions" },
+        { id: "platform-orders", label: t("tabs.installOrders"), icon: Package, link: "/platform/orders" },
+      ],
+    },
+    {
+      id: "monitoring-health",
+      label: t("tabs.monitoringAndHealth"),
+      icon: Activity,
+      items: [
+        {
+          id: "platform-monitoring",
+          label: t("tabs.monitoring"),
+          icon: Activity,
+          link: "/platform/monitoring",
+        },
+        { id: "platform-health", label: t("tabs.health"), icon: Activity, link: "/platform/health" },
+        { id: "platform-silo-requests", label: t("tabs.siloRequests"), icon: Inbox, link: "/platform/silo-requests" },
+      ],
+    },
+    {
+      id: "reporting-analytics",
+      label: t("tabs.reportingAndAnalytics"),
+      icon: BarChart3,
+      items: [
+        {
+          id: "platform-reporting",
+          label: t("tabs.reporting"),
+          icon: BarChart3,
+          link: "/platform/reporting",
+        },
+        { id: "platform-audit-logs", label: t("tabs.auditLogsFull"), icon: FileText, link: "/platform/audit-logs" },
+        { id: "platform-system-logs", label: t("tabs.systemLogsFull"), icon: FileText, link: "/platform/logs" },
+      ],
+    },
+    {
+      id: "security-compliance",
+      label: t("tabs.securityAndCompliance"),
+      icon: Shield,
+      items: [
+        { id: "platform-security", label: t("tabs.security"), icon: Shield, link: "/platform/security" },
+        { id: "platform-insurance", label: t("tabs.insurance"), icon: HeartHandshake, link: "/platform/insurance" },
+        { id: "platform-launch", label: t("tabs.launchReadinessFull"), icon: Rocket, link: "/platform/launch-readiness" },
+      ],
+    },
+  ];
+
+  return { workspaceGroups, tenantTechnicianGroups, globalTechnicianGroups, superAdminGroups };
+}
 
 interface MobileAdminNavProps {
   isOpen: boolean;
@@ -211,10 +186,11 @@ interface MobileAdminNavProps {
 
 export function MobileAdminNav({ isOpen, onClose }: MobileAdminNavProps) {
   const { role } = useIsSuperAdmin();
-  // Role-aware navigation: super admins get the platform groups, technicians
-  // get their field-work group (Dashboard + My Installs), everyone else
-  // (admin / manager) gets the tenant workspace groups.
   const { isGlobalTechnician, isTenantTechnician } = useIsGlobalTechnician();
+  const { t } = useTranslation();
+  
+  const { workspaceGroups, tenantTechnicianGroups, globalTechnicianGroups, superAdminGroups } = getNavGroups(t);
+
   const groups =
     role === "super_admin"
       ? superAdminGroups

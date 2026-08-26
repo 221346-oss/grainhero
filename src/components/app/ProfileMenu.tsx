@@ -2,6 +2,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { LogOut, Settings as SettingsIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useTranslation } from "@/i18n";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -17,6 +18,7 @@ export function ProfileMenu() {
   const { data } = useMyProfile();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { t } = useTranslation();
   const profile = (data as any)?.profile ?? data ?? {};
   const name: string | undefined = profile?.name;
   const email: string | undefined = profile?.email;
@@ -47,7 +49,7 @@ export function ProfileMenu() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel className="flex flex-col gap-0.5">
-          <span className="text-sm font-semibold truncate">{name ?? "Signed in"}</span>
+          <span className="text-sm font-semibold truncate">{name ?? t("auth.signedIn")}</span>
           {email ? (
             <span className="text-xs font-normal text-muted-foreground truncate">{email}</span>
           ) : null}
@@ -55,7 +57,7 @@ export function ProfileMenu() {
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link to="/settings" className="cursor-pointer">
-            <SettingsIcon className="mr-2 h-4 w-4" /> Settings
+            <SettingsIcon className="mr-2 h-4 w-4" /> {t("profile.settings")}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
@@ -63,7 +65,7 @@ export function ProfileMenu() {
           onClick={handleSignOut}
           className="cursor-pointer text-red-600 focus:text-red-600"
         >
-          <LogOut className="mr-2 h-4 w-4" /> Sign out
+          <LogOut className="mr-2 h-4 w-4" /> {t("profile.signOut")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

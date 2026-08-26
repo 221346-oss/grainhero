@@ -9,6 +9,7 @@ import { Loader2 } from "lucide-react";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { AdminSummaryTiles } from "@/components/app/admin/AdminSummaryTiles";
 import { KpiChartHubSkeleton } from "@/components/app/skeletons";
+import { useTranslation } from "@/i18n";
 
 const STAGES: { id: string; label: string; color: string }[] = [
   {
@@ -65,6 +66,7 @@ export const Route = createFileRoute("/_authenticated/platform/pipeline")({
 });
 
 function PipelinePage() {
+  const { t } = useTranslation();
   const listFn = useServerFn(adminListHubspotDeals);
   const updateFn = useServerFn(adminUpdateDealStage);
   const qc = useQueryClient();
@@ -99,14 +101,14 @@ function PipelinePage() {
   if (isLoading) return <KpiChartHubSkeleton />;
 
   return (
-    <AdminPageShell title="Sales pipeline" subtitle="HubSpot deals across the sales funnel">
+    <AdminPageShell title={t("pipeline.title")} subtitle={t("pipeline.subtitle")}>
       <AdminSummaryTiles
         columns={4}
         tiles={[
-          { key: "d", label: "Total deals", value: totalDeals },
-          { key: "v", label: "Pipeline value", value: `PKR ${totalValue.toLocaleString()}` },
-          { key: "w", label: "Won deals", value: wonDeals },
-          { key: "wv", label: "Won value", value: `PKR ${wonValue.toLocaleString()}` },
+          { key: "d", label: t("pipeline.totalDeals"), value: totalDeals },
+          { key: "v", label: t("pipeline.pipelineValue"), value: `PKR ${totalValue.toLocaleString()}` },
+          { key: "w", label: t("pipeline.wonDeals"), value: wonDeals },
+          { key: "wv", label: t("pipeline.wonValue"), value: `PKR ${wonValue.toLocaleString()}` },
         ]}
       />
 
@@ -170,7 +172,7 @@ function PipelinePage() {
                     </div>
                   ))}
                   {list.length === 0 && (
-                    <div className="text-center py-6 text-slate-400 text-xs">No deals</div>
+                    <div className="text-center py-6 text-slate-400 text-xs">{t("pipeline.noDeals")}</div>
                   )}
                 </CardContent>
               </Card>

@@ -43,6 +43,7 @@ import {
 } from "@/lib/listings.functions";
 import { placeOrder } from "@/lib/buyer-orders.functions";
 import { GrainBatchesSkeleton } from "@/components/app/skeletons";
+import { useTranslation } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/listings")({
   head: () => ({
@@ -70,6 +71,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 function ListingsPage() {
+  const { t } = useTranslation();
   const [openNew, setOpenNew] = useState(false);
   const [orderFor, setOrderFor] = useState<string | null>(null);
   const qc = useQueryClient();
@@ -98,7 +100,7 @@ function ListingsPage() {
     mutationFn: (v: { id: string; status: "active" | "paused" | "archived" }) =>
       updateFn({ data: { id: v.id, status: v.status } }),
     onSuccess: () => {
-      toast.success("Updated");
+      toast.success(t("listings.updatedToast"));
       void qc.invalidateQueries({ queryKey: ["listings"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -106,48 +108,48 @@ function ListingsPage() {
 
   return (
     <AdminPageShell
-      title="Listings"
-      subtitle="Publish ready batches to buyers"
+      title={t("listings.title")}
+      subtitle={t("listings.subtitle")}
       actions={
         <Button onClick={() => setOpenNew(true)}>
           <Plus className="w-4 h-4 mr-1" />
-          New listing
+          {t("listings.newListing")}
         </Button>
       }
     >
       <AdminSummaryTiles
         columns={3}
         tiles={[
-          { key: "t", label: "Listings", value: summary.total },
-          { key: "a", label: "Active", value: summary.active },
-          { key: "s", label: "Stock (kg)", value: summary.stock.toLocaleString() },
+          { key: "t", label: t("listings.listings"), value: summary.total },
+          { key: "a", label: t("listings.active"), value: summary.active },
+          { key: "s", label: t("listings.stockKg"), value: summary.stock.toLocaleString() },
         ]}
       />
 
       <Card>
         <CardHeader>
-          <CardTitle>All listings</CardTitle>
+          <CardTitle>{t("listings.allListings")}</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {listQ.isLoading ? (
             <div className="p-8 text-center">
               <Loader2 className="w-5 h-5 animate-spin inline mr-2" />
-              Loading…
+              {t("listings.loading")}
             </div>
           ) : items.length === 0 ? (
             <div className="p-8 text-center text-slate-500">
-              No listings. Create one from a ready batch.
+              {t("listings.noListings")}
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Batch</TableHead>
-                  <TableHead className="text-right">Price/kg</TableHead>
-                  <TableHead className="text-right">Available (kg)</TableHead>
-                  <TableHead>Visibility</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>{t("listings.headerTitle")}</TableHead>
+                  <TableHead>{t("listings.headerBatch")}</TableHead>
+                  <TableHead className="text-right">{t("listings.headerPrice")}</TableHead>
+                  <TableHead className="text-right">{t("listings.headerAvailable")}</TableHead>
+                  <TableHead>{t("listings.headerVisibility")}</TableHead>
+                  <TableHead>{t("listings.headerStatus")}</TableHead>
                   <TableHead />
                 </TableRow>
               </TableHeader>
@@ -178,7 +180,7 @@ function ListingsPage() {
                           variant="outline"
                           onClick={() => statusMut.mutate({ id: l.id, status: "paused" })}
                         >
-                          Pause
+                          {t("listings.pause")}
                         </Button>
                       ) : l.status === "paused" ? (
                         <Button
@@ -186,7 +188,7 @@ function ListingsPage() {
                           variant="outline"
                           onClick={() => statusMut.mutate({ id: l.id, status: "active" })}
                         >
-                          Activate
+                          {t("listings.activate")}
                         </Button>
                       ) : null}
                       <Button
@@ -195,7 +197,7 @@ function ListingsPage() {
                         disabled={l.status !== "active"}
                       >
                         <ShoppingCart className="w-3.5 h-3.5 mr-1" />
-                        Order
+                        {t("listings.order")}
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -230,6 +232,7 @@ function ListingsPage() {
 }
 
 function NewListingDialog({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
+  const { t } = useTranslation();
   const getBatches = useServerFn(getEligibleBatches);
   const createFn = useServerFn(createListingFromBatch);
   const batchesQ = useQuery({ queryKey: ["eligible-batches"], queryFn: () => getBatches() });
@@ -266,7 +269,7 @@ function NewListingDialog({ onClose, onCreated }: { onClose: () => void; onCreat
         },
       }),
     onSuccess: () => {
-      toast.success("Listing created");
+      toast.success(t("listings.createdToast"));
       onCreated();
     },
     onError: (e: Error) => toast.error(e.message),
@@ -276,14 +279,14 @@ function NewListingDialog({ onClose, onCreated }: { onClose: () => void; onCreat
     <Dialog open onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>New listing</DialogTitle>
+          <DialogTitle>{t("listings.newListingTitle")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           <div>
-            <Label>Batch</Label>
+            <Label>{t("listings.batch")}</Label>
             <Select value={batchId} onValueChange={setBatchId}>
               <SelectTrigger>
-                <SelectValue placeholder="Pick a ready batch" />
+                <SelectValue placeholder={t("listings.pickReadyBatch")} />
               </SelectTrigger>
               <SelectContent>
                 {}
@@ -296,16 +299,16 @@ function NewListingDialog({ onClose, onCreated }: { onClose: () => void; onCreat
               </SelectContent>
             </Select>
             {batchesQ.data?.batches.length === 0 && (
-              <p className="text-xs text-amber-600 mt-1">No ready batches available.</p>
+              <p className="text-xs text-amber-600 mt-1">{t("listings.noReadyBatches")}</p>
             )}
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <Label>Price / kg (USD)</Label>
+              <Label>{t("listings.pricePerKg")}</Label>
               <Input type="number" value={price} onChange={(e) => setPrice(e.target.value)} />
             </div>
             <div>
-              <Label>Available (kg)</Label>
+              <Label>{t("listings.availableKg")}</Label>
               <Input
                 type="number"
                 value={available}
@@ -313,46 +316,46 @@ function NewListingDialog({ onClose, onCreated }: { onClose: () => void; onCreat
               />
             </div>
             <div>
-              <Label>Min order (kg)</Label>
+              <Label>{t("listings.minOrderKg")}</Label>
               <Input type="number" value={minOrder} onChange={(e) => setMinOrder(e.target.value)} />
             </div>
             <div>
-              <Label>Visibility</Label>
+              <Label>{t("listings.visibility")}</Label>
               {}
               <Select value={visibility} onValueChange={(v) => setVisibility(v as any)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="private">Private</SelectItem>
-                  <SelectItem value="buyer_network">Buyer network</SelectItem>
-                  <SelectItem value="public">Public</SelectItem>
+                  <SelectItem value="private">{t("listings.visPrivate")}</SelectItem>
+                  <SelectItem value="buyer_network">{t("listings.visBuyerNetwork")}</SelectItem>
+                  <SelectItem value="public">{t("listings.visPublic")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <div>
-            <Label>Title (optional)</Label>
+            <Label>{t("listings.titleOptional")}</Label>
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Auto from batch"
+              placeholder={t("listings.autoFromBatch")}
             />
           </div>
           <div>
-            <Label>Description</Label>
+            <Label>{t("listings.description")}</Label>
             <Textarea value={desc} onChange={(e) => setDesc(e.target.value)} rows={3} />
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button
             disabled={!batchId || !price || !available || createMut.isPending}
             onClick={() => createMut.mutate()}
           >
-            Create
+            {t("listings.create")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -369,6 +372,7 @@ function PlaceOrderDialog({
   onClose: () => void;
   onPlaced: () => void;
 }) {
+  const { t } = useTranslation();
   const placeFn = useServerFn(placeOrder);
   const [buyerId, setBuyerId] = useState("");
   const [qty, setQty] = useState("");
@@ -398,7 +402,7 @@ function PlaceOrderDialog({
         },
       }),
     onSuccess: (r) => {
-      toast.success(`Order ${r.orderNumber} placed`);
+      toast.success(t("listings.orderPlacedToast", { number: r.orderNumber }));
       onPlaced();
     },
     onError: (e: Error) => toast.error(e.message),
@@ -408,14 +412,14 @@ function PlaceOrderDialog({
     <Dialog open onOpenChange={(v) => !v && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Place order</DialogTitle>
+          <DialogTitle>{t("listings.placeOrder")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           <div>
-            <Label>Buyer</Label>
+            <Label>{t("listings.buyer")}</Label>
             <Select value={buyerId} onValueChange={setBuyerId}>
               <SelectTrigger>
-                <SelectValue placeholder="Pick buyer" />
+                <SelectValue placeholder={t("listings.pickBuyer")} />
               </SelectTrigger>
               <SelectContent>
                 {(buyersQ.data ?? []).map((b) => (
@@ -426,27 +430,27 @@ function PlaceOrderDialog({
               </SelectContent>
             </Select>
             {(buyersQ.data ?? []).length === 0 && (
-              <p className="text-xs text-amber-600 mt-1">No buyers — add one first.</p>
+              <p className="text-xs text-amber-600 mt-1">{t("listings.noBuyers")}</p>
             )}
           </div>
           <div>
-            <Label>Quantity (kg)</Label>
+            <Label>{t("listings.quantityKg")}</Label>
             <Input type="number" value={qty} onChange={(e) => setQty(e.target.value)} />
           </div>
           <div>
-            <Label>Notes</Label>
+            <Label>{t("listings.notes")}</Label>
             <Textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button
             disabled={!buyerId || !qty || placeMut.isPending}
             onClick={() => placeMut.mutate()}
           >
-            Place order
+            {t("listings.placeOrder")}
           </Button>
         </DialogFooter>
       </DialogContent>

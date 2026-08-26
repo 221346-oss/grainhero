@@ -32,6 +32,7 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/comp
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
 import { useIsGlobalTechnician } from "@/hooks/useIsGlobalTechnician";
+import { useTranslation } from "@/i18n";
 
 type AdminTabKey =
   | "overview"
@@ -87,105 +88,65 @@ type Def<K extends string> = {
   search?: { tab: string };
 };
 
-const CATALOG_ADMIN: Def<AdminTabKey>[] = [
-  { key: "overview", label: "Overview", icon: LayoutDashboard, to: "/dashboard" },
-  {
-    key: "silos",
-    label: "Silos",
-    icon: Container,
-    to: "/grain-operations",
-    search: { tab: "silos" },
-  },
-  {
-    key: "batches",
-    label: "Batches",
-    icon: Wheat,
-    to: "/grain-operations",
-    search: { tab: "batches" },
-  },
-  { key: "marketplace", label: "Marketplace", icon: Store, to: "/business" },
-  { key: "sensors", label: "Sensors", icon: Radio, to: "/sensors" },
-  { key: "actuators", label: "Actuators", icon: ToggleRight, to: "/actuators" },
-  {
-    key: "buyers",
-    label: "Buyers",
-    icon: Users,
-    to: "/grain-operations",
-    search: { tab: "buyers" },
-  },
-  { key: "orders", label: "Orders", icon: Package, to: "/orders" },
-  { key: "team", label: "Team", icon: UserCog, to: "/team-management" },
-];
+function getCatalogs(t: (key: string) => string) {
+  const CATALOG_ADMIN: Def<AdminTabKey>[] = [
+    { key: "overview", label: t("tabs.overview"), icon: LayoutDashboard, to: "/dashboard" },
+    { key: "silos", label: t("tabs.silos"), icon: Container, to: "/grain-operations", search: { tab: "silos" } },
+    { key: "batches", label: t("tabs.batches"), icon: Wheat, to: "/grain-operations", search: { tab: "batches" } },
+    { key: "marketplace", label: t("tabs.marketplace"), icon: Store, to: "/business" },
+    { key: "sensors", label: t("tabs.sensors"), icon: Radio, to: "/sensors" },
+    { key: "actuators", label: t("tabs.actuators"), icon: ToggleRight, to: "/actuators" },
+    { key: "buyers", label: t("tabs.buyers"), icon: Users, to: "/grain-operations", search: { tab: "buyers" } },
+    { key: "orders", label: t("tabs.orders"), icon: Package, to: "/orders" },
+    { key: "team", label: t("tabs.team"), icon: UserCog, to: "/team-management" },
+  ];
 
-const CATALOG_MANAGER: Def<ManagerTabKey>[] = [
-  { key: "overview", label: "Overview", icon: LayoutDashboard, to: "/dashboard" },
-  {
-    key: "silos",
-    label: "Silos",
-    icon: Container,
-    to: "/grain-operations",
-    search: { tab: "silos" },
-  },
-  {
-    key: "batches",
-    label: "Batches",
-    icon: Wheat,
-    to: "/grain-operations",
-    search: { tab: "batches" },
-  },
-  {
-    key: "dispatch",
-    label: "Dispatch",
-    icon: Truck,
-    to: "/grain-operations",
-    search: { tab: "silos" },
-  },
-  {
-    key: "qc",
-    label: "QC",
-    icon: ClipboardCheck,
-    to: "/grain-operations",
-    search: { tab: "batches" },
-  },
-  { key: "actuators", label: "Actuators", icon: ToggleRight, to: "/actuators" },
-  { key: "orders", label: "Orders", icon: Package, to: "/orders" },
-  { key: "sensors", label: "Sensors", icon: Radio, to: "/sensors" },
-  { key: "team", label: "Team", icon: UserCog, to: "/team-management" },
-];
+  const CATALOG_MANAGER: Def<ManagerTabKey>[] = [
+    { key: "overview", label: t("tabs.overview"), icon: LayoutDashboard, to: "/dashboard" },
+    { key: "silos", label: t("tabs.silos"), icon: Container, to: "/grain-operations", search: { tab: "silos" } },
+    { key: "batches", label: t("tabs.batches"), icon: Wheat, to: "/grain-operations", search: { tab: "batches" } },
+    { key: "dispatch", label: t("tabs.dispatch"), icon: Truck, to: "/grain-operations", search: { tab: "silos" } },
+    { key: "qc", label: t("tabs.qc"), icon: ClipboardCheck, to: "/grain-operations", search: { tab: "batches" } },
+    { key: "actuators", label: t("tabs.actuators"), icon: ToggleRight, to: "/actuators" },
+    { key: "orders", label: t("tabs.orders"), icon: Package, to: "/orders" },
+    { key: "sensors", label: t("tabs.sensors"), icon: Radio, to: "/sensors" },
+    { key: "team", label: t("tabs.team"), icon: UserCog, to: "/team-management" },
+  ];
 
-// Tenant technicians (admin tech) — sensors, actuators, installs
-const CATALOG_TENANT_TECHNICIAN: Def<TenantTechnicianTabKey>[] = [
-  { key: "overview", label: "Overview", icon: LayoutDashboard, to: "/dashboard" },
-  { key: "sensors", label: "Sensors", icon: Radio, to: "/sensors" },
-  { key: "actuators", label: "Actuators", icon: ToggleRight, to: "/actuators" },
-  { key: "alerts", label: "Alerts", icon: Bell, to: "/grain-alerts" },
-  { key: "installs", label: "My Installs", icon: Package, to: "/technician/installs" },
-];
+  const CATALOG_TENANT_TECHNICIAN: Def<TenantTechnicianTabKey>[] = [
+    { key: "overview", label: t("tabs.overview"), icon: LayoutDashboard, to: "/dashboard" },
+    { key: "sensors", label: t("tabs.sensors"), icon: Radio, to: "/sensors" },
+    { key: "actuators", label: t("tabs.actuators"), icon: ToggleRight, to: "/actuators" },
+    { key: "alerts", label: t("tabs.alerts"), icon: Bell, to: "/grain-alerts" },
+    { key: "installs", label: t("tabs.myInstalls"), icon: Package, to: "/technician/installs" },
+  ];
 
-// Global technicians (superadmin tech) — overview + installs
-const CATALOG_GLOBAL_TECHNICIAN: Def<GlobalTechnicianTabKey>[] = [
-  { key: "overview", label: "Overview", icon: LayoutDashboard, to: "/dashboard" },
-  { key: "installs", label: "My Installs", icon: Package, to: "/technician/installs" },
-];
+  const CATALOG_GLOBAL_TECHNICIAN: Def<GlobalTechnicianTabKey>[] = [
+    { key: "overview", label: t("tabs.overview"), icon: LayoutDashboard, to: "/dashboard" },
+    { key: "installs", label: t("tabs.myInstalls"), icon: Package, to: "/technician/installs" },
+  ];
 
-const CATALOG_SUPER: Def<SuperTabKey>[] = [
-  { key: "overview", label: "Overview", icon: LayoutDashboard, to: "/dashboard" },
-  { key: "orders", label: "Install Orders", icon: Package, to: "/platform/orders" },
-  { key: "financials", label: "Financials", icon: DollarSign, to: "/platform/financials" },
-  { key: "users", label: "Users", icon: Users, to: "/platform/users" },
-  { key: "plans", label: "Plans", icon: CreditCard, to: "/platform/plans" },
-  { key: "reporting", label: "Reporting", icon: MessageSquare, to: "/platform/reporting" },
-  { key: "health", label: "Health", icon: Activity, to: "/platform/health" },
-  { key: "audit-logs", label: "Audit logs", icon: ScrollText, to: "/platform/audit-logs" },
-  { key: "system-logs", label: "System logs", icon: ClipboardList, to: "/platform/logs" },
-  { key: "pipeline", label: "Pipeline", icon: TrendingUp, to: "/platform/pipeline" },
-  { key: "leads", label: "Leads", icon: UserPlus, to: "/platform/leads" },
-  { key: "insurance", label: "Insurance", icon: Shield, to: "/insurance" },
-  { key: "subscription", label: "Subscriptions", icon: CreditCard, to: "/subscription" },
-  { key: "security", label: "Security", icon: ShieldCheck, to: "/security-center" },
-  { key: "launch", label: "Launch readiness", icon: Rocket, to: "/platform/launch-readiness" },
-  { key: "technicians", label: "Technicians", icon: Users, to: "/platform/technicians" },
-];
+  const CATALOG_SUPER: Def<SuperTabKey>[] = [
+    { key: "overview", label: t("tabs.overview"), icon: LayoutDashboard, to: "/dashboard" },
+    { key: "orders", label: t("tabs.installOrders"), icon: Package, to: "/platform/orders" },
+    { key: "financials", label: t("tabs.financials"), icon: DollarSign, to: "/platform/financials" },
+    { key: "users", label: t("tabs.users"), icon: Users, to: "/platform/users" },
+    { key: "plans", label: t("tabs.plans"), icon: CreditCard, to: "/platform/plans" },
+    { key: "reporting", label: t("tabs.reporting"), icon: MessageSquare, to: "/platform/reporting" },
+    { key: "health", label: t("tabs.health"), icon: Activity, to: "/platform/health" },
+    { key: "audit-logs", label: t("tabs.auditLogs"), icon: ScrollText, to: "/platform/audit-logs" },
+    { key: "system-logs", label: t("tabs.systemLogs"), icon: ClipboardList, to: "/platform/logs" },
+    { key: "pipeline", label: t("tabs.pipeline"), icon: TrendingUp, to: "/platform/pipeline" },
+    { key: "leads", label: t("tabs.leads"), icon: UserPlus, to: "/platform/leads" },
+    { key: "insurance", label: t("tabs.insurance"), icon: Shield, to: "/insurance" },
+    { key: "subscription", label: t("tabs.subscriptions"), icon: CreditCard, to: "/subscription" },
+    { key: "security", label: t("tabs.security"), icon: ShieldCheck, to: "/security-center" },
+    { key: "launch", label: t("tabs.launchReadiness"), icon: Rocket, to: "/platform/launch-readiness" },
+    { key: "technicians", label: t("tabs.technicians"), icon: Users, to: "/platform/technicians" },
+  ];
+
+  return { CATALOG_ADMIN, CATALOG_MANAGER, CATALOG_SUPER, CATALOG_TENANT_TECHNICIAN, CATALOG_GLOBAL_TECHNICIAN };
+}
 
 const STORAGE_ADMIN = "gh_admin_tabs_v3";
 const STORAGE_SUPER = "gh_super_tabs_v1";
@@ -218,6 +179,11 @@ export function DashboardQuickTabs() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const search = useRouterState({ select: (s) => s.location.search as Record<string, unknown> });
   const isManager = role === "manager";
+  const { t } = useTranslation();
+
+  const { CATALOG_ADMIN, CATALOG_MANAGER, CATALOG_SUPER, CATALOG_TENANT_TECHNICIAN, CATALOG_GLOBAL_TECHNICIAN } =
+    getCatalogs(t);
+
   const CATALOG = (
     isSuperAdmin
       ? CATALOG_SUPER
@@ -317,25 +283,25 @@ export function DashboardQuickTabs() {
           </PopoverTrigger>
           <PopoverContent align="end" className="w-56 p-2">
             <p className="px-2 py-1 text-[11px] uppercase tracking-wider text-muted-foreground">
-              Show tabs (max 5)
+              {t("tabs.showTabs")}
             </p>
             <div className="grid gap-0.5">
-              {CATALOG.map((t) => {
-                const checked = tabs.includes(t.key);
-                const locked = t.key === "overview";
+              {CATALOG.map((item) => {
+                const checked = tabs.includes(item.key);
+                const locked = item.key === "overview";
                 return (
                   <button
-                    key={t.key}
+                    key={item.key}
                     type="button"
                     disabled={locked}
-                    onClick={() => toggle(t.key)}
+                    onClick={() => toggle(item.key)}
                     className="flex items-center justify-between px-2 py-1.5 rounded text-xs hover:bg-muted disabled:opacity-60"
                   >
                     <span className="inline-flex items-center gap-2">
-                      <t.icon className="h-3.5 w-3.5" />
-                      {t.label}
+                      <item.icon className="h-3.5 w-3.5" />
+                      {item.label}
                       {locked && (
-                        <span className="ml-1 text-[9px] text-muted-foreground">pinned</span>
+                        <span className="ml-1 text-[9px] text-muted-foreground">{t("tabs.pinned")}</span>
                       )}
                     </span>
                     {checked && <Check className="h-3.5 w-3.5 text-emerald-600" />}

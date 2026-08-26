@@ -21,6 +21,7 @@ import { listPendingApprovalBatches } from "@/lib/batch-qc.functions";
 import { useDashboardStats } from "./useDashboardStats";
 import { HairlineGrid, NeonPanel } from "@/components/charts/neon";
 import { ResponsiveContainer, AreaChart, Area } from "recharts";
+import { useTranslation } from "@/i18n";
 
 const fmtPKR = new Intl.NumberFormat("en-PK", {
   style: "currency",
@@ -97,16 +98,18 @@ export function KpiSummary({
       : healthScore >= 60
         ? "text-warning"
         : "text-severity-critical";
+  const { t } = useTranslation();
+
   const healthLabel =
     healthScore >= 90
-      ? "Excellent"
+      ? t("superAdmin.excellent")
       : healthScore >= 80
-        ? "Very Good"
+        ? t("superAdmin.veryGood")
         : healthScore >= 70
-          ? "Good"
+          ? t("superAdmin.good")
           : healthScore >= 60
-            ? "Fair"
-            : "Needs Attention";
+            ? t("superAdmin.fair")
+            : t("superAdmin.needsAttention");
 
   const rev = revenueMtd ?? 0;
   const revPositive = (revenueDeltaPct ?? 0) >= 0;
@@ -114,7 +117,7 @@ export function KpiSummary({
   // KPI rows for the secondary metrics
   const rows: Row[] = [
     {
-      label: "Total Grain (kg)",
+      label: t("adminDash.totalGrainKg"),
       value: totalGrainKg.toLocaleString(),
       to: "/grain-operations",
       search: { tab: "batches" },
@@ -122,14 +125,14 @@ export function KpiSummary({
       icon: Wheat,
     },
     {
-      label: "Active Silos",
+      label: t("grainOps.activeSilos"),
       value: activeSilos,
       to: "/grain-operations",
       search: { tab: "silos" },
       icon: Container,
     },
     {
-      label: "Pending Approvals",
+      label: t("adminDash.pendingApprovals"),
       value: pendingApprovals,
       to: "/grain-operations",
       search: { tab: "batches" },
@@ -142,8 +145,8 @@ export function KpiSummary({
       {/* Header with Range Selector */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-1.5">
-          <h2 className="text-sm font-semibold text-foreground">Business Performance</h2>
-          <InfoDot text="Revenue, operations metrics, and system health. Switch range to compare periods." />
+          <h2 className="text-sm font-semibold text-foreground">{t("adminDash.businessPerformance")}</h2>
+          <InfoDot text={t("adminDash.businessPerformanceHint")} />
         </div>
         <RangeChip value={range} onChange={onRange} />
       </div>
@@ -153,7 +156,7 @@ export function KpiSummary({
         <div className="flex items-center justify-between mb-2">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Business Health Score
+              {t("adminDash.businessHealthScore")}
             </p>
             <div className="flex items-baseline gap-2 mt-1">
               <span className={`text-3xl font-bold tabular-nums ${healthColor}`}>
@@ -195,9 +198,8 @@ export function KpiSummary({
           to="/subscription"
           className="group rounded-lg border border-border bg-card p-4 transition hover:ring-1 hover:ring-emerald-500/40 hover:border-emerald-500/40 flex flex-col justify-between min-h-[180px]"
         >
-          <div className="flex items-center justify-between mb-2">
-            <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-              <Wallet className="h-3 w-3" /> Monthly Revenue
+          <div className="flex items-center justify-between mb-2">              <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+              <Wallet className="h-3 w-3" /> {t("superAdmin.monthlyRevenue")}
             </span>
             {planName && (
               <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-success/10 text-success border border-success/20">
@@ -211,7 +213,7 @@ export function KpiSummary({
               <div className="text-3xl md:text-4xl font-bold tabular-nums text-success leading-tight">
                 {fmtPKR.format(rev)}
               </div>
-              <p className="text-[11px] text-muted-foreground mt-1">Total Revenue</p>
+              <p className="text-[11px] text-muted-foreground mt-1">{t("adminDash.totalRevenue")}</p>
             </div>
 
             {/* Growth Indicator with Trend Icon */}
@@ -226,7 +228,7 @@ export function KpiSummary({
                 )}
                 <span>
                   {revPositive ? "+" : ""}
-                  {revenueDeltaPct ?? 0}% vs prev period
+                  {revenueDeltaPct ?? 0}% {t("adminDash.vsPrevPeriod")}
                 </span>
               </div>
 

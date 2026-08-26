@@ -71,6 +71,7 @@ import {
   listWarehouses,
   listSilos,
 } from "@/lib/operations.functions";
+import { useTranslation } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/sensors")({
   head: () => ({
@@ -99,6 +100,19 @@ const SENSOR_TYPES = [
   "ph",
 ] as const;
 type SensorType = (typeof SENSOR_TYPES)[number];
+
+// Maps a sensor type id to its dictionary key so type names follow the
+// active language instead of showing raw ids like "temperature".
+const SENSOR_TYPE_KEYS: Record<SensorType, string> = {
+  temperature: "typeTemperature",
+  humidity: "typeHumidity",
+  co2: "typeCo2",
+  voc: "typeVoc",
+  moisture: "typeMoisture",
+  pressure: "typePressure",
+  light: "typeLight",
+  ph: "typePh",
+};
 
 type Device = {
   id: string;
@@ -189,6 +203,7 @@ const emptyForm: Form = {
 };
 
 function SensorsPage() {
+  const { t } = useTranslation();
   const listFn = useServerFn(listSensorDevices);
   const upsertFn = useServerFn(upsertSensorDevice);
   const deleteFn = useServerFn(deleteSensorDevice);
@@ -307,24 +322,24 @@ function SensorsPage() {
         },
       }),
     onSuccess: () => {
-      toast.success(form.id ? "Sensor updated" : "Sensor created");
+      toast.success(form.id ? t("sensors.updatedToast") : t("sensors.createdToast"));
       qc.invalidateQueries({ queryKey: ["sensor-devices"] });
       qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
       setEditOpen(false);
       setForm(emptyForm);
     },
-    onError: (e: Error) => toast.error(e.message || "Save failed"),
+    onError: (e: Error) => toast.error(e.message || t("sensors.saveFailed")),
   });
 
   const deleteMut = useMutation({
     mutationFn: (id: string) => deleteFn({ data: { id } }),
     onSuccess: () => {
-      toast.success("Sensor deleted");
+      toast.success(t("sensors.deletedToast"));
       qc.invalidateQueries({ queryKey: ["sensor-devices"] });
       qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
       setDeleteId(null);
     },
-    onError: (e: Error) => toast.error(e.message || "Delete failed"),
+    onError: (e: Error) => toast.error(e.message || t("sensors.deleteFailed")),
   });
 
   function openCreate() {
@@ -366,16 +381,16 @@ function SensorsPage() {
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto">
       <PageHeader
-        title="Sensor Devices"
-        subtitle="IoT devices, live telemetry & health"
+        title={t("sensors.title")}
+        subtitle={t("sensors.subtitle")}
         badge={isLoading ? "…" : `${rows.length}`}
       />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <MiniStat icon={Cpu} label="Devices" value={stats.total} tint="emerald" />
-        <MiniStat icon={Wifi} label="Online" value={stats.online} tint="sky" />
-        <MiniStat icon={Radio} label="Maintenance" value={stats.maint} tint="amber" />
-        <MiniStat icon={WifiOff} label="Offline / err" value={stats.err} tint="rose" />
+        <MiniStat icon={Cpu} label={t("sensors.devices")} value={stats.total} tint="emerald" />
+        <MiniStat icon={Wifi} label={t("sensors.online")} value={stats.online} tint="sky" />
+        <MiniStat icon={Radio} label={t("sensors.maintenance")} value={stats.maint} tint="amber" />
+        <MiniStat icon={WifiOff} label={t("sensors.offlineOrErr")} value={stats.err} tint="rose" />
       </div>
 
       <div className="flex flex-col sm:flex-row gap-2 mb-5">
@@ -384,39 +399,39 @@ function SensorsPage() {
           <Input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search device, MAC, silo…"
+            placeholder={t("sensors.searchPlaceholder")}
             className="pl-9"
           />
         </div>
         <div className="grid grid-cols-2 sm:flex gap-2">
           <Select value={typeFilter} onValueChange={setTypeFilter}>
             <SelectTrigger className="w-full sm:w-36">
-              <SelectValue placeholder="Sensor type" />
+              <SelectValue placeholder={t("sensors.sensorType")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All types</SelectItem>
+              <SelectItem value="all">{t("sensors.allTypes")}</SelectItem>
               {SENSOR_TYPES.map((s) => (
                 <SelectItem key={s} value={s}>
-                  {s}
+                  {t(`sensors.${SENSOR_TYPE_KEYS[s]}`)}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-full sm:w-36">
-              <SelectValue placeholder="Status" />
+              <SelectValue placeholder={t("sensors.status")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All statuses</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="maintenance">Maintenance</SelectItem>
-              <SelectItem value="offline">Offline</SelectItem>
-              <SelectItem value="error">Error</SelectItem>
+              <SelectItem value="all">{t("sensors.allStatuses")}</SelectItem>
+              <SelectItem value="active">{t("sensors.active")}</SelectItem>
+              <SelectItem value="maintenance">{t("sensors.maintenance")}</SelectItem>
+              <SelectItem value="offline">{t("sensors.offline")}</SelectItem>
+              <SelectItem value="error">{t("sensors.error")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <Button onClick={openCreate} className="gap-2 whitespace-nowrap">
-          <Plus className="w-4 h-4" /> New sensor
+          <Plus className="w-4 h-4" /> {t("sensors.newSensor")}
         </Button>
       </div>
 
@@ -424,18 +439,18 @@ function SensorsPage() {
         <Card className="border-dashed border-border bg-card/60">
           <CardContent className="py-16 flex flex-col items-center text-muted-foreground">
             <Inbox className="w-10 h-10 mb-3 opacity-60" />
-            <p className="text-sm mb-4">No sensor devices.</p>
+            <p className="text-sm mb-4">{t("sensors.noSensorDevices")}</p>
             {silos.length === 0 ? (
               <Link
                 to="/grain-operations"
                 search={{ tab: "silos" }}
                 className="text-sm text-primary hover:text-primary/80 underline underline-offset-4"
               >
-                Create a silo first →
+                {t("sensors.createSiloFirst")}
               </Link>
             ) : (
               <Button onClick={openCreate} size="sm" className="gap-2">
-                <Plus className="w-4 h-4" /> Add sensor
+                <Plus className="w-4 h-4" /> {t("sensors.addSensor")}
               </Button>
             )}
           </CardContent>
@@ -473,18 +488,18 @@ function SensorsPage() {
       >
         <DialogContent className="max-w-lg max-h-[92vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{form.id ? "Edit sensor" : "New sensor device"}</DialogTitle>
-            <DialogDescription>Device ID is auto-generated if omitted.</DialogDescription>
+            <DialogTitle>{form.id ? t("sensors.editSensor") : t("sensors.newSensorDevice")}</DialogTitle>
+            <DialogDescription>{t("sensors.deviceIdAuto")}</DialogDescription>
           </DialogHeader>
           {warehouses.length === 0 && (
             <div className="rounded-md border border-amber-300 bg-amber-50 text-amber-800 text-xs px-3 py-2 flex items-start gap-2">
               <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
               <div>
-                <div className="font-medium">You have no warehouses yet.</div>
+                <div className="font-medium">{t("sensors.noWarehouses")}</div>
                 <Link to="/grain-operations" search={{ tab: "silos" }} className="underline">
-                  Create a warehouse first
+                  {t("sensors.createWarehouseFirst")}
                 </Link>{" "}
-                — sensors must be attached to a silo inside a warehouse.
+                {t("sensors.warehousesNote")}
               </div>
             </div>
           )}
@@ -492,11 +507,11 @@ function SensorsPage() {
             <div className="rounded-md border border-amber-300 bg-amber-50 text-amber-800 text-xs px-3 py-2 flex items-start gap-2">
               <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
               <div>
-                <div className="font-medium">This warehouse has no silos.</div>
+                <div className="font-medium">{t("sensors.warehouseNoSilos")}</div>
                 <Link to="/grain-operations" search={{ tab: "silos" }} className="underline">
-                  Add a silo
+                  {t("sensors.addSilo")}
                 </Link>{" "}
-                before registering a sensor.
+                {t("sensors.addSiloNote")}
               </div>
             </div>
           )}
@@ -509,7 +524,7 @@ function SensorsPage() {
             }}
           >
             <div>
-              <Label>Device name *</Label>
+              <Label>{t("sensors.deviceName")} *</Label>
               <Input
                 required
                 value={form.device_name}
@@ -518,13 +533,13 @@ function SensorsPage() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label>Warehouse *</Label>
+                <Label>{t("sensors.warehouse")} *</Label>
                 <Select
                   value={form.warehouse_id}
                   onValueChange={(v) => setForm({ ...form, warehouse_id: v, silo_id: "" })}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select" />
+                    <SelectValue placeholder={t("sensors.select")} />
                   </SelectTrigger>
                   <SelectContent>
                     {warehouses.map((w) => (
@@ -536,13 +551,13 @@ function SensorsPage() {
                 </Select>
               </div>
               <div>
-                <Label>Silo *</Label>
+                <Label>{t("sensors.silo")} *</Label>
                 <Select
                   value={form.silo_id}
                   onValueChange={(v) => setForm({ ...form, silo_id: v })}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select" />
+                    <SelectValue placeholder={t("sensors.select")} />
                   </SelectTrigger>
                   <SelectContent>
                     {filteredSilos.map((s) => (
@@ -555,25 +570,25 @@ function SensorsPage() {
               </div>
             </div>
             <div>
-              <Label className="mb-1 block">Sensor types</Label>
+              <Label className="mb-1 block">{t("sensors.sensorTypes")}</Label>
               <div className="grid grid-cols-4 gap-1.5">
-                {SENSOR_TYPES.map((t) => {
-                  const on = form.sensor_types.includes(t);
+                {SENSOR_TYPES.map((st) => {
+                  const on = form.sensor_types.includes(st);
                   return (
                     <button
                       type="button"
-                      key={t}
+                      key={st}
                       onClick={() =>
                         setForm({
                           ...form,
                           sensor_types: on
-                            ? form.sensor_types.filter((x) => x !== t)
-                            : [...form.sensor_types, t],
+                            ? form.sensor_types.filter((x) => x !== st)
+                            : [...form.sensor_types, st],
                         })
                       }
                       className={`text-xs px-2 py-1 rounded border ${on ? "bg-emerald-600 text-white border-emerald-600" : "bg-white border-slate-200 text-slate-600"}`}
                     >
-                      {t}
+                      {t(`sensors.${SENSOR_TYPE_KEYS[st]}`)}
                     </button>
                   );
                 })}
@@ -581,21 +596,21 @@ function SensorsPage() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label>Model</Label>
+                <Label>{t("sensors.model")}</Label>
                 <Input
                   value={form.model}
                   onChange={(e) => setForm({ ...form, model: e.target.value })}
                 />
               </div>
               <div>
-                <Label>Manufacturer</Label>
+                <Label>{t("sensors.manufacturer")}</Label>
                 <Input
                   value={form.manufacturer}
                   onChange={(e) => setForm({ ...form, manufacturer: e.target.value })}
                 />
               </div>
               <div>
-                <Label>MAC address</Label>
+                <Label>{t("sensors.macAddress")}</Label>
                 <Input
                   value={form.mac_address}
                   onChange={(e) => setForm({ ...form, mac_address: e.target.value })}
@@ -603,7 +618,7 @@ function SensorsPage() {
                 />
               </div>
               <div>
-                <Label>Firmware</Label>
+                <Label>{t("sensors.firmware")}</Label>
                 <Input
                   value={form.firmware_version}
                   onChange={(e) => setForm({ ...form, firmware_version: e.target.value })}
@@ -611,7 +626,7 @@ function SensorsPage() {
                 />
               </div>
               <div>
-                <Label>Status</Label>
+                <Label>{t("sensors.status")}</Label>
                 <Select
                   value={form.status}
                   onValueChange={(v) => setForm({ ...form, status: v as Form["status"] })}
@@ -620,15 +635,15 @@ function SensorsPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="maintenance">Maintenance</SelectItem>
-                    <SelectItem value="offline">Offline</SelectItem>
-                    <SelectItem value="error">Error</SelectItem>
+                    <SelectItem value="active">{t("sensors.active")}</SelectItem>
+                    <SelectItem value="maintenance">{t("sensors.maintenance")}</SelectItem>
+                    <SelectItem value="offline">{t("sensors.offline")}</SelectItem>
+                    <SelectItem value="error">{t("sensors.error")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>Power source</Label>
+                <Label>{t("sensors.powerSource")}</Label>
                 <Select
                   value={form.power_source || "none"}
                   onValueChange={(v) =>
@@ -642,16 +657,16 @@ function SensorsPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">—</SelectItem>
-                    <SelectItem value="solar">Solar</SelectItem>
-                    <SelectItem value="battery">Battery</SelectItem>
-                    <SelectItem value="direct">Direct</SelectItem>
-                    <SelectItem value="hybrid">Hybrid</SelectItem>
+                    <SelectItem value="none">{t("sensors.none")}</SelectItem>
+                    <SelectItem value="solar">{t("sensors.solar")}</SelectItem>
+                    <SelectItem value="battery">{t("sensors.battery")}</SelectItem>
+                    <SelectItem value="direct">{t("sensors.direct")}</SelectItem>
+                    <SelectItem value="hybrid">{t("sensors.hybrid")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>Transmit every (s)</Label>
+                <Label>{t("sensors.transmitEvery")}</Label>
                 <Input
                   type="number"
                   min={1}
@@ -660,7 +675,7 @@ function SensorsPage() {
                 />
               </div>
               <div>
-                <Label>Calibration (days)</Label>
+                <Label>{t("sensors.calibrationDays")}</Label>
                 <Input
                   type="number"
                   min={1}
@@ -669,7 +684,7 @@ function SensorsPage() {
                 />
               </div>
               <div className="col-span-2">
-                <Label>Last calibration</Label>
+                <Label>{t("sensors.lastCalibration")}</Label>
                 <Input
                   type="date"
                   value={form.last_calibration_date}
@@ -681,10 +696,10 @@ function SensorsPage() {
                   checked={form.is_enabled}
                   onCheckedChange={(v) => setForm({ ...form, is_enabled: !!v })}
                 />{" "}
-                Device enabled
+                {t("sensors.deviceEnabled")}
               </label>
               <div className="col-span-2">
-                <Label>Notes</Label>
+                <Label>{t("sensors.notes")}</Label>
                 <Textarea
                   rows={2}
                   value={form.notes}
@@ -695,16 +710,16 @@ function SensorsPage() {
           </form>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setEditOpen(false)}>
-              Cancel
+              {t("sensors.cancel")}
             </Button>
             <div className="flex flex-col items-end gap-1">
               {(!form.device_name || !form.warehouse_id || !form.silo_id) && (
                 <span className="text-[11px] text-muted-foreground">
-                  Missing:{" "}
+                  {t("sensors.missing")}{" "}
                   {[
-                    !form.device_name && "name",
-                    !form.warehouse_id && "warehouse",
-                    !form.silo_id && "silo",
+                    !form.device_name && t("sensors.name"),
+                    !form.warehouse_id && t("sensors.warehouse"),
+                    !form.silo_id && t("sensors.silo"),
                   ]
                     .filter(Boolean)
                     .join(", ")}
@@ -720,9 +735,9 @@ function SensorsPage() {
                 {saveMut.isPending ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : form.id ? (
-                  "Save changes"
+                  t("sensors.saveChanges")
                 ) : (
-                  "Create sensor"
+                  t("sensors.createSensor")
                 )}
               </Button>
             </div>
@@ -751,7 +766,7 @@ function SensorsPage() {
               {selected.silo_id && (
                 <div className="mt-4 rounded-lg border p-3">
                   <div className="flex items-center justify-between mb-2">
-                    <div className="text-sm font-medium">Live readings</div>
+                    <div className="text-sm font-medium">{t("sensors.liveReadings")}</div>
                     <QualityBadge flag={readingByDevice.get(selected.id) ? "ok" : "missing"} />
                   </div>
                   <LiveReadingChart
@@ -780,18 +795,22 @@ function SensorsPage() {
       <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete sensor?</AlertDialogTitle>
+            <AlertDialogTitle>{t("sensors.deleteSensor")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Historical readings remain but the device link will be broken.
+              {t("sensors.deleteDesc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("sensors.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deleteId && deleteMut.mutate(deleteId)}
               className="bg-rose-600 hover:bg-rose-700"
             >
-              {deleteMut.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Delete"}
+              {deleteMut.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                t("common.delete")
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -815,6 +834,7 @@ function SensorCard({
   onDelete: () => void;
   onThresholds?: () => void;
 }) {
+  const { t } = useTranslation();
   const heartbeatAge = device.last_heartbeat
     ? Math.round((Date.now() - new Date(device.last_heartbeat).getTime()) / 60000)
     : null;
@@ -843,7 +863,7 @@ function SensorCard({
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                   <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
                 </span>{" "}
-                Live
+                {t("sensors.live")}
               </span>
             )}
           </div>
@@ -864,9 +884,11 @@ function SensorCard({
 
         {(device.sensor_types ?? []).length > 0 && (
           <div className="flex flex-wrap gap-1">
-            {(device.sensor_types ?? []).slice(0, 6).map((t) => (
-              <Badge key={t} variant="secondary" className="text-[10px] h-4 px-1.5">
-                {t}
+            {(device.sensor_types ?? []).slice(0, 6).map((st) => (
+              <Badge key={st} variant="secondary" className="text-[10px] h-4 px-1.5">
+                {SENSOR_TYPE_KEYS[st as SensorType]
+                  ? t(`sensors.${SENSOR_TYPE_KEYS[st as SensorType]}`)
+                  : st}
               </Badge>
             ))}
           </div>
@@ -893,17 +915,21 @@ function SensorCard({
           <span className="inline-flex items-center gap-1">
             <Wifi className="w-3 h-3" /> {sig != null ? `${Math.round(Number(sig))} dBm` : "—"}
           </span>
-          <span>{heartbeatAge != null ? `${heartbeatAge}m ago` : "no beat"}</span>
+          <span>
+            {heartbeatAge != null
+              ? t("sensors.minutesAgo", { count: heartbeatAge })
+              : t("sensors.noBeat")}
+          </span>
         </div>
 
         <div className="grid grid-cols-4 gap-1">
           <Button variant="outline" size="sm" onClick={onView} className="h-8">
             <Eye className="w-3.5 h-3.5 mr-1" />
-            View
+            {t("sensors.view")}
           </Button>
           <Button variant="outline" size="sm" onClick={onEdit} className="h-8">
             <Edit2 className="w-3.5 h-3.5 mr-1" />
-            Edit
+            {t("sensors.edit")}
           </Button>
           <Button
             variant="outline"
@@ -913,7 +939,7 @@ function SensorCard({
             className="h-8"
           >
             <AlertTriangle className="w-3.5 h-3.5 mr-1" />
-            Rules
+            {t("sensors.rules")}
           </Button>
           <Button
             variant="outline"
@@ -940,6 +966,7 @@ function DeviceDetail({
   historyFn: (arg: { data: { device_id: string; limit: number } }) => Promise<Reading[]>;
   onEdit: () => void;
 }) {
+  const { t } = useTranslation();
   const { data: history, isLoading } = useQuery({
     queryKey: ["device-readings", device.id],
     queryFn: () => historyFn({ data: { device_id: device.id, limit: 30 } }),
@@ -958,28 +985,28 @@ function DeviceDetail({
         </DialogDescription>
       </DialogHeader>
       <div className="space-y-3 text-sm py-2">
-        <Row label="Status">
+        <Row label={t("sensors.status")}>
           <StatusBadge value={device.status} />
         </Row>
-        <Row label="Silo">{device.silos?.name ?? "—"}</Row>
-        <Row label="Warehouse">{device.warehouses?.name ?? "—"}</Row>
-        <Row label="Manufacturer">{device.manufacturer ?? "—"}</Row>
-        <Row label="Firmware">{device.firmware_version ?? "—"}</Row>
+        <Row label={t("sensors.silo")}>{device.silos?.name ?? "—"}</Row>
+        <Row label={t("sensors.warehouse")}>{device.warehouses?.name ?? "—"}</Row>
+        <Row label={t("sensors.manufacturer")}>{device.manufacturer ?? "—"}</Row>
+        <Row label={t("sensors.firmware")}>{device.firmware_version ?? "—"}</Row>
         <Row label="MAC">{device.mac_address ?? "—"}</Row>
-        <Row label="Power">{device.power_source ?? "—"}</Row>
-        <Row label="Battery">{reading?.battery_level ?? device.battery_level ?? "—"}</Row>
-        <Row label="Signal">{reading?.signal_strength ?? device.signal_strength ?? "—"} dBm</Row>
-        <Row label="Last heartbeat">
+        <Row label={t("sensors.power")}>{device.power_source ?? "—"}</Row>
+        <Row label={t("sensors.battery")}>{reading?.battery_level ?? device.battery_level ?? "—"}</Row>
+        <Row label={t("sensors.signal")}>{reading?.signal_strength ?? device.signal_strength ?? "—"} dBm</Row>
+        <Row label={t("sensors.lastHeartbeat")}>
           {device.last_heartbeat ? new Date(device.last_heartbeat).toLocaleString() : "—"}
         </Row>
-        <Row label="Calibration due">
+        <Row label={t("sensors.calibrationDue")}>
           {device.calibration_due_date
             ? new Date(device.calibration_due_date).toLocaleDateString()
             : "—"}
         </Row>
 
         <div className="pt-3 border-t border-slate-100">
-          <div className="text-xs uppercase tracking-wider text-slate-500 mb-2">Latest reading</div>
+          <div className="text-xs uppercase tracking-wider text-slate-500 mb-2">{t("sensors.latestReading")}</div>
           {reading ? (
             <div className="grid grid-cols-4 gap-2">
               <MiniReading icon={Thermometer} value={reading.temperature_value} unit="°C" />
@@ -988,16 +1015,16 @@ function DeviceDetail({
               <MiniReading icon={AlertTriangle} value={reading.voc_value} unit="" />
             </div>
           ) : (
-            <p className="text-xs text-slate-500">No readings yet.</p>
+            <p className="text-xs text-slate-500">{t("sensors.noReadings")}</p>
           )}
         </div>
 
         <div className="pt-3 border-t border-slate-100">
-          <div className="text-xs uppercase tracking-wider text-slate-500 mb-2">Recent history</div>
+          <div className="text-xs uppercase tracking-wider text-slate-500 mb-2">{t("sensors.recentHistory")}</div>
           {isLoading ? (
             <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
           ) : !history || history.length === 0 ? (
-            <p className="text-xs text-slate-500">No history.</p>
+            <p className="text-xs text-slate-500">{t("sensors.noHistory")}</p>
           ) : (
             <div className="max-h-56 overflow-y-auto rounded border border-slate-100 divide-y divide-slate-100 text-xs">
               {history.map((r) => (
@@ -1016,7 +1043,7 @@ function DeviceDetail({
                   <span className="tabular-nums text-right">
                     {r.anomaly_detected ? (
                       <Badge variant="destructive" className="text-[9px] h-4 px-1">
-                        anom
+                        {t("sensors.anom")}
                       </Badge>
                     ) : (
                       (r.ml_risk_class ?? "")
@@ -1030,14 +1057,14 @@ function DeviceDetail({
 
         {device.notes && (
           <div className="pt-2 border-t border-slate-100">
-            <div className="text-xs uppercase tracking-wider text-slate-500 mb-1">Notes</div>
+            <div className="text-xs uppercase tracking-wider text-slate-500 mb-1">{t("sensors.notes")}</div>
             <p className="text-slate-700 whitespace-pre-wrap">{device.notes}</p>
           </div>
         )}
       </div>
       <DialogFooter className="gap-2">
         <Button variant="outline" onClick={onEdit}>
-          Edit
+          {t("sensors.edit")}
         </Button>
       </DialogFooter>
     </>

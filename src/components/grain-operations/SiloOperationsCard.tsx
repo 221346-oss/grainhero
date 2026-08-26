@@ -22,6 +22,7 @@ import { SiloStatusPie, type StatusSlice } from "./SiloStatusPie";
 import { DispatchApprovalPanel } from "./DispatchApprovalPanel";
 import { listDispatches } from "@/lib/dispatches.functions";
 import type { ExportColumn } from "@/lib/csv-pdf-export";
+import { useTranslation } from "@/i18n";
 
 export type SiloRow = {
   id: string;
@@ -155,6 +156,23 @@ export function SiloOperationsCard({
   isAdmin: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const { t } = useTranslation();
+  const batchToneLabels: Record<FlowGroup["tone"], string> = {
+    yellow: t("grainOps.pending"),
+    orange: t("grainOps.qc"),
+    green: t("grainOps.stored"),
+    blue: t("grainOps.processing"),
+    purple: t("grainOps.dispatched"),
+    red: t("grainOps.issue"),
+  };
+  const dispatchToneLabels: Record<FlowGroup["tone"], string> = {
+    yellow: t("grainOps.pending"),
+    orange: t("grainOps.qc"),
+    green: t("grainOps.confirmed"),
+    blue: t("grainOps.inTransit"),
+    purple: t("grainOps.delivered"),
+    red: t("grainOps.cancelled"),
+  };
   const listDispatchesFn = useServerFn(listDispatches);
 
   const cap = Number(silo.capacity_kg ?? 0);
@@ -162,6 +180,16 @@ export function SiloOperationsCard({
   const pct = cap ? Math.round((occ / cap) * 100) : 0;
   const barColor = pct >= 90 ? "bg-red-500" : pct >= 70 ? "bg-amber-500" : "bg-emerald-500";
   const siloBadge = siloStatusBadge(pct, silo.status);
+  const siloBadgeLabel =
+    siloBadge.label === "Full"
+      ? t("silos.full")
+      : siloBadge.label === "Maintenance"
+        ? t("silos.maintenance")
+        : siloBadge.label === "Offline"
+          ? t("silos.offline")
+          : siloBadge.label === "Error"
+            ? t("silos.error")
+            : t("silos.active");
 
   const siloBatches = useMemo(
     () => batches.filter((b) => b.silos?.id === silo.id),
@@ -182,8 +210,8 @@ export function SiloOperationsCard({
 
   const incoming = useMemo(
     () =>
-      groupByTone(siloBatches, BATCH_TONE, (b) => Number(b.quantity_kg ?? 0), BATCH_TONE_LABELS),
-    [siloBatches],
+      groupByTone(siloBatches, BATCH_TONE, (b) => Number(b.quantity_kg ?? 0), batchToneLabels),
+    [siloBatches, batchToneLabels],
   );
   const outgoing = useMemo(
     () =>
@@ -192,10 +220,10 @@ export function SiloOperationsCard({
             dispatches,
             DISPATCH_TONE,
             (d) => Number(d.total_qty_kg ?? 0),
-            DISPATCH_TONE_LABELS,
+            dispatchToneLabels,
           )
         : [],
-    [dispatches, expanded],
+    [dispatches, expanded, dispatchToneLabels],
   );
   const pieData: StatusSlice[] = useMemo(() => {
     const byTone: Record<FlowGroup["tone"], number> = {
@@ -208,11 +236,11 @@ export function SiloOperationsCard({
     };
     for (const b of siloBatches) byTone[BATCH_TONE[String(b.status ?? "")] ?? "yellow"] += 1;
     return ALL_TONES.filter((t) => byTone[t] > 0).map((t) => ({
-      name: BATCH_TONE_LABELS[t],
+      name: batchToneLabels[t],
       value: byTone[t],
       tone: t,
     }));
-  }, [siloBatches]);
+  }, [siloBatches, batchToneLabels]);
 
   const incomingCount = siloBatches.length;
   const outgoingCount = dispatches.length;
@@ -234,8 +262,8 @@ export function SiloOperationsCard({
             {silo.warehouses?.name ?? "—"} · {silo.silo_id}
           </p>
         </div>
-        <Badge className={siloBadge.cls} variant="outline">
-          {siloBadge.label}
+        <Badge className={`${siloBadge.cls} shrink-0 whitespace-nowrap max-w-full`} variant="outline">
+          {siloBadgeLabel}
         </Badge>
       </CardHeader>
       <CardContent className="p-3 pt-0 space-y-2">
@@ -257,14 +285,14 @@ export function SiloOperationsCard({
           <div className="flex items-center gap-1.5 rounded-md border border-border/50 bg-muted/30 px-2 py-1">
             <PackagePlus className="h-3 w-3 text-emerald-600 shrink-0" />
             <div className="min-w-0">
-              <p className="text-[9px] text-muted-foreground leading-none">Incoming</p>
+            <p className="text-[9px] text-muted-foreground leading-none">{t("grainOps.incoming")}</p>
               <p className="text-xs font-semibold tabular-nums leading-tight">{incomingCount}</p>
             </div>
           </div>
           <div className="flex items-center gap-1.5 rounded-md border border-border/50 bg-muted/30 px-2 py-1">
             <PackageMinus className="h-3 w-3 text-sky-600 shrink-0" />
             <div className="min-w-0">
-              <p className="text-[9px] text-muted-foreground leading-none">Outgoing</p>
+            <p className="text-[9px] text-muted-foreground leading-none">{t("grainOps.outgoing")}</p>
               <p className="text-xs font-semibold tabular-nums leading-tight">
                 {expanded ? outgoingCount : "—"}
               </p>
@@ -278,14 +306,14 @@ export function SiloOperationsCard({
             className="h-7 flex-1 gap-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs"
             onClick={() => onSell(silo)}
           >
-            <ShoppingCart className="h-3 w-3" /> Sell
+            <ShoppingCart className="h-3 w-3" /> {t("grainOps.sell")}
           </Button>
           <Button
             size="sm"
             variant="ghost"
             className="h-7 w-7 p-0"
             onClick={() => onView(silo)}
-            title="View"
+            title={t("grainOps.view")}
           >
             <Eye className="h-3.5 w-3.5" />
           </Button>
@@ -294,7 +322,7 @@ export function SiloOperationsCard({
             variant="ghost"
             className="h-7 w-7 p-0"
             onClick={() => onEdit(silo)}
-            title="Edit"
+            title={t("common.edit")}
           >
             <Edit2 className="h-3.5 w-3.5" />
           </Button>
@@ -303,7 +331,7 @@ export function SiloOperationsCard({
             variant="ghost"
             className="h-7 w-7 p-0 text-rose-600 hover:text-rose-700"
             onClick={() => onDelete(silo.id)}
-            title="Delete"
+            title={t("common.delete")}
           >
             <Trash2 className="h-3.5 w-3.5" />
           </Button>
@@ -328,7 +356,7 @@ export function SiloOperationsCard({
             onClick={onRequestMore}
             className="w-full text-[10px] text-emerald-700 dark:text-emerald-400 hover:underline"
           >
-            Request more capacity
+            {t("grainOps.requestMoreCapacity")}
           </button>
         )}
 

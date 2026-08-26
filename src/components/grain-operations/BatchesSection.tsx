@@ -89,6 +89,7 @@ import { BatchQCDialog, type QCMode } from "./BatchQCDialog";
 import { cn } from "@/lib/utils";
 import { ExportMenu } from "@/components/app/ExportMenu";
 import type { ExportColumn } from "@/lib/csv-pdf-export";
+import { useTranslation } from "@/i18n";
 
 const GRAIN_TYPES = ["Wheat", "Rice", "Maize", "Barley", "Sorghum"] as const;
 const STATUSES = [
@@ -335,6 +336,7 @@ const emptySpoilage: Spoilage = {
 };
 
 export function BatchesSection({ initialStatus }: { initialStatus?: string } = {}) {
+  const { t } = useTranslation();
   const listFn = useServerFn(listGrainBatches);
   const listSiloFn = useServerFn(listSilos);
   const listSupFn = useServerFn(listSuppliers);
@@ -587,6 +589,19 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
 
   const availableSilos = silos.filter((s) => (s.current_occupancy_kg ?? 0) < (s.capacity_kg ?? 0));
 
+  const grainLabels: Record<string, string> = {
+    Wheat: t("business.wheat"), Rice: t("business.rice"), Maize: t("business.maize"),
+    Barley: t("business.barley"), Sorghum: t("business.sorghum"),
+  };
+  const statusLabels: Record<string, string> = {
+    stored: t("grainOps.stored"), processing: t("grainOps.processing"),
+    dispatched: t("grainOps.dispatched"), sold: t("grainOps.sold"),
+    damaged: t("grainOps.damaged"), expired: t("grainOps.expired"), on_hold: t("grainOps.onHold"),
+    pending_qc: t("grainOps.pending"), qc_submitted: t("grainOps.qc"),
+    qc_failed: t("grainOps.issue"), qc_passed: t("grainOps.confirmed"),
+    admin_rejected: t("grainOps.issue"), pending_approval: t("grainOps.pending"),
+  };
+
   if (isLoading) return <GrainBatchesSkeleton />;
 
   return (
@@ -594,34 +609,34 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <Card>
           <CardContent className="p-3">
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Total</div>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("common.total")}</div>
             <div className="font-semibold">{stats.total}</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-3">
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Stored</div>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("grainOps.stored")}</div>
             <div className="font-semibold">{stats.stored}</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-3">
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-              Dispatched
+              {t("grainOps.dispatched")}
             </div>
             <div className="font-semibold">{stats.dispatched}</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-3">
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Volume</div>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("grainOps.volume")}</div>
             <div className="font-semibold">{(stats.totalKg / 1000).toFixed(1)}t</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-3">
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-              At Risk
+              {t("grainOps.atRisk")}
             </div>
             <div className="font-semibold">{stats.risky}</div>
           </CardContent>
@@ -634,45 +649,45 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
           <Input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search batch, farmer, buyer…"
+            placeholder={t("grainOps.searchBatch")}
             className="pl-9 h-9"
           />
         </div>
         <Select value={grainFilter} onValueChange={setGrainFilter}>
           <SelectTrigger className="w-full sm:w-36 h-9">
-            <SelectValue placeholder="Grain" />
+            <SelectValue placeholder={t("grainOps.grain")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All grains</SelectItem>
+            <SelectItem value="all">{t("grainOps.allGrains")}</SelectItem>
             {GRAIN_TYPES.map((g) => (
               <SelectItem key={g} value={g}>
-                {g}
+                {grainLabels[g] ?? g}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-full sm:w-40 h-9">
-            <SelectValue placeholder="Status" />
+            <SelectValue placeholder={t("grainOps.statusHeader")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
+            <SelectItem value="all">{t("grainOps.allStatuses")}</SelectItem>
             {FILTER_STATUSES.map((s) => (
               <SelectItem key={s} value={s}>
-                {s.replace(/_/g, " ")}
+                {statusLabels[s] ?? s.replace(/_/g, " ")}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
         <ExportMenu
           filename="grain-batches"
-          title="Grain Batches"
+          title={t("grainOps.grainBatches")}
           rows={rows}
           columns={batchExportColumns}
         />
         {canCreate && (
           <Button onClick={openCreate} className="gap-2 h-9 whitespace-nowrap">
-            <Package className="w-4 h-4" /> New batch
+            <Package className="w-4 h-4" /> {t("grainOps.newBatch")}
           </Button>
         )}
       </div>
@@ -680,7 +695,7 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
       {rows.length === 0 ? (
         <Card className="border-dashed border-border bg-card/60">
           <CardContent className="py-16 flex flex-col items-center text-muted-foreground">
-            <p className="text-sm mb-4">No batches yet.</p>
+            <p className="text-sm mb-4">{t("grainOps.noBatches")}</p>
             {availableSilos.length === 0 ? (
               isAdmin ? (
                 <Link
@@ -688,16 +703,16 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
                   search={{ tab: "silos" }}
                   className="text-sm text-primary hover:text-primary/80 underline underline-offset-4"
                 >
-                  Create a silo first →
+                  {t("silos.requestSilo")} →
                 </Link>
               ) : (
                 <span className="text-sm text-muted-foreground">
-                  No available silos in your assigned warehouses.
+                  {t("grainOps.noSilos")}
                 </span>
               )
             ) : canCreate ? (
               <Button onClick={openCreate} size="sm" className="gap-2">
-                <Plus className="w-4 h-4" /> Add incoming batch
+                <Plus className="w-4 h-4" /> {t("grainOps.addIncomingBatch")}
               </Button>
             ) : null}
           </CardContent>
@@ -709,15 +724,15 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
             <Table className="text-xs">
               <TableHeader className="sticky top-0 bg-card/95 backdrop-blur z-10">
                 <TableRow className="[&_th]:h-9 [&_th]:text-[10px] [&_th]:uppercase [&_th]:tracking-wider [&_th]:text-muted-foreground [&_th]:font-medium">
-                  <TableHead>Batch</TableHead>
-                  <TableHead>Grain</TableHead>
-                  <TableHead>Supplier</TableHead>
-                  <TableHead>Silo</TableHead>
-                  <TableHead className="text-right">Intake (kg)</TableHead>
-                  <TableHead className="text-right">Remaining (kg)</TableHead>
-                  <TableHead>Intake date</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{t("grainOps.batch")}</TableHead>
+                  <TableHead>{t("grainOps.grain")}</TableHead>
+                  <TableHead>{t("grainOps.supplier")}</TableHead>
+                  <TableHead>{t("grainOps.silo")}</TableHead>
+                  <TableHead className="text-right">{t("grainOps.intake")}</TableHead>
+                  <TableHead className="text-right">{t("grainOps.remaining")}</TableHead>
+                  <TableHead>{t("grainOps.intakeDate")}</TableHead>
+                  <TableHead>{t("grainOps.statusHeader")}</TableHead>
+                  <TableHead className="text-right">{t("grainOps.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -736,7 +751,7 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
                       }}
                     >
                       <TableCell className="font-medium">{b.batch_id}</TableCell>
-                      <TableCell className="text-muted-foreground">{b.grain_type}</TableCell>
+                      <TableCell className="text-muted-foreground">{grainLabels[b.grain_type] ?? b.grain_type}</TableCell>
                       <TableCell className="text-muted-foreground truncate max-w-[140px]">
                         {supplier}
                       </TableCell>
@@ -763,7 +778,7 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
                             ["pending_qc", "qc_failed"].includes(b.status)
                               ? [
                                   {
-                                    label: b.status === "qc_failed" ? "Resubmit QC" : "Submit QC",
+                                    label: b.status === "qc_failed" ? t("grainOps.resubmitQc") : t("grainOps.submitQc"),
                                     icon: FlaskConical,
                                     onClick: () => openQC(b, "submit" as QCMode),
                                   },
@@ -772,7 +787,7 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
                             ...(["manager", "admin"].includes(myRole) && b.status === "qc_submitted"
                               ? [
                                   {
-                                    label: "Review QC",
+                                    label: t("grainOps.reviewQc"),
                                     icon: FlaskConical,
                                     onClick: () => openQC(b, "review" as QCMode),
                                   },
@@ -781,7 +796,7 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
                             ...(myRole === "admin" && b.status === "qc_passed"
                               ? [
                                   {
-                                    label: "Final review",
+                                    label: t("grainOps.finalReview"),
                                     icon: ShieldCheck,
                                     onClick: () => openQC(b, "admin" as QCMode),
                                   },
@@ -790,14 +805,14 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
                             ...(myRole === "admin" && b.status === "admin_rejected"
                               ? [
                                   {
-                                    label: "Resolve rejection",
+                                    label: t("grainOps.resolveRejection"),
                                     icon: Undo2,
                                     onClick: () => openQC(b, "resolve" as QCMode),
                                   },
                                 ]
                               : []),
                             {
-                              label: "View",
+                              label: t("grainOps.view"),
                               icon: Eye,
                               onClick: () => {
                                 setSelected(b);
@@ -806,9 +821,9 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
                             },
                             ...(isManager && b.status !== "pending_approval"
                               ? []
-                              : [{ label: "Edit", icon: Edit2, onClick: () => openEdit(b) }]),
+                              : [{ label: t("grainOps.edit"), icon: Edit2, onClick: () => openEdit(b) }]),
                             {
-                              label: "QR code",
+                              label: t("grainOps.qrCode"),
                               icon: QrCode,
                               onClick: () => {
                                 setSelected(b);
@@ -816,12 +831,12 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
                               },
                             },
                             {
-                              label: "Log spoilage",
+                              label: t("grainOps.logSpoilage"),
                               icon: AlertTriangle,
                               onClick: () => openSpoilage(b),
                             },
                             {
-                              label: "Delete",
+                              label: t("common.delete"),
                               icon: Trash2,
                               destructive: true,
                               onClick: () => setDeleteId(b.id),
@@ -837,16 +852,16 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
           </div>
           <div className="px-3 py-2 border-t border-border/60 flex items-center justify-between text-[11px] text-muted-foreground">
             <span>
-              {rows.length} batch{rows.length === 1 ? "" : "es"}
+              {rows.length} {t("grainOps.grainBatches")}
             </span>
             <span>
-              Dispatch from the{" "}
+              {t("grainOps.dispatchFrom", { tab: t("grainOps.silos") })}{" "}
               <Link
                 to="/grain-operations"
                 search={{ tab: "silos" }}
                 className="text-emerald-600 hover:text-emerald-700 underline underline-offset-2"
               >
-                Silos
+                {t("grainOps.silos")}
               </Link>{" "}
               tab
             </span>

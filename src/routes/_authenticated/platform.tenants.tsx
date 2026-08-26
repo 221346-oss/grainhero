@@ -11,6 +11,7 @@ import { AdminSummaryTiles } from "@/components/app/admin/AdminSummaryTiles";
 import { AdminFilterBar, AdminFilterField } from "@/components/app/admin/AdminFilterBar";
 import { AdminDataCard } from "@/components/app/admin/AdminDataCard";
 import { useTicketCount } from "@/hooks/useTicketCount";
+import { useTranslation } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/platform/tenants")({
   head: () => ({
@@ -73,6 +74,7 @@ function UsageBar({ used, max, label }: { used: number; max: number; label: stri
 
 // ── Tenant detail Sheet ───────────────────────────────────────────────────────
 function TenantDetailSheet({ adminId, onClose }: { adminId: string; onClose: () => void }) {
+  const { t } = useTranslation();
   const fn = useServerFn(getTenantDetail);
   const { data, isLoading, isError } = useQuery({
     queryKey: ["tenant-detail", adminId],
@@ -110,7 +112,9 @@ function TenantDetailSheet({ adminId, onClose }: { adminId: string; onClose: () 
     >
       <SheetContent className="sm:max-w-lg overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>{profile?.name ?? profile?.email ?? "Tenant"}</SheetTitle>
+          <SheetTitle>
+            {profile?.name ?? profile?.email ?? t("platformTenants.tenantFallback")}
+          </SheetTitle>
           {profile?.email && (
             <p className="text-xs text-slate-500">
               {profile.email}
@@ -131,7 +135,7 @@ function TenantDetailSheet({ adminId, onClose }: { adminId: string; onClose: () 
           </div>
         )}
 
-        {isError && <p className="mt-6 text-sm text-red-500">Could not load tenant details.</p>}
+        {isError && <p className="mt-6 text-sm text-red-500">{t("platformTenants.loadError")}</p>}
 
         {data && profile && (
           <div className="mt-6 space-y-5">
@@ -142,7 +146,7 @@ function TenantDetailSheet({ adminId, onClose }: { adminId: string; onClose: () 
                   {sub?.plan_name ?? profile.subscription_plan ?? "—"}
                 </div>
                 <div className="text-[10px] text-slate-500 uppercase tracking-wider mt-0.5">
-                  {sub?.status ?? "no active sub"}
+                  {sub?.status ?? t("platformTenants.noActiveSub")}
                 </div>
               </div>
               <div
@@ -154,19 +158,21 @@ function TenantDetailSheet({ adminId, onClose }: { adminId: string; onClose: () 
                   {sub?.end_date ? new Date(sub.end_date).toLocaleDateString() : "—"}
                 </div>
                 <div className="text-[10px] text-slate-500 uppercase tracking-wider mt-0.5">
-                  {daysUntilExpiry !== null ? `${daysUntilExpiry} days left` : "Expires"}
+                  {daysUntilExpiry !== null
+                    ? t("platformTenants.daysLeft", { n: daysUntilExpiry })
+                    : t("platformTenants.expires")}
                 </div>
               </div>
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                 <div className="text-base font-bold text-slate-800">{usage?.silos ?? 0}</div>
                 <div className="text-[10px] text-slate-500 uppercase tracking-wider mt-0.5">
-                  Silos
+                  {t("platformTenants.silos")}
                 </div>
               </div>
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                 <div className="text-base font-bold text-slate-800">{usage?.team ?? 0}</div>
                 <div className="text-[10px] text-slate-500 uppercase tracking-wider mt-0.5">
-                  Team members
+                  {t("platformTenants.teamMembers")}
                 </div>
               </div>
             </div>
@@ -175,21 +181,24 @@ function TenantDetailSheet({ adminId, onClose }: { adminId: string; onClose: () 
             {sub && (
               <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-3">
                 <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-                  Plan Usage
+                  {t("platformTenants.planUsage")}
                 </p>
-                <UsageBar used={usage?.silos ?? 0} max={sub.max_silos ?? 0} label="Silos" />
+                <UsageBar used={usage?.silos ?? 0} max={sub.max_silos ?? 0} label={t("platformTenants.silos")} />
                 <UsageBar
                   used={usage?.warehouses ?? 0}
                   max={sub.max_warehouses ?? 0}
-                  label="Warehouses"
+                  label={t("platformTenants.warehouses")}
                 />
-                <UsageBar used={usage?.team ?? 0} max={sub.max_users ?? 0} label="Team" />
-                <UsageBar used={usage?.batches ?? 0} max={sub.max_batches ?? 0} label="Batches" />
+                <UsageBar used={usage?.team ?? 0} max={sub.max_users ?? 0} label={t("platformTenants.team")} />
+                <UsageBar used={usage?.batches ?? 0} max={sub.max_batches ?? 0} label={t("platformTenants.batches")} />
                 {(usage?.capacityKg ?? 0) > 0 && (
                   <UsageBar
                     used={usage?.totalKg ?? 0}
                     max={usage?.capacityKg ?? 0}
-                    label={`Storage (${(usage?.totalKg ?? 0).toLocaleString()} / ${(usage?.capacityKg ?? 0).toLocaleString()} kg)`}
+                    label={t("platformTenants.storage", {
+                      used: (usage?.totalKg ?? 0).toLocaleString(),
+                      max: (usage?.capacityKg ?? 0).toLocaleString(),
+                    })}
                   />
                 )}
               </div>
@@ -198,10 +207,10 @@ function TenantDetailSheet({ adminId, onClose }: { adminId: string; onClose: () 
             {/* ── Profile info ── */}
             <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-2 text-sm">
               <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-                Profile
+                {t("platformTenants.profile")}
               </p>
               <div className="flex justify-between">
-                <span className="text-slate-500">Status</span>
+                <span className="text-slate-500">{t("platformTenants.status")}</span>
                 <Badge
                   className={
                     profile.blocked
@@ -209,18 +218,18 @@ function TenantDetailSheet({ adminId, onClose }: { adminId: string; onClose: () 
                       : "bg-emerald-100 text-emerald-700 border-emerald-200"
                   }
                 >
-                  {profile.blocked ? "Blocked" : "Active"}
+                  {profile.blocked ? t("platformTenants.blockedLabel") : t("platformTenants.activeLabel")}
                 </Badge>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Joined</span>
+                <span className="text-slate-500">{t("platformTenants.joined")}</span>
                 <span className="text-slate-700 font-medium">
                   {profile.created_at ? new Date(profile.created_at).toLocaleDateString() : "—"}
                 </span>
               </div>
               {sub?.price && (
                 <div className="flex justify-between">
-                  <span className="text-slate-500">MRR</span>
+                  <span className="text-slate-500">{t("platformTenants.mrr")}</span>
                   <span className="text-slate-700 font-medium">
                     PKR {Number(sub.price).toLocaleString()}
                   </span>
@@ -232,7 +241,7 @@ function TenantDetailSheet({ adminId, onClose }: { adminId: string; onClose: () 
             {(silos ?? []).length > 0 && (
               <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
                 <p className="px-4 py-2.5 border-b border-slate-100 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-                  Silos ({(silos ?? []).length})
+                  {t("platformTenants.silosCount", { n: (silos ?? []).length })}
                 </p>
                 <div className="divide-y divide-slate-50 max-h-40 overflow-y-auto">
                   {(silos as any[]).map((s) => (
@@ -253,7 +262,7 @@ function TenantDetailSheet({ adminId, onClose }: { adminId: string; onClose: () 
             {(team ?? []).length > 0 && (
               <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
                 <p className="px-4 py-2.5 border-b border-slate-100 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-                  Team ({(team ?? []).length})
+                  {t("platformTenants.teamCount", { n: (team ?? []).length })}
                 </p>
                 <div className="divide-y divide-slate-50 max-h-36 overflow-y-auto">
                   {(team as any[]).map((m) => (
@@ -268,7 +277,7 @@ function TenantDetailSheet({ adminId, onClose }: { adminId: string; onClose: () 
                       </div>
                       {m.blocked && (
                         <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 font-medium shrink-0">
-                          blocked
+                          {t("platformTenants.blockedSmall")}
                         </span>
                       )}
                     </div>
@@ -281,7 +290,7 @@ function TenantDetailSheet({ adminId, onClose }: { adminId: string; onClose: () 
             {(recentBatches ?? []).length > 0 && (
               <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
                 <p className="px-4 py-2.5 border-b border-slate-100 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-                  Recent Batches
+                  {t("platformTenants.recentBatches")}
                 </p>
                 <div className="divide-y divide-slate-50 max-h-36 overflow-y-auto">
                   {(recentBatches as any[]).map((b) => (
@@ -304,7 +313,7 @@ function TenantDetailSheet({ adminId, onClose }: { adminId: string; onClose: () 
             {(activityLogs ?? []).length > 0 && (
               <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
                 <p className="px-4 py-2.5 border-b border-slate-100 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-                  Recent Activity
+                  {t("platformTenants.recentActivity")}
                 </p>
                 <div className="divide-y divide-slate-50 max-h-36 overflow-y-auto">
                   {(activityLogs as any[]).map((l) => (
@@ -334,6 +343,7 @@ function TenantDetailSheet({ adminId, onClose }: { adminId: string; onClose: () 
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 function TenantsPage() {
+  const { t } = useTranslation();
   const fn = useServerFn(listAllTenants);
   const { data = [], isLoading } = useQuery({
     queryKey: ["platform-tenants"],
@@ -371,7 +381,7 @@ function TenantsPage() {
 
   if (isLoading) {
     return (
-      <AdminPageShell title="Platform tenants" subtitle="Organizations and their subscriptions">
+      <AdminPageShell title={t("platformTenants.title")} subtitle={t("platformTenants.subtitle")}>
         <div className="space-y-4">
           <div className="grid gap-px bg-border rounded-md overflow-hidden grid-cols-2 md:grid-cols-4">
             {[...Array(4)].map((_, i) => (
@@ -407,54 +417,56 @@ function TenantsPage() {
   }
 
   return (
-    <AdminPageShell title="Platform tenants" subtitle="Organizations and their subscriptions">
+    <AdminPageShell title={t("platformTenants.title")} subtitle={t("platformTenants.subtitle")}>
       <AdminSummaryTiles
         columns={4}
         tiles={[
-          { key: "all", label: "Total tenants", value: totalTenants },
-          { key: "active", label: "Active", value: activeTenants },
-          { key: "month", label: "This month", value: thisMonth },
-          { key: "blocked", label: "Blocked", value: blockedTenants },
+          { key: "all", label: t("platformTenants.totalTenants"), value: totalTenants },
+          { key: "active", label: t("platformTenants.active"), value: activeTenants },
+          { key: "month", label: t("platformTenants.thisMonth"), value: thisMonth },
+          { key: "blocked", label: t("platformTenants.blocked"), value: blockedTenants },
         ]}
       />
 
       <AdminFilterBar onSubmit={() => setQ(qInput)}>
-        <AdminFilterField label="Search" width="flex-1 min-w-[240px]">
+        <AdminFilterField label={t("platformTenants.search")} width="flex-1 min-w-[240px]">
           <Input
             value={qInput}
             onChange={(e) => setQInput(e.target.value)}
-            placeholder="Search tenants by name or email…"
+            placeholder={t("platformTenants.searchPlaceholder")}
           />
         </AdminFilterField>
       </AdminFilterBar>
 
       <AdminDataCard
-        title="All tenants"
-        description={`Showing ${filtered.length} of ${data.length}`}
+        title={t("platformTenants.allTenants")}
+        description={t("platformTenants.showingOf", { shown: filtered.length, total: data.length })}
       >
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-14 text-slate-400">
-            <p className="text-sm">No tenants found</p>
+            <p className="text-sm">{t("platformTenants.noTenants")}</p>
           </div>
         ) : (
           <div>
-            {filtered.map((t) => (
+            {filtered.map((tn) => (
               <button
-                key={t.id}
+                key={tn.id}
                 type="button"
-                onClick={() => setSelectedId(t.id)}
+                onClick={() => setSelectedId(tn.id)}
                 className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4 px-4 py-3.5 hover:bg-slate-50 transition-colors text-left border-b border-slate-100 last:border-0"
               >
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-slate-900 truncate">
-                    {t.name ?? "Unnamed organization"}
+                    {tn.name ?? t("platformTenants.unnamed")}
                   </div>
                   <div className="text-xs text-slate-500 truncate mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                    <span>{t.email}</span>
-                    {t.business_type && <span>• {t.business_type}</span>}
-                    {t.created_at && (
+                    <span>{tn.email}</span>
+                    {tn.business_type && <span>• {tn.business_type}</span>}
+                    {tn.created_at && (
                       <span className="text-slate-400">
-                        • Joined {new Date(t.created_at).toLocaleDateString()}
+                        • {t("platformTenants.joinedOn", {
+                          date: new Date(tn.created_at).toLocaleDateString(),
+                        })}
                       </span>
                     )}
                   </div>
@@ -462,31 +474,31 @@ function TenantsPage() {
                 <div className="flex flex-wrap items-center gap-3.5 mt-1 sm:mt-0">
                   <div className="flex items-center gap-3 text-xs">
                     <span>
-                      <span className="font-semibold text-slate-700">{t.team_size}</span>{" "}
-                      <span className="text-slate-500">users</span>
+                      <span className="font-semibold text-slate-700">{tn.team_size}</span>{" "}
+                      <span className="text-slate-500">{t("platformTenants.users")}</span>
                     </span>
                     <span>
-                      <span className="font-semibold text-slate-700">{t.batch_count}</span>{" "}
-                      <span className="text-slate-500">batches</span>
+                      <span className="font-semibold text-slate-700">{tn.batch_count}</span>{" "}
+                      <span className="text-slate-500">{t("platformTenants.batches")}</span>
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
                     <Badge
                       variant="outline"
                       className={
-                        t.blocked
+                        tn.blocked
                           ? "bg-red-100 text-red-700 border-red-200 text-[10px]"
                           : "bg-emerald-100 text-emerald-700 border-emerald-200 text-[10px]"
                       }
                     >
-                      {t.blocked ? "Blocked" : "Active"}
+                      {tn.blocked ? t("platformTenants.blocked") : t("platformTenants.active")}
                     </Badge>
-                    {t.subscription_plan && (
+                    {tn.subscription_plan && (
                       <Badge
                         variant="outline"
                         className="bg-slate-100 text-slate-700 border-slate-200 text-[10px]"
                       >
-                        {t.subscription_plan}
+                        {tn.subscription_plan}
                       </Badge>
                     )}
                   </div>

@@ -58,6 +58,7 @@ import { parsePlanLimitError, usePlanGate } from "@/lib/plan-gate";
 import { getMyRole } from "@/lib/roles.functions";
 import { SiloOperationsCard, type BatchRow } from "./SiloOperationsCard";
 import { DispatchDialog } from "@/components/app/silos/DispatchDialog";
+import { useTranslation } from "@/i18n";
 
 function friendlySaveError(e: Error): string {
   const limit = parsePlanLimitError(e);
@@ -133,6 +134,7 @@ const emptyWarehouseForm: WarehouseFormState = {
 };
 
 export function SilosSection() {
+  const { t } = useTranslation();
   const list = useServerFn(listSilos);
   const listWh = useServerFn(listWarehouses);
   const listBatchesFn = useServerFn(listGrainBatches);
@@ -347,7 +349,7 @@ export function SilosSection() {
       }),
     onSuccess: (result) => {
       console.log("[SiloSection] Silo saved successfully:", result);
-      toast.success(`Silo "${result?.name || "saved"}" updated successfully`);
+      toast.success(`${result?.name || t("silos.title")} — ${t("common.save")}`);
       qc.invalidateQueries({ queryKey: ["silos"] });
       qc.invalidateQueries({ queryKey: ["warehouses"] });
       qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
@@ -360,29 +362,29 @@ export function SilosSection() {
         stack: e.stack,
         fullError: e,
       });
-      toast.error(`Error: ${friendlySaveError(e)}`);
+      toast.error(`${t("common.error")}: ${friendlySaveError(e)}`);
     },
   });
 
   const renameMutation = useMutation({
     mutationFn: (payload: { id: string; name: string }) => rename({ data: payload }),
     onSuccess: () => {
-      toast.success("Silo renamed");
+      toast.success(`${t("silos.title")} — ${t("common.save")}`);
       qc.invalidateQueries({ queryKey: ["silos"] });
       qc.invalidateQueries({ queryKey: ["dashboard-extras"] });
     },
-    onError: (e: Error) => toast.error(e.message || "Rename failed"),
+    onError: (e: Error) => toast.error(e.message || t("common.error")),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => del({ data: { id } }),
     onSuccess: () => {
-      toast.success("Silo deleted");
+      toast.success(`${t("silos.title")} — ${t("common.delete")}`);
       qc.invalidateQueries({ queryKey: ["silos"] });
       qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
       setDeleteId(null);
     },
-    onError: (e: Error) => toast.error(e.message || "Delete failed"),
+    onError: (e: Error) => toast.error(e.message || t("common.error")),
   });
 
   function openEdit(s: Silo) {
@@ -409,20 +411,20 @@ export function SilosSection() {
           <Input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search silo name…"
+            placeholder={t("common.search") + " " + t("grainOps.silo").toLowerCase() + "…"}
             className="pl-9 h-9"
           />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-full sm:w-40 h-9">
-            <SelectValue placeholder="Status" />
+            <SelectValue placeholder={t("silos.status")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="offline">Offline</SelectItem>
-            <SelectItem value="error">Error</SelectItem>
-            <SelectItem value="maintenance">Maintenance</SelectItem>
+            <SelectItem value="all">{t("silos.allStatuses")}</SelectItem>
+            <SelectItem value="active">{t("silos.active")}</SelectItem>
+            <SelectItem value="offline">{t("silos.offline")}</SelectItem>
+            <SelectItem value="error">{t("silos.error")}</SelectItem>
+            <SelectItem value="maintenance">{t("silos.maintenance")}</SelectItem>
           </SelectContent>
         </Select>
         {isAdmin &&
@@ -432,7 +434,7 @@ export function SilosSection() {
               onClick={() => navigate({ to: "/plan-management" })}
               className="gap-2 h-9 whitespace-nowrap border-emerald-400 text-emerald-700 hover:bg-emerald-50"
             >
-              <ShoppingCart className="w-4 h-4" /> Upgrade Plan
+              <ShoppingCart className="w-4 h-4" /> {t("silos.upgradePlan")}
             </Button>
           ) : (
             <Button
@@ -440,20 +442,20 @@ export function SilosSection() {
               onClick={handleRequestSilo}
               disabled={siloGate.isLoading}
               className="gap-2 h-9 whitespace-nowrap border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-400 dark:hover:bg-amber-950/30"
-              title="Silo provisioning is handled by Super Admin — this requests a new one."
+              title={t("silos.siloProvisioningMessage")}
             >
-              <ShoppingCart className="w-4 h-4" /> Request Silo
+              <ShoppingCart className="w-4 h-4" /> {t("silos.requestSilo")}
             </Button>
           ))}
       </div>
 
       {isLoading ? (
         <div className="flex items-center justify-center py-8 text-muted-foreground">
-          <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading…
+          <Loader2 className="w-5 h-5 animate-spin mr-2" /> {t("common.loading")}
         </div>
       ) : rows.length === 0 ? (
         <div className="py-8 text-center text-muted-foreground">
-          <p className="text-sm">No silos yet.</p>
+          <p className="text-sm">{t("silos.noSilos")}</p>
         </div>
       ) : (
         // Fixed height container for 4 entries (4 columns x 1 row) with vertical scroll
@@ -488,8 +490,8 @@ export function SilosSection() {
       >
         <DialogContent className="max-w-md max-h-[92vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit silo</DialogTitle>
-            <DialogDescription>Update silo details.</DialogDescription>
+            <DialogTitle>{t("silos.editSilo")}</DialogTitle>
+            <DialogDescription>{t("silos.updateSiloDetails")}</DialogDescription>
           </DialogHeader>
           <form
             id="silo-form"
@@ -500,7 +502,7 @@ export function SilosSection() {
             }}
           >
             <div>
-              <Label>Name</Label>
+              <Label>{t("common.name")}</Label>
               {form.id && !canRename ? (
                 <div className="h-9 flex items-center px-3 rounded-md border bg-muted text-sm text-muted-foreground">
                   {form.name || "—"}
@@ -509,21 +511,21 @@ export function SilosSection() {
                 <Input
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="Auto-generated if left blank"
+                  placeholder={t("silos.nameAutoGenerated")}
                 />
               )}
             </div>
             <div>
-              <Label>Warehouse</Label>
+              <Label>{t("silos.warehouse")}</Label>
               <Select
                 value={form.warehouse_id || "__auto__"}
                 onValueChange={(v) => setForm({ ...form, warehouse_id: v === "__auto__" ? "" : v })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Auto-detect from location" />
+                  <SelectValue placeholder={t("silos.autoDetectLocation")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__auto__">Auto-detect from location</SelectItem>
+                  <SelectItem value="__auto__">{t("silos.autoDetectLocation")}</SelectItem>
                   {warehouses.map((w) => (
                     <SelectItem key={w.id} value={w.id}>
                       {w.name}
@@ -532,11 +534,11 @@ export function SilosSection() {
                 </SelectContent>
               </Select>
               <p className="text-[10px] text-muted-foreground mt-1">
-                Leave on "Auto-detect" to create a warehouse from the silo's location
+                {t("silos.autoDetectHelp")}
               </p>
             </div>
             <div>
-              <Label>Capacity (kg) *</Label>
+              <Label>{t("silos.capacity")} (kg) *</Label>
               <Input
                 type="number"
                 min={1}
@@ -546,27 +548,27 @@ export function SilosSection() {
               />
             </div>
             <div>
-              <Label>City / Location *</Label>
+              <Label>{t("silos.city")} / {t("silos.location") || t("silos.city")} *</Label>
               <Input
                 value={form.location_description}
                 onChange={(e) => setForm({ ...form, location_description: e.target.value })}
-                placeholder="e.g. Lahore, Sialkot"
+                placeholder={t("silos.cityPlaceholder")}
               />
-              <p className="text-[10px] text-muted-foreground mt-1">Used for region grouping</p>
+              <p className="text-[10px] text-muted-foreground mt-1">{t("silos.regionGrouping")}</p>
             </div>
             <div>
-              <Label>Address</Label>
+              <Label>{t("silos.address")}</Label>
               <Input
                 value={form.address}
                 onChange={(e) => setForm({ ...form, address: e.target.value })}
-                placeholder="e.g. 125 farm road, block a"
+                placeholder={t("silos.addressPlaceholder")}
               />
               <p className="text-[10px] text-muted-foreground mt-1">
-                Street address for warehouse identification
+                {t("silos.addressHelp")}
               </p>
             </div>
             <div>
-              <Label>Status</Label>
+              <Label>{t("silos.status")}</Label>
               <Select
                 value={form.status}
                 onValueChange={(v) => setForm({ ...form, status: v as FormState["status"] })}
@@ -575,14 +577,14 @@ export function SilosSection() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="offline">Offline</SelectItem>
-                  <SelectItem value="maintenance">Maintenance</SelectItem>
+                  <SelectItem value="active">{t("silos.active")}</SelectItem>
+                  <SelectItem value="offline">{t("silos.offline")}</SelectItem>
+                  <SelectItem value="maintenance">{t("silos.maintenance")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label>Notes</Label>
+              <Label>{t("silos.notes")}</Label>
               <Textarea
                 rows={2}
                 value={form.notes}
@@ -592,7 +594,7 @@ export function SilosSection() {
           </form>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setEditOpen(false)}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               form="silo-form"
@@ -602,7 +604,7 @@ export function SilosSection() {
               {saveMutation.isPending ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                "Save changes"
+                t("common.save")
               )}
             </Button>
           </DialogFooter>
@@ -628,22 +630,22 @@ export function SilosSection() {
                 <DialogDescription>{selected.silo_id}</DialogDescription>
               </DialogHeader>
               <div className="space-y-2 text-sm py-2">
-                <Row label="Warehouse">{selected.warehouses?.name ?? "—"}</Row>
-                <Row label="Capacity">{(selected.capacity_kg ?? 0).toLocaleString()} kg</Row>
-                <Row label="Current">
+                <Row label={t("silos.warehouse")}>{selected.warehouses?.name ?? "—"}</Row>
+                <Row label={t("silos.capacity")}>{(selected.capacity_kg ?? 0).toLocaleString()} kg</Row>
+                <Row label={t("silos.current")}>
                   {(selected.current_occupancy_kg ?? 0).toLocaleString()} kg
                 </Row>
-                <Row label="Status">
+                <Row label={t("silos.status")}>
                   <StatusBadge value={selected.status} />
                 </Row>
                 {selected.location?.description && (
-                  <Row label="Location">{selected.location.description}</Row>
+                  <Row label={t("silos.location")}>{selected.location.description}</Row>
                 )}
                 {selected.current_batch && (
-                  <Row label="Current Batch">{selected.current_batch.grain_type}</Row>
+                  <Row label={t("silos.currentBatch")}>{selected.current_batch.grain_type}</Row>
                 )}
                 {selected.notes && (
-                  <Row label="Notes">
+                  <Row label={t("silos.notes")}>
                     <span className="whitespace-pre-wrap">{selected.notes}</span>
                   </Row>
                 )}
@@ -670,18 +672,18 @@ export function SilosSection() {
       <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete silo?</AlertDialogTitle>
+            <AlertDialogTitle>{t("silos.deleteSilo")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This permanently removes the silo. Any batches it contains must be reassigned first.
+              {t("silos.deleteDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deleteId && deleteMutation.mutate(deleteId)}
               className="bg-rose-600 hover:bg-rose-700"
             >
-              {deleteMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Delete"}
+              {deleteMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : t("common.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -699,26 +701,20 @@ export function SilosSection() {
       <Dialog open={limitOpen} onOpenChange={setLimitOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Silo limit reached</DialogTitle>
+            <DialogTitle>{t("silos.limitReached")}</DialogTitle>
             <DialogDescription>
-              Your current plan allows up to{" "}
-              <strong>
-                {typeof siloGate.data?.limit === "number" ? siloGate.data.limit : "—"}
-              </strong>{" "}
-              silos and you are already using{" "}
-              <strong>
-                {typeof siloGate.data?.used === "number" ? siloGate.data.used : "all"}
-              </strong>{" "}
-              of them.
+              {t("silos.limitDescription", {
+                limit: typeof siloGate.data?.limit === "number" ? siloGate.data.limit : "—",
+                used: typeof siloGate.data?.used === "number" ? siloGate.data.used : "all",
+              })}
             </DialogDescription>
           </DialogHeader>
           <p className="text-sm text-slate-600 px-1">
-            To add more silos, upgrade to a higher plan. Visit the plan management page to request
-            an upgrade.
+            {t("silos.upgradeDescription")}
           </p>
           <DialogFooter className="mt-2 flex gap-2">
             <Button variant="outline" onClick={() => setLimitOpen(false)}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               className="bg-emerald-600 hover:bg-emerald-700 text-white"
@@ -727,7 +723,7 @@ export function SilosSection() {
                 navigate({ to: "/plan-management" });
               }}
             >
-              Upgrade plan
+              {t("silos.upgradePlan")}
             </Button>
           </DialogFooter>
         </DialogContent>
