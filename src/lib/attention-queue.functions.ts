@@ -3,37 +3,86 @@
  */
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { z } from "zod";
+import { resolveLocationScope, byWarehouse, type LocationScope } from "./page-scope.server";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 const SEVERITY_WEIGHT: Record<string, number> = { critical: 100, warning: 30, info: 5 };
 
+/**
+ * Ids of the rows of a silo-keyed table that fall inside the active location.
+ * `null` means no location is active and the caller should not filter at all —
+ * an empty array means the location genuinely has none.
+ */
+async function idsForSilos(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  sb: any,
+  table: "sensor_devices" | "actuators",
+  scope: LocationScope,
+): Promise<string[] | null> {
+  if (!scope.siloIds) return null;
+  if (scope.siloIds.length === 0) return [];
+  const { data } = await sb.from(table).select("id").in("silo_id", scope.siloIds).limit(5000);
+  return ((data ?? []) as Row[]).map((r) => r.id as string);
+}
+
 export const getAttentionQueue = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((data) =>
+    z
+      .object({ loc: z.string().trim().min(1).optional(), wh: z.string().uuid().optional() })
+      .parse(data ?? {}),
+  )
+  .handler(async ({ context, data: input }) => {
     const sb = context.supabase;
     const since24h = new Date(Date.now() - 24 * 3600_000).toISOString();
+    const scope = await resolveLocationScope(sb, input?.loc, input?.wh);
+
+    // Neither device_heartbeats nor actuator_commands carries a warehouse: they
+    // hang off sensor_devices and actuators, which key on silo_id. Under a
+    // location the ids are resolved first so the two counters below describe
+    // the selected warehouse rather than the whole tenant.
+    const [deviceIds, actuatorIds] = await Promise.all([
+      idsForSilos(sb, "sensor_devices", scope),
+      idsForSilos(sb, "actuators", scope),
+    ]);
 
     const [silosRes, alertsRes, hbRes, failedCmdRes] = await Promise.all([
-      sb.from("silos").select("id, name, warehouse_id, capacity_kg, current_occupancy_kg"),
-      sb
-        .from("grain_alerts")
-        .select("id, silo_id, severity, alert_type, message, created_at")
+      byWarehouse(
+        sb.from("silos").select("id, name, warehouse_id, capacity_kg, current_occupancy_kg"),
+        scope,
+      ),
+      byWarehouse(
+        sb.from("grain_alerts").select("id, silo_id, severity, alert_type, message, created_at"),
+        scope,
+      )
         .is("resolved_at", null)
         .gte("created_at", since24h),
-      sb.from("device_heartbeats").select("device_id, status, last_seen_at"),
-      sb
-        .from("actuator_commands")
-        .select("id, actuator_id, status, created_at")
-        .eq("status", "failed")
-        .gte("created_at", since24h),
+      deviceIds === null
+        ? sb.from("device_heartbeats").select("device_id, status, last_seen_at")
+        : deviceIds.length === 0
+          ? null
+          : sb
+              .from("device_heartbeats")
+              .select("device_id, status, last_seen_at")
+              .in("device_id", deviceIds),
+      (() => {
+        if (actuatorIds !== null && actuatorIds.length === 0) return null;
+        const q = sb
+          .from("actuator_commands")
+          .select("id, actuator_id, status, created_at")
+          .eq("status", "failed")
+          .gte("created_at", since24h);
+        return actuatorIds === null ? q : q.in("actuator_id", actuatorIds);
+      })(),
     ]);
 
     const silos = (silosRes.data ?? []) as Row[];
     const alerts = (alertsRes.data ?? []) as Row[];
-    const heartbeats = (hbRes.data ?? []) as Row[];
-    const failed = (failedCmdRes.data ?? []) as Row[];
+    const heartbeats = (hbRes?.data ?? []) as Row[];
+    const failed = (failedCmdRes?.data ?? []) as Row[];
 
     // Map alerts by silo
     const alertsBySilo = new Map<string, Row[]>();

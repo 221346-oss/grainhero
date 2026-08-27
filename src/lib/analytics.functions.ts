@@ -97,14 +97,23 @@ function computeFallbackRisk(
  */
 export const getSiloPredictions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((data) =>
+    z
+      .object({ loc: z.string().trim().min(1).optional(), wh: z.string().uuid().optional() })
+      .parse(data ?? {}),
+  )
+  .handler(async ({ context, data: input }) => {
     await assertAllowed(context.supabase, context.userId);
+    const scope = await resolveLocationScope(context.supabase, input?.loc, input?.wh);
 
-    const { data: silos, error } = await context.supabase
-      .from("silos")
-      .select(
-        "id, silo_id, name, capacity_kg, current_occupancy_kg, status, warehouse_id, risk_score",
-      )
+    const { data: silos, error } = await byWarehouse(
+      context.supabase
+        .from("silos")
+        .select(
+          "id, silo_id, name, capacity_kg, current_occupancy_kg, status, warehouse_id, risk_score",
+        ),
+      scope,
+    )
       .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .limit(200);
@@ -299,31 +308,48 @@ export const getMLModels = createServerFn({ method: "GET" })
 
 export const getAnalyticsOverview = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((data) =>
+    z
+      .object({ loc: z.string().trim().min(1).optional(), wh: z.string().uuid().optional() })
+      .parse(data ?? {}),
+  )
+  .handler(async ({ context, data: input }) => {
     await assertAllowed(context.supabase, context.userId);
+    const scope = await resolveLocationScope(context.supabase, input?.loc, input?.wh);
 
     const [batches, alerts, silos, readings] = await Promise.all([
-      context.supabase
-        .from("grain_batches")
-        .select(
-          "id, grain_type, status, quantity_kg, revenue, profit, purchase_price_per_kg, sell_price_per_kg, risk_score, intake_date, created_at, spoilage_label",
-        )
+      byWarehouse(
+        context.supabase
+          .from("grain_batches")
+          .select(
+            "id, grain_type, status, quantity_kg, revenue, profit, purchase_price_per_kg, sell_price_per_kg, risk_score, intake_date, created_at, spoilage_label",
+          ),
+        scope,
+      )
         .is("deleted_at", null)
         .limit(1000),
-      context.supabase
-        .from("grain_alerts")
-        .select("id, status, priority, created_at, alert_type")
+      byWarehouse(
+        context.supabase
+          .from("grain_alerts")
+          .select("id, status, priority, created_at, alert_type"),
+        scope,
+      )
         .order("created_at", { ascending: false })
         .limit(500),
-      context.supabase
-        .from("silos")
-        .select("id, name, capacity_kg, current_occupancy_kg, status")
-        .limit(200),
-      context.supabase
-        .from("sensor_readings")
-        .select(
-          "temperature_value, humidity_value, moisture_value, ml_risk_score, reading_timestamp",
-        )
+      byWarehouse(
+        context.supabase
+          .from("silos")
+          .select("id, name, capacity_kg, current_occupancy_kg, status"),
+        scope,
+      ).limit(200),
+      byWarehouse(
+        context.supabase
+          .from("sensor_readings")
+          .select(
+            "temperature_value, humidity_value, moisture_value, ml_risk_score, reading_timestamp",
+          ),
+        scope,
+      )
         .order("reading_timestamp", { ascending: false })
         .limit(500),
     ]);

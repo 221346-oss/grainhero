@@ -17,6 +17,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { getSiloPredictions } from "@/lib/analytics.functions";
+import { useLocationScopeQuery } from "@/components/app/location/LocationScope";
 import { getMyRole } from "@/lib/roles.functions";
 import { getSpoilageInsight } from "@/lib/ai-insights.functions";
 import { toast } from "sonner";
@@ -66,10 +67,12 @@ export function PredictionsSection() {
 
 function TenantView() {
   const fetchPredictions = useServerFn(getSiloPredictions);
+  // Scope this section to the active warehouse — key and request together.
+  const { key: loc, params: locParams } = useLocationScopeQuery();
 
   const { data, isFetching, refetch } = useQuery({
-    queryKey: ["ai-predictions"],
-    queryFn: () => fetchPredictions(),
+    queryKey: ["ai-predictions", loc],
+    queryFn: () => fetchPredictions({ data: locParams }),
     refetchInterval: 60_000,
   });
 

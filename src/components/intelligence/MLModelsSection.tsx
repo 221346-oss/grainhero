@@ -6,7 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Database, Activity, GitBranch } from "lucide-react";
 import { getMLModels } from "@/lib/analytics.functions";
 import { getMyRole } from "@/lib/roles.functions";
-import { useLocationScope } from "@/components/app/location/LocationScope";
+import { useLocationScope, useLocationScopeQuery } from "@/components/app/location/LocationScope";
 
 export function MLModelsSection() {
   const fetchRole = useServerFn(getMyRole);
@@ -17,11 +17,11 @@ export function MLModelsSection() {
 
   // Each site trains on its own data, so performance is reported per location.
   const scope = useLocationScope();
-  const loc = scope?.scopeKey ?? null;
+  const { key: loc, params: locParams } = useLocationScopeQuery();
 
   const { data } = useQuery({
     queryKey: ["ml-models", loc],
-    queryFn: () => fetchModels({ data: { loc: loc ?? undefined } }),
+    queryFn: () => fetchModels({ data: locParams }),
     enabled: allowed,
   });
 

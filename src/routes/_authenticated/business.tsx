@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useLocationScopeQuery } from "@/components/app/location/LocationScope";
 import { VariableFontText } from "@/components/app/VariableFontText";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -53,10 +54,17 @@ function BusinessWorkspace() {
   const [activeTab, setActiveTab] = useState<Tab>("revenue");
 
   const fetchRevenue = useServerFn(getRevenueOverview);
+
+  // Scope this page to the active warehouse — key and request together.
+
+  const { key: loc, params: locParams } = useLocationScopeQuery();
   const fetchSub = useServerFn(getMySubscription);
   const fetchRole = useServerFn(getMyRole);
 
-  const { data: revenue } = useQuery({ queryKey: ["revenue"], queryFn: () => fetchRevenue() });
+  const { data: revenue } = useQuery({
+    queryKey: ["revenue", loc],
+    queryFn: () => fetchRevenue({ data: locParams }),
+  });
   const { data: mySub } = useQuery({ queryKey: ["my-subscription"], queryFn: () => fetchSub() });
   const { data: roleData } = useQuery({ queryKey: ["my-role"], queryFn: () => fetchRole() });
   const role = roleData?.role ?? "pending";

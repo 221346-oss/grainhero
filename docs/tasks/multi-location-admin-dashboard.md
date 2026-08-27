@@ -513,3 +513,42 @@ Separate data, switching instantly, no bleed.
    a horizontal flex overlapped the Sell and View buttons at panel width.
 
 None of the three were caught by types, lint, tests or the build.
+
+---
+
+## 12. Second scoping sweep — the analytical pages
+
+The first pass covered the operational pages. The five analytical ones still
+read the whole tenant while the header switcher claimed a single warehouse, so
+the figures on them contradicted the pages beside them.
+
+| Page | Server function | Scoped by |
+|---|---|---|
+| Analytics | `getAnalyticsOverview` | `warehouse_id` on batches, alerts, silos and readings |
+| Intelligence — predictions | `getSiloPredictions` | `warehouse_id` on silos |
+| Intelligence — ML models | `getMLModels` | `warehouse_id` on readings |
+| Attention | `getAttentionQueue` | silos and alerts by warehouse; devices and actuators by silo |
+| Revenue / Business | `getRevenueOverview` | dispatches by warehouse, invoices and payments by dispatch |
+
+Three details worth recording:
+
+- **Invoices and payments carry no warehouse.** They point at a dispatch, which
+  does. The scope narrows dispatches first and the resulting ids narrow the
+  other two. A location with no dispatches must yield **no** invoices — the
+  empty case is filtered explicitly rather than left to fall through to
+  "unfiltered", which would have shown every invoice in the account.
+- **Heartbeats and actuator commands carry no warehouse either.** They hang off
+  `sensor_devices` and `actuators`, which key on `silo_id`. The two counters on
+  the attention page (`offlineDeviceCount`, `failedCommandCount`) are resolved
+  through those ids; left unscoped they described the whole tenant while the
+  rows beneath them described one warehouse.
+- **Every call site, not just the route.** `getMLModels`,
+  `getAnalyticsOverview`, `getSiloPredictions` and `getRevenueOverview` are each
+  called from a section component as well as its route. Scoping the route alone
+  leaves the component serving the account-wide figure, and the shared query key
+  then hands one location's cache to another. `MLModelsSection` was also sending
+  only `loc`, so choosing a single warehouse silently fell back to its whole
+  city.
+
+Verified by `tsc`, `eslint` and the unit tests; the same in-browser isolation
+check as §11 still needs running against these five pages.

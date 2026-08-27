@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useLocationScopeQuery } from "@/components/app/location/LocationScope";
 import { VariableFontText } from "@/components/app/VariableFontText";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -40,6 +41,10 @@ function IntelligenceWorkspace() {
   const [activeTab, setActiveTab] = useState<Tab>("predictions");
 
   const fetchRole = useServerFn(getMyRole);
+
+  // Scope this page to the active warehouse — key and request together.
+
+  const { key: loc, params: locParams } = useLocationScopeQuery();
   const roleQ = useQuery({ queryKey: ["my-role"], queryFn: () => fetchRole() });
   const role = roleQ.data?.role ?? "pending";
   const isSuperAdmin = role === "super_admin";
@@ -51,20 +56,20 @@ function IntelligenceWorkspace() {
   const fetchModels = useServerFn(getMLModels);
 
   const { data: predictions } = useQuery({
-    queryKey: ["ai-predictions"],
-    queryFn: () => fetchPredictions(),
+    queryKey: ["ai-predictions", loc],
+    queryFn: () => fetchPredictions({ data: locParams }),
     enabled: allowedAnalytics && !isSuperAdmin,
     refetchInterval: 60_000,
   });
   const { data: analytics } = useQuery({
-    queryKey: ["analytics-overview"],
-    queryFn: () => fetchOverview(),
+    queryKey: ["analytics-overview", loc],
+    queryFn: () => fetchOverview({ data: locParams }),
     enabled: allowedAnalytics,
     refetchInterval: 60_000,
   });
   const { data: mlModels } = useQuery({
-    queryKey: ["ml-models"],
-    queryFn: () => fetchModels(),
+    queryKey: ["ml-models", loc],
+    queryFn: () => fetchModels({ data: locParams }),
     enabled: allowedModels,
   });
 

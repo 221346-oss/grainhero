@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useLocationScopeQuery } from "@/components/app/location/LocationScope";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,7 +27,12 @@ export const Route = createFileRoute("/_authenticated/attention")({
 
 function AttentionPage() {
   const fn = useServerFn(getAttentionQueue);
-  const { data, isLoading } = useQuery({ queryKey: ["attention-queue"], queryFn: () => fn() });
+  // Scope this page to the active warehouse — key and request together.
+  const { key: loc, params: locParams } = useLocationScopeQuery();
+  const { data, isLoading } = useQuery({
+    queryKey: ["attention-queue", loc],
+    queryFn: () => fn({ data: locParams }),
+  });
   const d = data as
     | {
         rows: Array<{

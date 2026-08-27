@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { AlertCircle, Search, Plus, Truck, RotateCcw, DollarSign } from "lucide-react";
 import { getRevenueOverview, markInvoicePaid } from "@/lib/billing.functions";
+import { useLocationScopeQuery } from "@/components/app/location/LocationScope";
 import { kgToMan, pricePerKgToPerMan } from "@/lib/units";
 import { DispatchSaleWizard } from "@/components/business/DispatchSaleWizard";
 import { ExportMenu } from "@/components/app/ExportMenu";
@@ -121,7 +122,12 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
   const fn = useServerFn(getRevenueOverview);
   const markFn = useServerFn(markInvoicePaid);
   const qc = useQueryClient();
-  const { data } = useQuery({ queryKey: ["revenue"], queryFn: () => fn() });
+  // Scope this section to the active warehouse — key and request together.
+  const { key: loc, params: locParams } = useLocationScopeQuery();
+  const { data } = useQuery({
+    queryKey: ["revenue", loc],
+    queryFn: () => fn({ data: locParams }),
+  });
 
   const [q, setQ] = useState("");
   const [wizardOpen, setWizardOpen] = useState(false);

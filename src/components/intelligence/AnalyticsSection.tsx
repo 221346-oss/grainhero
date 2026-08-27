@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { TrendingUp, DollarSign, Thermometer, Droplet, Wheat, AlertTriangle } from "lucide-react";
 import { getAnalyticsOverview } from "@/lib/analytics.functions";
+import { useLocationScopeQuery } from "@/components/app/location/LocationScope";
 import { getPlatformAnalyticsBreakdown } from "@/lib/platform-overviews.functions";
 import { getMyRole } from "@/lib/roles.functions";
 import { PlatformScopeBanner } from "@/components/app/PlatformScopeBanner";
@@ -27,14 +28,16 @@ function fmtMoney(n: number) {
 export function AnalyticsSection() {
   const fetchRole = useServerFn(getMyRole);
   const fetchOverview = useServerFn(getAnalyticsOverview);
+  // Scope this section to the active warehouse — key and request together.
+  const { key: loc, params: locParams } = useLocationScopeQuery();
   const roleQ = useQuery({ queryKey: ["my-role"], queryFn: () => fetchRole() });
   const role = roleQ.data?.role ?? "pending";
   const allowed = ["super_admin", "admin", "manager"].includes(role);
   const isSuperAdmin = role === "super_admin";
 
   const { data } = useQuery({
-    queryKey: ["analytics-overview"],
-    queryFn: () => fetchOverview(),
+    queryKey: ["analytics-overview", loc],
+    queryFn: () => fetchOverview({ data: locParams }),
     enabled: allowed,
     refetchInterval: 60_000,
   });

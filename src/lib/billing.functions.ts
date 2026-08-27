@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { resolveLocationScope, byWarehouse } from "./page-scope.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { getEffectiveRole } from "./rbac.server";
@@ -136,8 +137,14 @@ export const cancelMySubscription = createServerFn({ method: "POST" })
 
 export const getRevenueOverview = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((data) =>
+    z
+      .object({ loc: z.string().trim().min(1).optional(), wh: z.string().uuid().optional() })
+      .parse(data ?? {}),
+  )
+  .handler(async ({ context, data: input }) => {
     const r = await role(context.supabase, context.userId);
+    const scope = await resolveLocationScope(context.supabase, input?.loc, input?.wh);
     if (!["super_admin", "admin", "manager"].includes(r)) throw new Error("Forbidden");
 
     let adminId: string | null = null;
@@ -176,6 +183,26 @@ export const getRevenueOverview = createServerFn({ method: "GET" })
       invQuery = invQuery.eq("admin_id", adminId);
       payQuery = payQuery.eq("admin_id", adminId);
       dispQuery = dispQuery.eq("admin_id", adminId);
+    }
+
+    // Dispatches carry the warehouse; invoices and payments only point at a
+    // dispatch. So the scope is applied to dispatches first, and the resulting
+    // ids narrow the other two. An empty list means this location has no
+    // dispatches, which must yield no invoices rather than all of them.
+    if (scope.warehouseIds) {
+      dispQuery = dispQuery.in("warehouse_id", scope.warehouseIds);
+      const { data: scoped } = await byWarehouse(
+        context.supabase.from("grain_dispatches").select("id"),
+        scope,
+      ).limit(5000);
+      const ids = (scoped ?? []).map((d) => d.id);
+      if (ids.length === 0) {
+        invQuery = invQuery.eq("dispatch_id", "00000000-0000-0000-0000-000000000000");
+        payQuery = payQuery.eq("dispatch_id", "00000000-0000-0000-0000-000000000000");
+      } else {
+        invQuery = invQuery.in("dispatch_id", ids);
+        payQuery = payQuery.in("dispatch_id", ids);
+      }
     }
 
     const [invRes, payRes, dispRes] = await Promise.all([

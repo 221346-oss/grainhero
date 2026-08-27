@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useLocationScopeQuery } from "@/components/app/location/LocationScope";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -52,6 +53,8 @@ function fmtMoney(n: number) {
 
 function AnalyticsPage() {
   const fetchRole = useServerFn(getMyRole);
+  // Scope this page to the active warehouse — key and request together.
+  const { key: loc, params: locParams } = useLocationScopeQuery();
   const fetchOverview = useServerFn(getAnalyticsOverview);
   const roleQ = useQuery({ queryKey: ["my-role"], queryFn: () => fetchRole() });
   const role = roleQ.data?.role ?? "pending";
@@ -59,8 +62,8 @@ function AnalyticsPage() {
   const isSuperAdmin = role === "super_admin";
 
   const { data } = useQuery({
-    queryKey: ["analytics-overview"],
-    queryFn: () => fetchOverview(),
+    queryKey: ["analytics-overview", loc],
+    queryFn: () => fetchOverview({ data: locParams }),
     enabled: allowed,
     refetchInterval: 60_000,
   });

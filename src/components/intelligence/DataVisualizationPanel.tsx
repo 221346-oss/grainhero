@@ -194,8 +194,8 @@ export function DataVisualizationPanel() {
 
   // Fetch ML performance metrics
   const { data: mlData, isLoading: isLoadingML } = useQuery({
-    queryKey: ["ml-models-overview"],
-    queryFn: () => getMLFn(),
+    queryKey: ["ml-models-overview", loc],
+    queryFn: () => getMLFn({ data: locParams }),
   });
 
   const mlMetrics = useMemo((): MlMetrics => {

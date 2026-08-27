@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useLocationScopeQuery } from "@/components/app/location/LocationScope";
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -57,9 +58,14 @@ function money(n: number, ccy: string | null | undefined) {
 
 function RevenuePage() {
   const fn = useServerFn(getRevenueOverview);
+  // Scope this page to the active warehouse — key and request together.
+  const { key: loc, params: locParams } = useLocationScopeQuery();
   const markFn = useServerFn(markInvoicePaid);
   const qc = useQueryClient();
-  const { data, isLoading } = useQuery({ queryKey: ["revenue"], queryFn: () => fn() });
+  const { data, isLoading } = useQuery({
+    queryKey: ["revenue", loc],
+    queryFn: () => fn({ data: locParams }),
+  });
 
   const [q, setQ] = useState("");
 
