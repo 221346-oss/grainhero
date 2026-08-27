@@ -656,3 +656,38 @@ at all rather than how to force them into a location. Worth settling separately.
 `silo_id` is deliberately left null even on the two that are backfilled: the
 warehouse is determined, the silo is not, and a wrong silo would put a real
 alert against the wrong row on the cockpit.
+
+---
+
+## 15. The impersonation banner outlived its session
+
+Found while trying to run the §13 follow-up as a real admin.
+
+A super admin had used "View as" earlier in the browser. After signing out and
+signing in as an ordinary admin, the banner still read **"Viewing as Nigar
+Fatima"** — and clicking Exit returned `Forbidden: super_admin only`, because
+`stopImpersonation` is gated on super admin and the current user was not one.
+The banner was stuck on screen with no way to dismiss it, over an account that
+had nothing to do with it.
+
+Two causes, both fixed:
+
+- **The session was not bound to anyone.** It lives in `localStorage`, which is
+  keyed to the browser rather than the account, so it survived the sign-out.
+  `startImpersonation` now returns `startedBy` (the super admin's user id), it
+  is stored with the session, and the banner discards any session whose
+  `startedBy` is missing or does not match the current user. A session with no
+  `startedBy` predates the field and cannot be attributed, so it is treated as
+  not ours and dropped — a super admin mid-impersonation when this ships has to
+  re-enter it, which is cheaper than the banner sticking to a stranger.
+- **Exit depended on a call it did not need.** The state is client-side, so
+  clearing `localStorage` *is* the work and the server call is advisory. It now
+  clears on `onSettled` rather than `onSuccess`, so a failing or forbidden call
+  can no longer strand the banner.
+
+Verified: reloading the affected session clears the banner on its own, and the
+page renders the signed-in admin's own state.
+
+This is the same root cause as §13 — impersonation state living only in the
+browser — and fixing it does not fix that. A support user's "View as" still
+gives them platform scope on the server.

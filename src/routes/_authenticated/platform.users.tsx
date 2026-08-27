@@ -207,6 +207,7 @@ function UsersPage() {
         adminName: data.adminName ?? "",
         adminEmail: data.adminEmail ?? null,
         businessType: data.businessType ?? null,
+        startedBy: data.startedBy,
       });
       toast.success(`Now viewing as ${data.adminName}`);
       navigate({ to: "/dashboard" });

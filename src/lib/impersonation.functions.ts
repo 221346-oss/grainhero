@@ -31,9 +31,13 @@ export const startImpersonation = createServerFn({ method: "POST" })
 
     if (!hasAdminRole) throw new Error("Target user is not an admin");
 
-    // Return the verified admin info — state is stored client-side
+    // Return the verified admin info — state is stored client-side.
+    // `startedBy` travels with it so the session can be recognised as belonging
+    // to this super admin and discarded when anyone else signs in; localStorage
+    // is keyed to the browser, not the account.
     return {
       success: true,
+      startedBy: context.userId,
       adminName: targetUser.name || targetUser.email,
       adminId: targetUser.id,
       adminEmail: targetUser.email,
