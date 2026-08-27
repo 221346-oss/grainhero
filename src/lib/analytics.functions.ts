@@ -104,7 +104,12 @@ export const getSiloPredictions = createServerFn({ method: "GET" })
   )
   .handler(async ({ context, data: input }) => {
     await assertAllowed(context.supabase, context.userId);
-    const scope = await resolveLocationScope(context.supabase, input?.loc, input?.wh);
+    const scope = await resolveLocationScope(
+      context.supabase,
+      context.userId,
+      input?.loc,
+      input?.wh,
+    );
 
     const { data: silos, error } = await byWarehouse(
       context.supabase
@@ -214,7 +219,12 @@ export const getMLModels = createServerFn({ method: "GET" })
     // warehouses in the same city can hold very different numbers of silos — one
     // silo versus three is a materially different dataset — so aggregating them
     // under a city would hide exactly the difference this is meant to show.
-    const scope = await resolveLocationScope(context.supabase, input?.loc, input?.wh);
+    const scope = await resolveLocationScope(
+      context.supabase,
+      context.userId,
+      input?.loc,
+      input?.wh,
+    );
 
     // Derive live "accuracy" proxy from readings that have ml_risk_class populated.
     const { data: readings } = await byWarehouse(
@@ -315,7 +325,12 @@ export const getAnalyticsOverview = createServerFn({ method: "GET" })
   )
   .handler(async ({ context, data: input }) => {
     await assertAllowed(context.supabase, context.userId);
-    const scope = await resolveLocationScope(context.supabase, input?.loc, input?.wh);
+    const scope = await resolveLocationScope(
+      context.supabase,
+      context.userId,
+      input?.loc,
+      input?.wh,
+    );
 
     const [batches, alerts, silos, readings] = await Promise.all([
       byWarehouse(

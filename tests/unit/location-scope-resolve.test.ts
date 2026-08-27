@@ -9,23 +9,38 @@ type Row = Record<string, unknown>;
  * Records the `.in()` filters applied so a test can assert what the silo lookup
  * was actually narrowed to, and resolves to whatever rows the table holds.
  */
-function fakeSupabase(tables: Record<string, Row[]>) {
-  const calls: Array<{ table: string; in: Record<string, unknown[]> }> = [];
+function fakeSupabase(tables: Record<string, Row[]>, role: string = "admin") {
+  const calls: Array<{
+    table: string;
+    in: Record<string, unknown[]>;
+    eq: Record<string, unknown>;
+  }> = [];
 
   return {
     calls,
+    rpc: async () => ({ data: role, error: null }),
     from(table: string) {
-      const record = { table, in: {} as Record<string, unknown[]> };
+      const record = {
+        table,
+        in: {} as Record<string, unknown[]>,
+        eq: {} as Record<string, unknown>,
+      };
       calls.push(record);
       const rows = tables[table] ?? [];
 
       const builder: Record<string, unknown> = {
         then: (resolve: (v: { data: Row[]; error: null }) => unknown) =>
           resolve({ data: rows, error: null }),
+        maybeSingle: async () => ({ data: rows[0] ?? null, error: null }),
+        single: async () => ({ data: rows[0] ?? null, error: null }),
       };
-      for (const method of ["select", "is", "limit", "eq", "order"]) {
+      for (const method of ["select", "is", "limit", "order"]) {
         builder[method] = () => builder;
       }
+      builder.eq = (col: string, val: unknown) => {
+        record.eq[col] = val;
+        return builder;
+      };
       builder.in = (col: string, vals: unknown[]) => {
         record.in[col] = vals;
         return builder;
@@ -33,6 +48,16 @@ function fakeSupabase(tables: Record<string, Row[]>) {
       return builder;
     },
   };
+}
+
+const USER = "u-admin";
+
+/** The caller's own profile row — makes them the tenant admin. */
+const PROFILES: Row[] = [{ id: USER, admin_id: null }];
+
+/** Tables every call needs, plus whatever the test overrides. */
+function tablesFor(extra: Record<string, Row[]> = {}) {
+  return { profiles: PROFILES, activity_logs: [], ...extra };
 }
 
 const WAREHOUSES: Row[] = [
@@ -46,26 +71,27 @@ const SILOS: Row[] = [{ id: "s-1" }, { id: "s-2" }];
 
 describe("resolveLocationScope", () => {
   it("returns the unscoped default when no city is given", async () => {
-    const sb = fakeSupabase({ warehouses: WAREHOUSES, silos: SILOS });
+    const sb = fakeSupabase(tablesFor({ warehouses: WAREHOUSES, silos: SILOS }));
     for (const input of [undefined, null, "", "   "]) {
-      const scope = await resolveLocationScope(sb as never, input);
+      const scope = await resolveLocationScope(sb as never, USER, input);
       expect(scope).toEqual(ALL_LOCATIONS);
     }
-    // Nothing should have been queried for the unscoped path.
+    // Nothing should have been queried for the unscoped path — not even the
+    // tenant lookup, which would be wasted work.
     expect(sb.calls).toHaveLength(0);
   });
 
   it("resolves a city to its warehouses regardless of how it was spelled", async () => {
-    const sb = fakeSupabase({ warehouses: WAREHOUSES, silos: SILOS });
-    const scope = await resolveLocationScope(sb as never, "karachi");
+    const sb = fakeSupabase(tablesFor({ warehouses: WAREHOUSES, silos: SILOS }));
+    const scope = await resolveLocationScope(sb as never, USER, "karachi");
 
     expect(scope.warehouseIds).toEqual(["w-khi-1", "w-khi-2"]);
     expect(scope.cityKey).toBe("karachi");
   });
 
   it("excludes warehouses from every other city", async () => {
-    const sb = fakeSupabase({ warehouses: WAREHOUSES, silos: SILOS });
-    const scope = await resolveLocationScope(sb as never, "karachi");
+    const sb = fakeSupabase(tablesFor({ warehouses: WAREHOUSES, silos: SILOS }));
+    const scope = await resolveLocationScope(sb as never, USER, "karachi");
 
     // The bleed this whole feature exists to prevent.
     expect(scope.warehouseIds).not.toContain("w-pindi");
@@ -73,8 +99,8 @@ describe("resolveLocationScope", () => {
   });
 
   it("narrows the silo lookup to the resolved warehouses", async () => {
-    const sb = fakeSupabase({ warehouses: WAREHOUSES, silos: SILOS });
-    const scope = await resolveLocationScope(sb as never, "rawalpindi");
+    const sb = fakeSupabase(tablesFor({ warehouses: WAREHOUSES, silos: SILOS }));
+    const scope = await resolveLocationScope(sb as never, USER, "rawalpindi");
 
     expect(scope.warehouseIds).toEqual(["w-pindi"]);
     expect(scope.siloIds).toEqual(["s-1", "s-2"]);
@@ -87,8 +113,8 @@ describe("resolveLocationScope", () => {
     // The important safety property. A stale or hand-edited `?loc=` must show
     // nothing rather than silently widening to every warehouse the admin owns —
     // RLS would not catch that, because the admin does own them all.
-    const sb = fakeSupabase({ warehouses: WAREHOUSES, silos: SILOS });
-    const scope = await resolveLocationScope(sb as never, "atlantis");
+    const sb = fakeSupabase(tablesFor({ warehouses: WAREHOUSES, silos: SILOS }));
+    const scope = await resolveLocationScope(sb as never, USER, "atlantis");
 
     expect(scope.warehouseIds).toEqual([]);
     expect(scope.siloIds).toEqual([]);
@@ -98,8 +124,8 @@ describe("resolveLocationScope", () => {
   it("scopes to a single warehouse when one is named", async () => {
     // The warehouse is the primary unit — model performance and every
     // location-dependent table key on it, not on the city.
-    const sb = fakeSupabase({ warehouses: WAREHOUSES, silos: SILOS });
-    const scope = await resolveLocationScope(sb as never, null, "w-khi-2");
+    const sb = fakeSupabase(tablesFor({ warehouses: WAREHOUSES, silos: SILOS }));
+    const scope = await resolveLocationScope(sb as never, USER, null, "w-khi-2");
 
     expect(scope.warehouseId).toBe("w-khi-2");
     expect(scope.warehouseIds).toEqual(["w-khi-2"]);
@@ -112,8 +138,8 @@ describe("resolveLocationScope", () => {
   it("refuses a warehouse the caller does not own", async () => {
     // An id from the client is a request, not a permission. RLS would not stop
     // this on its own, since an admin owns every warehouse in their account.
-    const sb = fakeSupabase({ warehouses: WAREHOUSES, silos: SILOS });
-    const scope = await resolveLocationScope(sb as never, null, "w-someone-else");
+    const sb = fakeSupabase(tablesFor({ warehouses: WAREHOUSES, silos: SILOS }));
+    const scope = await resolveLocationScope(sb as never, USER, null, "w-someone-else");
 
     expect(scope.warehouseIds).toEqual([]);
     expect(scope.siloIds).toEqual([]);
@@ -121,17 +147,29 @@ describe("resolveLocationScope", () => {
   });
 
   it("lets the warehouse win over a city that disagrees with it", async () => {
-    const sb = fakeSupabase({ warehouses: WAREHOUSES, silos: SILOS });
-    const scope = await resolveLocationScope(sb as never, "rawalpindi", "w-khi-1");
+    const sb = fakeSupabase(tablesFor({ warehouses: WAREHOUSES, silos: SILOS }));
+    const scope = await resolveLocationScope(sb as never, USER, "rawalpindi", "w-khi-1");
 
     expect(scope.warehouseIds).toEqual(["w-khi-1"]);
     expect(scope.cityKey).toBe("karachi");
   });
 
   it("groups warehouses with no usable city under the unassigned bucket", async () => {
-    const sb = fakeSupabase({ warehouses: WAREHOUSES, silos: SILOS });
-    const scope = await resolveLocationScope(sb as never, "unassigned");
+    const sb = fakeSupabase(tablesFor({ warehouses: WAREHOUSES, silos: SILOS }));
+    const scope = await resolveLocationScope(sb as never, USER, "unassigned");
 
     expect(scope.warehouseIds).toEqual(["w-none"]);
+  });
+
+  it("pins the warehouse lookup to the caller's own tenant", async () => {
+    // Ownership is decided by the resolved tenant, not by whatever RLS happens
+    // to let the caller read. Redundant for a real admin today; load-bearing
+    // for any caller whose database identity is wider than the tenant they act
+    // for, which is what a server-authoritative impersonation would create.
+    const sb = fakeSupabase(tablesFor({ warehouses: WAREHOUSES, silos: SILOS }));
+    await resolveLocationScope(sb as never, USER, "karachi");
+
+    const warehouseQuery = sb.calls.find((c) => c.table === "warehouses");
+    expect(warehouseQuery?.eq.admin_id).toBe(USER);
   });
 });

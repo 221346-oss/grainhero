@@ -66,17 +66,27 @@ function sum(ns: Array<number | null | undefined>): number {
 /**
  * List the caller's warehouses grouped into cities.
  *
- * RLS scopes `warehouses` to the caller's tenant, so this returns the admin's
- * own sites and nothing else. Managers and technicians are narrowed further to
- * the warehouses they are assigned to — they never see the picker, but the
- * switcher reuses this and must not widen their view.
+ * Narrowed to the resolved tenant explicitly rather than relying on RLS alone,
+ * so the query says what it means. For a real admin the two agree.
+ *
+ * This does NOT currently stop a super admin using "View as" from seeing every
+ * warehouse on the platform in a tenant-facing picker: impersonation is stored
+ * client-side and never reaches the server, so the caller still resolves to
+ * platform scope and no tenant filter is applied. That is a real defect, filed
+ * separately — it needs impersonation to become server-authoritative.
+ *
+ * Managers and technicians are narrowed further to the warehouses they are
+ * assigned to — they never see the picker, but the switcher reuses this and
+ * must not widen their view.
  */
 export const listAdminLocations = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<{ locations: LocationCard[]; plan: PlanUsage }> => {
     const sb = context.supabase;
     const { getEffectiveRole } = await import("./rbac.server");
+    const { resolveTenantAdminId } = await import("./page-scope.server");
     const role = await getEffectiveRole(sb, context.userId);
+    const adminId = await resolveTenantAdminId(sb, context.userId);
 
     let query = sb
       .from("warehouses")
@@ -87,6 +97,9 @@ export const listAdminLocations = createServerFn({ method: "GET" })
       .order("name", { ascending: true })
       .limit(500);
 
+    // A null adminId is a super admin viewing the platform in their own right,
+    // who has no picker (R10). Anyone else is pinned to one tenant.
+    if (adminId) query = query.eq("admin_id", adminId);
     if (role === "manager") query = query.eq("manager_id", context.userId);
     else if (role === "technician") query = query.contains("technician_ids", [context.userId]);
 

@@ -26,7 +26,12 @@ export const getMaintenanceOverview = createServerFn({ method: "GET" })
   .handler(async ({ context, data: input }) => {
     const r = await role(context.supabase, context.userId);
     req(r, ["super_admin", "admin", "manager", "technician"]);
-    const scope = await resolveLocationScope(context.supabase, input?.loc, input?.wh);
+    const scope = await resolveLocationScope(
+      context.supabase,
+      context.userId,
+      input?.loc,
+      input?.wh,
+    );
 
     const { data: devices } = await byWarehouse(
       context.supabase
@@ -187,7 +192,12 @@ export const getDeviceHealth = createServerFn({ method: "GET" })
   .handler(async ({ context, data: input }) => {
     const r = await role(context.supabase, context.userId);
     req(r, ["super_admin", "admin", "manager", "technician"]);
-    const scope = await resolveLocationScope(context.supabase, input?.loc, input?.wh);
+    const scope = await resolveLocationScope(
+      context.supabase,
+      context.userId,
+      input?.loc,
+      input?.wh,
+    );
 
     const { data: devices } = await byWarehouse(
       context.supabase

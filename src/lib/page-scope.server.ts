@@ -53,6 +53,22 @@ export async function resolvePageScope(
 }
 
 /**
+ * The tenant whose data the caller is acting on, or `null` for a super admin
+ * viewing the platform in their own right.
+ *
+ * Thin wrapper over {@link resolvePageScope} for the callers that only need the
+ * id — chiefly the location queries, which must not treat "RLS let me read it"
+ * as "the tenant owns it".
+ */
+export async function resolveTenantAdminId(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<string | null> {
+  const scope = await resolvePageScope(supabase, userId);
+  return scope.scope === "tenant" ? scope.adminId : null;
+}
+
+/**
  * Location scope — which of the tenant's warehouses a request may read.
  *
  * `warehouseIds: null` means "every warehouse in the tenant" and is the
@@ -99,11 +115,26 @@ export const ALL_LOCATIONS: LocationScope = {
  * nothing at the database level would stop a hand-edited query string widening
  * the view, or naming a warehouse in a city they are not currently viewing.
  *
+ * The tenant is filtered explicitly rather than left to RLS. For a real admin
+ * or manager the two agree and the filter is redundant. It matters for any
+ * caller whose database identity is wider than the tenant they are acting for —
+ * today that is nobody, because impersonation is client-side only (see below),
+ * but the filter is what makes this correct rather than accidentally correct.
+ *
+ * NOTE: `resolvePageScope`'s impersonation branch never fires. Nothing writes
+ * the `activity_logs` row it looks for — `startImpersonation` keeps the session
+ * in `localStorage` and tells the server nothing. So a super admin using
+ * "View as" still resolves to platform scope here, and this function returns
+ * the unfiltered platform view rather than the impersonated tenant's. Fixing
+ * that means making impersonation server-authoritative; until then no scoped
+ * page can be verified through "View as".
+ *
  * An unknown warehouse or city yields an **empty** scope, never the tenant-wide
  * one: a stale link must show nothing rather than everything.
  */
 export async function resolveLocationScope(
   supabase: SupabaseClient,
+  userId: string,
   cityKey?: string | null,
   warehouseId?: string | null,
 ): Promise<LocationScope> {
@@ -111,11 +142,19 @@ export async function resolveLocationScope(
   const wh = typeof warehouseId === "string" ? warehouseId.trim() : "";
   if (!city && !wh) return ALL_LOCATIONS;
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("warehouses")
     .select("id, name, location, location_city, location_address")
     .is("deleted_at", null)
     .limit(500);
+
+  // Narrow to the tenant before deciding what the caller owns. See the note on
+  // impersonation above: RLS alone would let an impersonating super admin claim
+  // any warehouse on the platform.
+  const adminId = await resolveTenantAdminId(supabase, userId);
+  if (adminId) query = query.eq("admin_id", adminId);
+
+  const { data, error } = await query;
   if (error) throw error;
   const owned = data ?? [];
 

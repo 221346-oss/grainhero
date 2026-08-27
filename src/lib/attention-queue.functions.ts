@@ -38,7 +38,7 @@ export const getAttentionQueue = createServerFn({ method: "GET" })
   .handler(async ({ context, data: input }) => {
     const sb = context.supabase;
     const since24h = new Date(Date.now() - 24 * 3600_000).toISOString();
-    const scope = await resolveLocationScope(sb, input?.loc, input?.wh);
+    const scope = await resolveLocationScope(sb, context.userId, input?.loc, input?.wh);
 
     // Neither device_heartbeats nor actuator_commands carries a warehouse: they
     // hang off sensor_devices and actuators, which key on silo_id. Under a

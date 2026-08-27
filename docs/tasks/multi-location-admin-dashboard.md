@@ -552,3 +552,53 @@ Three details worth recording:
 
 Verified by `tsc`, `eslint` and the unit tests; the same in-browser isolation
 check as §11 still needs running against these five pages.
+
+---
+
+## 13. Impersonation does not reach the server — and what that costs §11
+
+Found while re-checking §11 in the browser on 2026-08-27.
+
+Signed in as super admin and using "View as" to reach a tenant with 4
+warehouses in 2 cities, the location picker showed **6 cities and all 9
+warehouses in the database**, including four belonging to other tenants.
+Drilling into `islamabad` — another tenant's city — rendered their warehouses by
+name and id.
+
+**The cause is not a leak past a check. There is no check to pass.**
+`startImpersonation` verifies the target and returns; its own comment says the
+state is stored client-side, and it lives in `localStorage` under
+`gh_impersonation_session`. Across the whole repo and every migration, the
+string `active_session` appears exactly once — in `page-scope.server.ts`, where
+it is **read**. Nothing writes it.
+
+So `resolvePageScope`'s impersonation branch is dead code. While "viewing as" a
+tenant, every server function still runs as the super admin and resolves to
+`{ scope: "platform", adminId: null }`. The picker showed nine warehouses
+because a super admin is entitled to nine.
+
+### What this means for §11
+
+§11 records isolation as "confirmed by hand … using the platform's own 'View
+as' to reach a tenant with warehouses in six locations". Six is the
+platform-wide city count, not a tenant's. That check was reading super-admin
+platform data throughout, so it does not establish tenant isolation. The
+previous sweep's defect 1 was fixed on the client — the picker renders under
+impersonation — but the server side was never wired up.
+
+**No location-scoped page can be verified through "View as".** Verification
+needs a real admin login.
+
+### Not fixed here
+
+Making impersonation server-authoritative — writing a session row on start,
+clearing it on stop, deciding expiry and staleness — changes how support access
+works and belongs with the lead, not inside a scoping task.
+
+What *was* done: `resolveLocationScope` and `listAdminLocations` now filter on
+the resolved tenant explicitly instead of relying on RLS, and `userId` is a
+required argument so the compiler forces every call site to resolve a tenant.
+For a real admin this is redundant with RLS. It becomes load-bearing the moment
+impersonation reaches the server. **It does not fix the behaviour above** — on
+that path `adminId` is null and the filter is skipped. Confirmed in the browser:
+the picker still shows all six cities.

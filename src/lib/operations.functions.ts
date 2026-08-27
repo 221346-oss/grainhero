@@ -259,7 +259,12 @@ export const listSilos = createServerFn({ method: "GET" })
     // Get user's role
     const { getEffectiveRole } = await import("./rbac.server");
     const userRole = await getEffectiveRole(context.supabase, context.userId);
-    const scope = await resolveLocationScope(context.supabase, input?.loc, input?.wh);
+    const scope = await resolveLocationScope(
+      context.supabase,
+      context.userId,
+      input?.loc,
+      input?.wh,
+    );
 
     let query = byWarehouse(
       context.supabase.from("silos").select(
@@ -518,7 +523,12 @@ export const listGrainBatches = createServerFn({ method: "GET" })
     // Get user role to filter visible batches
     const { getEffectiveRole } = await import("./rbac.server");
     const userRole = await getEffectiveRole(context.supabase, context.userId);
-    const scope = await resolveLocationScope(context.supabase, input?.loc, input?.wh);
+    const scope = await resolveLocationScope(
+      context.supabase,
+      context.userId,
+      input?.loc,
+      input?.wh,
+    );
 
     let query = byWarehouse(
       context.supabase
@@ -1198,7 +1208,12 @@ export const listSensorDevices = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator(parseLoc)
   .handler(async ({ context, data: input }) => {
-    const scope = await resolveLocationScope(context.supabase, input?.loc, input?.wh);
+    const scope = await resolveLocationScope(
+      context.supabase,
+      context.userId,
+      input?.loc,
+      input?.wh,
+    );
     const { data, error } = await byWarehouse(
       context.supabase
         .from("sensor_devices")
@@ -1376,7 +1391,12 @@ export const listActuators = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator(parseLoc)
   .handler(async ({ context, data: input }) => {
-    const scope = await resolveLocationScope(context.supabase, input?.loc, input?.wh);
+    const scope = await resolveLocationScope(
+      context.supabase,
+      context.userId,
+      input?.loc,
+      input?.wh,
+    );
     // actuators carry no warehouse_id — they hang off a silo, so the scope's
     // resolved silo list is the only way to narrow them.
     const { data, error } = await bySilo(
@@ -1563,7 +1583,12 @@ export const listGrainAlerts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator(parseLoc)
   .handler(async ({ context, data: input }) => {
-    const scope = await resolveLocationScope(context.supabase, input?.loc, input?.wh);
+    const scope = await resolveLocationScope(
+      context.supabase,
+      context.userId,
+      input?.loc,
+      input?.wh,
+    );
     const { data, error } = await byWarehouse(
       context.supabase
         .from("grain_alerts")

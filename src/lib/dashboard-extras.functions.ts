@@ -56,7 +56,7 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
     const range = (data?.range ?? "30d") as Range;
     // Resolved server-side from the caller's own warehouses — see
     // resolveLocationScope for why the client's list is not trusted.
-    const scope = await resolveLocationScope(context.supabase, data?.loc, data?.wh);
+    const scope = await resolveLocationScope(context.supabase, context.userId, data?.loc, data?.wh);
     const { startISO, priorStartISO, priorEndISO } = rangeToWindow(range);
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
     const now0 = new Date();

@@ -119,7 +119,12 @@ export const getIncidents = createServerFn({ method: "GET" })
   .handler(async ({ context, data: input }) => {
     const r = await role(context.supabase, context.userId);
     requireAny(r, ["super_admin", "admin", "manager", "technician"]);
-    const scope = await resolveLocationScope(context.supabase, input?.loc, input?.wh);
+    const scope = await resolveLocationScope(
+      context.supabase,
+      context.userId,
+      input?.loc,
+      input?.wh,
+    );
 
     // Fetch both system alerts (high/critical priority) AND field incidents
     // (source = field_incident, priority = medium) in one query so the

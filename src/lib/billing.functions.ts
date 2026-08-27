@@ -144,7 +144,12 @@ export const getRevenueOverview = createServerFn({ method: "GET" })
   )
   .handler(async ({ context, data: input }) => {
     const r = await role(context.supabase, context.userId);
-    const scope = await resolveLocationScope(context.supabase, input?.loc, input?.wh);
+    const scope = await resolveLocationScope(
+      context.supabase,
+      context.userId,
+      input?.loc,
+      input?.wh,
+    );
     if (!["super_admin", "admin", "manager"].includes(r)) throw new Error("Forbidden");
 
     let adminId: string | null = null;
