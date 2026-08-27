@@ -627,3 +627,32 @@ For a real admin this is redundant with RLS. It becomes load-bearing the moment
 impersonation reaches the server. **It does not fix the behaviour above** — on
 that path `adminId` is null and the filter is skipped. Confirmed in the browser:
 the picker still shows all six cities.
+
+---
+
+## 14. Legacy alerts with no warehouse
+
+All 10 `grain_alerts` rows carry a null `warehouse_id` **and** a null `silo_id`,
+so every one of them is excluded from every location-scoped page. Correct
+behaviour on unattributed data, but it means the attention queue and the alert
+counts read zero under any location.
+
+The three current writers (`ml-pipeline.functions.ts`,
+`sensor-offline-detector.ts`, `sync-firebase.ts`) all stamp both columns, so
+this is legacy data from before `20260720120000_multi_warehouse_support.sql`,
+not a live bug.
+
+**Only 2 of the 10 can be recovered.** `20260827120000_backfill_grain_alert_warehouse.sql`
+attributes an alert when its tenant owns exactly one warehouse — one possible
+answer, so no guessing. Dry-run against production: 2 updated, 8 left null.
+
+The remaining 8 belong to a tenant that owns **no warehouses at all**, and
+nothing on the rows points at a silo, a batch or a warehouse. They cannot be
+attributed by any rule. They are `source = 'field_incident'`,
+`alert_type = 'in-app'` — closer to an in-app notice than a silo alert, which
+suggests the real question is whether field incidents belong in `grain_alerts`
+at all rather than how to force them into a location. Worth settling separately.
+
+`silo_id` is deliberately left null even on the two that are backfilled: the
+warehouse is determined, the silo is not, and a wrong silo would put a real
+alert against the wrong row on the cockpit.
