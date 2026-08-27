@@ -289,8 +289,6 @@ const FALLBACK_URDU_WORDS: Record<string, string> = {
   yearly: "سالانہ",
   yes: "ہاں",
   carousel: "سلائیڈ شو",
-  more: "مزید",
-  next: "اگلا",
   pages: "صفحات",
   pagination: "صفحہ بندی",
   previous: "پچھلا",
