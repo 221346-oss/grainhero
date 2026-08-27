@@ -1,10 +1,19 @@
 # Multi-Location Admin Dashboard — Requirement Report
 
-**Status:** Complete — all requirements implemented and verified in the running app
+**Status:** Built (17/17). Isolation proven by integration test; **not** verified
+end-to-end through the UI — see §13 for why §11's evidence does not stand.
 **Owner:** Abdullah
 **Target branch:** `abdullah_dev` (standing PR #55 → `main`)
 **Date:** 2026-08-25 (rev. 2)
 
+> **Revision 7.** §11's by-hand verification does not stand: it was carried out
+> through "View as", and impersonation never reaches the server, so the figures
+> checked were platform-wide rather than one tenant's (§13). Isolation is now
+> proven instead by an integration test against a real database
+> (`tests/integration/location-isolation.test.ts`), which is what S15 asked for.
+> The header status is corrected accordingly. UI-level verification for a real
+> admin remains outstanding.
+>
 > **Revision 6.** Verified end to end against the live app. The picker,
 > warehouse drill-down, switcher, empty state and role exclusions all behave as
 > specified, and two warehouses in the same city were confirmed to show
@@ -463,10 +472,19 @@ Implemented on `abdullah_dev` (PR #55).
 
 ### Known limitations
 
-- Test coverage is unit-level only (city derivation and scope resolution).
-  There are no integration tests proving cross-location isolation against a real
-  database, which is what S15 actually asked for — the isolation was confirmed
-  by hand instead (§11).
+- ~~Test coverage is unit-level only.~~ Closed. S15 is satisfied by
+  `tests/integration/location-isolation.test.ts`, which resolves real scopes
+  against the database and asserts that two warehouses of one tenant return
+  disjoint silos, batches, alerts, dispatches and actuators; that a foreign
+  tenant's warehouse id is refused; and that an unknown id fails closed rather
+  than widening. It runs under a **service-role** client with RLS bypassed, so
+  it proves the segregation is application-layer (S10) rather than borrowed from
+  the database. It discovers its fixtures and skips — visibly — when the data
+  is absent, and names the warehouses it used so a green run cannot be mistaken
+  for one that tested nothing.
+- No UI-level verification. The integration test covers the query layer; it says
+  nothing about whether a route or section component passes the scope through,
+  which is where two of the three defects in §12 actually lived.
 - Location data quality is poor in places. The picker now refuses obvious junk,
   but values a person genuinely typed (`abcd`, a bare street address) still
   appear as city names because nothing can distinguish them from a real place.
@@ -474,7 +492,14 @@ Implemented on `abdullah_dev` (PR #55).
 
 ---
 
-## 11. Verification
+## 11. Verification — SUPERSEDED, see §13
+
+> **This section's evidence does not stand.** It was gathered through "View as",
+> and impersonation never reaches the server, so every figure below is the
+> platform-wide view rather than one tenant's — including the "six locations",
+> which is the platform's city count. Retained unedited as the record of what
+> was checked and believed at the time. Isolation is proven instead by
+> `tests/integration/location-isolation.test.ts`.
 
 Checked against the running app, signed in as super admin and using the
 platform's own "View as" to reach a tenant with warehouses in six locations.
