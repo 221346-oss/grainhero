@@ -21,6 +21,7 @@ import {
   getShipmentTracking,
 } from "@/lib/dispatch.functions";
 import { getMarketplaceSettings } from "@/lib/marketplace-settings.functions";
+import { translateText, useI18n } from "@/i18n";
 
 export function ShipmentPanel({
   orderId,
@@ -31,6 +32,7 @@ export function ShipmentPanel({
   canManage: boolean;
   orderStatus: string;
 }) {
+  const { locale } = useI18n();
   const trackFn = useServerFn(getShipmentTracking);
   const settingsFn = useServerFn(getMarketplaceSettings);
   const createFn = useServerFn(createShipment);
@@ -62,7 +64,7 @@ export function ShipmentPanel({
     mutationFn: () =>
       createFn({ data: { orderId, courierKey: courier, trackingNumber: tracking || null } }),
     onSuccess: () => {
-      toast.success("Shipment created");
+      toast.success(translateText("Shipment created", locale));
       invalidate();
     },
     onError: (e) => toast.error((e as Error).message),
@@ -79,7 +81,7 @@ export function ShipmentPanel({
         },
       }),
     onSuccess: () => {
-      toast.success("Event added");
+      toast.success(translateText("Event added", locale));
       setEventLabel("");
       setNextStatus("");
       invalidate();
@@ -89,7 +91,7 @@ export function ShipmentPanel({
   const dMut = useMutation({
     mutationFn: () => deliverFn({ data: { shipmentId: data!.shipment!.id } }),
     onSuccess: () => {
-      toast.success("Marked delivered");
+      toast.success(translateText("Marked delivered", locale));
       invalidate();
     },
     onError: (e) => toast.error((e as Error).message),

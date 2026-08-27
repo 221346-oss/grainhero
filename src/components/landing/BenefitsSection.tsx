@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { TrendingDown, Clock, DollarSign, Shield, ArrowUpRight, Zap } from "lucide-react";
+import { LocalizedContent } from "@/i18n";
 
 const benefits = [
   {
@@ -54,7 +55,7 @@ const benefits = [
 
 export function BenefitsSection() {
   return (
-    <section className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-[#FAFAF7]">
+    <LocalizedContent><section className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-[#FAFAF7]">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <motion.div
@@ -116,6 +117,6 @@ export function BenefitsSection() {
           </button>
         </motion.div>
       </div>
-    </section>
+    </section></LocalizedContent>
   );
 }

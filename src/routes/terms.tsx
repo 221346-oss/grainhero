@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Scale, FileText, AlertCircle, CheckCircle, XCircle, Users } from "lucide-react";
 import { NewGlassNav } from "@/components/landing/NewGlassNav";
 import { NewFooter } from "@/components/landing/NewFooter";
+import { LocalizedContent } from "@/i18n";
 
 export const Route = createFileRoute("/terms")({
   head: () => ({
@@ -117,7 +118,7 @@ function TermsOfServicePage() {
   ];
 
   return (
-    <main className="min-h-screen bg-[#EDE9D4]">
+    <LocalizedContent><main className="min-h-screen bg-[#EDE9D4]">
       <NewGlassNav />
 
       {/* Hero Section */}
@@ -303,6 +304,6 @@ function TermsOfServicePage() {
       </section>
 
       <NewFooter />
-    </main>
+    </main></LocalizedContent>
   );
 }

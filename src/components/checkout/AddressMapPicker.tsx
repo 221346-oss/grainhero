@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { MapPin, Loader2, Search, Crosshair } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { LocalizedContent, translateText, useI18n } from "@/i18n";
 
 // Google Maps JS API loader (singleton across the app)
 declare global {
@@ -62,6 +63,7 @@ interface Props {
 const DEFAULT_CENTER = { lat: 33.5651, lng: 73.0169 };
 
 export function AddressMapPicker({ value, onChange, defaultCenter }: Props) {
+  const { locale } = useI18n();
   const mapEl = useRef<HTMLDivElement | null>(null);
   const inputEl = useRef<HTMLInputElement | null>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
@@ -277,7 +279,8 @@ export function AddressMapPicker({ value, onChange, defaultCenter }: Props) {
   };
 
   return (
-    <div className="space-y-2">
+    <LocalizedContent>
+      <div className="space-y-2">
       <div className="relative">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
@@ -299,7 +302,7 @@ export function AddressMapPicker({ value, onChange, defaultCenter }: Props) {
                 if (!pickingRef.current) commitManualAddress();
               }
             }}
-            placeholder="Search address, area, landmark…"
+            placeholder={translateText("Search address, area, landmark…", locale)}
             className="pl-9 pr-10"
             maxLength={300}
           />
@@ -307,7 +310,7 @@ export function AddressMapPicker({ value, onChange, defaultCenter }: Props) {
             type="button"
             onClick={useMyLocation}
             className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
-            title="Use my current location"
+            title={translateText("Use my current location", locale)}
           >
             <Crosshair className="h-4 w-4" />
           </button>
@@ -368,7 +371,8 @@ export function AddressMapPicker({ value, onChange, defaultCenter }: Props) {
           to fine-tune.
         </p>
       )}
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }
 

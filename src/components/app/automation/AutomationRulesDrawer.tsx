@@ -29,6 +29,7 @@ import {
   toggleAutomationRule,
 } from "@/lib/automation-rules.functions";
 import { listActuators } from "@/lib/operations.functions";
+import { translateText, useI18n } from "@/i18n";
 
 type Metric = "temperature" | "humidity" | "moisture" | "co2";
 type Op = "gt" | "lt";
@@ -45,6 +46,7 @@ export function AutomationRulesDrawer({
   siloId: string;
   siloName: string;
 }) {
+  const { locale } = useI18n();
   const listFn = useServerFn(listAutomationRules);
   const listActFn = useServerFn(listActuators);
   const saveFn = useServerFn(saveAutomationRule);
@@ -91,7 +93,7 @@ export function AutomationRulesDrawer({
         },
       }),
     onSuccess: () => {
-      toast.success("Rule saved");
+      toast.success(translateText("Rule saved", locale));
       invalidate();
       setForm((f) => ({ ...f, triggerValue: "" }));
     },
@@ -100,7 +102,7 @@ export function AutomationRulesDrawer({
   const del = useMutation({
     mutationFn: (id: string) => delFn({ data: { id } }),
     onSuccess: () => {
-      toast.success("Deleted");
+      toast.success(translateText("Deleted", locale));
       invalidate();
     },
   });

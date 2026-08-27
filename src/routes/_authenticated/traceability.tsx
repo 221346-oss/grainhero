@@ -41,6 +41,7 @@ import { getBatchTraceability } from "@/lib/traceability.functions";
 import { ExportMenu } from "@/components/app/ExportMenu";
 import type { ExportColumn } from "@/lib/csv-pdf-export";
 import { getBatchStageLabel } from "@/lib/batch-stage.utils";
+import { LocalizedContent } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/traceability")({
   head: () => ({
@@ -143,19 +144,22 @@ function TraceabilityPage() {
 
   if (isLoading) {
     return (
-      <div className="p-4 sm:p-6 space-y-6">
+      <LocalizedContent>
+        <div className="p-4 sm:p-6 space-y-6">
         <div className="space-y-2">
           <Skeleton className="h-8 w-64" />
           <Skeleton className="h-4 w-96 max-w-full" />
         </div>
         <StatsSkeleton />
         <TableSkeleton rows={8} cols={5} />
-      </div>
+        </div>
+      </LocalizedContent>
     );
   }
 
   return (
-    <div className="min-h-screen p-4 sm:p-6 space-y-6 bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">
+    <LocalizedContent>
+      <div className="min-h-screen p-4 sm:p-6 space-y-6 bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">
       <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4 sm:flex sm:flex-wrap sm:justify-between">
         <div className="min-w-0">
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
@@ -347,7 +351,8 @@ function TraceabilityPage() {
           onClose={() => setQrOpen(false)}
         />
       )}
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }
 

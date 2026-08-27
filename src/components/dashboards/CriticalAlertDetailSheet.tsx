@@ -9,6 +9,7 @@ import { acknowledgeAlert } from "@/lib/alerts.functions";
 import { updateIncidentStatus } from "@/lib/monitoring.functions";
 import { AlertTriangle, Clock, Building2, Warehouse, CheckCircle2, XCircle } from "lucide-react";
 import { toast } from "sonner";
+import { translateText, useI18n } from "@/i18n";
 
 interface Props {
   open: boolean;
@@ -23,6 +24,7 @@ const statusConfig: Record<string, { label: string; cls: string }> = {
 };
 
 export function CriticalAlertDetailSheet({ open, onOpenChange }: Props) {
+  const { locale } = useI18n();
   const fetchAlerts = useServerFn(getCriticalAlertsForSuperAdmin);
   const ackFn = useServerFn(acknowledgeAlert);
   const resolveFn = useServerFn(updateIncidentStatus);
@@ -42,11 +44,11 @@ export function CriticalAlertDetailSheet({ open, onOpenChange }: Props) {
     setActionId(id);
     try {
       await ackFn({ data: { id } });
-      toast.success("Alert acknowledged");
+      toast.success(translateText("Alert acknowledged", locale));
       await qc.invalidateQueries({ queryKey: ["critical-alerts-detail"] });
       await qc.invalidateQueries({ queryKey: ["platform-metrics"] });
     } catch (e: any) {
-      toast.error(e.message ?? "Failed to acknowledge");
+      toast.error(translateText(e.message ?? "Failed to acknowledge", locale));
     } finally {
       setActionId(null);
     }
@@ -56,11 +58,11 @@ export function CriticalAlertDetailSheet({ open, onOpenChange }: Props) {
     setActionId(id);
     try {
       await resolveFn({ data: { id, status: "resolved" } });
-      toast.success("Alert resolved");
+      toast.success(translateText("Alert resolved", locale));
       await qc.invalidateQueries({ queryKey: ["critical-alerts-detail"] });
       await qc.invalidateQueries({ queryKey: ["platform-metrics"] });
     } catch (e: any) {
-      toast.error(e.message ?? "Failed to resolve");
+      toast.error(translateText(e.message ?? "Failed to resolve", locale));
     } finally {
       setActionId(null);
     }
@@ -70,11 +72,11 @@ export function CriticalAlertDetailSheet({ open, onOpenChange }: Props) {
     setActionId(id);
     try {
       await resolveFn({ data: { id, status: "dismissed" } });
-      toast.success("Alert dismissed");
+      toast.success(translateText("Alert dismissed", locale));
       await qc.invalidateQueries({ queryKey: ["critical-alerts-detail"] });
       await qc.invalidateQueries({ queryKey: ["platform-metrics"] });
     } catch (e: any) {
-      toast.error(e.message ?? "Failed to dismiss");
+      toast.error(translateText(e.message ?? "Failed to dismiss", locale));
     } finally {
       setActionId(null);
     }

@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Trash2, Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { listThresholds, saveThreshold, deleteThreshold } from "@/lib/telemetry.functions";
+import { translateText, useI18n } from "@/i18n";
 
 type Metric = "temperature" | "humidity" | "moisture" | "co2";
 
@@ -37,6 +38,7 @@ export function ThresholdDrawer({
   siloId: string;
   siloName: string;
 }) {
+  const { locale } = useI18n();
   const list = useServerFn(listThresholds);
   const save = useServerFn(saveThreshold);
   const del = useServerFn(deleteThreshold);
@@ -81,21 +83,21 @@ export function ThresholdDrawer({
         },
       }),
     onSuccess: () => {
-      toast.success("Threshold saved");
+      toast.success(translateText("Threshold saved", locale));
       qc.invalidateQueries({ queryKey: ["thresholds", siloId] });
     },
     onError: (e: unknown) => {
       const msg = (e as Error).message || "";
       if (msg.startsWith("PLAN_LIMIT"))
-        toast.error("Plan limit reached — upgrade to add more alert rules.");
-      else toast.error(msg || "Save failed");
+        toast.error(translateText("Plan limit reached — upgrade to add more alert rules.", locale));
+      else toast.error(msg || translateText("Save failed", locale));
     },
   });
 
   const delMut = useMutation({
     mutationFn: (id: string) => del({ data: { id } }),
     onSuccess: () => {
-      toast.success("Deleted");
+      toast.success(translateText("Deleted", locale));
       qc.invalidateQueries({ queryKey: ["thresholds", siloId] });
     },
   });

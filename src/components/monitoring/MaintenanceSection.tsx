@@ -32,6 +32,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { LocalizedContent, translateText, useI18n } from "@/i18n";
 
 const emptyForm = { title: "", description: "", deviceId: "", priority: "normal" as const };
 
@@ -42,6 +43,7 @@ function RequestMaintenanceDialog({
   open: boolean;
   onOpenChange: (o: boolean) => void;
 }) {
+  const { locale } = useI18n();
   const qc = useQueryClient();
   const listDevicesFn = useServerFn(listSensorDevices);
   const createFn = useServerFn(createMaintenanceRequest);
@@ -69,12 +71,13 @@ function RequestMaintenanceDialog({
         },
       }),
     onSuccess: () => {
-      toast.success("Maintenance requested");
+      toast.success(translateText("Maintenance requested", locale));
       qc.invalidateQueries({ queryKey: ["maintenance-requests"] });
       setForm(emptyForm);
       onOpenChange(false);
     },
-    onError: (e: Error) => toast.error(e.message || "Could not submit request"),
+    onError: (e: Error) =>
+      toast.error(translateText(e.message || "Could not submit request", locale)),
   });
 
   return (
@@ -182,6 +185,7 @@ function statusTone(status: string) {
 }
 
 export function MaintenanceSection() {
+  const { locale } = useI18n();
   const getFn = useServerFn(getMaintenanceOverview);
   const listRequestsFn = useServerFn(listMaintenanceRequests);
   const fetchRole = useServerFn(getMyRole);
@@ -218,7 +222,8 @@ export function MaintenanceSection() {
     });
 
   return (
-    <div className="space-y-6">
+    <LocalizedContent>
+      <div className="space-y-6">
       {canRequest && (
         <div className="flex items-center justify-between">
           <p className="text-xs text-muted-foreground">
@@ -343,6 +348,7 @@ export function MaintenanceSection() {
       </div>
 
       <RequestMaintenanceDialog open={dlgOpen} onOpenChange={setDlgOpen} />
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }

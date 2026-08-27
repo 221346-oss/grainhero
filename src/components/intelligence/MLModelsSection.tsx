@@ -6,6 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Database, Activity, GitBranch } from "lucide-react";
 import { getMLModels } from "@/lib/analytics.functions";
 import { getMyRole } from "@/lib/roles.functions";
+import { LocalizedContent } from "@/i18n";
 
 export function MLModelsSection() {
   const fetchRole = useServerFn(getMyRole);
@@ -22,7 +23,8 @@ export function MLModelsSection() {
 
   if (!roleQ.isLoading && !allowed) {
     return (
-      <Card>
+      <LocalizedContent>
+        <Card>
         <CardHeader>
           <CardTitle>Access restricted</CardTitle>
           <CardDescription>
@@ -30,14 +32,16 @@ export function MLModelsSection() {
             view under Platform.
           </CardDescription>
         </CardHeader>
-      </Card>
+        </Card>
+      </LocalizedContent>
     );
   }
 
   const models = data?.models ?? [];
 
   return (
-    <div className="space-y-6">
+    <LocalizedContent>
+      <div className="space-y-6">
       <div className="grid gap-4 lg:grid-cols-2">
         {models.map((m: any) => (
           <Card key={m.id}>
@@ -139,6 +143,7 @@ export function MLModelsSection() {
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }

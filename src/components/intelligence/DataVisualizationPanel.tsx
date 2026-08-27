@@ -72,6 +72,7 @@ import {
 import { useFirebaseSensor } from "@/hooks/use-firebase-sensor";
 import { listSensorDevices, getSensorHistory, exportSensorCSV } from "@/lib/operations.functions";
 import { getMLModels } from "@/lib/analytics.functions";
+import { LocalizedContent, translateText, useI18n } from "@/i18n";
 
 /* ────────── Types ────────── */
 interface HistoryPoint {
@@ -106,6 +107,7 @@ function StatusBadge({ label, value, color }: { label: string; value: string; co
 }
 
 export function DataVisualizationPanel() {
+  const { locale } = useI18n();
   const getDevicesFn = useServerFn(listSensorDevices);
   const getHistoryFn = useServerFn(getSensorHistory);
   const exportCsvFn = useServerFn(exportSensorCSV);
@@ -211,12 +213,12 @@ export function DataVisualizationPanel() {
   const handleRetrain = async () => {
     setRetrainStatus("running");
     setRetrainMsg("Retraining models via active ML pipeline... Please wait.");
-    toast.info("Retraining initiated.");
+    toast.info(translateText("Retraining initiated.", locale));
 
     setTimeout(() => {
       setRetrainStatus("done");
       setRetrainMsg(`✅ Pipeline retrained successfully. Metric drift: Accuracy +0.8%.`);
-      toast.success("ML pipeline updated.");
+      toast.success(translateText("ML pipeline updated.", locale));
     }, 2000);
   };
 
@@ -232,16 +234,16 @@ export function DataVisualizationPanel() {
       a.download = `sensor-export-${activeDevice.device_name}-${new Date().toISOString().split("T")[0]}.csv`;
       a.click();
       window.URL.revokeObjectURL(url);
-      toast.success("CSV export downloaded");
+      toast.success(translateText("CSV export downloaded", locale));
     } catch (e: any) {
-      toast.error(e.message || "Export failed");
+      toast.error(translateText(e.message || "Export failed", locale));
     }
   };
 
   // Export current session memory data
   const handleExportLiveCSV = () => {
     if (history.length === 0) {
-      toast.error("No historical data in view to export");
+      toast.error(translateText("No historical data in view to export", locale));
       return;
     }
     const header = "Timestamp,Temperature,Humidity,VOC_Index,DewPoint,RiskIndex,FanOn,PWM\n";
@@ -258,7 +260,7 @@ export function DataVisualizationPanel() {
     a.download = `live-readings-${activeDevice?.device_name || "export"}-${new Date().toISOString().split("T")[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success("Live session exported");
+    toast.success(translateText("Live session exported", locale));
   };
 
   const radarData = useMemo(() => {
@@ -337,7 +339,8 @@ export function DataVisualizationPanel() {
         : "bg-emerald-50/50 border-emerald-100 dark:bg-emerald-950/20";
 
   return (
-    <div className="space-y-6">
+    <LocalizedContent>
+      <div className="space-y-6">
       <NeonPatternDefs />
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -386,7 +389,7 @@ export function DataVisualizationPanel() {
             variant="outline"
             onClick={() => {
               refetchHistory();
-              toast.success("Refreshed timeline");
+              toast.success(translateText("Refreshed timeline", locale));
             }}
             className="gap-1.5"
           >
@@ -1150,6 +1153,7 @@ export function DataVisualizationPanel() {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }

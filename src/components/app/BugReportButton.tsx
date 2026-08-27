@@ -23,10 +23,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { submitBugReport } from "@/lib/bug-reports.functions";
+import { translateText, useI18n } from "@/i18n";
 
 type Category = "bug" | "maintenance";
 
 export function BugReportButton() {
+  const { locale } = useI18n();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const submitFn = useServerFn(submitBugReport);
   const [open, setOpen] = useState(false);
@@ -46,14 +48,14 @@ export function BugReportButton() {
     onSuccess: () => {
       toast.success(
         category === "maintenance"
-          ? "Thanks — your maintenance note was submitted."
-          : "Thanks — your bug report was submitted.",
+          ? translateText("Thanks — your maintenance note was submitted.", locale)
+          : translateText("Thanks — your bug report was submitted.", locale),
       );
       setDescription("");
       setCategory("bug");
       setOpen(false);
     },
-    onError: (e: Error) => toast.error(e.message || "Could not submit report"),
+    onError: (e: Error) => toast.error(e.message || translateText("Could not submit report", locale)),
   });
 
   return (
@@ -61,8 +63,8 @@ export function BugReportButton() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label="Report a bug"
-        title="Report a bug"
+        aria-label={translateText("Report a bug", locale)}
+        title={translateText("Report a bug", locale)}
         className="fixed bottom-5 right-5 z-40 h-11 w-11 rounded-full bg-card border border-border shadow-lg grid place-items-center text-muted-foreground hover:text-emerald-600 hover:border-emerald-500/40 transition"
       >
         <Bug className="h-5 w-5" />

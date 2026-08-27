@@ -24,6 +24,7 @@ import {
 } from "@/lib/monitoring.functions";
 import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
 import { PlatformScopeBanner } from "@/components/app/PlatformScopeBanner";
+import { LocalizedContent, translateText, useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/incidents")({
   head: () => ({
@@ -66,6 +67,7 @@ function IncidentsPage() {
 }
 
 function TenantIncidentsView() {
+  const { locale } = useI18n();
   const fn = useServerFn(getIncidents);
   const ackFn = useServerFn(acknowledgeIncident);
   const qc = useQueryClient();
@@ -82,7 +84,7 @@ function TenantIncidentsView() {
   const ackM = useMutation({
     mutationFn: (args: { id: string; resolve?: boolean }) => ackFn({ data: args }),
     onSuccess: () => {
-      toast.success("Updated");
+      toast.success(translateText("Updated", locale));
       qc.invalidateQueries({ queryKey: ["incidents"] });
     },
     onError: (e: any) => toast.error(e.message ?? "Failed"),
@@ -107,7 +109,8 @@ function TenantIncidentsView() {
   if (isLoading) return <DashboardSkeleton />;
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+    <LocalizedContent>
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
           <AlertOctagon className="h-6 w-6 text-red-600" /> Incidents
@@ -237,7 +240,8 @@ function TenantIncidentsView() {
           </div>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }
 
@@ -251,7 +255,8 @@ function PlatformIncidentsView() {
   const totals = data?.totals ?? { total: 0, open: 0, resolved: 0, acknowledged: 0 };
   const tenants = data?.tenants ?? [];
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+    <LocalizedContent>
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6">
       <PlatformScopeBanner label="Aggregate incident volume across every tenant. Read-only — no acknowledge or resolve." />
       <div>
         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
@@ -337,6 +342,7 @@ function PlatformIncidentsView() {
           )}
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }

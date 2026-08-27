@@ -31,6 +31,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { LocalizedContent, translateText, useI18n } from "@/i18n";
 
 const emptyForm = { title: "", description: "", recipientId: "" };
 
@@ -46,6 +47,7 @@ function ReportFieldIncidentDialog({
   open: boolean;
   onOpenChange: (o: boolean) => void;
 }) {
+  const { locale } = useI18n();
   const qc = useQueryClient();
   const listMembersFn = useServerFn(listTeamMembers);
   const roleFn = useServerFn(getMyRole);
@@ -84,12 +86,13 @@ function ReportFieldIncidentDialog({
         },
       }),
     onSuccess: () => {
-      toast.success("Incident reported");
+      toast.success(translateText("Incident reported", locale));
       qc.invalidateQueries({ queryKey: ["field-incidents"] });
       setForm(emptyForm);
       onOpenChange(false);
     },
-    onError: (e: Error) => toast.error(e.message || "Could not report incident"),
+    onError: (e: Error) =>
+      toast.error(translateText(e.message || "Could not report incident", locale)),
   });
 
   const canSubmit =
@@ -192,6 +195,7 @@ function ReportFieldIncidentDialog({
 }
 
 export function FieldIncidentsSection() {
+  const { locale } = useI18n();
   const listFn = useServerFn(listFieldIncidents);
   const closeFn = useServerFn(closeFieldIncident);
   const qc = useQueryClient();
@@ -203,14 +207,15 @@ export function FieldIncidentsSection() {
   const closeMut = useMutation({
     mutationFn: (id: string) => closeFn({ data: { id } }),
     onSuccess: () => {
-      toast.success("Marked closed");
+      toast.success(translateText("Marked closed", locale));
       qc.invalidateQueries({ queryKey: ["field-incidents"] });
     },
-    onError: (e: Error) => toast.error(e.message || "Could not close"),
+    onError: (e: Error) => toast.error(translateText(e.message || "Could not close", locale)),
   });
 
   return (
-    <div className="space-y-4">
+    <LocalizedContent>
+      <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-xs text-muted-foreground">
           Auto-routed up your chain of command — private between you and the recipient.
@@ -279,6 +284,7 @@ export function FieldIncidentsSection() {
       )}
 
       <ReportFieldIncidentDialog open={dlgOpen} onOpenChange={setDlgOpen} />
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }

@@ -3,9 +3,11 @@ import { Wheat, Sun, Moon } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { useState, useEffect, type ReactNode } from "react";
 import { getStoredThemeMode, toggleThemeMode, type ThemeMode } from "@/lib/theme";
+import { LocalizedContent, translateText, useI18n } from "@/i18n";
 
 export function AuthShell({ children }: { children: ReactNode }) {
   const [mode, setMode] = useState<ThemeMode>("light");
+  const { locale } = useI18n();
 
   useEffect(() => {
     setMode(getStoredThemeMode());
@@ -31,14 +33,17 @@ export function AuthShell({ children }: { children: ReactNode }) {
           <button
             type="button"
             onClick={handleToggle}
-            aria-label={mode === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            aria-label={translateText(
+              mode === "dark" ? "Switch to light mode" : "Switch to dark mode",
+              locale,
+            )}
             className="h-9 w-9 grid place-items-center rounded-full border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
           >
             {mode === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
         </div>
 
-        <Card className="shadow-xl p-6">{children}</Card>
+        <Card className="shadow-xl p-6"><LocalizedContent>{children}</LocalizedContent></Card>
       </div>
     </div>
   );
@@ -47,6 +52,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
 export type Msg = { type: "success" | "error" | "info"; text: string } | null;
 
 export function Message({ msg }: { msg: Msg }) {
+  const { locale } = useI18n();
   if (!msg) return null;
   const styles =
     msg.type === "error"
@@ -54,5 +60,5 @@ export function Message({ msg }: { msg: Msg }) {
       : msg.type === "success"
         ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-950/40 dark:text-green-300 dark:border-green-800"
         : "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800";
-  return <div className={`text-sm border rounded-md p-3 ${styles}`}>{msg.text}</div>;
+  return <div className={`text-sm border rounded-md p-3 ${styles}`}>{translateText(msg.text, locale)}</div>;
 }

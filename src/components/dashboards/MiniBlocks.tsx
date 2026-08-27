@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowUpRight, PackageOpen, CreditCard, Users2 } from "lucide-react";
 import { getDashboardExtras } from "@/lib/dashboard-extras.functions";
+import { LocalizedContent, translateText, useI18n } from "@/i18n";
 
 function useExtras() {
   const fn = useServerFn(getDashboardExtras);
@@ -20,6 +21,7 @@ function MiniCard({
   label: string;
   children: React.ReactNode;
 }) {
+  const { locale } = useI18n();
   return (
     <Link
       to={to}
@@ -28,11 +30,11 @@ function MiniCard({
       <div className="flex items-center justify-between">
         <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
           <Icon className="h-3.5 w-3.5 text-emerald-600" />
-          {label}
+          {translateText(label, locale)}
         </span>
         <ArrowUpRight className="h-3.5 w-3.5 opacity-0 transition group-hover:opacity-100 text-emerald-600" />
       </div>
-      <div className="mt-2">{children}</div>
+      <div className="mt-2"><LocalizedContent>{children}</LocalizedContent></div>
     </Link>
   );
 }

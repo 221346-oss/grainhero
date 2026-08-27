@@ -27,6 +27,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { LocalizedContent, translateText, useI18n } from "@/i18n";
 
 function levelBadge(level: string) {
   switch (level) {
@@ -65,6 +66,7 @@ export function PredictionsSection() {
 }
 
 function TenantView() {
+  const { locale } = useI18n();
   const fetchPredictions = useServerFn(getSiloPredictions);
 
   const { data, isFetching, refetch } = useQuery({
@@ -85,7 +87,7 @@ function TenantView() {
     mutationFn: (v: { siloId: string; silo_name: string }) =>
       insightFn({ data: { siloId: v.siloId } }).then((r) => ({ ...r, silo_name: v.silo_name })),
     onSuccess: (d) => setInsight(d),
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(translateText(e.message, locale)),
   });
   const preds = data?.predictions ?? [];
 
@@ -115,7 +117,8 @@ function TenantView() {
   );
 
   return (
-    <div className="space-y-6">
+    <LocalizedContent>
+      <div className="space-y-6">
       <div className="flex items-center justify-end">
         <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
           <RefreshCw className={`h-4 w-4 mr-2 ${isFetching ? "animate-spin" : ""}`} /> Refresh
@@ -260,6 +263,7 @@ function TenantView() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }

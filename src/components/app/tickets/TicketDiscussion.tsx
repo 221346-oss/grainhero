@@ -30,6 +30,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Send, Pencil, Trash2, Check, X, Paperclip, FileText, Image as ImageIcon, Download } from "lucide-react";
 import { toast } from "sonner";
+import { translateText, useI18n } from "@/i18n";
 
 interface Props {
   ticketId: string;
@@ -48,6 +49,7 @@ export function TicketDiscussion({
   currentUserId,
   currentUserLabel,
 }: Props) {
+  const { locale } = useI18n();
   // Attach channel WITH unread tracking as soon as ticketId + userId are known.
   // This must use attachTicketForUser (not bare attachTicket) so the unread
   // counter is registered for the current user on this ticket.
@@ -125,7 +127,7 @@ export function TicketDiscussion({
           };
         } catch (uploadErr) {
           console.error("File upload error:", uploadErr);
-          toast.error("Failed to upload file. Please try again.");
+          toast.error(translateText("Failed to upload file. Please try again.", locale));
           setUploading(false);
           setSending(false);
           return;
@@ -146,7 +148,7 @@ export function TicketDiscussion({
       setSelectedFile(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (error) {
-      toast.error("Failed to send message");
+      toast.error(translateText("Failed to send message", locale));
       console.error("Send error:", error);
     } finally {
       setSending(false);
@@ -160,7 +162,7 @@ export function TicketDiscussion({
     
     // Check file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
-      toast.error("File size must be less than 10MB");
+      toast.error(translateText("File size must be less than 10MB", locale));
       return;
     }
     

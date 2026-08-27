@@ -1,14 +1,17 @@
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
+import { LocalizedContent } from "@/i18n";
 
 const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => (
+  ({ className, children, ...props }, ref) => (
     <div
       ref={ref}
       className={cn("rounded-xl border bg-card text-card-foreground shadow", className)}
       {...props}
-    />
+    >
+      <LocalizedContent>{children}</LocalizedContent>
+    </div>
   ),
 );
 Card.displayName = "Card";

@@ -62,6 +62,7 @@ import {
   CheckCircle,
   Circle,
 } from "lucide-react";
+import { LocalizedContent, translateText, useI18n } from "@/i18n";
 
 // ── Status config ──────────────────────────────────────────────────────────
 
@@ -95,6 +96,7 @@ const LIFECYCLE_STEPS = [
 // ── Main Component ─────────────────────────────────────────────────────────
 
 export function SuperAdminTechnicianPage({ name }: { name?: string }) {
+  const { locale } = useI18n();
   const channelId = useId();
   const qc = useQueryClient();
   const [activeTab, setActiveTab] = useState<"overview" | "installs" | "warehouses">("overview");
@@ -195,10 +197,10 @@ export function SuperAdminTechnicianPage({ name }: { name?: string }) {
   const setAvailability = useMutation({
     mutationFn: (status: string) => availFn({ data: { technician_status: status as any } }),
     onSuccess: () => {
-      toast.success("Availability updated");
+      toast.success(translateText("Availability updated", locale));
       qc.invalidateQueries({ queryKey: ["my-technician-profile"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(translateText(e.message, locale)),
   });
 
   const tabs = [
@@ -208,7 +210,8 @@ export function SuperAdminTechnicianPage({ name }: { name?: string }) {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <LocalizedContent>
+      <div className="min-h-screen bg-background">
       <div className="max-w-6xl mx-auto p-6 md:p-8 space-y-6">
         {/* Header */}
         <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -444,7 +447,8 @@ export function SuperAdminTechnicianPage({ name }: { name?: string }) {
           onClose={() => setSelectedInstallId(null)}
         />
       )}
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }
 
@@ -454,11 +458,16 @@ function WarehousesTab({ assignments, loading }: { assignments: any[]; loading: 
   if (loading) return <div className="h-32 rounded-xl bg-muted animate-pulse" />;
   if (!assignments.length)
     return (
-      <div className="text-center py-12 text-muted-foreground">No warehouse assignments found.</div>
+      <LocalizedContent>
+        <div className="text-center py-12 text-muted-foreground">
+          No warehouse assignments found.
+        </div>
+      </LocalizedContent>
     );
 
   return (
-    <div className="space-y-4">
+    <LocalizedContent>
+      <div className="space-y-4">
       {assignments.map((a: any, idx: number) => {
         const wh = a.warehouses ?? {};
         const orders = a.orders ?? [];
@@ -523,7 +532,8 @@ function WarehousesTab({ assignments, loading }: { assignments: any[]; loading: 
           </Card>
         );
       })}
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }
 
@@ -536,6 +546,7 @@ function InstallDetailDrawer({
   installId: string | null;
   onClose: () => void;
 }) {
+  const { locale } = useI18n();
   const qc = useQueryClient();
   const fetchDetail = useServerFn(getMyInstallDetail);
   const statusFn = useServerFn(updateInstallStatus);
@@ -556,11 +567,11 @@ function InstallDetailDrawer({
         data: { installId: installId!, status: v.status, blockerNote: v.blockerNote ?? null },
       }),
     onSuccess: () => {
-      toast.success("Status updated");
+      toast.success(translateText("Status updated", locale));
       qc.invalidateQueries({ queryKey: ["my-technician-installs"] });
       qc.invalidateQueries({ queryKey: ["my-install-detail", installId] });
     },
-    onError: (e: Error) => toast.error(String(e)),
+    onError: (e: Error) => toast.error(translateText(String(e), locale)),
   });
 
   const addEvent = useMutation({
@@ -570,10 +581,10 @@ function InstallDetailDrawer({
     }) =>
       eventFn({ data: { installId: installId!, eventType: v.eventType, note: v.note ?? null } }),
     onSuccess: () => {
-      toast.success("Event logged");
+      toast.success(translateText("Event logged", locale));
       qc.invalidateQueries({ queryKey: ["my-install-detail", installId] });
     },
-    onError: (e: Error) => toast.error(String(e)),
+    onError: (e: Error) => toast.error(translateText(String(e), locale)),
   });
 
   if (!installId) return null;
@@ -581,12 +592,14 @@ function InstallDetailDrawer({
   const detail = data as any;
   if (isLoading || !detail) {
     return (
-      <div className="fixed inset-0 z-50 flex">
+      <LocalizedContent>
+        <div className="fixed inset-0 z-50 flex">
         <div className="absolute inset-0 bg-black/50" onClick={onClose} />
         <div className="ml-auto w-[28rem] bg-white h-full overflow-y-auto relative z-10 flex items-center justify-center">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
-      </div>
+        </div>
+      </LocalizedContent>
     );
   }
 
@@ -615,7 +628,8 @@ function InstallDetailDrawer({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex">
+    <LocalizedContent>
+      <div className="fixed inset-0 z-50 flex">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
       <div className="ml-auto w-[28rem] bg-white h-full overflow-y-auto relative z-10">
         <div className="p-6 space-y-6">
@@ -793,6 +807,7 @@ function InstallDetailDrawer({
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }

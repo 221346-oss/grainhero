@@ -16,6 +16,7 @@ import {
 } from "@/lib/operations2.functions";
 import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
 import { PlatformScopeBanner } from "@/components/app/PlatformScopeBanner";
+import { LocalizedContent, translateText, useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/maintenance")({
   head: () => ({
@@ -51,6 +52,7 @@ function MaintenancePage() {
 }
 
 function TenantMaintenanceView() {
+  const { locale } = useI18n();
   const fn = useServerFn(getMaintenanceOverview);
   const doneFn = useServerFn(markMaintenanceDone);
   const qc = useQueryClient();
@@ -61,7 +63,7 @@ function TenantMaintenanceView() {
     mutationFn: (args: { id: string; kind: "device" | "actuator" }) =>
       doneFn({ data: { ...args, nextInDays: 180 } }),
     onSuccess: () => {
-      toast.success("Marked serviced");
+      toast.success(translateText("Marked serviced", locale));
       qc.invalidateQueries({ queryKey: ["maintenance"] });
     },
     onError: (e: any) => toast.error(e.message ?? "Failed"),
@@ -104,7 +106,8 @@ function TenantMaintenanceView() {
   if (isLoading) return <DashboardSkeleton />;
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+    <LocalizedContent>
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
           <Wrench className="h-6 w-6 text-emerald-600" /> Maintenance
@@ -221,7 +224,8 @@ function TenantMaintenanceView() {
           </div>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }
 
@@ -235,7 +239,8 @@ function PlatformMaintenanceView() {
   const totals = data?.totals ?? { devices: 0, overdue: 0, dueSoon: 0, lowBattery: 0 };
   const tenants = data?.tenants ?? [];
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+    <LocalizedContent>
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6">
       <PlatformScopeBanner label="Overdue and upcoming maintenance across every tenant. Read-only." />
       <div>
         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
@@ -324,6 +329,7 @@ function PlatformMaintenanceView() {
           )}
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }

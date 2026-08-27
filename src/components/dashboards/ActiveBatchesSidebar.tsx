@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { getActiveBatches } from "@/lib/active-batches.functions";
 import { X, Clock, User, Beaker, Droplets, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LocalizedContent } from "@/i18n";
 
 interface ActiveBatchesSidebarProps {
   isOpen: boolean;
@@ -47,7 +48,8 @@ export function ActiveBatchesSidebar({ isOpen, onClose }: ActiveBatchesSidebarPr
   };
 
   return (
-    <>
+    <LocalizedContent>
+      <>
       {/* Backdrop - only render when open (no shadow) */}
       {isOpen && (
         <div
@@ -242,6 +244,7 @@ export function ActiveBatchesSidebar({ isOpen, onClose }: ActiveBatchesSidebarPr
           )}
         </div>
       </div>
-    </>
+      </>
+    </LocalizedContent>
   );
 }

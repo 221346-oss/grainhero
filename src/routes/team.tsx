@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { NewGlassNav } from "@/components/landing/NewGlassNav";
 import { TeamSection } from "@/components/landing/TeamSection";
 import { NewFooter } from "@/components/landing/NewFooter";
+import { LocalizedContent } from "@/i18n";
 
 export const Route = createFileRoute("/team")({
   head: () => ({
@@ -30,7 +31,7 @@ export const Route = createFileRoute("/team")({
 
 function TeamPage() {
   return (
-    <main className="min-h-screen bg-[#EDE9D4]">
+    <LocalizedContent><main className="min-h-screen bg-[#EDE9D4]">
       <NewGlassNav />
 
       {/* Hero Section */}
@@ -112,6 +113,6 @@ function TeamPage() {
       </section>
 
       <NewFooter />
-    </main>
+    </main></LocalizedContent>
   );
 }

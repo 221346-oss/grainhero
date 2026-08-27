@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getPublicSellerStorefront } from "@/lib/reputation.functions";
+import { LocalizedContent } from "@/i18n";
 
 export const Route = createFileRoute("/marketplace/seller/$adminId")({
   component: SellerStorefront,
@@ -27,12 +28,12 @@ function SellerStorefront() {
   });
   if (isLoading || !data) {
     return (
-      <div className="min-h-screen p-6 text-sm text-muted-foreground">Loading storefront…</div>
+      <LocalizedContent><div className="min-h-screen p-6 text-sm text-muted-foreground">Loading storefront…</div></LocalizedContent>
     );
   }
   const { seller, reputation, reviews, listings, brand } = data;
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/30 p-4 sm:p-6 space-y-6">
+    <LocalizedContent><div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/30 p-4 sm:p-6 space-y-6">
       <header className="max-w-6xl mx-auto flex items-center justify-between">
         <div>
           <div className="text-xs uppercase tracking-wide text-emerald-700">{brand.brandName}</div>
@@ -121,6 +122,6 @@ function SellerStorefront() {
           ))}
         </div>
       </section>
-    </div>
+    </div></LocalizedContent>
   );
 }

@@ -49,6 +49,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Link, useLocation } from "@tanstack/react-router";
+import { LocalizedContent, translateText, useI18n } from "@/i18n";
 
 type TabKey = "all" | "active" | "resolved" | "dismissed" | "incoming" | "escalated";
 
@@ -290,6 +291,7 @@ function DetailPanel({
 }
 
 export function IncidentsSection() {
+  const { locale } = useI18n();
   const getFn = useServerFn(getIncidents);
   const fetchRole = useServerFn(getMyRole);
   const listTeamFn = useServerFn(listTeamMembers);
@@ -332,39 +334,40 @@ export function IncidentsSection() {
   const assignMut = useMutation({
     mutationFn: (v: { id: string; technicianId: string | null }) => assignFn({ data: v }),
     onSuccess: () => {
-      toast.success("Assigned");
+      toast.success(translateText("Assigned", locale));
       qc.invalidateQueries({ queryKey: ["incidents"] });
     },
-    onError: (e: Error) => toast.error(e.message || "Could not assign"),
+    onError: (e: Error) => toast.error(translateText(e.message || "Could not assign", locale)),
   });
 
   const escalateMut = useMutation({
     mutationFn: (id: string) => escalateFn({ data: { id } }),
     onSuccess: () => {
-      toast.success("Escalated to Admin");
+      toast.success(translateText("Escalated to Admin", locale));
       qc.invalidateQueries({ queryKey: ["incidents"] });
     },
-    onError: (e: Error) => toast.error(e.message || "Could not escalate"),
+    onError: (e: Error) =>
+      toast.error(translateText(e.message || "Could not escalate", locale)),
   });
 
   const resolveMut = useMutation({
     mutationFn: (id: string) => updateStatusFn({ data: { id, status: "resolved" } }),
     onSuccess: () => {
-      toast.success("Incident marked as resolved");
+      toast.success(translateText("Incident marked as resolved", locale));
       setActive(null);
       qc.invalidateQueries({ queryKey: ["incidents"] });
     },
-    onError: (e: Error) => toast.error(e.message || "Could not resolve"),
+    onError: (e: Error) => toast.error(translateText(e.message || "Could not resolve", locale)),
   });
 
   const dismissMut = useMutation({
     mutationFn: (id: string) => updateStatusFn({ data: { id, status: "dismissed" } }),
     onSuccess: () => {
-      toast.success("Incident marked as dismissed");
+      toast.success(translateText("Incident marked as dismissed", locale));
       setActive(null);
       qc.invalidateQueries({ queryKey: ["incidents"] });
     },
-    onError: (e: Error) => toast.error(e.message || "Could not dismiss"),
+    onError: (e: Error) => toast.error(translateText(e.message || "Could not dismiss", locale)),
   });
 
   const allIncidents = (data?.incidents ?? []) as IncidentRow[];
@@ -473,7 +476,8 @@ export function IncidentsSection() {
   const splitView = !!active;
 
   return (
-    <div className="space-y-4">
+    <LocalizedContent>
+      <div className="space-y-4">
       {/* Tab Navigation */}
       <div className="border-b border-border">
         <div className="flex items-center gap-1 overflow-x-auto">
@@ -838,6 +842,7 @@ export function IncidentsSection() {
         incident={activeDiscussion}
         currentUserId={currentUserId}
       />
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }

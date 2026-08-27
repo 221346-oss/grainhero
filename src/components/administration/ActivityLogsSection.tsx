@@ -20,6 +20,7 @@ import { AdminDataCard } from "@/components/app/admin/AdminDataCard";
 import { AdminDetailPanel, DetailField } from "@/components/app/admin/AdminDetailPanel";
 import { ExportMenu } from "@/components/app/ExportMenu";
 import type { ExportColumn } from "@/lib/csv-pdf-export";
+import { LocalizedContent } from "@/i18n";
 
 type Log = Awaited<ReturnType<typeof listActivityLogs>>["logs"][number];
 
@@ -145,7 +146,8 @@ export function ActivityLogsSection() {
   ];
 
   return (
-    <div className="space-y-6">
+    <LocalizedContent>
+      <div className="space-y-6">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <p className="text-sm text-muted-foreground">{scopeText}</p>
         <div className="flex items-center gap-2">
@@ -409,6 +411,7 @@ export function ActivityLogsSection() {
           )}
         </AdminDetailPanel>
       </div>
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }

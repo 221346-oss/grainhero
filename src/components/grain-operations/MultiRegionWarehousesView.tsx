@@ -26,6 +26,7 @@ import {
   Loader2,
   ChevronDown,
 } from "lucide-react";
+import { LocalizedContent } from "@/i18n";
 
 type WarehouseRow = {
   id: string;
@@ -162,7 +163,8 @@ function WarehouseCard({
 }) {
   const cfg = statusCfg(w.status);
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-3 hover:border-slate-300 transition-colors">
+    <LocalizedContent>
+      <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-3 hover:border-slate-300 transition-colors">
       {/* Header row */}
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
@@ -278,7 +280,8 @@ function WarehouseCard({
           {w.notes}
         </p>
       )}
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }
 
@@ -302,7 +305,8 @@ function RegionGroup({
   const technicians = [...new Set(warehouses.flatMap((w) => w.technician_names))];
 
   return (
-    <div className="space-y-0 border border-slate-200 rounded-lg overflow-hidden">
+    <LocalizedContent>
+      <div className="space-y-0 border border-slate-200 rounded-lg overflow-hidden">
       {/* Region header - clickable to expand */}
       <button
         onClick={() => setExpanded(!expanded)}
@@ -382,7 +386,8 @@ function RegionGroup({
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }
 

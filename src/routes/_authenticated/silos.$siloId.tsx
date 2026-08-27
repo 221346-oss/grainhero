@@ -34,6 +34,7 @@ import { listSilos, listGrainBatches, renameSilo } from "@/lib/operations.functi
 import { listDispatches } from "@/lib/dispatches.functions";
 import { getMyRole } from "@/lib/roles.functions";
 import { DispatchDialog } from "@/components/app/silos/DispatchDialog";
+import { LocalizedContent, translateText, useI18n } from "@/i18n";
 
 // Same allow-list used for team invite/manage — technicians can't rename.
 const RENAME_ROLES = ["super_admin", "admin", "manager"];
@@ -107,6 +108,7 @@ type Dispatch = {
 };
 
 function SiloDetailPage() {
+  const { locale } = useI18n();
   const { siloId } = Route.useParams();
   const listS = useServerFn(listSilos);
   const listB = useServerFn(listGrainBatches);
@@ -131,7 +133,7 @@ function SiloDetailPage() {
   const renameMutation = useMutation({
     mutationFn: (payload: { id: string; name: string }) => renameFn({ data: payload }),
     onSuccess: () => {
-      toast.success("Silo renamed");
+      toast.success(translateText("Silo renamed", locale));
       qc.invalidateQueries({ queryKey: ["silos"] });
       qc.invalidateQueries({ queryKey: ["dashboard-extras"] });
     },
@@ -196,14 +198,17 @@ function SiloDetailPage() {
 
   if (silosQ.isLoading || batchesQ.isLoading) {
     return (
-      <div className="p-8 flex items-center justify-center text-muted-foreground">
-        <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading silo…
-      </div>
+      <LocalizedContent>
+        <div className="p-8 flex items-center justify-center text-muted-foreground">
+          <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading silo…
+        </div>
+      </LocalizedContent>
     );
   }
   if (!silo) {
     return (
-      <div className="p-8 max-w-3xl mx-auto">
+      <LocalizedContent>
+        <div className="p-8 max-w-3xl mx-auto">
         <Link
           to="/grain-operations"
           search={{ tab: "silos" }}
@@ -216,7 +221,8 @@ function SiloDetailPage() {
             Silo not found.
           </CardContent>
         </Card>
-      </div>
+        </div>
+      </LocalizedContent>
     );
   }
 
@@ -226,7 +232,8 @@ function SiloDetailPage() {
   const wh = silo.warehouses;
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
+    <LocalizedContent>
+      <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
       <Link
         to="/grain-operations"
         search={{ tab: "silos" }}
@@ -583,6 +590,7 @@ function SiloDetailPage() {
         siloId={silo.id}
         siloName={silo.name}
       />
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }

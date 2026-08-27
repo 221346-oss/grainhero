@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { MapPin, ShieldCheck } from "lucide-react";
+import { LocalizedContent } from "@/i18n";
 
 export const Route = createFileRoute("/marketplace/$slug")({
   component: ListingDetail,
@@ -49,8 +50,8 @@ function ListingDetail() {
     onError: (e) => toast.error((e as Error).message),
   });
 
-  if (isLoading) return <div className="text-muted-foreground">Loading…</div>;
-  if (!l) return <div className="text-muted-foreground">Listing not found.</div>;
+  if (isLoading) return <LocalizedContent><div className="text-muted-foreground">Loading…</div></LocalizedContent>;
+  if (!l) return <LocalizedContent><div className="text-muted-foreground">Listing not found.</div></LocalizedContent>;
 
   const min = Number(l.min_order_kg ?? 0);
   const avail = Number(l.available_kg ?? 0);
@@ -59,7 +60,7 @@ function ListingDetail() {
   const valid = qty >= min && qty <= avail;
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+    <LocalizedContent><div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
       <div className="space-y-4">
         <Link to="/marketplace" className="text-sm text-muted-foreground hover:text-foreground">
           ← Back to marketplace
@@ -136,6 +137,6 @@ function ListingDetail() {
           </p>
         </CardContent>
       </Card>
-    </div>
+    </div></LocalizedContent>
   );
 }

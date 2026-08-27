@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Check, X, Loader2, Clock, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LocalizedContent } from "@/i18n";
 import {
   listDispatches,
   approveDispatch,
@@ -76,7 +77,8 @@ export function DispatchApprovalPanel({ siloId, isAdmin }: { siloId: string; isA
   if (drafts.length === 0) return null;
 
   return (
-    <div className="rounded-md border border-amber-500/30 bg-amber-500/5 p-2 space-y-1.5">
+    <LocalizedContent>
+      <div className="rounded-md border border-amber-500/30 bg-amber-500/5 p-2 space-y-1.5">
       <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400 flex items-center gap-1">
         <Clock className="h-3 w-3" /> Pending sale approval ({drafts.length})
       </p>
@@ -149,6 +151,7 @@ export function DispatchApprovalPanel({ siloId, isAdmin }: { siloId: string; isA
           )}
         </div>
       ))}
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }

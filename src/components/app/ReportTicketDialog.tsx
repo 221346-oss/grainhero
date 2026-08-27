@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Loader2, Ticket, ChevronDown, Upload, X } from "lucide-react";
 import { INCIDENT_SUGGESTIONS } from "@/lib/field-incident-suggestions";
+import { LocalizedContent, translateText, useI18n } from "@/i18n";
 
 // ── Severity options (High removed per spec) ─────────────────────────────────
 const SEVERITY_OPTIONS = [
@@ -105,7 +106,8 @@ function TitleCombobox({
   }
 
   return (
-    <div className="relative" ref={containerRef}>
+    <LocalizedContent>
+      <div className="relative" ref={containerRef}>
       {/* Main input field */}
       <Input
         ref={inputRef}
@@ -160,7 +162,8 @@ function TitleCombobox({
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }
 
@@ -171,6 +174,7 @@ export function ReportTicketDialog({
   silos = [],
   extraInvalidate = [],
 }: Props) {
+  const { locale } = useI18n();
   const qc = useQueryClient();
   const reportFn = useServerFn(reportMobileFieldIncident);
   const getRoleFn = useServerFn(getMyRole);
@@ -243,7 +247,7 @@ export function ReportTicketDialog({
         },
       }),
     onSuccess: () => {
-      toast.success(`Incident reported → ${targetRole.toUpperCase()}`);
+      toast.success(translateText(`Incident reported → ${targetRole.toUpperCase()}`, locale));
       reset();
       onOpenChange(false);
       qc.invalidateQueries({ queryKey: ["manager-dashboard"] });
@@ -266,7 +270,7 @@ export function ReportTicketDialog({
     if (file) {
       // Basic validation: max 10MB
       if (file.size > 10 * 1024 * 1024) {
-        toast.error("File too large. Maximum 10MB.");
+        toast.error(translateText("File too large. Maximum 10MB.", locale));
         return;
       }
       setAttachment(file);

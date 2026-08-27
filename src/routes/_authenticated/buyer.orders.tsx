@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { listMyOrders } from "@/lib/buyer-portal.functions";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { LocalizedContent } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/buyer/orders")({
   head: () => ({
@@ -41,7 +42,8 @@ function MyOrders() {
   const orders = data?.orders ?? [];
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-6">
+    <LocalizedContent>
+      <div className="max-w-6xl mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">My marketplace orders</h1>
@@ -108,6 +110,7 @@ function MyOrders() {
           ))}
         </div>
       )}
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }

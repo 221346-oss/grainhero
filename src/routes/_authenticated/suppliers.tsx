@@ -36,6 +36,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { RowActions } from "@/components/app/RowActions";
 import { listSuppliers, upsertSupplier, deleteSupplier } from "@/lib/suppliers.functions";
+import { LocalizedContent, translateText, useI18n } from "@/i18n";
 
 type SupplierRow = Record<string, any>;
 
@@ -93,6 +94,7 @@ const empty: FormState = {
 };
 
 function SuppliersPage() {
+  const { locale } = useI18n();
   const qc = useQueryClient();
   const [kindFilter, setKindFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
@@ -131,7 +133,7 @@ function SuppliersPage() {
         },
       }),
     onSuccess: () => {
-      toast.success(form.id ? "Supplier updated" : "Supplier added");
+      toast.success(translateText(form.id ? "Supplier updated" : "Supplier added", locale));
       setEditOpen(false);
       setForm(empty);
       qc.invalidateQueries({ queryKey: ["suppliers"] });
@@ -141,7 +143,7 @@ function SuppliersPage() {
   const delMut = useMutation({
     mutationFn: (id: string) => delFn({ data: { id } }),
     onSuccess: () => {
-      toast.success("Supplier removed");
+      toast.success(translateText("Supplier removed", locale));
       qc.invalidateQueries({ queryKey: ["suppliers"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -153,7 +155,8 @@ function SuppliersPage() {
   }, [rows]);
 
   return (
-    <div className="p-4 md:p-6 space-y-4">
+    <LocalizedContent>
+      <div className="p-4 md:p-6 space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
@@ -435,6 +438,7 @@ function SuppliersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }

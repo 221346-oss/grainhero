@@ -13,6 +13,7 @@ import {
   Mail,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LocalizedContent } from "@/i18n";
 
 interface OpenOrdersSidebarProps {
   isOpen: boolean;
@@ -94,7 +95,8 @@ export function OpenOrdersSidebar({ isOpen, onClose }: OpenOrdersSidebarProps) {
   };
 
   return (
-    <>
+    <LocalizedContent>
+      <>
       {/* Backdrop - only render when open (no shadow) */}
       {isOpen && (
         <div
@@ -305,6 +307,7 @@ export function OpenOrdersSidebar({ isOpen, onClose }: OpenOrdersSidebarProps) {
           )}
         </div>
       </div>
-    </>
+      </>
+    </LocalizedContent>
   );
 }

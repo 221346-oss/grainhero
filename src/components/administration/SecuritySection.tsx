@@ -53,6 +53,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getAuthRedirectOrigin } from "@/lib/app-url";
 import { toast } from "sonner";
 import { HairlineGrid, NeonPanel, NEON } from "@/components/charts/neon";
+import { LocalizedContent, translateText, useI18n } from "@/i18n";
 
 type TenantUser = {
   id: string;
@@ -103,6 +104,7 @@ function sevBadge(s: string) {
 }
 
 export function SecuritySection() {
+  const { locale } = useI18n();
   const qc = useQueryClient();
   const fnRole = useServerFn(getMyRole);
   const fnOverview = useServerFn(getSecurityOverview);
@@ -135,7 +137,7 @@ export function SecuritySection() {
   const toggle = useMutation({
     mutationFn: (v: { id: string; blocked: boolean }) => updateFn({ data: v }),
     onSuccess: () => {
-      toast.success("User status updated");
+      toast.success(translateText("User status updated", locale));
       qc.invalidateQueries({ queryKey: ["security-center"] });
       qc.invalidateQueries({ queryKey: ["team-members"] });
     },
@@ -145,7 +147,7 @@ export function SecuritySection() {
   const warn = useMutation({
     mutationFn: (v: { userId: string; message: string }) => warnFn({ data: v }),
     onSuccess: () => {
-      toast.success("Warning sent");
+      toast.success(translateText("Warning sent", locale));
       qc.invalidateQueries({ queryKey: ["security-events"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -159,7 +161,7 @@ export function SecuritySection() {
       return managers.length;
     },
     onSuccess: (count) => {
-      toast.success(`Blocked ${count} manager${count === 1 ? "" : "s"}`);
+      toast.success(translateText(`Blocked ${count} manager${count === 1 ? "" : "s"}`, locale));
       qc.invalidateQueries({ queryKey: ["security-center"] });
       qc.invalidateQueries({ queryKey: ["team-members"] });
       setQuickAction(null);
@@ -174,7 +176,10 @@ export function SecuritySection() {
     },
     onSuccess: () => {
       toast.success(
-        "Account blocked — they'll be denied on their next request. Note: an already-open browser session stays valid until its token expires; there's no live session-revocation API in this Supabase project.",
+        translateText(
+          "Account blocked — they'll be denied on their next request. Note: an already-open browser session stays valid until its token expires; there's no live session-revocation API in this Supabase project.",
+          locale,
+        ),
       );
       qc.invalidateQueries({ queryKey: ["security-center"] });
       setQuickAction(null);
@@ -194,7 +199,7 @@ export function SecuritySection() {
       await logFn({ data: { event: "password_reset_issued", meta: { targetUserId: userId } } });
     },
     onSuccess: () => {
-      toast.success("Reset link emailed to the user");
+      toast.success(translateText("Reset link emailed to the user", locale));
       setQuickAction(null);
       setPickedUserId("");
     },
@@ -229,7 +234,8 @@ export function SecuritySection() {
   const userById = new Map(users.map((u) => [u.id, u]));
 
   return (
-    <div className="space-y-6">
+    <LocalizedContent>
+      <div className="space-y-6">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <p className="text-sm text-muted-foreground">
           User access, privilege overview and real security events (sign-ins, unauthorized access,
@@ -598,6 +604,7 @@ export function SecuritySection() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }

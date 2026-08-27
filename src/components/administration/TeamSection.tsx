@@ -63,6 +63,7 @@ import {
 } from "@/lib/team-settings-insurance.functions";
 import { AdminSummaryTiles } from "@/components/app/admin/AdminSummaryTiles";
 import { AdminDataCard } from "@/components/app/admin/AdminDataCard";
+import { LocalizedContent, translateText, useI18n } from "@/i18n";
 
 type Role = "admin" | "manager" | "technician" | "pending";
 type Member = {
@@ -104,6 +105,7 @@ const teamExportColumns: ExportColumn<Member>[] = [
 ];
 
 export function TeamSection() {
+  const { locale } = useI18n();
   const qc = useQueryClient();
   const roleFn = useServerFn(getMyRole);
   const listFn = useServerFn(listTeamMembers);
@@ -222,12 +224,12 @@ export function TeamSection() {
       data: { email: string; name?: string; role: "admin" | "manager" | "technician" };
     }) => inviteFn(v),
     onSuccess: () => {
-      toast.success("Invitation sent");
+      toast.success(translateText("Invitation sent", locale));
       setInviteOpen(false);
       setInviteForm({ email: "", name: "", role: "technician" });
       qc.invalidateQueries({ queryKey: ["team-members"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(translateText(e.message, locale)),
   });
   const update = useMutation({
     mutationFn: (v: {
@@ -235,25 +237,28 @@ export function TeamSection() {
     }) => updateFn(v),
     onSuccess: (_r, v) => {
       toast.success(
-        v.data.blocked !== undefined
-          ? v.data.blocked
-            ? "Member blocked"
-            : "Member unblocked"
-          : "Member updated",
+        translateText(
+          v.data.blocked !== undefined
+            ? v.data.blocked
+              ? "Member blocked"
+              : "Member unblocked"
+            : "Member updated",
+          locale,
+        ),
       );
       setEditing(null);
       qc.invalidateQueries({ queryKey: ["team-members"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(translateText(e.message, locale)),
   });
   const remove = useMutation({
     mutationFn: (v: { data: { id: string } }) => removeFn(v),
     onSuccess: () => {
-      toast.success("Member removed");
+      toast.success(translateText("Member removed", locale));
       setDeleting(null);
       qc.invalidateQueries({ queryKey: ["team-members"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(translateText(e.message, locale)),
   });
 
   const availableRoles: Role[] = useMemo(
@@ -276,7 +281,8 @@ export function TeamSection() {
   // Super admins manage users on the platform pages — no duplicate implementation here.
   if (isSuperAdmin) {
     return (
-      <Card>
+      <LocalizedContent>
+        <Card>
         <CardContent className="p-10 text-center space-y-3">
           <Users className="h-10 w-10 text-emerald-600 mx-auto" />
           <div className="text-lg font-semibold text-slate-900">Platform user management</div>
@@ -289,12 +295,14 @@ export function TeamSection() {
             </Link>
           </Button>
         </CardContent>
-      </Card>
+        </Card>
+      </LocalizedContent>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <LocalizedContent>
+      <div className="space-y-6">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <p className="text-sm text-muted-foreground">
           Invite teammates and manage roles across your tenant.
@@ -710,6 +718,7 @@ export function TeamSection() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }

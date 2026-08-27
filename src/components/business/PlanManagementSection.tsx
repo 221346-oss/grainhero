@@ -18,8 +18,10 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useMyProfile } from "@/hooks/useMyProfile";
+import { LocalizedContent, translateText, useI18n } from "@/i18n";
 
 export function PlanManagementSection() {
+  const { locale } = useI18n();
   const qc = useQueryClient();
   const profile = useMyProfile();
   const currentPlan = (profile.data as any)?.subscription_plan ?? "basic";
@@ -81,8 +83,8 @@ export function PlanManagementSection() {
     onSuccess: (res: any) => {
       toast.success(
         res.auto_applied
-          ? "Upgrade applied automatically"
-          : "Change requested — awaiting super admin",
+          ? translateText("Upgrade applied automatically", locale)
+          : translateText("Change requested — awaiting super admin", locale),
       );
       setNote("");
       qc.invalidateQueries({ queryKey: ["my-plan-change-requests"] });
@@ -94,7 +96,7 @@ export function PlanManagementSection() {
   const cancelMut = useMutation({
     mutationFn: (id: string) => cancel({ data: { id } }),
     onSuccess: () => {
-      toast.success("Request cancelled");
+      toast.success(translateText("Request cancelled", locale));
       qc.invalidateQueries({ queryKey: ["my-plan-change-requests"] });
     },
     onError: (e: any) => toast.error(e?.message ?? "Failed"),
@@ -103,13 +105,14 @@ export function PlanManagementSection() {
   const autoMut = useMutation({
     mutationFn: (enabled: boolean) => setAuto({ data: { enabled } }),
     onSuccess: () => {
-      toast.success("Preference saved");
+      toast.success(translateText("Preference saved", locale));
       qc.invalidateQueries({ queryKey: ["my-profile"] });
     },
   });
 
   return (
-    <div className="space-y-6">
+    <LocalizedContent>
+      <div className="space-y-6">
       <p className="text-sm text-muted-foreground">
         Compare plans, request an upgrade or downgrade, and manage auto-upgrade.
       </p>
@@ -260,6 +263,7 @@ export function PlanManagementSection() {
           </tbody>
         </table>
       </AdminDataCard>
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }

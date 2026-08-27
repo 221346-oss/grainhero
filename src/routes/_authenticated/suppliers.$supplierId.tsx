@@ -5,6 +5,7 @@ import { ArrowLeft, Loader2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getSupplierDetail } from "@/lib/suppliers.functions";
+import { LocalizedContent } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/suppliers/$supplierId")({
   head: () => ({
@@ -37,9 +38,11 @@ function SupplierDetail() {
   });
   if (q.isLoading)
     return (
-      <div className="p-6">
-        <Loader2 className="h-4 w-4 animate-spin inline mr-2" /> Loading…
-      </div>
+      <LocalizedContent>
+        <div className="p-6">
+          <Loader2 className="h-4 w-4 animate-spin inline mr-2" /> Loading…
+        </div>
+      </LocalizedContent>
     );
   const s = (q.data?.supplier ?? {}) as Row;
   const batches = (q.data?.batches ?? []) as Row[];
@@ -53,7 +56,8 @@ function SupplierDetail() {
   })();
 
   return (
-    <div className="p-4 md:p-6 space-y-4">
+    <LocalizedContent>
+      <div className="p-4 md:p-6 space-y-4">
       <div className="flex items-center gap-2">
         <Button asChild variant="ghost" size="sm">
           <Link to="/suppliers">
@@ -149,6 +153,7 @@ function SupplierDetail() {
           <CardContent className="p-4 text-sm whitespace-pre-wrap">{s.notes}</CardContent>
         </Card>
       )}
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }

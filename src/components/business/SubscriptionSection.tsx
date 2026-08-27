@@ -46,6 +46,7 @@ import {
 } from "@/components/ui/select";
 import { AdminDataCard } from "@/components/app/admin/AdminDataCard";
 import { SubscriptionSkeleton } from "@/components/app/skeletons";
+import { LocalizedContent, translateText, useI18n } from "@/i18n";
 
 function statusBadge(s: string | null | undefined) {
   switch (s) {
@@ -93,6 +94,7 @@ function UsageRow({
 }
 
 export function SubscriptionSection() {
+  const { locale } = useI18n();
   const fn = useServerFn(getMySubscription);
   const cancelFn = useServerFn(cancelMySubscription);
   const portalFn = useServerFn(createStripeBillingPortalSession);
@@ -122,7 +124,7 @@ export function SubscriptionSection() {
   const cancelM = useMutation({
     mutationFn: () => cancelFn({ data: { reason: reason || undefined } }),
     onSuccess: () => {
-      toast.success("Subscription cancelled");
+      toast.success(translateText("Subscription cancelled", locale));
       setConfirmOpen(false);
       qc.invalidateQueries({ queryKey: ["my-subscription"] });
     },
@@ -140,7 +142,7 @@ export function SubscriptionSection() {
   const changeM = useMutation({
     mutationFn: () => changeFn({ data: { planId: newPlan } }),
     onSuccess: () => {
-      toast.success("Plan updated");
+      toast.success(translateText("Plan updated", locale));
       setChangeOpen(false);
       qc.invalidateQueries({ queryKey: ["my-subscription"] });
     },
@@ -149,7 +151,7 @@ export function SubscriptionSection() {
   const cancelPeriodM = useMutation({
     mutationFn: () => cancelPeriodFn(),
     onSuccess: () => {
-      toast.success("Will cancel at period end");
+      toast.success(translateText("Will cancel at period end", locale));
       qc.invalidateQueries({ queryKey: ["my-subscription"] });
     },
     onError: (e: any) => toast.error(e.message ?? "Failed"),
@@ -157,7 +159,7 @@ export function SubscriptionSection() {
   const resumeM = useMutation({
     mutationFn: () => resumeFn(),
     onSuccess: () => {
-      toast.success("Subscription resumed");
+      toast.success(translateText("Subscription resumed", locale));
       qc.invalidateQueries({ queryKey: ["my-subscription"] });
     },
     onError: (e: any) => toast.error(e.message ?? "Failed"),
@@ -173,7 +175,8 @@ export function SubscriptionSection() {
   if (isLoading) return <SubscriptionSkeleton />;
 
   return (
-    <div className="space-y-6">
+    <LocalizedContent>
+      <div className="space-y-6">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <p className="text-sm text-muted-foreground">
           Manage your plan, usage and billing history.
@@ -492,6 +495,7 @@ export function SubscriptionSection() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }

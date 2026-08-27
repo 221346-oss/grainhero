@@ -10,6 +10,7 @@ import { useState, useEffect } from "react";
 import { listAvailableTeam, updateWarehouseTeam } from "@/lib/operations.functions";
 import { X, Loader2, Check, AlertCircle, User, Wrench } from "lucide-react";
 import { toast } from "sonner";
+import { LocalizedContent } from "@/i18n";
 
 type WarehouseRow = {
   id: string;
@@ -112,7 +113,8 @@ export function WarehouseAssignmentSidebar({
   };
 
   return (
-    <>
+    <LocalizedContent>
+      <>
       {/* Backdrop overlay */}
       {isOpen && (
         <div className="fixed inset-0 bg-black/50 z-40" onClick={onClose} aria-hidden="true" />
@@ -256,6 +258,7 @@ export function WarehouseAssignmentSidebar({
           </button>
         </div>
       </div>
-    </>
+      </>
+    </LocalizedContent>
   );
 }

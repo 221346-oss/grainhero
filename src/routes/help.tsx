@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Search, MessageCircle, Book, Video, Mail, Phone } from "lucide-react";
 import { NewGlassNav } from "@/components/landing/NewGlassNav";
 import { NewFooter } from "@/components/landing/NewFooter";
+import { LocalizedContent } from "@/i18n";
 
 export const Route = createFileRoute("/help")({
   head: () => ({
@@ -72,7 +73,7 @@ function HelpCenterPage() {
   ];
 
   return (
-    <main className="min-h-screen bg-[#EDE9D4]">
+    <LocalizedContent><main className="min-h-screen bg-[#EDE9D4]">
       <NewGlassNav />
 
       {/* Hero Section */}
@@ -181,6 +182,6 @@ function HelpCenterPage() {
       </section>
 
       <NewFooter />
-    </main>
+    </main></LocalizedContent>
   );
 }

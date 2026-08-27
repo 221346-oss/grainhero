@@ -8,6 +8,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { listTickets } from "@/lib/tickets.functions";
 import { TicketDetailSheet } from "@/components/app/tickets/TicketDetailSheet";
 import type { TicketRow } from "@/lib/tickets.functions";
+import { LocalizedContent, translateText, useI18n } from "@/i18n";
 
 interface MobilePageLayoutProps {
   title?: string;
@@ -24,6 +25,7 @@ export function MobilePageLayout({
   criticalAlerts = 0,
   userName,
 }: MobilePageLayoutProps) {
+  const { locale } = useI18n();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarView, setSidebarView] = useState<"navigation" | "tickets">("navigation");
   const [selectedTicket, setSelectedTicket] = useState<TicketRow | null>(null);
@@ -86,11 +88,11 @@ export function MobilePageLayout({
                     <button
                       onClick={() => setSidebarView("navigation")}
                       className="p-2 hover:bg-muted rounded-lg transition-colors"
-                      aria-label="Back to navigation"
+                    aria-label={translateText("Back to navigation", locale)}
                     >
                       <ChevronDown className="w-5 h-5 rotate-90" />
                     </button>
-                    <span className="font-semibold text-foreground">Tickets</span>
+                    <span className="font-semibold text-foreground">{translateText("Tickets", locale)}</span>
                   </div>
                   <button
                     onClick={() => setSidebarOpen(false)}
@@ -110,12 +112,12 @@ export function MobilePageLayout({
                 <div className="space-y-1">
                   <div className="px-4 py-3 border-b border-border">
                     <p className="text-xs text-muted-foreground">
-                      Open incident tickets from all admins
+                      {translateText("Open incident tickets from all admins", locale)}
                     </p>
                   </div>
                   {allTickets.length === 0 ? (
                     <div className="px-4 py-8 text-center">
-                      <p className="text-sm text-muted-foreground">No tickets</p>
+                      <p className="text-sm text-muted-foreground">{translateText("No tickets", locale)}</p>
                     </div>
                   ) : (
                     allTickets.map((ticket) => (
@@ -126,14 +128,14 @@ export function MobilePageLayout({
                       >
                         <div className="flex items-start justify-between gap-2 mb-1">
                           <h4 className="text-sm font-medium text-foreground line-clamp-1">
-                            {ticket.title}
+                            {translateText(ticket.title, locale)}
                           </h4>
                           <Badge variant="outline" className="text-xs shrink-0">
-                            {ticket.priority}
+                          {translateText(ticket.priority, locale)}
                           </Badge>
                         </div>
                         <p className="text-xs text-muted-foreground line-clamp-1">
-                          {ticket.description?.substring(0, 60)}
+                          {translateText(ticket.description?.substring(0, 60) ?? "", locale)}
                         </p>
                       </button>
                     ))
@@ -147,7 +149,7 @@ export function MobilePageLayout({
 
       {/* Main Content Area - Full width, scrollable */}
       <main className="flex-1 w-full overflow-y-auto">
-        <div className="w-full min-h-full bg-white">{children}</div>
+        <div className="w-full min-h-full bg-white"><LocalizedContent>{children}</LocalizedContent></div>
       </main>
 
       {/* Ticket Detail Sheet */}

@@ -14,6 +14,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { getClaimTimeline } from "@/lib/insurance.functions";
+import { LocalizedContent } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/insurance-claims/$claimId")({
   head: () => ({
@@ -64,7 +65,8 @@ function ClaimTimelinePage() {
   const attachments = data?.attachments ?? [];
 
   return (
-    <div className="min-h-screen p-4 sm:p-6 space-y-6 bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">
+    <LocalizedContent>
+      <div className="min-h-screen p-4 sm:p-6 space-y-6 bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">
       <Link
         to="/insurance"
         className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900"
@@ -200,7 +202,8 @@ function ClaimTimelinePage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }
 

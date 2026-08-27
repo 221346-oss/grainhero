@@ -29,6 +29,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
+import { LocalizedContent } from "@/i18n";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
@@ -409,7 +410,7 @@ function CheckoutPage() {
   const goBack = () => setStep((s) => Math.max(0, s - 1));
 
   return (
-    <div className="min-h-screen py-10 px-4 checkout-bg checkout-inline-bg bg-background transition-colors">
+    <LocalizedContent><div className="min-h-screen py-10 px-4 checkout-bg checkout-inline-bg bg-background transition-colors">
       <div className="max-w-5xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <Link
@@ -1068,6 +1069,6 @@ function CheckoutPage() {
           </aside>
         </div>
       </div>
-    </div>
+    </div></LocalizedContent>
   );
 }

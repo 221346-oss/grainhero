@@ -20,6 +20,7 @@ import { PlatformScopeBanner } from "@/components/app/PlatformScopeBanner";
 import { PlatformOverviewTable } from "@/components/app/PlatformOverviewTable";
 import { PageHeader } from "@/components/dashboards/_shared";
 import { AnalyticsSkeleton } from "@/components/app/skeletons";
+import { LocalizedContent } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/analytics")({
   head: () => ({
@@ -75,7 +76,8 @@ function AnalyticsPage() {
 
   if (!roleQ.isLoading && !allowed) {
     return (
-      <div className="p-8 max-w-lg mx-auto">
+      <LocalizedContent>
+        <div className="p-8 max-w-lg mx-auto">
         <Card>
           <CardHeader>
             <CardTitle>Access restricted</CardTitle>
@@ -84,7 +86,8 @@ function AnalyticsPage() {
             </CardDescription>
           </CardHeader>
         </Card>
-      </div>
+        </div>
+      </LocalizedContent>
     );
   }
 
@@ -100,7 +103,8 @@ function AnalyticsPage() {
   const maxTrend = Math.max(1, ...trend.map((d: any) => d.kg));
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+    <LocalizedContent>
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6">
       {isSuperAdmin && (
         <PlatformScopeBanner label="Aggregated operational and financial metrics across every tenant." />
       )}
@@ -342,6 +346,7 @@ function AnalyticsPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }

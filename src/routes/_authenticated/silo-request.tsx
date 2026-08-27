@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { LocalizedContent, translateText, useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/silo-request")({
   head: () => ({ meta: [{ title: "Request a silo — GrainHero" }] }),
@@ -38,6 +39,7 @@ function validatePakistaniPhone(val: string): string | null {
 const emptyForm = { address: "", city: "", country: "", phone: "", notes: "" };
 
 function SiloRequestPage() {
+  const { locale } = useI18n();
   const draftFn = useServerFn(createSiloDraftRequest);
   const qc = useQueryClient();
   const navigate = useNavigate();
@@ -63,14 +65,15 @@ function SiloRequestPage() {
       qc.invalidateQueries({ queryKey: ["my-hardware-orders"] });
       qc.invalidateQueries({ queryKey: ["plan-gate"] });
     },
-    onError: (e: Error) => toast.error(e.message || "Could not submit request"),
+    onError: (e: Error) => toast.error(e.message || translateText("Could not submit request", locale)),
   });
 
   // Plan limit reached — show upgrade prompt instead of the form
   const atLimit = siloGate.data && !siloGate.data.allowed;
 
   return (
-    <div className="p-6 md:p-8 max-w-2xl mx-auto space-y-6">
+    <LocalizedContent>
+      <div className="p-6 md:p-8 max-w-2xl mx-auto space-y-6">
       <Link
         to="/orders"
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -274,6 +277,7 @@ function SiloRequestPage() {
           </CardContent>
         </Card>
       )}
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }

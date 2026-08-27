@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Wrench, Wifi, LineChart, CheckCircle } from "lucide-react";
+import { LocalizedContent } from "@/i18n";
 
 const steps = [
   {
@@ -43,7 +44,7 @@ const steps = [
 
 export function NewHowItWorks() {
   return (
-    <section
+    <LocalizedContent><section
       id="how-it-works"
       className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-white relative overflow-hidden"
     >
@@ -157,6 +158,6 @@ export function NewHowItWorks() {
           </button>
         </motion.div>
       </div>
-    </section>
+    </section></LocalizedContent>
   );
 }

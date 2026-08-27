@@ -15,6 +15,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { getMyRole } from "@/lib/roles.functions";
 import { SuperAdminTechnicianPage } from "@/components/dashboards/SuperAdminTechnicianPage";
 import { Loader2, ShieldAlert } from "lucide-react";
+import { LocalizedContent } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/superadmin-technician")({
   head: () => ({
@@ -57,18 +58,22 @@ function SuperAdminTechnicianRoute() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-24">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
+      <LocalizedContent>
+        <div className="flex items-center justify-center py-24">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      </LocalizedContent>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 text-center">
-        <ShieldAlert className="h-10 w-10 text-red-500 mb-3" />
-        <p className="text-sm text-red-600">Failed to load role: {(error as Error).message}</p>
-      </div>
+      <LocalizedContent>
+        <div className="flex flex-col items-center justify-center py-24 text-center">
+          <ShieldAlert className="h-10 w-10 text-red-500 mb-3" />
+          <p className="text-sm text-red-600">Failed to load role: {(error as Error).message}</p>
+        </div>
+      </LocalizedContent>
     );
   }
 
@@ -77,14 +82,16 @@ function SuperAdminTechnicianRoute() {
   // Only technicians and super_admins can access this page
   if (role !== "technician" && role !== "super_admin") {
     return (
-      <div className="flex flex-col items-center justify-center py-24 text-center">
-        <ShieldAlert className="h-10 w-10 text-amber-500 mb-3" />
-        <h2 className="text-lg font-semibold mb-1">Access Restricted</h2>
-        <p className="text-sm text-muted-foreground max-w-md">
-          The Technician Command Center is available to technicians and super administrators only.
-          Your current role is <span className="font-medium">{role}</span>.
-        </p>
-      </div>
+      <LocalizedContent>
+        <div className="flex flex-col items-center justify-center py-24 text-center">
+          <ShieldAlert className="h-10 w-10 text-amber-500 mb-3" />
+          <h2 className="text-lg font-semibold mb-1">Access Restricted</h2>
+          <p className="text-sm text-muted-foreground max-w-md">
+            The Technician Command Center is available to technicians and super administrators only.
+            Your current role is <span className="font-medium">{role}</span>.
+          </p>
+        </div>
+      </LocalizedContent>
     );
   }
 

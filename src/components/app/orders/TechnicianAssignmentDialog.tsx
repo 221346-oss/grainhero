@@ -31,6 +31,7 @@ import {
   assignTechnicianToOrder,
 } from "@/lib/warehouse-assignment.functions";
 import { Loader2, MapPin, User, Clock, CheckCircle2, AlertCircle, XCircle } from "lucide-react";
+import { translateText, useI18n } from "@/i18n";
 
 interface TechnicianAssignmentDialogProps {
   open: boolean;
@@ -74,6 +75,7 @@ export function TechnicianAssignmentDialog({
   onOpenChange,
   order,
 }: TechnicianAssignmentDialogProps) {
+  const { locale } = useI18n();
   const qc = useQueryClient();
   const [selectedWarehouse, setSelectedWarehouse] = useState<string>(order.warehouse_id || "");
   const [selectedTechnician, setSelectedTechnician] = useState<string>(order.assigned_technician_id || "");
@@ -122,7 +124,7 @@ export function TechnicianAssignmentDialog({
       scheduledFor?: string | null;
     }) => assignTech({ data }),
     onSuccess: () => {
-      toast.success("Technician assigned successfully");
+      toast.success(translateText("Technician assigned successfully", locale));
       qc.invalidateQueries({ queryKey: ["platform-orders"] });
       qc.invalidateQueries({ queryKey: ["platform.order", order.id] });
       // Refresh technician list so job counts and availability update
@@ -131,7 +133,7 @@ export function TechnicianAssignmentDialog({
       onOpenChange(false);
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to assign technician");
+      toast.error(error.message || translateText("Failed to assign technician", locale));
     },
   });
 
@@ -154,7 +156,7 @@ export function TechnicianAssignmentDialog({
 
   const handleAssign = () => {
     if (!selectedTechnician) {
-      toast.error("Please select a technician");
+      toast.error(translateText("Please select a technician", locale));
       return;
     }
 
@@ -171,7 +173,12 @@ export function TechnicianAssignmentDialog({
       order.assigned_technician_id === selectedTechnician &&
       !isoScheduled
     ) {
-      toast.warning("This technician is already assigned. Add a schedule date or pick a different technician.");
+      toast.warning(
+        translateText(
+          "This technician is already assigned. Add a schedule date or pick a different technician.",
+          locale,
+        ),
+      );
       return;
     }
 

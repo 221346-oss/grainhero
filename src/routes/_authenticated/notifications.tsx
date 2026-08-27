@@ -37,6 +37,7 @@ import {
 import { getMySettings, updateMySettings } from "@/lib/team-settings-insurance.functions";
 import { Switch } from "@/components/ui/switch";
 import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { LocalizedContent, translateText, useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/notifications")({
   head: () => ({
@@ -119,6 +120,7 @@ const PREF_DEFAULTS: Record<string, boolean> = {
 };
 
 function NotificationPreferences() {
+  const { locale } = useI18n();
   const qc = useQueryClient();
   const getFn = useServerFn(getMySettings);
   const saveFn = useServerFn(updateMySettings);
@@ -134,7 +136,7 @@ function NotificationPreferences() {
     mutationFn: (next: Record<string, boolean>) =>
       saveFn({ data: { preferences: { ...stored, ...next } } }),
     onSuccess: () => {
-      toast.success("Preferences saved");
+      toast.success(translateText("Preferences saved", locale));
       qc.invalidateQueries({ queryKey: ["my-settings"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -166,6 +168,7 @@ function NotificationPreferences() {
 }
 
 function NotificationsPage() {
+  const { locale } = useI18n();
   const [filter, setFilter] = useState<Filter>("all");
   const [categories, setCategories] = useState<Set<string>>(new Set());
   const qc = useQueryClient();
@@ -197,14 +200,14 @@ function NotificationsPage() {
     mutationFn: () => markAll(),
     onSuccess: () => {
       invalidate();
-      toast.success("All marked as read");
+      toast.success(translateText("All marked as read", locale));
     },
   });
   const delMut = useMutation({
     mutationFn: (id: string) => del({ data: { id } }),
     onSuccess: () => {
       invalidate();
-      toast.success("Notification removed");
+      toast.success(translateText("Notification removed", locale));
     },
   });
 
@@ -214,7 +217,8 @@ function NotificationsPage() {
   if (isLoading) return <NotificationsSkeleton />;
 
   return (
-    <div className="min-h-screen p-4 sm:p-6 space-y-6 bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">
+    <LocalizedContent>
+      <div className="min-h-screen p-4 sm:p-6 space-y-6 bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">
       <Link
         to="/dashboard"
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -397,6 +401,7 @@ function NotificationsPage() {
       </Card>
 
       <NotificationPreferences />
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }

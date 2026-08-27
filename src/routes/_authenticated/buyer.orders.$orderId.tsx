@@ -14,6 +14,7 @@ import { z } from "zod";
 import { ShipmentPanel } from "@/components/app/marketplace/ShipmentPanel";
 import { BuyerReviewForm } from "@/components/app/marketplace/BuyerReviewForm";
 import { BuyerDisputeCard } from "@/components/app/marketplace/BuyerDisputeCard";
+import { LocalizedContent, translateText, useI18n } from "@/i18n";
 
 const search = z.object({ checkout: z.enum(["success", "cancel"]).optional() });
 
@@ -39,6 +40,7 @@ export const Route = createFileRoute("/_authenticated/buyer/orders/$orderId")({
 });
 
 function OrderDetail() {
+  const { locale } = useI18n();
   const { orderId } = Route.useParams();
   const s = useSearch({ from: "/_authenticated/buyer/orders/$orderId" });
   const qc = useQueryClient();
@@ -50,10 +52,10 @@ function OrderDetail() {
 
   useEffect(() => {
     if (s.checkout === "success") {
-      toast.success("Payment received — thank you!");
+      toast.success(translateText("Payment received — thank you!", locale));
       refetch();
     } else if (s.checkout === "cancel") {
-      toast.info("Checkout cancelled.");
+      toast.info(translateText("Checkout cancelled.", locale));
     }
   }, [s.checkout, refetch]);
 
@@ -70,27 +72,40 @@ function OrderDetail() {
   const resend = useMutation({
     mutationFn: (invoiceId: string) => resendFn({ data: { invoiceId } }),
     onSuccess: (r) =>
-      r.ok ? toast.success("Invoice email sent") : toast.error(r.error ?? "Failed to send"),
+      r.ok
+        ? toast.success(translateText("Invoice email sent", locale))
+        : toast.error(r.error ?? translateText("Failed to send", locale)),
     onError: (e) => toast.error((e as Error).message),
   });
 
   const cancel = useMutation({
     mutationFn: async () => cancelMyOrder({ data: { orderId } }),
     onSuccess: () => {
-      toast.success("Order cancelled");
+      toast.success(translateText("Order cancelled", locale));
       qc.invalidateQueries({ queryKey: ["my-order", orderId] });
     },
     onError: (e) => toast.error((e as Error).message),
   });
 
-  if (isLoading) return <div className="max-w-4xl mx-auto p-6 text-muted-foreground">Loading…</div>;
+  if (isLoading)
+    return (
+      <LocalizedContent>
+        <div className="max-w-4xl mx-auto p-6 text-muted-foreground">Loading…</div>
+      </LocalizedContent>
+    );
   const o = data?.order;
-  if (!o) return <div className="max-w-4xl mx-auto p-6">Order not found.</div>;
+  if (!o)
+    return (
+      <LocalizedContent>
+        <div className="max-w-4xl mx-auto p-6">Order not found.</div>
+      </LocalizedContent>
+    );
   const events = data?.events ?? [];
   const canPay = o.status === "pending" || o.status === "confirmed" || o.status === "invoiced";
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
+    <LocalizedContent>
+      <div className="max-w-4xl mx-auto p-6 space-y-6">
       <Link to="/buyer/orders" className="text-sm text-muted-foreground hover:text-foreground">
         ← All orders
       </Link>
@@ -214,6 +229,7 @@ function OrderDetail() {
           )}
         </div>
       )}
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }

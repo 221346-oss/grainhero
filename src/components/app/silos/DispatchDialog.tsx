@@ -32,6 +32,7 @@ import { listBuyers } from "@/lib/operations.functions";
 import { getPriceSettings } from "@/lib/suppliers.functions";
 import { pricePerKgToPerMan } from "@/lib/units";
 import { supabase } from "@/integrations/supabase/client";
+import { translateText, useI18n } from "@/i18n";
 
 type Batch = {
   id: string;
@@ -53,6 +54,7 @@ export function DispatchDialog({
   siloId: string | null;
   siloName?: string;
 }) {
+  const { locale } = useI18n();
   const qc = useQueryClient();
   const toastShownRef = useRef(false);
   const [grainType, setGrainType] = useState("");
@@ -178,7 +180,7 @@ export function DispatchDialog({
       if (up.error) throw up.error;
       setPhotoPath(signed.path);
     } catch (err) {
-      toast.error((err as Error).message || "Photo upload failed");
+      toast.error((err as Error).message || translateText("Photo upload failed", locale));
       setPhotoFile(null);
     } finally {
       setPhotoUploading(false);
@@ -233,7 +235,12 @@ export function DispatchDialog({
       });
     },
     onSuccess: (r) => {
-      toast.success(`Sale request ${r.dispatchNumber} submitted — awaiting admin approval`);
+      toast.success(
+        translateText(
+          `Sale request ${r.dispatchNumber} submitted — awaiting admin approval`,
+          locale,
+        ),
+      );
       qc.invalidateQueries({ queryKey: ["silo-dispatch-drafts", siloId] });
       qc.invalidateQueries({ queryKey: ["silo-dispatches", siloId] });
       toastShownRef.current = false;

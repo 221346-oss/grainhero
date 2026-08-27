@@ -13,6 +13,7 @@ import {
   DollarSign,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LocalizedContent } from "@/i18n";
 
 interface DispatchReadySidebarProps {
   isOpen: boolean;
@@ -78,7 +79,8 @@ export function DispatchReadySidebar({ isOpen, onClose }: DispatchReadySidebarPr
   };
 
   return (
-    <>
+    <LocalizedContent>
+      <>
       {/* Backdrop - only render when open (no shadow) */}
       {isOpen && (
         <div
@@ -269,6 +271,7 @@ export function DispatchReadySidebar({ isOpen, onClose }: DispatchReadySidebarPr
           )}
         </div>
       </div>
-    </>
+      </>
+    </LocalizedContent>
   );
 }

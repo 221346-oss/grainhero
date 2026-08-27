@@ -14,6 +14,7 @@ import { DispatchSaleWizard } from "@/components/business/DispatchSaleWizard";
 import { ExportMenu } from "@/components/app/ExportMenu";
 import type { ExportColumn } from "@/lib/csv-pdf-export";
 import type { AppRole } from "@/lib/roles.functions";
+import { LocalizedContent, translateText, useI18n } from "@/i18n";
 
 type Invoice = {
   id: string;
@@ -118,6 +119,7 @@ function money(n: number, ccy: string | null | undefined) {
 }
 
 export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
+  const { locale } = useI18n();
   const fn = useServerFn(getRevenueOverview);
   const markFn = useServerFn(markInvoicePaid);
   const qc = useQueryClient();
@@ -145,7 +147,7 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
   const markM = useMutation({
     mutationFn: (id: string) => markFn({ data: { id } }),
     onSuccess: () => {
-      toast.success("Invoice marked paid");
+      toast.success(translateText("Invoice marked paid", locale));
       qc.invalidateQueries({ queryKey: ["revenue"] });
     },
     onError: (e: any) => toast.error(e.message ?? "Failed"),
@@ -182,7 +184,8 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
   }, [invoices, q]);
 
   return (
-    <div className="space-y-6">
+    <LocalizedContent>
+      <div className="space-y-6">
       {canWrite && (
         <div className="flex justify-end">
           <Button onClick={openNewSale} className="gap-1.5">
@@ -426,6 +429,7 @@ export function RevenueSection({ role = "admin" }: { role?: AppRole }) {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }

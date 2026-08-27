@@ -927,6 +927,16 @@ html[lang="ur"] .app-scope .truncate {
   white-space: nowrap;
 }
 
+/* Page headings with .truncate must not clip Nastaliq ascenders. The
+   h1.truncate selector (0,3,2) beats .truncate (0,3,1) on specificity. */
+html[lang="ur"] .app-scope h1.truncate,
+html[lang="ur"] .app-scope h2.truncate,
+html[lang="ur"] .app-scope h3.truncate {
+  overflow: visible;
+  white-space: normal;
+  text-overflow: unset;
+}
+
 html[lang="ur"] .app-scope .whitespace-nowrap {
   white-space: nowrap;
   overflow-wrap: normal;

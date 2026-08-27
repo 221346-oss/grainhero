@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { getOpenAlerts } from "@/lib/open-alerts.functions";
 import { X, Clock, User, AlertTriangle, AlertCircle, Shield, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LocalizedContent } from "@/i18n";
 
 interface OpenAlertsSidebarProps {
   isOpen: boolean;
@@ -74,7 +75,8 @@ export function OpenAlertsSidebar({ isOpen, onClose }: OpenAlertsSidebarProps) {
   };
 
   return (
-    <>
+    <LocalizedContent>
+      <>
       {/* Backdrop - only render when open (no shadow) */}
       {isOpen && (
         <div
@@ -251,6 +253,7 @@ export function OpenAlertsSidebar({ isOpen, onClose }: OpenAlertsSidebarProps) {
           )}
         </div>
       </div>
-    </>
+      </>
+    </LocalizedContent>
   );
 }

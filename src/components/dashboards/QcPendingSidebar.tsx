@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { getQcPendingBatches } from "@/lib/qc-pending-batches.functions";
 import { X, Clock, User, Beaker, Droplets, Package, TestTube, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LocalizedContent } from "@/i18n";
 
 interface QcPendingSidebarProps {
   isOpen: boolean;
@@ -58,7 +59,8 @@ export function QcPendingSidebar({ isOpen, onClose }: QcPendingSidebarProps) {
   };
 
   return (
-    <>
+    <LocalizedContent>
+      <>
       {/* Backdrop - only render when open (no shadow) */}
       {isOpen && (
         <div
@@ -247,6 +249,7 @@ export function QcPendingSidebar({ isOpen, onClose }: QcPendingSidebarProps) {
           )}
         </div>
       </div>
-    </>
+      </>
+    </LocalizedContent>
   );
 }

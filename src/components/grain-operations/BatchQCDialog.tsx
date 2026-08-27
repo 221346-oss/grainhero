@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
+import { translateText, useI18n } from "@/i18n";
 import {
   Loader2,
   FlaskConical,
@@ -59,6 +60,7 @@ export function BatchQCDialog({
   open: boolean;
   onOpenChange: (o: boolean) => void;
 }) {
+  const { locale } = useI18n();
   const qc = useQueryClient();
   const submitFn = useServerFn(submitBatchQC);
   const reviewFn = useServerFn(reviewBatchQC);
@@ -84,32 +86,45 @@ export function BatchQCDialog({
         },
       }),
     onSuccess: () => {
-      toast.success("QC values submitted");
+      toast.success(translateText("QC values submitted", locale));
       invalidateBatches(qc);
       onOpenChange(false);
     },
-    onError: (e: Error) => toast.error(e.message || "Could not submit QC values"),
+    onError: (e: Error) =>
+      toast.error(e.message || translateText("Could not submit QC values", locale)),
   });
 
   const reviewMut = useMutation({
     mutationFn: (decision: "pass" | "fail") => reviewFn({ data: { batchId: batch!.id, decision } }),
     onSuccess: (_r, decision) => {
-      toast.success(decision === "pass" ? "QC passed" : "QC failed — sent back to technician");
+      toast.success(
+        translateText(
+          decision === "pass" ? "QC passed" : "QC failed — sent back to technician",
+          locale,
+        ),
+      );
       invalidateBatches(qc);
       onOpenChange(false);
     },
-    onError: (e: Error) => toast.error(e.message || "Could not record review"),
+    onError: (e: Error) =>
+      toast.error(e.message || translateText("Could not record review", locale)),
   });
 
   const adminMut = useMutation({
     mutationFn: (decision: "approve" | "reject") =>
       adminFn({ data: { batchId: batch!.id, decision } }),
     onSuccess: (_r, decision) => {
-      toast.success(decision === "approve" ? "Batch approved — now stored" : "Batch rejected");
+      toast.success(
+        translateText(
+          decision === "approve" ? "Batch approved — now stored" : "Batch rejected",
+          locale,
+        ),
+      );
       invalidateBatches(qc);
       onOpenChange(false);
     },
-    onError: (e: Error) => toast.error(e.message || "Could not record decision"),
+    onError: (e: Error) =>
+      toast.error(e.message || translateText("Could not record decision", locale)),
   });
 
   const resolveMut = useMutation({
@@ -117,14 +132,17 @@ export function BatchQCDialog({
       resolveFn({ data: { batchId: batch!.id, action } }),
     onSuccess: (_r, action) => {
       toast.success(
-        action === "resend_to_manager"
-          ? "Sent back to Manager for a fresh QC cycle"
-          : "Marked damaged",
+        translateText(
+          action === "resend_to_manager"
+            ? "Sent back to Manager for a fresh QC cycle"
+            : "Marked damaged",
+          locale,
+        ),
       );
       invalidateBatches(qc);
       onOpenChange(false);
     },
-    onError: (e: Error) => toast.error(e.message || "Could not resolve"),
+    onError: (e: Error) => toast.error(e.message || translateText("Could not resolve", locale)),
   });
 
   if (!batch || !mode) return null;

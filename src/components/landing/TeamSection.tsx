@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { LocalizedContent } from "@/i18n";
 
 export function TeamSection() {
   const [isVisible, setIsVisible] = useState(false);
@@ -67,7 +68,7 @@ export function TeamSection() {
   }, [isMobile, isVisible, nextSlide]);
 
   return (
-    <section id="team-section" className="relative py-12 sm:py-24 bg-white overflow-visible">
+    <LocalizedContent><section id="team-section" className="relative py-12 sm:py-24 bg-white overflow-visible">
       <div
         className="container mx-auto px-4 sm:px-8 lg:px-12 max-w-7xl"
         style={{ overflow: "visible" }}
@@ -158,7 +159,7 @@ export function TeamSection() {
           </div>
         </div>
       </div>
-    </section>
+    </section></LocalizedContent>
   );
 }
 
@@ -176,7 +177,7 @@ function FounderCard({
     .substring(0, 2);
 
   return (
-    <div
+    <LocalizedContent><div
       className="bg-gradient-to-b from-white to-gray-50 border-4 border-black relative shadow-lg"
       style={{ overflow: "visible" }}
     >
@@ -225,6 +226,6 @@ function FounderCard({
           </div>
         </div>
       </div>
-    </div>
+    </div></LocalizedContent>
   );
 }

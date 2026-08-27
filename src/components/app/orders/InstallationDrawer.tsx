@@ -31,6 +31,7 @@ import { InstallStageTracker, deriveStage } from "./InstallStageTracker";
 import { useMyProfile } from "@/hooks/useMyProfile";
 import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
 import { useIsGlobalTechnician } from "@/hooks/useIsGlobalTechnician";
+import { translateText, useI18n } from "@/i18n";
 
 interface Props {
   orderId: string | null;
@@ -42,6 +43,7 @@ interface Props {
 const DEVICE_STATUS = ["shipped", "en_route", "installed", "verified"];
 
 export function InstallationDrawer({ orderId, open, onOpenChange, canEdit }: Props) {
+  const { locale } = useI18n();
   const qc = useQueryClient();
   const getFn = useServerFn(getInstallation);
   const saveFn = useServerFn(upsertInstallation);
@@ -129,7 +131,7 @@ export function InstallationDrawer({ orderId, open, onOpenChange, canEdit }: Pro
         },
       }),
     onSuccess: () => {
-      toast.success("Installation saved");
+      toast.success(translateText("Installation saved", locale));
       qc.invalidateQueries({ queryKey: ["installation", orderId] });
     },
     onError: (e: any) => toast.error(e.message ?? "Failed"),
@@ -139,7 +141,7 @@ export function InstallationDrawer({ orderId, open, onOpenChange, canEdit }: Pro
     mutationFn: () =>
       devFn({ data: { orderId: orderId!, devices: devices.filter((d) => d.serial.trim()) } }),
     onSuccess: () => {
-      toast.success("Devices saved");
+      toast.success(translateText("Devices saved", locale));
       qc.invalidateQueries({ queryKey: ["installation", orderId] });
     },
     onError: (e: any) => toast.error(e.message ?? "Failed"),
@@ -148,7 +150,7 @@ export function InstallationDrawer({ orderId, open, onOpenChange, canEdit }: Pro
   const noteM = useMutation({
     mutationFn: () => eventFn({ data: { orderId: orderId!, note } }),
     onSuccess: () => {
-      toast.success("Note added");
+      toast.success(translateText("Note added", locale));
       setNote("");
       qc.invalidateQueries({ queryKey: ["installation", orderId] });
     },
@@ -200,7 +202,10 @@ export function InstallationDrawer({ orderId, open, onOpenChange, canEdit }: Pro
                   // Devices must exist — one silo is provisioned per device serial
                   if (devices.filter((d) => d.serial.trim()).length === 0) {
                     toast.error(
-                      "Add at least one device serial before completing — one silo is provisioned per serial.",
+                      translateText(
+                        "Add at least one device serial before completing — one silo is provisioned per serial.",
+                        locale,
+                      ),
                     );
                     return;
                   }
@@ -210,7 +215,10 @@ export function InstallationDrawer({ orderId, open, onOpenChange, canEdit }: Pro
                   await advanceFn({ data: { orderId: orderId!, next, note } });
                   if (next === "completed") {
                     toast.success(
-                      "Confirmed — warehouse & silos provisioned. They will appear in your Silos page shortly.",
+                      translateText(
+                        "Confirmed — warehouse & silos provisioned. They will appear in your Silos page shortly.",
+                        locale,
+                      ),
                     );
                     // Give the DB trigger a moment to commit before we refetch
                     setTimeout(() => {
@@ -220,7 +228,7 @@ export function InstallationDrawer({ orderId, open, onOpenChange, canEdit }: Pro
                       qc.invalidateQueries({ queryKey: ["dashboard-extras"] });
                     }, 1500);
                   } else {
-                    toast.success(`Advanced to ${next.replace(/_/g, " ")}`);
+                    toast.success(translateText(`Advanced to ${next.replace(/_/g, " ")}`, locale));
                   }
                   qc.invalidateQueries({ queryKey: ["installation", orderId] });
                   qc.invalidateQueries({ queryKey: ["platform-orders"] });

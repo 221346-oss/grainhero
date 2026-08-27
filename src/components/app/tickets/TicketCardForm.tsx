@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Paperclip, X } from "lucide-react";
+import { LocalizedContent, translateText, useI18n } from "@/i18n";
 
 type Priority = "low" | "medium" | "high";
 type ReporterRole = "admin" | "manager" | "technician";
@@ -217,6 +218,7 @@ interface Props {
 }
 
 export function TicketCardForm({ onSuccess, onCancel }: Props) {
+  const { locale } = useI18n();
   const qc = useQueryClient();
   const createFn = useServerFn(createTicket);
 
@@ -247,7 +249,7 @@ export function TicketCardForm({ onSuccess, onCancel }: Props) {
     
     // Check file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
-      toast.error("File size must be less than 10MB");
+      toast.error(translateText("File size must be less than 10MB", locale));
       return;
     }
     
@@ -303,7 +305,7 @@ export function TicketCardForm({ onSuccess, onCancel }: Props) {
       }
     },
     onSuccess: () => {
-      toast.success("Ticket sent to super admin");
+      toast.success(translateText("Ticket sent to super admin", locale));
       setIssueValue("");
       setReporterName("");
       setDescription("");
@@ -324,7 +326,8 @@ export function TicketCardForm({ onSuccess, onCancel }: Props) {
     !uploading;
 
   return (
-    <div className="relative rounded-xl border border-slate-200 bg-white shadow-sm p-5 space-y-4">
+    <LocalizedContent>
+      <div className="relative rounded-xl border border-slate-200 bg-white shadow-sm p-5 space-y-4">
       {/* Priority badge — top-right, auto-set by issue type but editable */}
       <div className="absolute top-4 right-4">
         <Select value={priority} onValueChange={(v) => setPriority(v as Priority)}>
@@ -489,6 +492,7 @@ export function TicketCardForm({ onSuccess, onCancel }: Props) {
           </Button>
         </div>
       </div>
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }

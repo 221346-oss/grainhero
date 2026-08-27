@@ -5,6 +5,7 @@ import { Mail, Phone, MapPin, Send, MessageSquare, CheckCircle, AlertCircle } fr
 import { NewGlassNav } from "@/components/landing/NewGlassNav";
 import { NewFooter } from "@/components/landing/NewFooter";
 import { sendContactEmail } from "@/lib/contact-email.functions";
+import { LocalizedContent } from "@/i18n";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
@@ -96,7 +97,7 @@ function ContactPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#EDE9D4]">
+    <LocalizedContent><main className="min-h-screen bg-[#EDE9D4]">
       <NewGlassNav />
 
       {/* Hero Section */}
@@ -368,6 +369,6 @@ function ContactPage() {
       </section>
 
       <NewFooter />
-    </main>
+    </main></LocalizedContent>
   );
 }

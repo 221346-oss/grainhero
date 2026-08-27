@@ -24,6 +24,7 @@ import { ArrowLeft, CheckCircle2, Ban, Truck, HardHat, Cpu } from "lucide-react"
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { LocalizedContent, translateText, useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/technician/installs/$installId")({
   head: () => ({ meta: [{ title: "Install detail — Technician" }] }),
@@ -45,6 +46,7 @@ export const Route = createFileRoute("/_authenticated/technician/installs/$insta
 const STATUS_STEPS = ["scheduled", "en_route", "onsite", "completed"] as const;
 
 function TechnicianInstallDetailPage() {
+  const { locale } = useI18n();
   const { installId } = Route.useParams();
   const qc = useQueryClient();
 
@@ -98,7 +100,7 @@ function TechnicianInstallDetailPage() {
       blockerNote?: string;
     }) => statusFn({ data: { installId, status: v.status, blockerNote: v.blockerNote ?? null } }),
     onSuccess: () => {
-      toast.success("Status updated");
+      toast.success(translateText("Status updated", locale));
       invalidate();
     },
     onError: (e) => toast.error(String(e)),
@@ -109,7 +111,7 @@ function TechnicianInstallDetailPage() {
       note?: string;
     }) => eventFn({ data: { installId, eventType: v.eventType, note: v.note ?? null } }),
     onSuccess: () => {
-      toast.success("Event logged");
+      toast.success(translateText("Event logged", locale));
       invalidate();
     },
     onError: (e) => toast.error(String(e)),
@@ -122,7 +124,7 @@ function TechnicianInstallDetailPage() {
       deviceType: string;
     }) => commissionFn({ data: { installId, ...v } }),
     onSuccess: () => {
-      toast.success("Device commissioned");
+      toast.success(translateText("Device commissioned", locale));
       invalidate();
     },
     onError: (e) => toast.error(String(e)),
@@ -130,15 +132,18 @@ function TechnicianInstallDetailPage() {
 
   if (isLoading || !data)
     return (
-      <div className="p-6">
-        <div className="h-32 rounded-xl bg-muted animate-pulse" />
-      </div>
+      <LocalizedContent>
+        <div className="p-6">
+          <div className="h-32 rounded-xl bg-muted animate-pulse" />
+        </div>
+      </LocalizedContent>
     );
   const { install, devices, events, silos, buyer } = data;
   const status = install.status as string;
 
   return (
-    <div className="p-6 md:p-8 max-w-5xl mx-auto space-y-6">
+    <LocalizedContent>
+      <div className="p-6 md:p-8 max-w-5xl mx-auto space-y-6">
       <Link
         to="/technician/installs"
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
@@ -184,7 +189,7 @@ function TechnicianInstallDetailPage() {
           variant="outline"
           className="ml-2 text-rose-700"
           onClick={() => {
-            const note = prompt("Blocker reason?") || "";
+            const note = prompt(translateText("Blocker reason?", locale)) || "";
             if (note.trim().length >= 3)
               setStatus.mutate({ status: "blocked", blockerNote: note.trim() });
           }}
@@ -292,7 +297,8 @@ function TechnicianInstallDetailPage() {
           )}
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }
 
@@ -309,7 +315,8 @@ function EventForm({
   >("arrived");
   const [note, setNote] = useState("");
   return (
-    <div className="grid gap-3 md:grid-cols-[180px_1fr_auto]">
+    <LocalizedContent>
+      <div className="grid gap-3 md:grid-cols-[180px_1fr_auto]">
       <Select value={type} onValueChange={(v) => setType(v as typeof type)}>
         <SelectTrigger>
           <SelectValue />
@@ -336,7 +343,8 @@ function EventForm({
       >
         Log
       </Button>
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }
 
@@ -350,7 +358,8 @@ function CommissionForm({
   const [serial, setSerial] = useState("");
   const [siloId, setSiloId] = useState("");
   return (
-    <div className="grid gap-2 md:grid-cols-[1fr_1fr_auto] mt-2">
+    <LocalizedContent>
+      <div className="grid gap-2 md:grid-cols-[1fr_1fr_auto] mt-2">
       <div className="space-y-1">
         <Label className="text-xs">Serial number</Label>
         <Input value={serial} onChange={(e) => setSerial(e.target.value)} />
@@ -378,6 +387,7 @@ function CommissionForm({
           Commission
         </Button>
       </div>
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }

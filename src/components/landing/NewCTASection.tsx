@@ -1,10 +1,11 @@
 import { motion } from "framer-motion";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
+import { LocalizedContent } from "@/i18n";
 
 export function NewCTASection() {
   return (
-    <section className="relative py-14 sm:py-20 overflow-hidden bg-[#111512]">
+    <LocalizedContent><section className="relative py-14 sm:py-20 overflow-hidden bg-[#111512]">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-10">
         <div
@@ -80,6 +81,6 @@ export function NewCTASection() {
           </motion.p>
         </motion.div>
       </div>
-    </section>
+    </section></LocalizedContent>
   );
 }

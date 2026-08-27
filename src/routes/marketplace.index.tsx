@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 import { MapPin } from "lucide-react";
+import { LocalizedContent } from "@/i18n";
 
 export const Route = createFileRoute("/marketplace/")({
   component: MarketplaceIndex,
@@ -22,7 +23,7 @@ function MarketplaceIndex() {
   const listings = data?.listings ?? [];
 
   return (
-    <div className="space-y-6">
+    <LocalizedContent><div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Verified grain listings</h1>
         <p className="text-sm text-muted-foreground">
@@ -94,6 +95,6 @@ function MarketplaceIndex() {
           </Card>
         )}
       </div>
-    </div>
+    </div></LocalizedContent>
   );
 }

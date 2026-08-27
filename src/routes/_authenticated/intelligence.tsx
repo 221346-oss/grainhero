@@ -11,6 +11,7 @@ import { Brain, BarChart3, Cpu, TrendingUp, TrendingDown } from "lucide-react";
 import { getSiloPredictions, getAnalyticsOverview, getMLModels } from "@/lib/analytics.functions";
 import { getMyRole } from "@/lib/roles.functions";
 import { KpiChartHubSkeleton } from "@/components/app/skeletons";
+import { LocalizedContent } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/intelligence")({
   head: () => ({
@@ -93,14 +94,15 @@ function IntelligenceWorkspace() {
   ];
 
   return (
-    <div
-      className="min-h-screen bg-background p-4 md:p-8"
-      style={{
-        fontFamily: "'Geist Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px)",
-        backgroundSize: "28px 28px",
-      }}
-    >
+    <LocalizedContent>
+      <div
+        className="min-h-screen bg-background p-4 md:p-8"
+        style={{
+          fontFamily: "'Geist Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px)",
+          backgroundSize: "28px 28px",
+        }}
+      >
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <div>
@@ -233,6 +235,7 @@ function IntelligenceWorkspace() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }

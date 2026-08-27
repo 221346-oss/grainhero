@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Cpu, Cloud, Smartphone, Zap, Wifi, Brain } from "lucide-react";
+import { LocalizedContent } from "@/i18n";
 
 const techFeatures = [
   {
@@ -39,7 +40,7 @@ const techFeatures = [
 
 export function TechnologySection() {
   return (
-    <section
+    <LocalizedContent><section
       id="technology"
       className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-[#111512] relative overflow-hidden"
     >
@@ -98,6 +99,6 @@ export function TechnologySection() {
           ))}
         </div>
       </div>
-    </section>
+    </section></LocalizedContent>
   );
 }

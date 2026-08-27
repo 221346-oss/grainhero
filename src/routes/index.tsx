@@ -10,6 +10,7 @@ import { HorizontalFAQ } from "@/components/landing/HorizontalFAQ";
 import { ContactCTA } from "@/components/landing/ContactCTA";
 import { StatsSection } from "@/components/landing/StatsSection";
 import { NewFooter } from "@/components/landing/NewFooter";
+import { LocalizedContent } from "@/i18n";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -72,7 +73,7 @@ export const Route = createFileRoute("/")({
 
 function NewHomePage() {
   return (
-    <main className="landing-type min-h-screen bg-[#FAFAF7] text-[#4A554C] landing-bg dark:text-foreground">
+    <LocalizedContent><main className="landing-type min-h-screen bg-[#FAFAF7] text-[#4A554C] landing-bg dark:text-foreground">
       <NewGlassNav />
       <section id="hero" aria-label="Hero section" className="landing-section">
         <AgriHero />
@@ -100,6 +101,6 @@ function NewHomePage() {
         <ContactCTA />
       </section>
       <NewFooter />
-    </main>
+    </main></LocalizedContent>
   );
 }

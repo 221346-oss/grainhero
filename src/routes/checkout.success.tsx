@@ -12,6 +12,7 @@ import {
   claimPaidCheckoutForUser,
 } from "@/lib/stripe-checkout.functions";
 import { autoConfirmUserEmail } from "@/lib/auth-verification-email.functions";
+import { LocalizedContent } from "@/i18n";
 
 const search = z.object({
   session_id: z.string().optional(),
@@ -232,7 +233,7 @@ function SuccessPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-background checkout-inline-bg transition-colors">
+    <LocalizedContent><div className="min-h-screen flex items-center justify-center px-4 bg-background checkout-inline-bg transition-colors">
       <Card className="max-w-sm w-full shadow-xl">
         <CardContent className="p-8 text-center space-y-4">
           {status === "error" ? (
@@ -265,6 +266,6 @@ function SuccessPage() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </div></LocalizedContent>
   );
 }

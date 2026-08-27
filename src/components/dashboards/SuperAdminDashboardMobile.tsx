@@ -50,6 +50,7 @@ type NavGroup = {
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { TicketDetailSheet } from "@/components/app/tickets/TicketDetailSheet";
+import { LocalizedContent } from "@/i18n";
 
 export function SuperAdminDashboardMobile({ name }: { name?: string }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -334,7 +335,8 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <LocalizedContent>
+      <div className="min-h-screen bg-background">
       {/* Sidebar Overlay Drawer - Shows navigation or tickets */}
       {sidebarOpen && (
         <>
@@ -777,6 +779,7 @@ export function SuperAdminDashboardMobile({ name }: { name?: string }) {
         open={!!selectedTicket}
         onClose={() => setSelectedTicket(null)}
       />
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }

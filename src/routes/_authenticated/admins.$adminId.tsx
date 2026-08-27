@@ -63,6 +63,7 @@ import {
 } from "@/lib/admin-profile.functions";
 import { startImpersonation } from "@/lib/impersonation.functions";
 import { AdminProfileSkeleton } from "@/components/app/skeletons";
+import { LocalizedContent, translateText, useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/admins/$adminId")({
   head: () => ({
@@ -99,6 +100,7 @@ function initials(name: string | null, email: string | null) {
 }
 
 function AdminProfilePage() {
+  const { locale } = useI18n();
   const { adminId } = Route.useParams();
   const nav = useNavigate();
   const qc = useQueryClient();
@@ -124,7 +126,7 @@ function AdminProfilePage() {
     mutationFn: (patch: { name?: string; phone?: string; notes?: string }) =>
       updateFn({ data: { adminId, patch } }),
     onSuccess: () => {
-      toast.success("Profile updated");
+      toast.success(translateText("Profile updated", locale));
       qc.invalidateQueries({ queryKey: ["admin-profile", adminId] });
       setEditOpen(false);
     },
@@ -133,7 +135,7 @@ function AdminProfilePage() {
   const suspendM = useMutation({
     mutationFn: (suspended: boolean) => suspendFn({ data: { adminId, suspended } }),
     onSuccess: (r: any) => {
-      toast.success(r.suspended ? "Admin suspended" : "Admin reactivated");
+      toast.success(translateText(r.suspended ? "Admin suspended" : "Admin reactivated", locale));
       qc.invalidateQueries({ queryKey: ["admin-profile", adminId] });
     },
     onError: (e: any) => toast.error(e.message ?? "Failed"),
@@ -155,7 +157,7 @@ function AdminProfilePage() {
       } catch {
         /* noop */
       }
-      toast.success(`Impersonating ${r.adminName}`);
+      toast.success(`${translateText("Impersonating", locale)} ${r.adminName}`);
       nav({ to: "/dashboard" });
     },
     onError: (e: any) => toast.error(e.message ?? "Failed"),
@@ -164,12 +166,17 @@ function AdminProfilePage() {
   if (profileQ.isLoading) return <AdminProfileSkeleton />;
   const d = profileQ.data;
   if (!d || !d.profile)
-    return <div className="p-8 text-sm text-muted-foreground">Admin not found.</div>;
+    return (
+      <LocalizedContent>
+        <div className="p-8 text-sm text-muted-foreground">Admin not found.</div>
+      </LocalizedContent>
+    );
   const p = d.profile as any;
   const stats = d.stats;
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
+    <LocalizedContent>
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
       <NeonPatternDefs />
       <Link
         to="/platform/tenants"
@@ -383,7 +390,8 @@ function AdminProfilePage() {
           />
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }
 

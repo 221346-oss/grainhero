@@ -31,6 +31,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { LocalizedContent, translateText, useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/revenue")({
   head: () => ({
@@ -132,6 +133,7 @@ function aggregateByYear(invoices: any[]) {
 
 
 function RevenuePage() {
+  const { locale } = useI18n();
   const fn = useServerFn(getRevenueOverview);
   const markFn = useServerFn(markInvoicePaid);
   const qc = useQueryClient();
@@ -143,7 +145,7 @@ function RevenuePage() {
   const markM = useMutation({
     mutationFn: (id: string) => markFn({ data: { id } }),
     onSuccess: () => {
-      toast.success("Invoice marked paid");
+      toast.success(translateText("Invoice marked paid", locale));
       qc.invalidateQueries({ queryKey: ["revenue"] });
     },
     onError: (e: any) => toast.error(e.message ?? "Failed"),
@@ -183,7 +185,8 @@ function RevenuePage() {
   if (isLoading) return <KpiChartHubSkeleton />;
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+    <LocalizedContent>
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
           <Wallet className="h-6 w-6 text-emerald-600" /> Revenue
@@ -515,6 +518,7 @@ function RevenuePage() {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }

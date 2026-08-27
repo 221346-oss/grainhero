@@ -12,6 +12,7 @@ import { EarningsSkeleton } from "@/components/app/skeletons";
 import { getSellerBalance, listLedgerEntries } from "@/lib/finance-ledger.functions";
 import { listPayouts, getMyPayoutAccount, upsertPayoutAccount } from "@/lib/payouts.functions";
 import { Wallet, Clock, CheckCircle2, TrendingDown } from "lucide-react";
+import { LocalizedContent, translateText, useI18n } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/earnings")({
   head: () => ({
@@ -30,6 +31,7 @@ export const Route = createFileRoute("/_authenticated/earnings")({
 });
 
 function EarningsPage() {
+  const { locale } = useI18n();
   const qc = useQueryClient();
   const bal = useServerFn(getSellerBalance);
   const ledger = useServerFn(listLedgerEntries);
@@ -73,7 +75,7 @@ function EarningsPage() {
   async function savePayoutAccount() {
     try {
       await saveAcct({ data: form });
-      toast.success("Payout account saved");
+      toast.success(translateText("Payout account saved", locale));
       qc.invalidateQueries({ queryKey: ["my-payout-account"] });
     } catch (e: any) {
       toast.error(e?.message ?? "Failed");
@@ -81,7 +83,8 @@ function EarningsPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1400px] mx-auto">
+    <LocalizedContent>
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1400px] mx-auto">
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold">Earnings</h1>
         <p className="text-sm text-muted-foreground mt-1">
@@ -249,6 +252,7 @@ function EarningsPage() {
           )}
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }

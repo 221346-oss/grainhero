@@ -28,6 +28,7 @@ import { getDeviceHealth, getMaintenanceOverview } from "@/lib/operations2.funct
 import { getIncidents } from "@/lib/monitoring.functions";
 import { getMyRole } from "@/lib/roles.functions";
 import { KpiChartHubSkeleton } from "@/components/app/skeletons";
+import { LocalizedContent } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/monitoring")({
   head: () => ({
@@ -142,14 +143,15 @@ function MonitoringWorkspace() {
   ];
 
   return (
-    <div
-      className="min-h-screen bg-background p-4 md:p-8"
-      style={{
-        fontFamily: "'Geist Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px)",
-        backgroundSize: "28px 28px",
-      }}
-    >
+    <LocalizedContent>
+      <div
+        className="min-h-screen bg-background p-4 md:p-8"
+        style={{
+          fontFamily: "'Geist Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px)",
+          backgroundSize: "28px 28px",
+        }}
+      >
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <div>
@@ -295,6 +297,7 @@ function MonitoringWorkspace() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }

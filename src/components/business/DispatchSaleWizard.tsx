@@ -39,6 +39,7 @@ import { listBuyers, listSilos } from "@/lib/operations.functions";
 import { extractPaymentDetails, type ExtractedPaymentDetails } from "@/lib/ocr-service";
 import { supabase } from "@/integrations/supabase/client";
 import { KG_PER_MAN, kgToMan, pricePerKgToPerMan } from "@/lib/units";
+import { translateText, useI18n } from "@/i18n";
 
 type Step = "details" | "invoice" | "dispatch" | "payment" | "complete";
 type Batch = { id: string; batch_id: string; grain_type: string; remaining_kg: number | string };
@@ -61,6 +62,7 @@ export function DispatchSaleWizard({
   /** Reopen straight at the payment step for an already-approved dispatch that was closed before a receipt was recorded — see the Outstanding payments table in RevenueSection. */
   resumeDispatch?: { id: string; dispatchNumber: string } | null;
 }) {
+  const { locale } = useI18n();
   const qc = useQueryClient();
   const [step, setStep] = useState<Step>("details");
 
@@ -242,7 +244,7 @@ export function DispatchSaleWizard({
       setInvoiceId(r.id);
       setInvoiceNumber(r.invoiceNumber);
       if (r.buyerId) setBuyerId(r.buyerId);
-      toast.success(`Invoice ${r.invoiceNumber} generated`);
+      toast.success(translateText(`Invoice ${r.invoiceNumber} generated`, locale));
       setStep("invoice");
     },
     onError: (e: Error) => toast.error(e.message),
@@ -261,7 +263,7 @@ export function DispatchSaleWizard({
       if (up.error) throw up.error;
       setDispatchPhotoPath(signed.path);
     } catch (err) {
-      toast.error((err as Error).message || "Photo upload failed");
+      toast.error((err as Error).message || translateText("Photo upload failed", locale));
       setDispatchPhotoFile(null);
     } finally {
       setDispatchPhotoUploading(false);
@@ -295,7 +297,12 @@ export function DispatchSaleWizard({
     onSuccess: (r) => {
       setDispatchId(r.id);
       setDispatchNumber(r.dispatchNumber);
-      toast.success(`Dispatch ${r.dispatchNumber} created — confirm with the buyer, then finalize`);
+      toast.success(
+        translateText(
+          `Dispatch ${r.dispatchNumber} created — confirm with the buyer, then finalize`,
+          locale,
+        ),
+      );
       qc.invalidateQueries({ queryKey: ["revenue"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -305,7 +312,7 @@ export function DispatchSaleWizard({
     mutationFn: () => confirmBuyerFn({ data: { id: dispatchId! } }),
     onSuccess: () => {
       setBuyerConfirmed(true);
-      toast.success("Buyer confirmation recorded");
+      toast.success(translateText("Buyer confirmation recorded", locale));
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -314,7 +321,7 @@ export function DispatchSaleWizard({
     mutationFn: () => approveFn({ data: { id: dispatchId! } }),
     onSuccess: () => {
       setDispatchApproved(true);
-      toast.success("Dispatch approved — stock deducted");
+      toast.success(translateText("Dispatch approved — stock deducted", locale));
       qc.invalidateQueries({ queryKey: ["revenue"] });
       qc.invalidateQueries({ queryKey: ["silos"] });
       setStep("payment");
@@ -347,7 +354,9 @@ export function DispatchSaleWizard({
         setExtracted(ocrResult);
         if (!ocrResult.amount) {
           setOcrFailed(true);
-          toast.warning("Couldn't detect an amount on this receipt — enter it manually below");
+          toast.warning(
+            translateText("Couldn't detect an amount on this receipt — enter it manually below", locale),
+          );
         }
       } catch {
         setOcrFailed(true);
@@ -393,7 +402,7 @@ export function DispatchSaleWizard({
       });
     },
     onSuccess: () => {
-      toast.success("Payment recorded");
+      toast.success(translateText("Payment recorded", locale));
       qc.invalidateQueries({ queryKey: ["revenue"] });
       setStep("complete");
       onDone?.();

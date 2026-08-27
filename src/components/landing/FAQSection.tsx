@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Minus } from "lucide-react";
+import { LocalizedContent } from "@/i18n";
 
 const faqs = [
   {
@@ -53,7 +54,7 @@ export function FAQSection() {
   };
 
   return (
-    <section id="faq" className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-[#FAFAF7]">
+    <LocalizedContent><section id="faq" className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-[#FAFAF7]">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <motion.div
@@ -137,6 +138,6 @@ export function FAQSection() {
           </button>
         </motion.div>
       </div>
-    </section>
+    </section></LocalizedContent>
   );
 }

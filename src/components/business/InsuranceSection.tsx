@@ -60,6 +60,7 @@ import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
 import { PlatformScopeBanner } from "@/components/app/PlatformScopeBanner";
 import { PlatformOverviewTable } from "@/components/app/PlatformOverviewTable";
 import { getPlatformInsuranceOverview } from "@/lib/platform-overviews.functions";
+import { LocalizedContent, translateText, useI18n } from "@/i18n";
 
 const POLICY_STATUS: Record<string, string> = {
   active: "bg-emerald-100 text-emerald-700 border-emerald-200",
@@ -128,6 +129,7 @@ const emptyClaim: ClaimForm = {
 };
 
 export function InsuranceSection() {
+  const { locale } = useI18n();
   const qc = useQueryClient();
   const { isSuperAdmin } = useIsSuperAdmin();
   const listPoliciesFn = useServerFn(listPolicies);
@@ -187,7 +189,7 @@ export function InsuranceSection() {
         },
       }),
     onSuccess: () => {
-      toast.success("Policy saved");
+      toast.success(translateText("Policy saved", locale));
       setPolicyOpen(false);
       setPolicyForm(emptyPolicy);
       qc.invalidateQueries({ queryKey: ["insurance-policies"] });
@@ -197,7 +199,7 @@ export function InsuranceSection() {
   const removePolicy = useMutation({
     mutationFn: (id: string) => delPolicyFn({ data: { id } }),
     onSuccess: () => {
-      toast.success("Policy deleted");
+      toast.success(translateText("Policy deleted", locale));
       setDeletePolicyId(null);
       qc.invalidateQueries({ queryKey: ["insurance-policies"] });
     },
@@ -220,7 +222,7 @@ export function InsuranceSection() {
         },
       }),
     onSuccess: () => {
-      toast.success("Claim saved");
+      toast.success(translateText("Claim saved", locale));
       setClaimOpen(false);
       setClaimForm(emptyClaim);
       qc.invalidateQueries({ queryKey: ["insurance-claims"] });
@@ -230,7 +232,7 @@ export function InsuranceSection() {
   const removeClaim = useMutation({
     mutationFn: (id: string) => delClaimFn({ data: { id } }),
     onSuccess: () => {
-      toast.success("Claim deleted");
+      toast.success(translateText("Claim deleted", locale));
       setDeleteClaimId(null);
       qc.invalidateQueries({ queryKey: ["insurance-claims"] });
     },
@@ -271,7 +273,8 @@ export function InsuranceSection() {
   };
 
   return (
-    <div className="space-y-6">
+    <LocalizedContent>
+      <div className="space-y-6">
       {isSuperAdmin && (
         <PlatformScopeBanner label="Policies and claims across every tenant. Totals reflect all insured value on the platform." />
       )}
@@ -777,6 +780,7 @@ export function InsuranceSection() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }

@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { Gauge, Brain, Bell, BarChart3, Settings, Building2 } from "lucide-react";
+import { LocalizedContent } from "@/i18n";
 
 const features = [
   {
@@ -79,7 +80,7 @@ function FlipCard({ feature, index }: { feature: (typeof features)[0]; index: nu
   const descColor = isDark ? "#a7f3d0" : "#111512";
 
   return (
-    <motion.div
+    <LocalizedContent><motion.div
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
@@ -199,13 +200,13 @@ function FlipCard({ feature, index }: { feature: (typeof features)[0]; index: nu
           </div>
         </div>
       </div>
-    </motion.div>
+    </motion.div></LocalizedContent>
   );
 }
 
 export function NewFeaturesSection() {
   return (
-    <section
+    <LocalizedContent><section
       id="features"
       className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-[#FAFAF7] dark:bg-background transition-colors"
     >
@@ -281,6 +282,6 @@ export function NewFeaturesSection() {
           </div>
         </motion.div>
       </div>
-    </section>
+    </section></LocalizedContent>
   );
 }

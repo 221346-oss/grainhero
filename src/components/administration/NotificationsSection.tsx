@@ -32,6 +32,7 @@ import {
   markAllNotificationsRead,
   deleteNotification,
 } from "@/lib/notifications-audit.functions";
+import { LocalizedContent, translateText, useI18n } from "@/i18n";
 
 type Filter = "all" | "unread" | "read";
 
@@ -71,6 +72,7 @@ function formatTime(dateStr: string) {
 }
 
 export function NotificationsSection() {
+  const { locale } = useI18n();
   const [filter, setFilter] = useState<Filter>("all");
   const qc = useQueryClient();
   useRealtimeInvalidate("notifications", [["notifications"]]);
@@ -94,14 +96,14 @@ export function NotificationsSection() {
     mutationFn: () => markAll(),
     onSuccess: () => {
       invalidate();
-      toast.success("All marked as read");
+      toast.success(translateText("All marked as read", locale));
     },
   });
   const delMut = useMutation({
     mutationFn: (id: string) => del({ data: { id } }),
     onSuccess: () => {
       invalidate();
-      toast.success("Notification removed");
+      toast.success(translateText("Notification removed", locale));
     },
   });
 
@@ -111,7 +113,8 @@ export function NotificationsSection() {
   if (isLoading && !data) return <NotificationsSkeleton />;
 
   return (
-    <div className="space-y-6">
+    <LocalizedContent>
+      <div className="space-y-6">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <p className="text-sm text-muted-foreground">
           {unread > 0
@@ -231,6 +234,7 @@ export function NotificationsSection() {
           )}
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }

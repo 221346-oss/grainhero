@@ -37,6 +37,7 @@ import {
 import { TicketDiscussion } from "./TicketDiscussion";
 import { CheckCircle2, User, CalendarClock, MessageSquare, X, Info, Trash2, Download, FileText } from "lucide-react";
 import { useEffect, useRef } from "react";
+import { translateText, useI18n } from "@/i18n";
 
 const PRIORITY_BADGE: Record<string, string> = {
   low: "bg-slate-100 text-slate-700 border-slate-200",
@@ -70,6 +71,7 @@ interface Props {
 }
 
 export function TicketDetailSheet({ ticket, open, onClose }: Props) {
+  const { locale } = useI18n();
   const qc = useQueryClient();
   const { isSuperAdmin } = useIsSuperAdmin();
   const closeFn = useServerFn(closeTicket);
@@ -98,7 +100,7 @@ export function TicketDetailSheet({ ticket, open, onClose }: Props) {
   const closeMut = useMutation({
     mutationFn: (id: string) => closeFn({ data: { id } }),
     onSuccess: () => {
-      toast.success("Ticket closed");
+      toast.success(translateText("Ticket closed", locale));
       if (ticket?.id) clearTicketMessages(ticket.id); // wipe localStorage on close
       qc.invalidateQueries({ queryKey: ["field-tickets"] });
       onClose();
@@ -109,7 +111,7 @@ export function TicketDetailSheet({ ticket, open, onClose }: Props) {
   const resolveMut = useMutation({
     mutationFn: ({ id, note }: { id: string; note?: string }) => resolveFn({ data: { id, note } }),
     onSuccess: () => {
-      toast.success("Ticket marked as resolved — admin will be notified");
+      toast.success(translateText("Ticket marked as resolved — admin will be notified", locale));
       setResolveNote("");
       setShowNoteInput(false);
       qc.invalidateQueries({ queryKey: ["field-tickets"] });
@@ -121,7 +123,7 @@ export function TicketDetailSheet({ ticket, open, onClose }: Props) {
   const deleteMut = useMutation({
     mutationFn: (id: string) => deleteFn({ data: { id } }),
     onSuccess: () => {
-      toast.success("Ticket deleted");
+      toast.success(translateText("Ticket deleted", locale));
       if (ticket?.id) clearTicketMessages(ticket.id); // wipe localStorage on delete
       qc.invalidateQueries({ queryKey: ["field-tickets"] });
       qc.invalidateQueries({ queryKey: ["field-tickets", "all"] });

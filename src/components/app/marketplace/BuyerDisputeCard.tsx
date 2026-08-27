@@ -17,8 +17,10 @@ import { openDispute } from "@/lib/disputes.functions";
 import { getMarketplaceSettings } from "@/lib/marketplace-settings.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { X, Paperclip } from "lucide-react";
+import { LocalizedContent, translateText, useI18n } from "@/i18n";
 
 export function BuyerDisputeCard({ orderId }: { orderId: string }) {
+  const { locale } = useI18n();
   const settingsFn = useServerFn(getMarketplaceSettings);
   const openFn = useServerFn(openDispute);
   const { data: settings } = useQuery({
@@ -39,7 +41,7 @@ export function BuyerDisputeCard({ orderId }: { orderId: string }) {
     const selected = Array.from(e.target.files ?? []);
     if (!selected.length) return;
     if (files.length + selected.length > 10) {
-      toast.error("Max 10 attachments");
+      toast.error(translateText("Max 10 attachments", locale));
       return;
     }
     setUploading(true);
@@ -72,7 +74,7 @@ export function BuyerDisputeCard({ orderId }: { orderId: string }) {
   const mut = useMutation({
     mutationFn: () => openFn({ data: { orderId, category, description, attachments: files } }),
     onSuccess: () => {
-      toast.success("Dispute submitted");
+      toast.success(translateText("Dispute submitted", locale));
       setOpen(false);
       setDescription("");
       setCategory("");
@@ -84,7 +86,8 @@ export function BuyerDisputeCard({ orderId }: { orderId: string }) {
   if (!enabled) return null;
   if (!open) {
     return (
-      <div className="pt-2">
+      <LocalizedContent>
+        <div className="pt-2">
         <Button
           variant="ghost"
           size="sm"
@@ -93,7 +96,8 @@ export function BuyerDisputeCard({ orderId }: { orderId: string }) {
         >
           Report a problem with this order
         </Button>
-      </div>
+        </div>
+      </LocalizedContent>
     );
   }
   return (

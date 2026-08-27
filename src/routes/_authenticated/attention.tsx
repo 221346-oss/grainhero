@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/dashboards/_shared";
 import { AlertTriangle, WifiOff, Radio, ArrowRight } from "lucide-react";
 import { getAttentionQueue } from "@/lib/attention-queue.functions";
+import { LocalizedContent } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/attention")({
   head: () => ({
@@ -44,7 +45,8 @@ function AttentionPage() {
     | undefined;
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
+    <LocalizedContent>
+      <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
       <PageHeader title="Attention queue" subtitle="Ranked silos needing action right now." />
 
       <div className="grid gap-4 sm:grid-cols-3">
@@ -106,7 +108,8 @@ function AttentionPage() {
           )}
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }
 

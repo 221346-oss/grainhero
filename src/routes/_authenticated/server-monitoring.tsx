@@ -8,6 +8,7 @@ import { getDeviceHealth } from "@/lib/operations2.functions";
 import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
 import { PlatformScopeBanner } from "@/components/app/PlatformScopeBanner";
 import { CommandConsoleSkeleton } from "@/components/app/skeletons";
+import { LocalizedContent } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/server-monitoring")({
   head: () => ({
@@ -53,7 +54,8 @@ function ServerMonitoringPage() {
   const uptime = totals.total ? (totals.online / totals.total) * 100 : 100;
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+    <LocalizedContent>
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6">
       {isSuperAdmin && <PlatformScopeBanner label="Fleet health across every tenant. Read-only." />}
       <div>
         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
@@ -162,6 +164,7 @@ function ServerMonitoringPage() {
           </div>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }

@@ -2,6 +2,7 @@ import { useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Wheat, ArrowRight } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { LocalizedContent } from "@/i18n";
 
 export function NewHeroSection() {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -20,7 +21,7 @@ export function NewHeroSection() {
   }, []);
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-[#111512]">
+    <LocalizedContent><div className="relative min-h-screen w-full overflow-hidden bg-[#111512]">
       {/* Background Video */}
       <video
         ref={videoRef}
@@ -105,6 +106,6 @@ export function NewHeroSection() {
           </div>
         </div>
       </div>
-    </div>
+    </div></LocalizedContent>
   );
 }

@@ -12,6 +12,7 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { AlertTriangle, Check, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { LocalizedContent } from "@/i18n";
 
 export type InstallStageKey = "paid" | "en_route" | "onsite" | "installed" | "completed";
 
@@ -125,15 +126,18 @@ export function InstallStageTracker({
 
   if (variant === "row") {
     return (
-      <div className="min-w-[160px] space-y-1">
-        {pillRow}
-        {label}
-      </div>
+      <LocalizedContent>
+        <div className="min-w-[160px] space-y-1">
+          {pillRow}
+          {label}
+        </div>
+      </LocalizedContent>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <LocalizedContent>
+      <div className="space-y-4">
       <div className="rounded-lg border border-border bg-card p-4 space-y-3">
         {pillRow}
         <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -204,7 +208,8 @@ export function InstallStageTracker({
             ))}
         </ol>
       </div>
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }
 
@@ -237,7 +242,11 @@ function AdvanceButton({
         ? canAdvanceAs.technician
         : canAdvanceAs.superAdmin);
   if (!next)
-    return <span className="text-xs text-emerald-600 font-medium">All stages complete</span>;
+    return (
+      <LocalizedContent>
+        <span className="text-xs text-emerald-600 font-medium">All stages complete</span>
+      </LocalizedContent>
+    );
 
   const actorLabel =
     next.actor === "admin"
@@ -256,7 +265,8 @@ function AdvanceButton({
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <LocalizedContent>
+      <div className="flex items-center gap-2">
       {canForNext && !blocked && (
         <Button
           size="sm"
@@ -316,7 +326,8 @@ function AdvanceButton({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }
 
