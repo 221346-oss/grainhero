@@ -23,6 +23,7 @@ import {
   Legend,
 } from "recharts";
 import { Eye, X } from "lucide-react";
+import { useTranslation } from "@/i18n";
 
 function SiloCapacityChart({
   selectedSilo,
@@ -63,9 +64,7 @@ function SiloCapacityChart({
     const silo = silos.find((s) => s.id === selectedSilo);
     if (silo) {
       const rangeData = getCapacityByRange(silo.capacity_kg, silo.current_occupancy_kg ?? 0, range);
-      fillPct = rangeData.capacity
-        ? Math.round((rangeData.fill / rangeData.capacity) * 100)
-        : 0;
+      fillPct = rangeData.capacity ? Math.round((rangeData.fill / rangeData.capacity) * 100) : 0;
       siloName = silo.name;
       currentFill = rangeData.fill;
       totalCapacity = rangeData.capacity;
@@ -78,10 +77,10 @@ function SiloCapacityChart({
       const totalFillSum = silos.reduce((sum, s) => sum + (s.current_occupancy_kg ?? 0), 0);
       const baseAverageCapacity = totalCapacitySum / totalSilos;
       const baseAverageFill = totalFillSum / totalSilos;
-      
+
       const rangeData = getCapacityByRange(baseAverageCapacity, baseAverageFill, range);
       fillPct = rangeData.capacity ? Math.round((rangeData.fill / rangeData.capacity) * 100) : 0;
-      
+
       // Update silo name to reflect time period
       const timeLabels = {
         today: "Today's Capacity",
@@ -207,11 +206,12 @@ export function ManagerKpiSummary({
 }) {
   const [selectedSilo, setSelectedSilo] = useState<string>("");
   const [factorPeriod, setFactorPeriod] = useState<"weekly" | "monthly" | "yearly">("monthly");
-  
+  const { t } = useTranslation();
+
   // Debug: Log silos data
-  console.log('ManagerKpiSummary - Silos:', silos?.length || 0, 'silos available');
-  console.log('ManagerKpiSummary - Full data:', { silos, kpis, fillSpark });
-  
+  console.log("ManagerKpiSummary - Silos:", silos?.length || 0, "silos available");
+  console.log("ManagerKpiSummary - Full data:", { silos, kpis, fillSpark });
+
   const k = kpis;
   const fill = k?.fillPct ?? 0;
   const fmtKg = (n: number) => `${Math.round(n / 1000).toLocaleString()}t`;
@@ -233,7 +233,7 @@ export function ManagerKpiSummary({
     <section className="rounded-xl border bg-card/60 p-3 backdrop-blur-sm">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-1.5">
-          <h2 className="text-sm font-semibold text-foreground">Operations Summary</h2>
+          <h2 className="text-sm font-semibold text-foreground">{t("grainOps.title")}</h2>
           <InfoDot text="Live silo utilisation and operational queues. Use the dropdown to view individual silo details." />
         </div>
         <div className="flex items-center gap-2">
@@ -262,7 +262,9 @@ export function ManagerKpiSummary({
                 })
               ) : (
                 <SelectItem value="no-data" disabled>
-                  <span className="text-muted-foreground">No silos available ({silos ? silos.length : 'loading'})</span>
+                  <span className="text-muted-foreground">
+                    No silos available ({silos ? silos.length : "loading"})
+                  </span>
                 </SelectItem>
               )}
             </SelectContent>
@@ -284,7 +286,7 @@ export function ManagerKpiSummary({
         {/* Grain Factors Impact - Bar Chart */}
         <div className="rounded-lg border bg-card overflow-hidden">
           <div className="px-3 py-2 border-b bg-card/60 flex items-center justify-between">
-            <h3 className="text-xs font-semibold">Grain Storage Factors Impact</h3>
+            <h3 className="text-xs font-semibold">{t("hardware.heading1")}</h3>
             <select
               value={factorPeriod}
               onChange={(e) => setFactorPeriod(e.target.value as "weekly" | "monthly" | "yearly")}
@@ -301,49 +303,80 @@ export function ManagerKpiSummary({
                 <defs>
                   {/* Define diagonal stripe patterns for each grain factor */}
                   <pattern id="diagonalHatch1" patternUnits="userSpaceOnUse" width="4" height="4">
-                    <rect width="4" height="4" fill="#ef4444" opacity="0.9"/>
-                    <path d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2" stroke="#dc2626" strokeWidth="0.8"/>
+                    <rect width="4" height="4" fill="#ef4444" opacity="0.9" />
+                    <path
+                      d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2"
+                      stroke="#dc2626"
+                      strokeWidth="0.8"
+                    />
                   </pattern>
                   <pattern id="diagonalHatch2" patternUnits="userSpaceOnUse" width="4" height="4">
-                    <rect width="4" height="4" fill="#3b82f6" opacity="0.9"/>
-                    <path d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2" stroke="#1d4ed8" strokeWidth="0.8"/>
+                    <rect width="4" height="4" fill="#3b82f6" opacity="0.9" />
+                    <path
+                      d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2"
+                      stroke="#1d4ed8"
+                      strokeWidth="0.8"
+                    />
                   </pattern>
                   <pattern id="diagonalHatch3" patternUnits="userSpaceOnUse" width="4" height="4">
-                    <rect width="4" height="4" fill="#06b6d4" opacity="0.9"/>
-                    <path d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2" stroke="#0891b2" strokeWidth="0.8"/>
+                    <rect width="4" height="4" fill="#06b6d4" opacity="0.9" />
+                    <path
+                      d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2"
+                      stroke="#0891b2"
+                      strokeWidth="0.8"
+                    />
                   </pattern>
                   <pattern id="diagonalHatch4" patternUnits="userSpaceOnUse" width="4" height="4">
-                    <rect width="4" height="4" fill="#8b5cf6" opacity="0.9"/>
-                    <path d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2" stroke="#7c3aed" strokeWidth="0.8"/>
+                    <rect width="4" height="4" fill="#8b5cf6" opacity="0.9" />
+                    <path
+                      d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2"
+                      stroke="#7c3aed"
+                      strokeWidth="0.8"
+                    />
                   </pattern>
                   <pattern id="diagonalHatch5" patternUnits="userSpaceOnUse" width="4" height="4">
-                    <rect width="4" height="4" fill="#06d6a0" opacity="0.9"/>
-                    <path d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2" stroke="#059669" strokeWidth="0.8"/>
+                    <rect width="4" height="4" fill="#06d6a0" opacity="0.9" />
+                    <path
+                      d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2"
+                      stroke="#059669"
+                      strokeWidth="0.8"
+                    />
                   </pattern>
                   <pattern id="diagonalHatch6" patternUnits="userSpaceOnUse" width="4" height="4">
-                    <rect width="4" height="4" fill="#fbbf24" opacity="0.9"/>
-                    <path d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2" stroke="#f59e0b" strokeWidth="0.8"/>
+                    <rect width="4" height="4" fill="#fbbf24" opacity="0.9" />
+                    <path
+                      d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2"
+                      stroke="#f59e0b"
+                      strokeWidth="0.8"
+                    />
                   </pattern>
                   <pattern id="diagonalHatch7" patternUnits="userSpaceOnUse" width="4" height="4">
-                    <rect width="4" height="4" fill="#10b981" opacity="0.9"/>
-                    <path d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2" stroke="#047857" strokeWidth="0.8"/>
+                    <rect width="4" height="4" fill="#10b981" opacity="0.9" />
+                    <path
+                      d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2"
+                      stroke="#047857"
+                      strokeWidth="0.8"
+                    />
                   </pattern>
                   <pattern id="diagonalHatch8" patternUnits="userSpaceOnUse" width="4" height="4">
-                    <rect width="4" height="4" fill="#f97316" opacity="0.9"/>
-                    <path d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2" stroke="#ea580c" strokeWidth="0.8"/>
+                    <rect width="4" height="4" fill="#f97316" opacity="0.9" />
+                    <path
+                      d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2"
+                      stroke="#ea580c"
+                      strokeWidth="0.8"
+                    />
                   </pattern>
                   <pattern id="diagonalHatch9" patternUnits="userSpaceOnUse" width="4" height="4">
-                    <rect width="4" height="4" fill="#6366f1" opacity="0.9"/>
-                    <path d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2" stroke="#4f46e5" strokeWidth="0.8"/>
+                    <rect width="4" height="4" fill="#6366f1" opacity="0.9" />
+                    <path
+                      d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2"
+                      stroke="#4f46e5"
+                      strokeWidth="0.8"
+                    />
                   </pattern>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
-                <XAxis 
-                  dataKey="name" 
-                  tick={false}
-                  axisLine={false}
-                  tickLine={false}
-                />
+                <XAxis dataKey="name" tick={false} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 11 }} width={35} />
                 <Tooltip
                   contentStyle={{ fontSize: 12, borderRadius: 6 }}
@@ -352,23 +385,17 @@ export function ManagerKpiSummary({
                 <Bar dataKey={factorPeriod} radius={[4, 4, 0, 0]}>
                   {grainFactorsData.map((entry, index) => {
                     const patterns = [
-                      'url(#diagonalHatch1)', // Temperature - Red
-                      'url(#diagonalHatch2)', // Grain Moisture - Blue
-                      'url(#diagonalHatch3)', // Humidity - Cyan
-                      'url(#diagonalHatch4)', // Pest Presence - Purple
-                      'url(#diagonalHatch5)', // Dew Point - Teal
-                      'url(#diagonalHatch6)', // Storage Days - Amber
-                      'url(#diagonalHatch7)', // Air Flow - Green
-                      'url(#diagonalHatch8)', // Ambient Light - Orange
-                      'url(#diagonalHatch9)', // Ventilation - Indigo
+                      "url(#diagonalHatch1)", // Temperature - Red
+                      "url(#diagonalHatch2)", // Grain Moisture - Blue
+                      "url(#diagonalHatch3)", // Humidity - Cyan
+                      "url(#diagonalHatch4)", // Pest Presence - Purple
+                      "url(#diagonalHatch5)", // Dew Point - Teal
+                      "url(#diagonalHatch6)", // Storage Days - Amber
+                      "url(#diagonalHatch7)", // Air Flow - Green
+                      "url(#diagonalHatch8)", // Ambient Light - Orange
+                      "url(#diagonalHatch9)", // Ventilation - Indigo
                     ];
-                    return (
-                      <Cell 
-                        key={`cell-${index}`} 
-                        fill={patterns[index]} 
-                        stroke="none"
-                      />
-                    );
+                    return <Cell key={`cell-${index}`} fill={patterns[index]} stroke="none" />;
                   })}
                 </Bar>
               </BarChart>

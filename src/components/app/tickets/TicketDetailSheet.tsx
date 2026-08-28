@@ -35,16 +35,9 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { TicketDiscussion } from "./TicketDiscussion";
-import {
-  CheckCircle2,
-  User,
-  CalendarClock,
-  MessageSquare,
-  X,
-  Info,
-  Trash2,
-} from "lucide-react";
+import { CheckCircle2, User, CalendarClock, MessageSquare, X, Info, Trash2, Download, FileText } from "lucide-react";
 import { useEffect, useRef } from "react";
+import { translateText, useI18n } from "@/i18n";
 
 const PRIORITY_BADGE: Record<string, string> = {
   low: "bg-slate-100 text-slate-700 border-slate-200",
@@ -58,6 +51,19 @@ const STATUS_BADGE: Record<string, string> = {
   closed: "bg-slate-100 text-slate-500 border-slate-200",
 };
 
+// Helper to extract attachment from markdown-formatted description
+function extractAttachment(description: string) {
+  const match = description.match(/\[Attachment: ([^\]]+)\]\(([^)]+)\)/);
+  if (match) {
+    return {
+      name: match[1],
+      url: match[2],
+      cleanDescription: description.replace(/\n\n\[Attachment: [^\]]+\]\([^)]+\)/, ""),
+    };
+  }
+  return { name: undefined, url: undefined, cleanDescription: description };
+}
+
 interface Props {
   ticket: TicketRow | null;
   open: boolean;
@@ -65,6 +71,7 @@ interface Props {
 }
 
 export function TicketDetailSheet({ ticket, open, onClose }: Props) {
+  const { locale } = useI18n();
   const qc = useQueryClient();
   const { isSuperAdmin } = useIsSuperAdmin();
   const closeFn = useServerFn(closeTicket);
@@ -93,7 +100,7 @@ export function TicketDetailSheet({ ticket, open, onClose }: Props) {
   const closeMut = useMutation({
     mutationFn: (id: string) => closeFn({ data: { id } }),
     onSuccess: () => {
-      toast.success("Ticket closed");
+      toast.success(translateText("Ticket closed", locale));
       if (ticket?.id) clearTicketMessages(ticket.id); // wipe localStorage on close
       qc.invalidateQueries({ queryKey: ["field-tickets"] });
       onClose();
@@ -102,10 +109,9 @@ export function TicketDetailSheet({ ticket, open, onClose }: Props) {
   });
 
   const resolveMut = useMutation({
-    mutationFn: ({ id, note }: { id: string; note?: string }) =>
-      resolveFn({ data: { id, note } }),
+    mutationFn: ({ id, note }: { id: string; note?: string }) => resolveFn({ data: { id, note } }),
     onSuccess: () => {
-      toast.success("Ticket marked as resolved — admin will be notified");
+      toast.success(translateText("Ticket marked as resolved — admin will be notified", locale));
       setResolveNote("");
       setShowNoteInput(false);
       qc.invalidateQueries({ queryKey: ["field-tickets"] });
@@ -117,7 +123,7 @@ export function TicketDetailSheet({ ticket, open, onClose }: Props) {
   const deleteMut = useMutation({
     mutationFn: (id: string) => deleteFn({ data: { id } }),
     onSuccess: () => {
-      toast.success("Ticket deleted");
+      toast.success(translateText("Ticket deleted", locale));
       if (ticket?.id) clearTicketMessages(ticket.id); // wipe localStorage on delete
       qc.invalidateQueries({ queryKey: ["field-tickets"] });
       qc.invalidateQueries({ queryKey: ["field-tickets", "all"] });
@@ -136,7 +142,7 @@ export function TicketDetailSheet({ ticket, open, onClose }: Props) {
   return (
     <>
       <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
-        <SheetContent className="w-full sm:max-w-lg flex flex-col p-0 overflow-hidden data-[state=open]:slide-in-from-right data-[state=closed]:slide-out-to-right">
+        <SheetContent className="gh-english-surface w-full sm:max-w-lg flex flex-col p-0 overflow-hidden data-[state=open]:slide-in-from-right data-[state=closed]:slide-out-to-right">
           {/* Header — title + id on left, Discussion button below the X (not next to it) */}
           <SheetHeader className="px-5 pt-5 pb-4 border-b border-slate-200 shrink-0">
             <SheetTitle className="text-base font-bold text-slate-900 leading-snug pr-8">
@@ -181,10 +187,7 @@ export function TicketDetailSheet({ ticket, open, onClose }: Props) {
               </Badge>
               <Badge
                 variant="outline"
-                className={cn(
-                  "text-[10px] font-semibold uppercase",
-                  STATUS_BADGE[ticket.status],
-                )}
+                className={cn("text-[10px] font-semibold uppercase", STATUS_BADGE[ticket.status])}
               >
                 {ticket.status}
               </Badge>
@@ -241,9 +244,33 @@ export function TicketDetailSheet({ ticket, open, onClose }: Props) {
                 Description
               </div>
               <div className="whitespace-pre-wrap text-slate-700 leading-relaxed rounded-md border border-slate-200 bg-white p-3 text-xs">
-                {ticket.description}
+                {extractAttachment(ticket.description).cleanDescription}
               </div>
             </div>
+
+            {/* Attachment */}
+            {extractAttachment(ticket.description).url && (
+              <div className="space-y-1.5">
+                <div className="text-xs text-slate-500 font-medium uppercase tracking-wide">
+                  Attachment
+                </div>
+                <a
+                  href={extractAttachment(ticket.description).url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-3 rounded-lg border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 transition-colors"
+                >
+                  <FileText className="h-4 w-4 text-emerald-600 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-emerald-900 truncate">
+                      {extractAttachment(ticket.description).name}
+                    </p>
+                    <p className="text-[10px] text-emerald-700">Click to download</p>
+                  </div>
+                  <Download className="h-4 w-4 text-emerald-600 shrink-0" />
+                </a>
+              </div>
+            )}
 
             {/* Timestamps */}
             <div className="rounded-lg border border-slate-200 bg-white p-3 space-y-2 text-xs">
@@ -258,22 +285,17 @@ export function TicketDetailSheet({ ticket, open, onClose }: Props) {
                 <div className="flex items-center gap-1.5 text-emerald-600">
                   <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
                   <span className="font-medium">Resolved</span>
-                  <span className="ml-auto">
-                    {new Date(ticket.resolved_at).toLocaleString()}
-                  </span>
+                  <span className="ml-auto">{new Date(ticket.resolved_at).toLocaleString()}</span>
                 </div>
               )}
               {ticket.closed_at && (
                 <div className="flex items-center gap-1.5 text-slate-400">
                   <X className="h-3.5 w-3.5 shrink-0" />
                   <span className="font-medium">Closed</span>
-                  <span className="ml-auto">
-                    {new Date(ticket.closed_at).toLocaleString()}
-                  </span>
+                  <span className="ml-auto">{new Date(ticket.closed_at).toLocaleString()}</span>
                 </div>
               )}
             </div>
-
           </div>
 
           {/* Footer actions — always visible at bottom, generous padding */}
@@ -346,7 +368,10 @@ export function TicketDetailSheet({ ticket, open, onClose }: Props) {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => { setShowNoteInput(false); setResolveNote(""); }}
+                        onClick={() => {
+                          setShowNoteInput(false);
+                          setResolveNote("");
+                        }}
                         disabled={isPending}
                       >
                         Cancel

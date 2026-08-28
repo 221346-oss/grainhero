@@ -21,7 +21,10 @@ export const getCommerceSettings = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
-      .from("mobile_commerce_settings").select("*").limit(1).maybeSingle();
+      .from("mobile_commerce_settings")
+      .select("*")
+      .limit(1)
+      .maybeSingle();
     if (error) throw new Error(error.message);
     return data;
   });
@@ -34,12 +37,21 @@ export const updateCommerceSettings = createServerFn({ method: "POST" })
     if (!(await isSuperAdmin(context.supabase, context.userId))) throw new Error("Forbidden");
 
     const { data: existing } = await context.supabase
-      .from("mobile_commerce_settings").select("*").limit(1).maybeSingle();
+      .from("mobile_commerce_settings")
+      .select("*")
+      .limit(1)
+      .maybeSingle();
     if (!existing) throw new Error("Commerce settings row missing");
-    if (data.max_order_cents <= data.min_order_cents) throw new Error("max_order_cents must exceed min_order_cents");
+    if (data.max_order_cents <= data.min_order_cents)
+      throw new Error("max_order_cents must exceed min_order_cents");
 
-    const { error } = await context.supabase.from("mobile_commerce_settings")
-      .update({ ...data, updated_by: context.userId, updated_at: new Date().toISOString() } as never)
+    const { error } = await context.supabase
+      .from("mobile_commerce_settings")
+      .update({
+        ...data,
+        updated_by: context.userId,
+        updated_at: new Date().toISOString(),
+      } as never)
       .eq("id", (existing as { id: string }).id);
     if (error) throw new Error(error.message);
 

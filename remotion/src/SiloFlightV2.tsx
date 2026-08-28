@@ -13,7 +13,10 @@ import {
 import { loadFont as loadArchivo } from "@remotion/google-fonts/Archivo";
 import { loadFont as loadMono } from "@remotion/google-fonts/JetBrainsMono";
 
-const { fontFamily: display } = loadArchivo("normal", { weights: ["700", "900"], subsets: ["latin"] });
+const { fontFamily: display } = loadArchivo("normal", {
+  weights: ["700", "900"],
+  subsets: ["latin"],
+});
 const { fontFamily: mono } = loadMono("normal", { weights: ["500", "700"], subsets: ["latin"] });
 
 const INK = "#111512";
@@ -21,8 +24,8 @@ const GREEN = "#2FA84F";
 const MIST = "#C7D9C1";
 const BONE = "#FAFAF7";
 
-const easeOut = Easing.bezier(0.16, 1, 0.3, 1);   // decelerate (settle)
-const easeIn = Easing.bezier(0.7, 0, 0.84, 0);    // accelerate (ramp up)
+const easeOut = Easing.bezier(0.16, 1, 0.3, 1); // decelerate (settle)
+const easeIn = Easing.bezier(0.7, 0, 0.84, 0); // accelerate (ramp up)
 const easeBoth = Easing.bezier(0.65, 0, 0.35, 1); // whip
 
 type Ramp = "in" | "out" | "both";
@@ -41,7 +44,19 @@ const Shot: React.FC<{
   fadeIn?: number;
   fadeOut?: number;
   children?: React.ReactNode;
-}> = ({ src, from, duration, scale, x, y, rot, ramp = "both", fadeIn = 12, fadeOut = 12, children }) => {
+}> = ({
+  src,
+  from,
+  duration,
+  scale,
+  x,
+  y,
+  rot,
+  ramp = "both",
+  fadeIn = 12,
+  fadeOut = 12,
+  children,
+}) => {
   const frame = useCurrentFrame();
   const local = frame - from;
   if (local < -fadeIn || local > duration + fadeOut) return null;
@@ -67,7 +82,9 @@ const Shot: React.FC<{
 
   return (
     <AbsoluteFill style={{ opacity, overflow: "hidden" }}>
-      <AbsoluteFill style={{ transform: `translate3d(${tx}px, ${ty}px, 0) scale(${s}) rotate(${rt}deg)` }}>
+      <AbsoluteFill
+        style={{ transform: `translate3d(${tx}px, ${ty}px, 0) scale(${s}) rotate(${rt}deg)` }}
+      >
         <Img src={staticFile(src)} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
       </AbsoluteFill>
       {children}
@@ -100,10 +117,36 @@ const Pin: React.FC<{
   const pulse = 1 + Math.sin(local / 6) * 0.16;
 
   return (
-    <div style={{ position: "absolute", top, left, opacity: s * out, display: "flex", alignItems: "center" }}>
+    <div
+      style={{
+        position: "absolute",
+        top,
+        left,
+        opacity: s * out,
+        display: "flex",
+        alignItems: "center",
+      }}
+    >
       <div style={{ position: "relative", width: 20, height: 20 }}>
-        <div style={{ position: "absolute", inset: 0, borderRadius: 999, border: `2px solid ${GREEN}`, transform: `scale(${pulse})`, opacity: 0.5 }} />
-        <div style={{ position: "absolute", inset: 6, borderRadius: 999, background: GREEN, boxShadow: `0 0 20px ${GREEN}` }} />
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            borderRadius: 999,
+            border: `2px solid ${GREEN}`,
+            transform: `scale(${pulse})`,
+            opacity: 0.5,
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            inset: 6,
+            borderRadius: 999,
+            background: GREEN,
+            boxShadow: `0 0 20px ${GREEN}`,
+          }}
+        />
       </div>
       <div style={{ width: lineW, height: 2, background: GREEN, opacity: 0.9 }} />
       <div
@@ -115,11 +158,39 @@ const Pin: React.FC<{
           transform: `translateX(${(1 - s) * -16}px)`,
         }}
       >
-        <div style={{ fontFamily: mono, fontWeight: 700, fontSize: 20, letterSpacing: 2.5, color: GREEN, textTransform: "uppercase" }}>
+        <div
+          style={{
+            fontFamily: mono,
+            fontWeight: 700,
+            fontSize: 20,
+            letterSpacing: 2.5,
+            color: GREEN,
+            textTransform: "uppercase",
+          }}
+        >
           {name}
         </div>
-        <div style={{ fontFamily: display, fontWeight: 900, fontSize: 40, color: BONE, lineHeight: 1.05 }}>{value}</div>
-        <div style={{ fontFamily: mono, fontWeight: 500, fontSize: 17, color: "rgba(250,250,247,0.6)" }}>{note}</div>
+        <div
+          style={{
+            fontFamily: display,
+            fontWeight: 900,
+            fontSize: 40,
+            color: BONE,
+            lineHeight: 1.05,
+          }}
+        >
+          {value}
+        </div>
+        <div
+          style={{
+            fontFamily: mono,
+            fontWeight: 500,
+            fontSize: 17,
+            color: "rgba(250,250,247,0.6)",
+          }}
+        >
+          {note}
+        </div>
       </div>
     </div>
   );
@@ -215,13 +286,35 @@ const Dust: React.FC<{ count?: number }> = ({ count = 110 }) => {
 const Hud: React.FC = () => {
   const frame = useCurrentFrame();
   const blink = Math.sin(frame / 7) > 0 ? 1 : 0.2;
-  const corner = (style: React.CSSProperties) => <div style={{ position: "absolute", width: 44, height: 44, ...style }} />;
+  const corner = (style: React.CSSProperties) => (
+    <div style={{ position: "absolute", width: 44, height: 44, ...style }} />
+  );
   return (
     <AbsoluteFill style={{ opacity: 0.5 }}>
-      {corner({ top: 54, left: 54, borderTop: `2px solid ${MIST}`, borderLeft: `2px solid ${MIST}` })}
-      {corner({ top: 54, right: 54, borderTop: `2px solid ${MIST}`, borderRight: `2px solid ${MIST}` })}
-      {corner({ bottom: 54, left: 54, borderBottom: `2px solid ${MIST}`, borderLeft: `2px solid ${MIST}` })}
-      {corner({ bottom: 54, right: 54, borderBottom: `2px solid ${MIST}`, borderRight: `2px solid ${MIST}` })}
+      {corner({
+        top: 54,
+        left: 54,
+        borderTop: `2px solid ${MIST}`,
+        borderLeft: `2px solid ${MIST}`,
+      })}
+      {corner({
+        top: 54,
+        right: 54,
+        borderTop: `2px solid ${MIST}`,
+        borderRight: `2px solid ${MIST}`,
+      })}
+      {corner({
+        bottom: 54,
+        left: 54,
+        borderBottom: `2px solid ${MIST}`,
+        borderLeft: `2px solid ${MIST}`,
+      })}
+      {corner({
+        bottom: 54,
+        right: 54,
+        borderBottom: `2px solid ${MIST}`,
+        borderRight: `2px solid ${MIST}`,
+      })}
       <div
         style={{
           position: "absolute",
@@ -237,7 +330,9 @@ const Hud: React.FC = () => {
           textTransform: "uppercase",
         }}
       >
-        <div style={{ width: 9, height: 9, borderRadius: 999, background: GREEN, opacity: blink }} />
+        <div
+          style={{ width: 9, height: 9, borderRadius: 999, background: GREEN, opacity: blink }}
+        />
         GRAINHERO · SILO 04 · LIVE
       </div>
     </AbsoluteFill>
@@ -269,39 +364,135 @@ export const SiloFlightV2: React.FC = () => {
   return (
     <AbsoluteFill style={{ backgroundColor: INK }}>
       {/* 1 · APPROACH — slow drift ramping into a fast push */}
-      <Shot src="v2/01-approach.jpg" from={0} duration={132} fadeIn={0} ramp="in" scale={[1.04, 1.5]} y={[0, -50]} />
+      <Shot
+        src="v2/01-approach.jpg"
+        from={0}
+        duration={132}
+        fadeIn={0}
+        ramp="in"
+        scale={[1.04, 1.5]}
+        y={[0, -50]}
+      />
 
       {/* 2 · HATCH — whip punch straight into the opening */}
-      <Shot src="v2/02-hatch.jpg" from={124} duration={64} ramp="in" scale={[1.06, 2.9]} rot={[0, 8]} />
+      <Shot
+        src="v2/02-hatch.jpg"
+        from={124}
+        duration={64}
+        ramp="in"
+        scale={[1.06, 2.9]}
+        rot={[0, 8]}
+      />
 
       {/* 3 · INTERIOR REVEAL — decelerate into the cathedral */}
-      <Shot src="v2/03-interior.jpg" from={186} duration={116} ramp="out" scale={[1.7, 1.05]} y={[-110, 30]}>
-        <Pin from={218} duration={72} top="24%" left="54%" name="SHT45" value="21.4°C · 68% RH" note="headspace air" />
+      <Shot
+        src="v2/03-interior.jpg"
+        from={186}
+        duration={116}
+        ramp="out"
+        scale={[1.7, 1.05]}
+        y={[-110, 30]}
+      >
+        <Pin
+          from={218}
+          duration={72}
+          top="24%"
+          left="54%"
+          name="SHT45"
+          value="21.4°C · 68% RH"
+          note="headspace air"
+        />
       </Shot>
 
       {/* 4 · GRAIN MACRO — high-speed kernels */}
-      <Shot src="v2/05-grain.jpg" from={296} duration={84} ramp="both" scale={[1.3, 1.02]} x={[70, -50]}>
-        <Pin from={314} duration={56} top="16%" left="56%" name="AJ-SR04M" value="3.24 m" note="ultrasonic grain level" />
+      <Shot
+        src="v2/05-grain.jpg"
+        from={296}
+        duration={84}
+        ramp="both"
+        scale={[1.3, 1.02]}
+        x={[70, -50]}
+      >
+        <Pin
+          from={314}
+          duration={56}
+          top="16%"
+          left="56%"
+          name="AJ-SR04M"
+          value="3.24 m"
+          note="ultrasonic grain level"
+        />
       </Shot>
 
       {/* 5 · SENSOR MACRO */}
-      <Shot src="v2/04-sensor.jpg" from={374} duration={86} ramp="out" scale={[1.28, 1.03]} x={[-80, 40]}>
-        <Pin from={392} duration={58} top="60%" left="46%" name="DS18B20" value="24.3°C" note="probe · top of mass" />
+      <Shot
+        src="v2/04-sensor.jpg"
+        from={374}
+        duration={86}
+        ramp="out"
+        scale={[1.28, 1.03]}
+        x={[-80, 40]}
+      >
+        <Pin
+          from={392}
+          duration={58}
+          top="60%"
+          left="46%"
+          name="DS18B20"
+          value="24.3°C"
+          note="probe · top of mass"
+        />
       </Shot>
 
       {/* 6 · CONTROLLER MACRO */}
-      <Shot src="v2/06-controller.jpg" from={454} duration={82} ramp="both" scale={[1.04, 1.3]} y={[26, -30]}>
-        <Pin from={470} duration={56} top="22%" left="52%" name="ESP32-S3" value="LIVE" note="edge node · alerts out" />
+      <Shot
+        src="v2/06-controller.jpg"
+        from={454}
+        duration={82}
+        ramp="both"
+        scale={[1.04, 1.3]}
+        y={[26, -30]}
+      >
+        <Pin
+          from={470}
+          duration={56}
+          top="22%"
+          left="52%"
+          name="ESP32-S3"
+          value="LIVE"
+          note="edge node · alerts out"
+        />
       </Shot>
 
       {/* 7 · EXIT — accelerate up through the hatch */}
-      <Shot src="v2/07-exit.jpg" from={530} duration={66} ramp="in" scale={[1.06, 2.2]} rot={[3, -3]} />
+      <Shot
+        src="v2/07-exit.jpg"
+        from={530}
+        duration={66}
+        ramp="in"
+        scale={[1.06, 2.2]}
+        rot={[3, -3]}
+      />
 
       {/* 8 · CLIMB AWAY — settle */}
-      <Shot src="v2/08-away.jpg" from={586} duration={104} ramp="out" scale={[1.32, 1.06]} y={[-40, 20]} />
+      <Shot
+        src="v2/08-away.jpg"
+        from={586}
+        duration={104}
+        ramp="out"
+        scale={[1.32, 1.06]}
+        y={[-40, 20]}
+      />
 
       {/* 9 · LOOP CLOSE — match frame 0 */}
-      <Shot src="v2/01-approach.jpg" from={676} duration={44} fadeOut={0} ramp="out" scale={[1.04, 1.04]} />
+      <Shot
+        src="v2/01-approach.jpg"
+        from={676}
+        duration={44}
+        fadeOut={0}
+        ramp="out"
+        scale={[1.04, 1.04]}
+      />
 
       {/* atmosphere */}
       <AbsoluteFill style={{ opacity: interior * 0.6 }}>
@@ -309,7 +500,8 @@ export const SiloFlightV2: React.FC = () => {
       </AbsoluteFill>
       <AbsoluteFill
         style={{
-          background: "radial-gradient(ellipse at center, rgba(0,0,0,0) 40%, rgba(10,14,10,0.5) 78%, rgba(8,11,8,0.9) 100%)",
+          background:
+            "radial-gradient(ellipse at center, rgba(0,0,0,0) 40%, rgba(10,14,10,0.5) 78%, rgba(8,11,8,0.9) 100%)",
         }}
       />
       <Hud />

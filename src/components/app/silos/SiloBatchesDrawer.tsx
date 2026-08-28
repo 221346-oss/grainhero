@@ -3,14 +3,20 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowUpRight, Loader2, Truck, Wheat, Inbox } from "lucide-react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { listGrainBatches } from "@/lib/operations.functions";
 
 // Structurally-compatible with the Silo type used in the Silos page.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 type Silo = any;
 
 type Batch = {
@@ -27,9 +33,11 @@ type Batch = {
 
 function statusPill(s: string) {
   const l = s.toLowerCase();
-  if (l.includes("dispatch")) return "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30";
+  if (l.includes("dispatch"))
+    return "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30";
   if (l.includes("sold")) return "bg-sky-500/10 text-sky-700 dark:text-sky-400 border-sky-500/30";
-  if (l.includes("damag") || l.includes("expir")) return "bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/30";
+  if (l.includes("damag") || l.includes("expir"))
+    return "bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/30";
   return "bg-slate-500/10 text-slate-700 dark:text-slate-300 border-slate-500/30";
 }
 
@@ -71,7 +79,9 @@ export function SiloBatchesDrawer({
               </SheetTitle>
               <SheetDescription className="flex items-center gap-2 text-xs mt-0.5">
                 <span className="font-mono">{silo?.silo_id}</span>
-                {silo?.warehouses?.name && <span className="truncate">· {silo.warehouses.name}</span>}
+                {silo?.warehouses?.name && (
+                  <span className="truncate">· {silo.warehouses.name}</span>
+                )}
               </SheetDescription>
             </div>
             {silo && (
@@ -88,18 +98,28 @@ export function SiloBatchesDrawer({
           {silo && (
             <div className="mt-3 grid grid-cols-3 gap-3 text-xs">
               <div>
-                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Fill</div>
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  Fill
+                </div>
                 <div className="font-semibold tabular-nums mt-0.5">{pct}%</div>
                 <Progress value={pct} className="h-1 mt-1" />
               </div>
               <div>
-                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Occupancy</div>
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  Occupancy
+                </div>
                 <div className="font-semibold tabular-nums mt-0.5">
-                  {occ.toLocaleString()}<span className="text-muted-foreground font-normal"> / {cap.toLocaleString()} kg</span>
+                  {occ.toLocaleString()}
+                  <span className="text-muted-foreground font-normal">
+                    {" "}
+                    / {cap.toLocaleString()} kg
+                  </span>
                 </div>
               </div>
               <div>
-                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Grain</div>
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  Grain
+                </div>
                 <div className="font-semibold mt-0.5 inline-flex items-center gap-1">
                   <Wheat className="w-3 h-3 text-amber-600" />
                   {silo.current_batch?.grain_type ?? "—"}
@@ -112,8 +132,12 @@ export function SiloBatchesDrawer({
         <div className="flex-1 overflow-auto">
           <div className="flex items-center justify-between px-5 py-2 border-b border-border/60">
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Batches</span>
-              <Badge variant="outline" className="h-4 px-1.5 text-[10px] tabular-nums">{rows.length}</Badge>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                Batches
+              </span>
+              <Badge variant="outline" className="h-4 px-1.5 text-[10px] tabular-nums">
+                {rows.length}
+              </Badge>
             </div>
             <Link
               to="/grain-operations"
@@ -164,9 +188,13 @@ export function SiloBatchesDrawer({
                       <td className="px-5 py-2 font-medium">{b.batch_id}</td>
                       <td className="px-2 py-2 text-muted-foreground">{b.grain_type}</td>
                       <td className="px-2 py-2 text-right tabular-nums">{qty.toLocaleString()}</td>
-                      <td className="px-2 py-2 text-right tabular-nums">{remaining.toLocaleString()}</td>
+                      <td className="px-2 py-2 text-right tabular-nums">
+                        {remaining.toLocaleString()}
+                      </td>
                       <td className="px-5 py-2">
-                        <span className={`inline-block h-5 px-1.5 rounded-full text-[10px] font-medium border ${statusPill(String(b.status))}`}>
+                        <span
+                          className={`inline-block h-5 px-1.5 rounded-full text-[10px] font-medium border ${statusPill(String(b.status))}`}
+                        >
                           {b.status}
                         </span>
                       </td>

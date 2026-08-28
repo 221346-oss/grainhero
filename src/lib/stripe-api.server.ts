@@ -8,7 +8,11 @@ export function stripeForm(params: Record<string, string | number | undefined>) 
   return body;
 }
 
-export async function stripeFetch(path: string, body: URLSearchParams | null, method: "GET" | "POST" = "POST") {
+export async function stripeFetch(
+  path: string,
+  body: URLSearchParams | null,
+  method: "GET" | "POST" = "POST",
+) {
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key) throw new Error("Stripe not configured");
   const res = await fetch(`${STRIPE_API}${path}`, {

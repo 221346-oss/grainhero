@@ -7,7 +7,6 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getEffectiveRole } from "./rbac.server";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 export const getPlatformEnvironmentalOverview = createServerFn({ method: "GET" })
@@ -49,7 +48,10 @@ export const getPlatformEnvironmentalOverview = createServerFn({ method: "GET" }
     const bucket = (adminId: string | null) => {
       const key = adminId ?? "unknown";
       let b = byTenant.get(key);
-      if (!b) { b = { adminId: key, silos: 0, online: 0, offline: 0 }; byTenant.set(key, b); }
+      if (!b) {
+        b = { adminId: key, silos: 0, online: 0, offline: 0 };
+        byTenant.set(key, b);
+      }
       return b;
     };
 
@@ -58,13 +60,22 @@ export const getPlatformEnvironmentalOverview = createServerFn({ method: "GET" }
     let offlineTotal = 0;
     for (const d of devices) {
       const b = bucket(d.admin_id);
-      if (isOnline(d)) { b.online += 1; onlineTotal += 1; } else { b.offline += 1; offlineTotal += 1; }
+      if (isOnline(d)) {
+        b.online += 1;
+        onlineTotal += 1;
+      } else {
+        b.offline += 1;
+        offlineTotal += 1;
+      }
     }
 
     const ids = Array.from(byTenant.keys()).filter((k) => k !== "unknown");
     let profiles: Array<{ id: string; name: string | null; email: string | null }> = [];
     if (ids.length > 0) {
-      const { data } = await context.supabase.from("profiles").select("id, name, email").in("id", ids);
+      const { data } = await context.supabase
+        .from("profiles")
+        .select("id, name, email")
+        .in("id", ids);
       profiles = data ?? [];
     }
     const nameOf = new Map(profiles.map((p) => [p.id, p.name ?? p.email ?? p.id]));
@@ -72,13 +83,19 @@ export const getPlatformEnvironmentalOverview = createServerFn({ method: "GET" }
     const tenants = Array.from(byTenant.values())
       .map((b) => ({
         ...b,
-        tenantName: b.adminId === "unknown" ? "Unknown tenant" : (nameOf.get(b.adminId) ?? b.adminId),
+        tenantName:
+          b.adminId === "unknown" ? "Unknown tenant" : (nameOf.get(b.adminId) ?? b.adminId),
       }))
       .sort((a, b) => b.offline - a.offline || b.silos - a.silos)
       .slice(0, 50);
 
     return {
-      totals: { silos: silos.length, devices: devices.length, online: onlineTotal, offline: offlineTotal },
+      totals: {
+        silos: silos.length,
+        devices: devices.length,
+        online: onlineTotal,
+        offline: offlineTotal,
+      },
       tenants,
     };
   });

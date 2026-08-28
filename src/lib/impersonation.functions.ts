@@ -10,7 +10,7 @@ export const startImpersonation = createServerFn({ method: "POST" })
     // Check if user is super_admin
     const { data: isSuperAdmin } = await context.supabase.rpc("has_role", {
       _user_id: context.userId,
-      _role: "super_admin"
+      _role: "super_admin",
     });
     if (!isSuperAdmin) throw new Error("Forbidden: super_admin only");
 
@@ -26,7 +26,7 @@ export const startImpersonation = createServerFn({ method: "POST" })
     // Check if target user has admin role
     const { data: hasAdminRole } = await context.supabase.rpc("has_role", {
       _user_id: data.adminId,
-      _role: "admin"
+      _role: "admin",
     });
 
     if (!hasAdminRole) throw new Error("Target user is not an admin");
@@ -49,7 +49,7 @@ export const stopImpersonation = createServerFn({ method: "POST" })
     // Check if user is super_admin
     const { data: isSuperAdmin } = await context.supabase.rpc("has_role", {
       _user_id: context.userId,
-      _role: "super_admin"
+      _role: "super_admin",
     });
     if (!isSuperAdmin) throw new Error("Forbidden: super_admin only");
 

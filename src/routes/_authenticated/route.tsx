@@ -7,7 +7,7 @@ import { AppSearch } from "@/components/app/AppSearch";
 import { AppSidebar, type SidebarMode } from "@/components/app/AppSidebar";
 import { DashboardQuickTabs } from "@/components/app/DashboardQuickTabs";
 import { ProfileMenu } from "@/components/app/ProfileMenu";
-import { Sun, Moon, Menu } from "lucide-react";
+import { Sun, Moon, Menu, LayoutDashboard, Package } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { SessionGuard } from "@/components/app/SessionGuard";
 import { OnboardingTour } from "@/components/app/OnboardingTour";
@@ -19,16 +19,22 @@ import { TicketSidePanel } from "@/components/app/tickets/TicketSidePanel";
 import { MobileAdminNav } from "@/components/app/mobile/MobileAdminNav";
 import { TicketChannelKeepAlive } from "@/components/app/tickets/TicketChannelKeepAlive";
 import { getStoredThemeMode, toggleThemeMode, type ThemeMode } from "@/lib/theme";
+import { LanguageSwitcher } from "@/components/app/LanguageSwitcher";
 import TextShimmer from "@/components/ui/text-shimmer";
 import { AppShellSkeleton } from "@/components/app/AppShellSkeleton";
 import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
+import { useIsGlobalTechnician } from "@/hooks/useIsGlobalTechnician";
 import { logSecurityEvent } from "@/lib/security-events.functions";
+import { useTranslation } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated")({
   head: () => ({
     meta: [
       { title: "Workspace — Grain Hero" },
-      { name: "description", content: "Workspace workspace in the Grain Hero platform — private, sign-in required." },
+      {
+        name: "description",
+        content: "Workspace workspace in the Grain Hero platform — private, sign-in required.",
+      },
       { property: "og:title", content: "Workspace — Grain Hero" },
       { property: "og:description", content: "Workspace workspace in the Grain Hero platform." },
       { name: "robots", content: "noindex, nofollow" },
@@ -57,9 +63,7 @@ export const Route = createFileRoute("/_authenticated")({
     // standalone paths. /silos/:siloId (the detail view) is still a real
     // standalone route (linked from attention.tsx, ManagerBento.tsx), so it
     // stays blocked too, via the "/silos/" sub-route prefix.
-    const OPERATIONAL_PREFIXES = [
-      "/grain-operations", "/silos/", "/sensors", "/actuators",
-    ];
+    const OPERATIONAL_PREFIXES = ["/grain-operations", "/silos/", "/sensors", "/actuators"];
     // super_admin → platform equivalent. Keep in sync with plan §2.
     const SUPER_ADMIN_REDIRECTS: Record<string, string> = {
       "/team-management": "/platform/users",
@@ -68,11 +72,17 @@ export const Route = createFileRoute("/_authenticated")({
       "/monitoring": "/platform/monitoring",
       "/intelligence": "/platform/intelligence",
     };
+    // Every /platform/* page is super-admin only (server functions also
+    // enforce it), but block the URL up-front so technicians/admins/managers
+    // get the not-allowed page instead of a data-less shell.
+    const PLATFORM_PREFIX = "/platform";
 
     const path = location.pathname;
     const needsRoleCheck =
       OPERATIONAL_PREFIXES.some((p) => path.startsWith(p)) ||
-      Object.keys(SUPER_ADMIN_REDIRECTS).some((p) => path === p || path.startsWith(p + "/"));
+      Object.keys(SUPER_ADMIN_REDIRECTS).some((p) => path === p || path.startsWith(p + "/")) ||
+      path === PLATFORM_PREFIX ||
+      path.startsWith(PLATFORM_PREFIX + "/");
 
     if (needsRoleCheck) {
       const { data: roles } = await supabase
@@ -82,9 +92,18 @@ export const Route = createFileRoute("/_authenticated")({
       const rs = (roles ?? []).map((r) => r.role as string);
       const isSuperAdmin = rs.includes("super_admin");
       const alsoOperational = rs.some((r) => ["admin", "manager", "technician"].includes(r));
+      // Platform pages: super-admin only.
+      if ((path === PLATFORM_PREFIX || path.startsWith(PLATFORM_PREFIX + "/")) && !isSuperAdmin) {
+        void logSecurityEvent({
+          data: { event: "unauthorized_access", meta: { page: path } },
+        }).catch(() => {});
+        throw redirect({ to: "/not-allowed" });
+      }
       if (isSuperAdmin && !alsoOperational) {
         if (OPERATIONAL_PREFIXES.some((p) => path.startsWith(p))) {
-          void logSecurityEvent({ data: { event: "unauthorized_access", meta: { page: path } } }).catch(() => {});
+          void logSecurityEvent({
+            data: { event: "unauthorized_access", meta: { page: path } },
+          }).catch(() => {});
           throw redirect({ to: "/not-allowed" });
         }
         for (const [from, to] of Object.entries(SUPER_ADMIN_REDIRECTS)) {
@@ -103,7 +122,7 @@ export const Route = createFileRoute("/_authenticated")({
 function AuthenticatedLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [mode, setMode] = useState<ThemeMode>(() =>
-    typeof window !== "undefined" ? getStoredThemeMode() : "light"
+    typeof window !== "undefined" ? getStoredThemeMode() : "light",
   );
   const [sidebarOpen, setSidebarOpen] = useState(false);
   // Desktop sidebar tri-state (expanded / collapsed-icon-rail / hidden),
@@ -121,9 +140,15 @@ function AuthenticatedLayout() {
   // saved preference for next visit.
   const setSidebarMode = (next: SidebarMode) => {
     setSidebarModeState(next);
-    try { localStorage.setItem("gh_sidebar_mode", next); } catch { /* ignore */ }
+    try {
+      localStorage.setItem("gh_sidebar_mode", next);
+    } catch {
+      /* ignore */
+    }
   };
   const [headerVisible, setHeaderVisible] = useState(true);
+  const { isTechnician } = useIsGlobalTechnician();
+  const { t } = useTranslation();
 
   useEffect(() => {
     const stored = getStoredThemeMode();
@@ -177,11 +202,13 @@ function AuthenticatedLayout() {
       <SessionGuard />
       <OnboardingTour />
       <BugReportButton />
-      <div className="app-scope min-h-screen flex w-full bg-white">
-        <div data-tour="sidebar" className="contents">
-          <AppSidebar mode={sidebarMode} onModeChange={setSidebarMode} />
-          <MobileAdminNav isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        </div>
+      <div className="app-scope min-h-screen flex w-full bg-white overflow-x-hidden">
+        {!isTechnician && (
+          <div data-tour="sidebar" className="contents">
+            <AppSidebar mode={sidebarMode} onModeChange={setSidebarMode} />
+            <MobileAdminNav isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+          </div>
+        )}
         <div className="flex-1 flex flex-col min-w-0">
           <ImpersonationBanner />
           <PlanExpiryBanner />
@@ -189,10 +216,18 @@ function AuthenticatedLayout() {
             initial="visible"
             animate={navHidden ? "hidden" : "visible"}
             variants={{
-              visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] } },
-              hidden: { opacity: 0, y: -20, transition: { duration: 0.25, ease: [0.55, 0.085, 0.68, 0.53] } },
+              visible: {
+                opacity: 1,
+                y: 0,
+                transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
+              },
+              hidden: {
+                opacity: 0,
+                y: -20,
+                transition: { duration: 0.25, ease: [0.55, 0.085, 0.68, 0.53] },
+              },
             }}
-            className="h-14 flex items-center gap-2 sm:gap-3 bg-white/90 backdrop-blur-md px-3 sm:px-6 border-b border-border sticky top-0 z-30 w-full"
+            className="h-14 flex items-center gap-1.5 sm:gap-3 bg-white/90 backdrop-blur-md px-2 sm:px-6 border-b border-border sticky top-0 z-30 w-full min-w-0 overflow-x-hidden"
           >
             {/* Mobile menu button + logo */}
             <div className="flex md:hidden items-center gap-2 shrink-0">
@@ -200,18 +235,50 @@ function AuthenticatedLayout() {
                 type="button"
                 onClick={() => setSidebarOpen((o) => !o)}
                 className="p-1.5 hover:bg-muted rounded-lg transition-colors text-foreground"
-                aria-label="Open navigation menu"
+                aria-label={t("nav.openNavigationMenu")}
               >
                 <Menu className="h-5 w-5" />
               </button>
-              <Link to="/dashboard" className="h-7 w-7 rounded-lg bg-[#2FAC0C] flex items-center justify-center font-black text-white text-xs">
+              <Link
+                to="/dashboard"
+                className="h-7 w-7 rounded-lg bg-[#2FAC0C] flex items-center justify-center font-black text-white text-xs"
+              >
                 GH
               </Link>
             </div>
             <div className="flex-1 max-w-2xl mx-auto w-full min-w-0">
               <AppSearch />
             </div>
-            <DashboardQuickTabs />
+            {isTechnician ? (
+              <nav className="hidden md:flex items-center gap-1 shrink-0">
+                <Link
+                  to="/dashboard"
+                  className={
+                    "h-8 inline-flex items-center gap-1.5 rounded-full px-3 text-xs font-medium transition " +
+                    (pathname === "/dashboard"
+                      ? "text-emerald-600 dark:text-emerald-400"
+                      : "text-muted-foreground hover:text-emerald-600")
+                  }
+                >
+                  <LayoutDashboard className="h-3.5 w-3.5" />
+                  {t("tabs.overview")}
+                </Link>
+                <Link
+                  to="/technician/installs"
+                  className={
+                    "h-8 inline-flex items-center gap-1.5 rounded-full px-3 text-xs font-medium transition " +
+                    (pathname.startsWith("/technician/installs")
+                      ? "text-emerald-600 dark:text-emerald-400"
+                      : "text-muted-foreground hover:text-emerald-600")
+                  }
+                >
+                  <Package className="h-3.5 w-3.5" />
+                  {t("tabs.myInstalls")}
+                </Link>
+              </nav>
+            ) : (
+              <DashboardQuickTabs />
+            )}
             <AdminUpgradeLink />
             <TicketSidePanel />
             {/* Dark / Light toggle */}
@@ -221,14 +288,14 @@ function AuthenticatedLayout() {
               aria-label={mode === "dark" ? "Switch to light mode" : "Switch to dark mode"}
               className="shrink-0 h-9 w-9 grid place-items-center rounded-full hover:bg-muted transition text-muted-foreground hover:text-foreground"
             >
-              {mode === "dark"
-                ? <Sun className="h-4 w-4" />
-                : <Moon className="h-4 w-4" />}
+              {mode === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
+            {/* Language Switcher */}
+            <LanguageSwitcher />
             <NotificationBell />
             <ProfileMenu />
           </motion.header>
-          <main className="flex-1 overflow-x-hidden">
+          <main className="flex-1 min-w-0 overflow-x-hidden">
             <TicketChannelKeepAlive />
             <AnimatedOutlet />
           </main>
@@ -241,13 +308,16 @@ function AuthenticatedLayout() {
 // Only tenant admins see the Upgrade shortcut in the topbar.
 function AdminUpgradeLink() {
   const { role } = useIsSuperAdmin();
+  const { t } = useTranslation();
   if (role !== "admin") return null;
   return (
     <Link
       to="/plan-management"
-      className="shrink-0 h-9 inline-flex items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold text-[#2FAC0C] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:text-emerald-400"
+      className="hidden sm:inline-flex shrink-0 h-9 items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold text-[#2FAC0C] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:text-emerald-400"
     >
-      <TextShimmer duration={2.2} baseColor="#2FAC0C99" peakColor="#4ade80">Upgrade</TextShimmer>
+      <TextShimmer duration={2.2} baseColor="#2FAC0C99" peakColor="#4ade80">
+        {t("nav.upgrade")}
+      </TextShimmer>
     </Link>
   );
 }
@@ -268,4 +338,3 @@ function AnimatedOutlet() {
     </AnimatePresence>
   );
 }
-

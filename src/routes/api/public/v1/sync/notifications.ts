@@ -9,10 +9,13 @@ export const Route = createFileRoute("/api/public/v1/sync/notifications")({
         const ctx = await authenticateMobile(request);
         if (ctx instanceof Response) return ctx;
         const url = new URL(request.url);
-        const result = await runSync(ctx.supabase, ctx.settings,
+        const result = await runSync(
+          ctx.supabase,
+          ctx.settings,
           url.searchParams.get("since"),
           Number(url.searchParams.get("limit")) || null,
-          { table: "notifications", cursorColumn: "created_at" });
+          { table: "notifications", cursorColumn: "created_at" },
+        );
         return Response.json(result);
       },
     },

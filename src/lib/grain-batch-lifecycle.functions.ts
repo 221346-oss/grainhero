@@ -5,11 +5,22 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
-const STATES = ["intake", "stored", "processing", "treatment", "ready", "dispatched", "sold", "on_hold", "damaged", "expired", "rejected"] as const;
-type State = typeof STATES[number];
+const STATES = [
+  "intake",
+  "stored",
+  "processing",
+  "treatment",
+  "ready",
+  "dispatched",
+  "sold",
+  "on_hold",
+  "damaged",
+  "expired",
+  "rejected",
+] as const;
+type State = (typeof STATES)[number];
 
 // Allowed transitions. Empty target list = terminal.
 const ALLOWED: Record<State, State[]> = {
@@ -29,17 +40,20 @@ const ALLOWED: Record<State, State[]> = {
 export const transitionBatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d) =>
-    z.object({
-      batchId: z.string().uuid(),
-      toState: z.enum(STATES),
-      note: z.string().max(1000).optional(),
-    }).parse(d),
+    z
+      .object({
+        batchId: z.string().uuid(),
+        toState: z.enum(STATES),
+        note: z.string().max(1000).optional(),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     const { data: batch } = await context.supabase
       .from("grain_batches")
       .select("id, admin_id, silo_id, status")
-      .eq("id", data.batchId).single();
+      .eq("id", data.batchId)
+      .single();
     const b = batch as Row | null;
     if (!b) throw new Error("Batch not found");
 
@@ -72,7 +86,9 @@ export const transitionBatch = createServerFn({ method: "POST" })
     if (data.toState === "dispatched") patch.actual_dispatch_date = now;
 
     const { error: upErr } = await context.supabase
-      .from("grain_batches").update(patch as never).eq("id", data.batchId);
+      .from("grain_batches")
+      .update(patch as never)
+      .eq("id", data.batchId);
     if (upErr) throw upErr;
 
     await context.supabase.from("grain_batch_events").insert({
@@ -116,7 +132,10 @@ export const getAllowedTransitions = createServerFn({ method: "GET" })
   .validator((d) => z.object({ batchId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { data: b } = await context.supabase
-      .from("grain_batches").select("status").eq("id", data.batchId).single();
+      .from("grain_batches")
+      .select("status")
+      .eq("id", data.batchId)
+      .single();
     const from = String((b as Row | null)?.status ?? "intake") as State;
     return { from, next: ALLOWED[from] ?? [] };
   });

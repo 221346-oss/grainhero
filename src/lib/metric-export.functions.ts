@@ -14,19 +14,25 @@ function toCsv(rows: Array<Record<string, unknown>>): string {
 
 export const exportMetricCsv = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d) => z.object({
-    key: z.string(),
-    from: z.string().optional(),
-    to: z.string().optional(),
-    filters: z.record(z.string(), z.any()).default({}),
-  }).parse(d))
+  .validator((d) =>
+    z
+      .object({
+        key: z.string(),
+        from: z.string().optional(),
+        to: z.string().optional(),
+        filters: z.record(z.string(), z.any()).default({}),
+      })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const filters = { ...(data.filters ?? {}), date_from: data.from, date_to: data.to };
-    const { data: result, error } = await sb.rpc("run_metric", { _key: data.key, _filters: filters });
+    const { data: result, error } = await sb.rpc("run_metric", {
+      _key: data.key,
+      _filters: filters,
+    });
     if (error) throw new Error(error.message);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const r = result as any;
     let rows: Array<Record<string, unknown>> = [];
     if (Array.isArray(r)) rows = r;
@@ -36,5 +42,9 @@ export const exportMetricCsv = createServerFn({ method: "POST" })
       else rows = [r as Record<string, unknown>];
     }
     const csv = toCsv(rows);
-    return { csv, filename: `${data.key}_${new Date().toISOString().slice(0, 10)}.csv`, count: rows.length };
+    return {
+      csv,
+      filename: `${data.key}_${new Date().toISOString().slice(0, 10)}.csv`,
+      count: rows.length,
+    };
   });

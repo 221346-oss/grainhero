@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { getQcPendingBatches } from "@/lib/qc-pending-batches.functions";
 import { X, Clock, User, Beaker, Droplets, Package, TestTube, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LocalizedContent } from "@/i18n";
 
 interface QcPendingSidebarProps {
   isOpen: boolean;
@@ -22,12 +23,12 @@ export function QcPendingSidebar({ isOpen, onClose }: QcPendingSidebarProps) {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", { 
+    return date.toLocaleDateString("en-US", {
       year: "numeric",
-      month: "short", 
+      month: "short",
       day: "numeric",
       hour: "2-digit",
-      minute: "2-digit"
+      minute: "2-digit",
     });
   };
 
@@ -35,48 +36,54 @@ export function QcPendingSidebar({ isOpen, onClose }: QcPendingSidebarProps) {
     const colors: Record<string, string> = {
       pending_qc: "bg-orange-100 text-orange-800",
       qc_submitted: "bg-blue-100 text-blue-800",
-      qc_failed: "bg-red-100 text-red-800"
+      qc_failed: "bg-red-100 text-red-800",
     };
     return colors[status] || "bg-gray-100 text-gray-800";
   };
 
   const formatStatus = (status: string) => {
-    return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    return status.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
   };
 
   const getQcStatusIcon = (status: string) => {
     switch (status) {
-      case 'pending_qc': return <TestTube className="h-4 w-4 text-orange-500" />;
-      case 'qc_submitted': return <Clock className="h-4 w-4 text-blue-500" />;
-      case 'qc_failed': return <AlertCircle className="h-4 w-4 text-red-500" />;
-      default: return <TestTube className="h-4 w-4 text-gray-400" />;
+      case "pending_qc":
+        return <TestTube className="h-4 w-4 text-orange-500" />;
+      case "qc_submitted":
+        return <Clock className="h-4 w-4 text-blue-500" />;
+      case "qc_failed":
+        return <AlertCircle className="h-4 w-4 text-red-500" />;
+      default:
+        return <TestTube className="h-4 w-4 text-gray-400" />;
     }
   };
 
   return (
-    <>
+    <LocalizedContent>
+      <>
       {/* Backdrop - only render when open (no shadow) */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-40 transition-opacity duration-300 ease-in-out"
           onClick={onClose}
           style={{
-            opacity: isOpen ? 1 : 0
+            opacity: isOpen ? 1 : 0,
           }}
         />
       )}
-      
+
       {/* Sliding Container - always render for smooth animation */}
-      <div className={`
+      <div
+        className={`
         fixed top-0 right-0 h-full w-[500px] bg-white dark:bg-gray-900 z-50 
         transform transition-all duration-300 ease-in-out border-l
         border-gray-200 dark:border-gray-700
-        ${isOpen ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}
+        ${isOpen ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"}
       `}
-      style={{
-        visibility: isOpen ? 'visible' : 'hidden',
-        transitionDelay: isOpen ? '0ms' : '300ms'
-      }}
+        style={{
+          visibility: isOpen ? "visible" : "hidden",
+          transitionDelay: isOpen ? "0ms" : "300ms",
+        }}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b bg-orange-50 dark:bg-orange-900/20">
@@ -89,12 +96,7 @@ export function QcPendingSidebar({ isOpen, onClose }: QcPendingSidebarProps) {
               {batches.length} batches awaiting quality control
             </p>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            className="h-8 w-8 p-0"
-          >
+          <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0">
             <X className="h-4 w-4" />
           </Button>
         </div>
@@ -127,14 +129,20 @@ export function QcPendingSidebar({ isOpen, onClose }: QcPendingSidebarProps) {
                         {getQcStatusIcon(batch.status)}
                         {batch.batch_id}
                       </h3>
-                      <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(batch.status)}`}>
+                      <span
+                        className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(batch.status)}`}
+                      >
                         {formatStatus(batch.status)}
                       </span>
                     </div>
                     {batch.risk_score && (
-                      <div className={`px-2 py-1 rounded text-xs font-medium ${
-                        batch.risk_score >= 70 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
-                      }`}>
+                      <div
+                        className={`px-2 py-1 rounded text-xs font-medium ${
+                          batch.risk_score >= 70
+                            ? "bg-red-100 text-red-800"
+                            : "bg-green-100 text-green-800"
+                        }`}
+                      >
                         Risk: {batch.risk_score}%
                       </div>
                     )}
@@ -150,9 +158,7 @@ export function QcPendingSidebar({ isOpen, onClose }: QcPendingSidebarProps) {
                         <p className="font-medium text-gray-900 dark:text-gray-100">
                           {batch.grain_type}
                         </p>
-                        {batch.variety && (
-                          <p className="text-xs text-gray-500">{batch.variety}</p>
-                        )}
+                        {batch.variety && <p className="text-xs text-gray-500">{batch.variety}</p>}
                       </div>
                     </div>
 
@@ -184,9 +190,9 @@ export function QcPendingSidebar({ isOpen, onClose }: QcPendingSidebarProps) {
                       <div>
                         <p className="text-gray-600 dark:text-gray-400">QC Technician</p>
                         <p className="font-medium text-gray-900 dark:text-gray-100">
-                          {batch.assigned_technician?.name || 
-                           batch.assigned_technician?.email || 
-                           'Unassigned'}
+                          {batch.assigned_technician?.name ||
+                            batch.assigned_technician?.email ||
+                            "Unassigned"}
                         </p>
                       </div>
                     </div>
@@ -226,14 +232,15 @@ export function QcPendingSidebar({ isOpen, onClose }: QcPendingSidebarProps) {
                     <div className="flex items-center justify-between mt-2 text-sm">
                       {batch.silos && (
                         <span className="text-gray-600 dark:text-gray-400">
-                          Silo: <span className="font-medium text-gray-900 dark:text-gray-100">{batch.silos.name}</span>
+                          Silo:{" "}
+                          <span className="font-medium text-gray-900 dark:text-gray-100">
+                            {batch.silos.name}
+                          </span>
                         </span>
                       )}
                     </div>
                     {batch.farmer_name && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        Farmer: {batch.farmer_name}
-                      </p>
+                      <p className="text-xs text-gray-500 mt-1">Farmer: {batch.farmer_name}</p>
                     )}
                   </div>
                 </div>
@@ -242,6 +249,7 @@ export function QcPendingSidebar({ isOpen, onClose }: QcPendingSidebarProps) {
           )}
         </div>
       </div>
-    </>
+      </>
+    </LocalizedContent>
   );
 }

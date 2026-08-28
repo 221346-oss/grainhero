@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { MapPin, ShieldCheck } from "lucide-react";
+import { LocalizedContent } from "@/i18n";
 
 export const Route = createFileRoute("/marketplace/$slug")({
   component: ListingDetail,
@@ -37,7 +38,9 @@ function ListingDetail() {
     mutationFn: async () => {
       if (!l) throw new Error("Listing not loaded");
       const created = await createBuyerOrder({ data: { listingId: l.id, quantityKg: qty } });
-      const { url } = await startBuyerCheckout({ data: { orderId: created.id, origin: window.location.origin } });
+      const { url } = await startBuyerCheckout({
+        data: { orderId: created.id, origin: window.location.origin },
+      });
       return { orderId: created.id, url };
     },
     onSuccess: ({ url }) => {
@@ -47,8 +50,8 @@ function ListingDetail() {
     onError: (e) => toast.error((e as Error).message),
   });
 
-  if (isLoading) return <div className="text-muted-foreground">Loading…</div>;
-  if (!l) return <div className="text-muted-foreground">Listing not found.</div>;
+  if (isLoading) return <LocalizedContent><div className="text-muted-foreground">Loading…</div></LocalizedContent>;
+  if (!l) return <LocalizedContent><div className="text-muted-foreground">Listing not found.</div></LocalizedContent>;
 
   const min = Number(l.min_order_kg ?? 0);
   const avail = Number(l.available_kg ?? 0);
@@ -57,9 +60,11 @@ function ListingDetail() {
   const valid = qty >= min && qty <= avail;
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+    <LocalizedContent><div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
       <div className="space-y-4">
-        <Link to="/marketplace" className="text-sm text-muted-foreground hover:text-foreground">← Back to marketplace</Link>
+        <Link to="/marketplace" className="text-sm text-muted-foreground hover:text-foreground">
+          ← Back to marketplace
+        </Link>
         <div className="aspect-video rounded-lg bg-muted overflow-hidden flex items-center justify-center">
           {l.cover_image_url && (
             <img src={l.cover_image_url} alt={l.title} className="w-full h-full object-cover" />
@@ -67,7 +72,9 @@ function ListingDetail() {
         </div>
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <Badge variant="secondary" className="capitalize">{l.grain_type}</Badge>
+            <Badge variant="secondary" className="capitalize">
+              {l.grain_type}
+            </Badge>
             <Badge variant="outline" className="text-emerald-600 border-emerald-500/50">
               <ShieldCheck className="h-3 w-3 mr-1" /> Sensor-verified
             </Badge>
@@ -78,7 +85,9 @@ function ListingDetail() {
             {l.warehouse_location?.city ?? "—"} · {l.warehouse_location?.country ?? ""}
           </p>
         </div>
-        {l.description && <p className="text-sm leading-relaxed whitespace-pre-line">{l.description}</p>}
+        {l.description && (
+          <p className="text-sm leading-relaxed whitespace-pre-line">{l.description}</p>
+        )}
       </div>
 
       <Card className="sticky top-6 h-fit">
@@ -106,7 +115,9 @@ function ListingDetail() {
           </div>
           <div className="flex items-center justify-between border-t pt-3">
             <span className="text-sm text-muted-foreground">Subtotal</span>
-            <span className="text-lg font-semibold">{l.currency} {total}</span>
+            <span className="text-lg font-semibold">
+              {l.currency} {total}
+            </span>
           </div>
           {signedIn ? (
             <Button
@@ -126,6 +137,6 @@ function ListingDetail() {
           </p>
         </CardContent>
       </Card>
-    </div>
+    </div></LocalizedContent>
   );
 }

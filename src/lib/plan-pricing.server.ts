@@ -3,7 +3,6 @@
 // (SuperAdmin overview, revenue analytics, financials, integrity checks)
 // so a price edit in the DB propagates everywhere immediately.
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyClient = any;
 
 export type PlanPriceRow = {
@@ -46,9 +45,9 @@ export async function loadSuperAdminIds(supabase: AnyClient): Promise<Set<string
 
 export type MrrInputs = {
   supabase: AnyClient;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   subscriptions?: Array<any> | null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   profiles?: Array<any> | null;
 };
 
@@ -58,8 +57,14 @@ export type MrrResult = {
   planMap: Map<string, PlanPriceRow>;
   byPlan: Record<string, number>;
   /** Subscribers merged (subscriptions rows + profile fallback rows). */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  entries: Array<{ admin_id: string | null; plan_id: string; plan_name: string; price: number; created_at: string | null }>;
+
+  entries: Array<{
+    admin_id: string | null;
+    plan_id: string;
+    plan_name: string;
+    price: number;
+    created_at: string | null;
+  }>;
 };
 
 /**
@@ -72,7 +77,11 @@ export type MrrResult = {
  * subscriptions.price_per_month is intentionally IGNORED so a stale/legacy USD
  * value cannot pollute the totals. Everything is PKR from plan_thresholds.
  */
-export async function computeMrr({ supabase, subscriptions, profiles }: MrrInputs): Promise<MrrResult> {
+export async function computeMrr({
+  supabase,
+  subscriptions,
+  profiles,
+}: MrrInputs): Promise<MrrResult> {
   const [planMap, superIds] = await Promise.all([
     loadPlanPricing(supabase),
     loadSuperAdminIds(supabase),

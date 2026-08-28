@@ -7,6 +7,7 @@ import { getMyRole } from "@/lib/roles.functions";
 import { SuperAdminDashboard } from "@/components/dashboards/SuperAdminDashboard";
 import { AdminDashboard } from "@/components/dashboards/AdminDashboard";
 import { ManagerDashboard } from "@/components/dashboards/ManagerDashboard";
+import { SuperAdminTechnicianPage } from "@/components/dashboards/SuperAdminTechnicianPage";
 import { TechnicianDashboard } from "@/components/dashboards/TechnicianDashboard";
 import { getImpersonationSession } from "@/components/app/ImpersonationBanner";
 import { useState, useEffect } from "react";
@@ -14,7 +15,10 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
       { title: "Dashboard — Grain Hero" },
-      { name: "description", content: "Dashboard workspace in the Grain Hero platform — private, sign-in required." },
+      {
+        name: "description",
+        content: "Dashboard workspace in the Grain Hero platform — private, sign-in required.",
+      },
       { property: "og:title", content: "Dashboard — Grain Hero" },
       { property: "og:description", content: "Dashboard workspace in the Grain Hero platform." },
       { name: "robots", content: "noindex, nofollow" },
@@ -46,7 +50,9 @@ function DashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="p-6"><DashboardSkeleton /></div>
+      <div className="p-6">
+        <DashboardSkeleton />
+      </div>
     );
   }
   if (error) {
@@ -59,10 +65,22 @@ function DashboardPage() {
   const name = impersonating ? impersonating.adminName : (data?.profile?.name ?? undefined);
 
   switch (role) {
-    case "super_admin": return <SuperAdminDashboard name={name} />;
-    case "manager": return <ManagerDashboard name={name} />;
-    case "technician": return <TechnicianDashboard name={name} />;
+    case "super_admin":
+      return <SuperAdminDashboard name={name} />;
+    case "manager":
+      return <ManagerDashboard name={name} />;
+    case "technician": {
+      // Global technicians (admin_id IS NULL) → Command Center
+      // Tenant technicians (admin_id IS NOT NULL) → basic dashboard
+      const isGlobalTech = data?.profile?.admin_id == null;
+      return isGlobalTech ? (
+        <SuperAdminTechnicianPage name={name} />
+      ) : (
+        <TechnicianDashboard name={name} />
+      );
+    }
     // "admin" and any legacy/pending role → admin dashboard by default
-    default: return <AdminDashboard name={name} />;
+    default:
+      return <AdminDashboard name={name} />;
   }
 }

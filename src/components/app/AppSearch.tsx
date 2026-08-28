@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Search, ArrowRight, Command, CornerDownLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getMyRole } from "@/lib/roles.functions";
+import { useTranslation } from "@/i18n";
 
 type NavTarget = {
   label: string;
@@ -28,24 +29,83 @@ const NAV_TARGETS: NavTarget[] = [
   { label: "Dashboard", to: "/dashboard", group: "Home", keywords: "home overview" },
   // Operations — Grain Batches / Silos / Warehouses / Buyers all live as
   // tabs on the single /grain-operations workspace.
-  { label: "Grain Operations", to: "/grain-operations", group: "Operations", keywords: "workspace batches silos warehouses buyers", operationalOnly: true },
-  { label: "Grain Batches", to: "/grain-operations", search: { tab: "batches" }, group: "Operations", keywords: "lots inventory", operationalOnly: true },
-  { label: "Spoiled / Damaged Batches", to: "/grain-operations", search: { tab: "batches", status: "damaged" }, group: "Operations", keywords: "spoiled rotten loss risk", operationalOnly: true },
-  { label: "Silos", to: "/grain-operations", search: { tab: "silos" }, group: "Operations", operationalOnly: true },
-  { label: "Warehouses", to: "/grain-operations", search: { tab: "warehouses" }, group: "Operations", operationalOnly: true },
-  { label: "Buyers", to: "/grain-operations", search: { tab: "buyers" }, group: "Operations", keywords: "customers dispatch", operationalOnly: true },
+  {
+    label: "Grain Operations",
+    to: "/grain-operations",
+    group: "Operations",
+    keywords: "workspace batches silos warehouses buyers",
+    operationalOnly: true,
+  },
+  {
+    label: "Grain Batches",
+    to: "/grain-operations",
+    search: { tab: "batches" },
+    group: "Operations",
+    keywords: "lots inventory",
+    operationalOnly: true,
+  },
+  {
+    label: "Spoiled / Damaged Batches",
+    to: "/grain-operations",
+    search: { tab: "batches", status: "damaged" },
+    group: "Operations",
+    keywords: "spoiled rotten loss risk",
+    operationalOnly: true,
+  },
+  {
+    label: "Silos",
+    to: "/grain-operations",
+    search: { tab: "silos" },
+    group: "Operations",
+    operationalOnly: true,
+  },
+  {
+    label: "Warehouses",
+    to: "/grain-operations",
+    search: { tab: "warehouses" },
+    group: "Operations",
+    operationalOnly: true,
+  },
+  {
+    label: "Buyers",
+    to: "/grain-operations",
+    search: { tab: "buyers" },
+    group: "Operations",
+    keywords: "customers dispatch",
+    operationalOnly: true,
+  },
   { label: "Sensors", to: "/sensors", group: "Operations", keywords: "iot devices" },
   { label: "Actuators", to: "/actuators", group: "Operations", keywords: "iot control" },
   { label: "Incidents", to: "/incidents", group: "Operations" },
   { label: "Maintenance", to: "/maintenance", group: "Operations" },
-  { label: "Environmental", to: "/environmental", group: "Operations", keywords: "climate weather" },
+  {
+    label: "Environmental",
+    to: "/environmental",
+    group: "Operations",
+    keywords: "climate weather",
+  },
   // Insights
-  { label: "Intelligence", to: "/intelligence", group: "Insights", keywords: "ai predictions analytics ml models reports charts graphs data visualization" },
+  {
+    label: "Intelligence",
+    to: "/intelligence",
+    group: "Insights",
+    keywords: "ai predictions analytics ml models reports charts graphs data visualization",
+  },
   { label: "Traceability", to: "/traceability", group: "Insights" },
-  { label: "Administration", to: "/administration", group: "Admin", keywords: "team members users security activity logs audit history" },
+  {
+    label: "Administration",
+    to: "/administration",
+    group: "Admin",
+    keywords: "team members users security activity logs audit history",
+  },
   // Business
   { label: "Orders", to: "/orders", group: "Business", keywords: "hardware install" },
-  { label: "Business", to: "/business", group: "Business", keywords: "revenue income subscription insurance policies claims plan management billing" },
+  {
+    label: "Business",
+    to: "/business",
+    group: "Business",
+    keywords: "revenue income subscription insurance policies claims plan management billing",
+  },
   { label: "Plans", to: "/plans", group: "Business", keywords: "pricing" },
   // Admin
   { label: "Server Monitoring", to: "/server-monitoring", group: "Admin" },
@@ -55,11 +115,26 @@ const NAV_TARGETS: NavTarget[] = [
   { label: "Platform · Users & roles", to: "/platform/users", group: "Platform" },
   { label: "Platform · Plans & pricing", to: "/platform/plans", group: "Platform" },
   { label: "Platform · Revenue", to: "/revenue", group: "Platform" },
-  { label: "Platform · Pipeline", to: "/platform/pipeline", group: "Platform", keywords: "hubspot leads" },
+  {
+    label: "Platform · Pipeline",
+    to: "/platform/pipeline",
+    group: "Platform",
+    keywords: "hubspot leads",
+  },
   { label: "Platform · Leads", to: "/platform/leads", group: "Platform" },
-  { label: "Platform · Install orders", to: "/platform/orders", group: "Platform", keywords: "hardware" },
+  {
+    label: "Platform · Install orders",
+    to: "/platform/orders",
+    group: "Platform",
+    keywords: "hardware",
+  },
   { label: "Platform · Health", to: "/platform/health", group: "Platform" },
-  { label: "Platform · Reporting", to: "/platform/reporting", group: "Platform", keywords: "bugs hardware queries support" },
+  {
+    label: "Platform · Reporting",
+    to: "/platform/reporting",
+    group: "Platform",
+    keywords: "bugs hardware queries support",
+  },
   { label: "Platform · Audit logs", to: "/platform/audit-logs", group: "Platform" },
   { label: "Platform · System logs", to: "/platform/logs", group: "Platform" },
 ];
@@ -71,6 +146,7 @@ export function AppSearch() {
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const [highlight, setHighlight] = useState(0);
+  const { t } = useTranslation();
 
   // Same query key AppSidebar/useIsSuperAdmin use — shares the cache, no
   // extra request. "Pure" super_admin (no other role) matches the
@@ -79,7 +155,10 @@ export function AppSearch() {
   const { data: roleData } = useQuery({ queryKey: ["my-role"], queryFn: () => fetchRole() });
   const isPureSuperAdmin = useMemo(() => {
     const roles = roleData?.roles ?? [];
-    return roles.includes("super_admin") && !roles.some((r) => ["admin", "manager", "technician"].includes(r));
+    return (
+      roles.includes("super_admin") &&
+      !roles.some((r) => ["admin", "manager", "technician"].includes(r))
+    );
   }, [roleData]);
 
   // Global shortcuts: "/" and ⌘K / Ctrl+K focus the bar. Esc clears + closes.
@@ -112,17 +191,19 @@ export function AppSearch() {
   const matches = useMemo(() => {
     if (!q.trim()) return [];
     const needle = q.trim().toLowerCase();
-    return NAV_TARGETS.filter((t) =>
-      !(isPureSuperAdmin && t.operationalOnly) && (
-        t.label.toLowerCase().includes(needle) ||
-        t.group.toLowerCase().includes(needle) ||
-        (t.keywords ?? "").toLowerCase().includes(needle)
-      ),
+    return NAV_TARGETS.filter(
+      (t) =>
+        !(isPureSuperAdmin && t.operationalOnly) &&
+        (t.label.toLowerCase().includes(needle) ||
+          t.group.toLowerCase().includes(needle) ||
+          (t.keywords ?? "").toLowerCase().includes(needle)),
     ).slice(0, 10);
   }, [q, isPureSuperAdmin]);
 
   // Keep highlight in bounds when the result list changes.
-  useEffect(() => { setHighlight(0); }, [q]);
+  useEffect(() => {
+    setHighlight(0);
+  }, [q]);
 
   function goTo(target: NavTarget) {
     setOpen(false);
@@ -159,7 +240,7 @@ export function AppSearch() {
         onFocus={() => setOpen(true)}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
         onKeyDown={onInputKeyDown}
-        placeholder="Search anything or jump to a page…"
+        placeholder={t("search.placeholder")}
         aria-label="Search anything or jump to a page"
         className={cn(
           "w-full h-9 pl-9 pr-16 rounded-full text-sm bg-transparent hover:bg-muted focus:bg-background",
@@ -173,7 +254,7 @@ export function AppSearch() {
       {open && q.trim() && (
         <div className="absolute left-0 right-0 top-full mt-2 rounded-xl border border-border bg-background shadow-lg overflow-hidden z-40">
           {matches.length === 0 ? (
-            <div className="p-4 text-sm text-muted-foreground">No matching pages.</div>
+            <div className="p-4 text-sm text-muted-foreground">{t("search.noResults")}</div>
           ) : (
             <>
               <ul className="max-h-80 overflow-y-auto">
@@ -184,14 +265,19 @@ export function AppSearch() {
                       search={(m.search ?? {}) as never}
                       onMouseDown={(e) => e.preventDefault()}
                       onMouseEnter={() => setHighlight(i)}
-                      onClick={() => { setOpen(false); setQ(""); }}
+                      onClick={() => {
+                        setOpen(false);
+                        setQ("");
+                      }}
                       className={cn(
                         "flex items-center gap-3 px-3 py-2 text-sm",
                         i === highlight ? "bg-muted" : "hover:bg-muted/60",
                       )}
                     >
                       <span className="flex-1">{m.label}</span>
-                      <span className="text-[10px] uppercase tracking-widest text-muted-foreground">{m.group}</span>
+                      <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                        {m.group}
+                      </span>
                       <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
                     </Link>
                   </li>
@@ -203,7 +289,8 @@ export function AppSearch() {
                   <kbd className="rounded border border-border/60 px-1">↓</kbd> navigate
                 </span>
                 <span className="flex items-center gap-1">
-                  <CornerDownLeft className="h-3 w-3" /> open · <kbd className="rounded border border-border/60 px-1">esc</kbd> close
+                  <CornerDownLeft className="h-3 w-3" /> open ·{" "}
+                  <kbd className="rounded border border-border/60 px-1">esc</kbd> close
                 </span>
               </div>
             </>

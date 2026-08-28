@@ -39,10 +39,27 @@ export const getPlatformAnalyticsBreakdown = createServerFn({ method: "GET" })
       .is("deleted_at", null)
       .limit(10000);
 
-    const agg = new Map<string, { admin_id: string; batches: number; kg: number; revenue: number; profit: number; spoiled: number }>();
+    const agg = new Map<
+      string,
+      {
+        admin_id: string;
+        batches: number;
+        kg: number;
+        revenue: number;
+        profit: number;
+        spoiled: number;
+      }
+    >();
     for (const b of (batches ?? []) as any[]) {
       const k = b.admin_id ?? "unknown";
-      const cur = agg.get(k) ?? { admin_id: k, batches: 0, kg: 0, revenue: 0, profit: 0, spoiled: 0 };
+      const cur = agg.get(k) ?? {
+        admin_id: k,
+        batches: 0,
+        kg: 0,
+        revenue: 0,
+        profit: 0,
+        spoiled: 0,
+      };
       cur.batches += 1;
       cur.kg += Number(b.quantity_kg ?? 0);
       cur.revenue += Number(b.revenue ?? 0);
@@ -59,25 +76,38 @@ export const getPlatformAnalyticsBreakdown = createServerFn({ method: "GET" })
     // batch-level dispatch data is fully migrated.
     const dispatchTotals = await fetchDispatchTotals(sa);
     for (const d of dispatchTotals) {
-      const cur = agg.get(d.admin_id) ?? { admin_id: d.admin_id, batches: 0, kg: 0, revenue: 0, profit: 0, spoiled: 0 };
+      const cur = agg.get(d.admin_id) ?? {
+        admin_id: d.admin_id,
+        batches: 0,
+        kg: 0,
+        revenue: 0,
+        profit: 0,
+        spoiled: 0,
+      };
       cur.revenue += d.revenue;
       cur.profit += d.profit;
       agg.set(d.admin_id, cur);
     }
 
-    const rows = Array.from(agg.values()).map((t) => ({
-      admin_id: t.admin_id,
-      name: tenantName(tenants, t.admin_id),
-      batches: t.batches,
-      kg: t.kg,
-      revenue: t.revenue,
-      margin: t.revenue > 0 ? t.profit / t.revenue : 0,
-      spoilageRate: t.batches > 0 ? t.spoiled / t.batches : 0,
-    })).sort((a, b) => b.revenue - a.revenue);
+    const rows = Array.from(agg.values())
+      .map((t) => ({
+        admin_id: t.admin_id,
+        name: tenantName(tenants, t.admin_id),
+        batches: t.batches,
+        kg: t.kg,
+        revenue: t.revenue,
+        margin: t.revenue > 0 ? t.profit / t.revenue : 0,
+        spoilageRate: t.batches > 0 ? t.spoiled / t.batches : 0,
+      }))
+      .sort((a, b) => b.revenue - a.revenue);
 
     const totals = rows.reduce(
-      (s, r) => ({ kg: s.kg + r.kg, revenue: s.revenue + r.revenue, batches: s.batches + r.batches }),
-      { kg: 0, revenue: 0, batches: 0 }
+      (s, r) => ({
+        kg: s.kg + r.kg,
+        revenue: s.revenue + r.revenue,
+        batches: s.batches + r.batches,
+      }),
+      { kg: 0, revenue: 0, batches: 0 },
     );
 
     return { rows, totals, totalTenants: rows.length };
@@ -92,14 +122,43 @@ export const getPlatformInsuranceOverview = createServerFn({ method: "GET" })
     const tenants = await loadTenants(sa);
 
     const [{ data: policies }, { data: claims }] = await Promise.all([
-      sa.from("insurance_policies").select("admin_id, coverage_amount, premium_amount, status").limit(5000),
-      sa.from("insurance_claims").select("admin_id, amount_claimed, amount_approved, status").limit(5000),
+      sa
+        .from("insurance_policies")
+        .select("admin_id, coverage_amount, premium_amount, status")
+        .limit(5000),
+      sa
+        .from("insurance_claims")
+        .select("admin_id, amount_claimed, amount_approved, status")
+        .limit(5000),
     ]);
 
-    const agg = new Map<string, { admin_id: string; policies: number; activePolicies: number; coverage: number; premium: number; claims: number; openClaims: number; claimed: number; approved: number }>();
+    const agg = new Map<
+      string,
+      {
+        admin_id: string;
+        policies: number;
+        activePolicies: number;
+        coverage: number;
+        premium: number;
+        claims: number;
+        openClaims: number;
+        claimed: number;
+        approved: number;
+      }
+    >();
     for (const p of (policies ?? []) as any[]) {
       const k = p.admin_id ?? "unknown";
-      const cur = agg.get(k) ?? { admin_id: k, policies: 0, activePolicies: 0, coverage: 0, premium: 0, claims: 0, openClaims: 0, claimed: 0, approved: 0 };
+      const cur = agg.get(k) ?? {
+        admin_id: k,
+        policies: 0,
+        activePolicies: 0,
+        coverage: 0,
+        premium: 0,
+        claims: 0,
+        openClaims: 0,
+        claimed: 0,
+        approved: 0,
+      };
       cur.policies += 1;
       if (p.status === "active") cur.activePolicies += 1;
       cur.coverage += Number(p.coverage_amount ?? 0);
@@ -108,7 +167,17 @@ export const getPlatformInsuranceOverview = createServerFn({ method: "GET" })
     }
     for (const c of (claims ?? []) as any[]) {
       const k = c.admin_id ?? "unknown";
-      const cur = agg.get(k) ?? { admin_id: k, policies: 0, activePolicies: 0, coverage: 0, premium: 0, claims: 0, openClaims: 0, claimed: 0, approved: 0 };
+      const cur = agg.get(k) ?? {
+        admin_id: k,
+        policies: 0,
+        activePolicies: 0,
+        coverage: 0,
+        premium: 0,
+        claims: 0,
+        openClaims: 0,
+        claimed: 0,
+        approved: 0,
+      };
       cur.claims += 1;
       if (c.status !== "paid" && c.status !== "rejected") cur.openClaims += 1;
       cur.claimed += Number(c.amount_claimed ?? 0);
@@ -116,19 +185,21 @@ export const getPlatformInsuranceOverview = createServerFn({ method: "GET" })
       agg.set(k, cur);
     }
 
-    const rows = Array.from(agg.values()).map((t) => ({
-      admin_id: t.admin_id,
-      name: tenantName(tenants, t.admin_id),
-      policies: t.policies,
-      activePolicies: t.activePolicies,
-      coverage: t.coverage,
-      premium: t.premium,
-      claims: t.claims,
-      openClaims: t.openClaims,
-      claimed: t.claimed,
-      approved: t.approved,
-      claimRate: t.policies > 0 ? t.claims / t.policies : 0,
-    })).sort((a, b) => b.coverage - a.coverage);
+    const rows = Array.from(agg.values())
+      .map((t) => ({
+        admin_id: t.admin_id,
+        name: tenantName(tenants, t.admin_id),
+        policies: t.policies,
+        activePolicies: t.activePolicies,
+        coverage: t.coverage,
+        premium: t.premium,
+        claims: t.claims,
+        openClaims: t.openClaims,
+        claimed: t.claimed,
+        approved: t.approved,
+        claimRate: t.policies > 0 ? t.claims / t.policies : 0,
+      }))
+      .sort((a, b) => b.coverage - a.coverage);
 
     const totals = rows.reduce(
       (s, r) => ({
@@ -138,7 +209,7 @@ export const getPlatformInsuranceOverview = createServerFn({ method: "GET" })
         openClaims: s.openClaims + r.openClaims,
         policies: s.policies + r.policies,
       }),
-      { coverage: 0, premium: 0, claimed: 0, openClaims: 0, policies: 0 }
+      { coverage: 0, premium: 0, claimed: 0, openClaims: 0, policies: 0 },
     );
 
     return { rows, totals };
@@ -154,37 +225,76 @@ export const getPlatformBuyersOverview = createServerFn({ method: "GET" })
 
     const [{ data: buyers }, { data: invoices }] = await Promise.all([
       sa.from("buyers").select("admin_id, status, rating, last_order_at").limit(10000),
-      sa.from("buyer_invoices").select("admin_id, total_amount, payment_status, created_at").limit(10000),
+      sa
+        .from("buyer_invoices")
+        .select("admin_id, total_amount, payment_status, created_at")
+        .limit(10000),
     ]);
 
-    const agg = new Map<string, { admin_id: string; buyers: number; active: number; ratingSum: number; ratingN: number; invoices: number; revenue: number; outstanding: number }>();
+    const agg = new Map<
+      string,
+      {
+        admin_id: string;
+        buyers: number;
+        active: number;
+        ratingSum: number;
+        ratingN: number;
+        invoices: number;
+        revenue: number;
+        outstanding: number;
+      }
+    >();
     for (const b of (buyers ?? []) as any[]) {
       const k = b.admin_id ?? "unknown";
-      const cur = agg.get(k) ?? { admin_id: k, buyers: 0, active: 0, ratingSum: 0, ratingN: 0, invoices: 0, revenue: 0, outstanding: 0 };
+      const cur = agg.get(k) ?? {
+        admin_id: k,
+        buyers: 0,
+        active: 0,
+        ratingSum: 0,
+        ratingN: 0,
+        invoices: 0,
+        revenue: 0,
+        outstanding: 0,
+      };
       cur.buyers += 1;
       if (b.status === "active") cur.active += 1;
-      if (typeof b.rating === "number") { cur.ratingSum += b.rating; cur.ratingN += 1; }
+      if (typeof b.rating === "number") {
+        cur.ratingSum += b.rating;
+        cur.ratingN += 1;
+      }
       agg.set(k, cur);
     }
     for (const inv of (invoices ?? []) as any[]) {
       const k = inv.admin_id ?? "unknown";
-      const cur = agg.get(k) ?? { admin_id: k, buyers: 0, active: 0, ratingSum: 0, ratingN: 0, invoices: 0, revenue: 0, outstanding: 0 };
+      const cur = agg.get(k) ?? {
+        admin_id: k,
+        buyers: 0,
+        active: 0,
+        ratingSum: 0,
+        ratingN: 0,
+        invoices: 0,
+        revenue: 0,
+        outstanding: 0,
+      };
       cur.invoices += 1;
       cur.revenue += Number(inv.total_amount ?? 0);
-      if (inv.payment_status !== "paid" && inv.payment_status !== "cancelled") cur.outstanding += Number(inv.total_amount ?? 0);
+      if (inv.payment_status !== "paid" && inv.payment_status !== "cancelled")
+        cur.outstanding += Number(inv.total_amount ?? 0);
       agg.set(k, cur);
     }
 
-    const rows = Array.from(agg.values()).map((t) => ({
-      admin_id: t.admin_id,
-      name: tenantName(tenants, t.admin_id),
-      buyers: t.buyers,
-      active: t.active,
-      avgRating: t.ratingN > 0 ? t.ratingSum / t.ratingN : 0,
-      invoices: t.invoices,
-      revenue: t.revenue,
-      outstanding: t.outstanding,
-    })).sort((a, b) => b.revenue - a.revenue);
+    const rows = Array.from(agg.values())
+      .map((t) => ({
+        admin_id: t.admin_id,
+        name: tenantName(tenants, t.admin_id),
+        buyers: t.buyers,
+        active: t.active,
+        avgRating: t.ratingN > 0 ? t.ratingSum / t.ratingN : 0,
+        invoices: t.invoices,
+        revenue: t.revenue,
+        outstanding: t.outstanding,
+      }))
+      .sort((a, b) => b.revenue - a.revenue);
 
     const totals = rows.reduce(
       (s, r) => ({
@@ -194,7 +304,7 @@ export const getPlatformBuyersOverview = createServerFn({ method: "GET" })
         revenue: s.revenue + r.revenue,
         outstanding: s.outstanding + r.outstanding,
       }),
-      { buyers: 0, active: 0, invoices: 0, revenue: 0, outstanding: 0 }
+      { buyers: 0, active: 0, invoices: 0, revenue: 0, outstanding: 0 },
     );
 
     return { rows, totals };

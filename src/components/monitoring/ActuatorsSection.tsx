@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -27,11 +27,21 @@ export function ActuatorsSection() {
             <table className="w-full text-sm">
               <thead className="bg-muted/40 border-b border-border">
                 <tr>
-                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Actuator</th>
-                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Type</th>
-                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Status</th>
-                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">State</th>
-                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Silo</th>
+                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+                    Actuator
+                  </th>
+                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+                    Type
+                  </th>
+                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+                    State
+                  </th>
+                  <th className="px-4 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+                    Silo
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -39,9 +49,19 @@ export function ActuatorsSection() {
                   <tr key={a.id} className="hover:bg-muted/40 transition-colors">
                     <td className="px-4 py-3 text-foreground font-medium">{a.name}</td>
                     <td className="px-4 py-3 text-muted-foreground text-xs">{a.actuator_type}</td>
-                    <td className="px-4 py-3"><span className={`text-xs px-2 py-1 rounded ${a.status === "active" ? "bg-emerald-500/20 text-emerald-400" : "bg-red-500/20 text-red-400"}`}>{a.status}</span></td>
-                    <td className="px-4 py-3 text-muted-foreground text-xs">{a.is_on ? "On" : "Off"}</td>
-                    <td className="px-4 py-3 text-muted-foreground text-xs">{a.silos?.name ?? "—"}</td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`text-xs px-2 py-1 rounded ${a.status === "active" ? "bg-emerald-500/20 text-emerald-400" : "bg-red-500/20 text-red-400"}`}
+                      >
+                        {a.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground text-xs">
+                      {a.is_on ? "On" : "Off"}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground text-xs">
+                      {a.silos?.name ?? "—"}
+                    </td>
                   </tr>
                 ))}
               </tbody>

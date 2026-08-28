@@ -9,21 +9,61 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
-  BarChart3, Cloud, MapPin, Thermometer, Droplets, Wind, Gauge, Sun, Eye,
-  Sunrise, Sunset, CloudRain, Snowflake, CloudLightning, Activity,
+  BarChart3,
+  Cloud,
+  MapPin,
+  Thermometer,
+  Droplets,
+  Wind,
+  Gauge,
+  Sun,
+  Eye,
+  Sunrise,
+  Sunset,
+  CloudRain,
+  Snowflake,
+  CloudLightning,
+  Activity,
 } from "lucide-react";
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, AreaChart, Area } from "recharts";
-import { NEON, NeonPatternDefs, neonFill, neonGrid, neonAxis, neonTooltipStyle, ChartEmpty, HairlineGrid, NeonPanel } from "@/components/charts/neon";
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  AreaChart,
+  Area,
+} from "recharts";
+import {
+  NEON,
+  NeonPatternDefs,
+  neonFill,
+  neonGrid,
+  neonAxis,
+  neonTooltipStyle,
+  ChartEmpty,
+  HairlineGrid,
+  NeonPanel,
+} from "@/components/charts/neon";
 import { geocodeCity, getWeatherBundle } from "@/lib/openweather.functions";
 import { useFirebaseAllSensors } from "@/hooks/use-firebase-sensor";
+import { useTranslation } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/environmental")({
   head: () => ({
     meta: [
       { title: "Environmental — Grain Hero" },
-      { name: "description", content: "Environmental workspace in the Grain Hero platform — private, sign-in required." },
+      {
+        name: "description",
+        content: "Environmental workspace in the Grain Hero platform — private, sign-in required.",
+      },
       { property: "og:title", content: "Environmental — Grain Hero" },
-      { property: "og:description", content: "Environmental workspace in the Grain Hero platform." },
+      {
+        property: "og:description",
+        content: "Environmental workspace in the Grain Hero platform.",
+      },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
@@ -31,7 +71,15 @@ export const Route = createFileRoute("/_authenticated/environmental")({
 });
 
 interface OWCurrent {
-  main?: { temp?: number; feels_like?: number; humidity?: number; pressure?: number; temp_min?: number; temp_max?: number; grnd_level?: number };
+  main?: {
+    temp?: number;
+    feels_like?: number;
+    humidity?: number;
+    pressure?: number;
+    temp_min?: number;
+    temp_max?: number;
+    grnd_level?: number;
+  };
   wind?: { speed?: number; deg?: number; gust?: number };
   visibility?: number;
   clouds?: { all?: number };
@@ -49,18 +97,69 @@ interface OWForecastItem {
   snow?: { "3h"?: number };
   clouds?: { all?: number };
 }
-interface AQIComponents { co?: number; no?: number; no2?: number; o3?: number; so2?: number; pm2_5?: number; pm10?: number; nh3?: number }
+interface AQIComponents {
+  co?: number;
+  no?: number;
+  no2?: number;
+  o3?: number;
+  so2?: number;
+  pm2_5?: number;
+  pm10?: number;
+  nh3?: number;
+}
 
 function windDir(deg?: number) {
   if (deg === undefined) return "--";
-  const dirs = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+  const dirs = [
+    "N",
+    "NNE",
+    "NE",
+    "ENE",
+    "E",
+    "ESE",
+    "SE",
+    "SSE",
+    "S",
+    "SSW",
+    "SW",
+    "WSW",
+    "W",
+    "WNW",
+    "NW",
+    "NNW",
+  ];
   return dirs[Math.round(deg / 22.5) % 16];
 }
-function fmtTime(unix?: number) { return unix ? new Date(unix * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "--"; }
-function aqiLabel(v: number | null) { return v === null ? "--" : (["", "Good", "Fair", "Moderate", "Poor", "Very Poor"][v] ?? "--"); }
-function aqiColor(v: number | null) { return v === null ? "text-slate-500" : (["", "text-emerald-600", "text-lime-600", "text-yellow-600", "text-orange-600", "text-red-600"][v] ?? "text-slate-500"); }
+function fmtTime(unix?: number) {
+  return unix
+    ? new Date(unix * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    : "--";
+}
+// AQI labels are translated at render time (needs the active language).
+function useAqiLabel() {
+  const { t } = useTranslation();
+  return (v: number | null) => {
+    if (v === null) return "--";
+    const keys = ["", "aqiGood", "aqiFair", "aqiModerate", "aqiPoor", "aqiVeryPoor"];
+    return keys[v] ? t(`environmental.${keys[v]}`) : "--";
+  };
+}
+function aqiColor(v: number | null) {
+  return v === null
+    ? "text-slate-500"
+    : ([
+        "",
+        "text-emerald-600",
+        "text-lime-600",
+        "text-yellow-600",
+        "text-orange-600",
+        "text-red-600",
+      ][v] ?? "text-slate-500");
+}
 
 function EnvironmentalPage() {
+  const { t } = useTranslation();
+  const aqiLabel = useAqiLabel();
   const geoFn = useServerFn(geocodeCity);
   const bundleFn = useServerFn(getWeatherBundle);
 
@@ -69,7 +168,10 @@ function EnvironmentalPage() {
 
   const geo = useMutation({
     mutationFn: (city: string) => geoFn({ data: { city } }),
-    onSuccess: (d) => { setCoords({ lat: d.lat, lon: d.lon }); toast.success(`${d.name}, ${d.country}`); },
+    onSuccess: (d) => {
+      setCoords({ lat: d.lat, lon: d.lon });
+      toast.success(`${d.name}, ${d.country}`);
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -81,38 +183,50 @@ function EnvironmentalPage() {
   });
 
   const current = weather.data?.current as OWCurrent | undefined;
-  const forecastList = (weather.data?.forecast as { list?: OWForecastItem[] } | undefined)?.list ?? [];
-  const aqiPayload = weather.data?.aqi as { list?: Array<{ main?: { aqi?: number }; components?: AQIComponents }> } | undefined;
+  const forecastList =
+    (weather.data?.forecast as { list?: OWForecastItem[] } | undefined)?.list ?? [];
+  const aqiPayload = weather.data?.aqi as
+    { list?: Array<{ main?: { aqi?: number }; components?: AQIComponents }> } | undefined;
   const aqi = aqiPayload?.list?.[0]?.main?.aqi ?? null;
   const aqiComp = aqiPayload?.list?.[0]?.components ?? null;
 
-  const forecastSeries = useMemo(() => forecastList.map((it) => ({
-    ts: new Date(it.dt * 1000).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit" }),
-    temp: it.main?.temp ?? null,
-    feels: it.main?.feels_like ?? null,
-    humidity: it.main?.humidity ?? null,
-    wind: it.wind?.speed ?? null,
-    rain: it.rain?.["3h"] ?? 0,
-    snow: it.snow?.["3h"] ?? 0,
-  })), [forecastList]);
+  const forecastSeries = useMemo(
+    () =>
+      forecastList.map((it) => ({
+        ts: new Date(it.dt * 1000).toLocaleString([], {
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+        }),
+        temp: it.main?.temp ?? null,
+        feels: it.main?.feels_like ?? null,
+        humidity: it.main?.humidity ?? null,
+        wind: it.wind?.speed ?? null,
+        rain: it.rain?.["3h"] ?? 0,
+        snow: it.snow?.["3h"] ?? 0,
+      })),
+    [forecastList],
+  );
 
-  useEffect(() => { if (!coords) geo.mutate(cityQuery); /* eslint-disable-next-line */ }, []);
+  useEffect(() => {
+    if (!coords) geo.mutate(cityQuery); /* eslint-disable-next-line */
+  }, []);
 
   // Show skeleton while initial geocoding + weather fetches resolve
   const isInitialLoading = geo.isPending || (!!coords && weather.isFetching && !weather.data);
-  
-  if (isInitialLoading) return <KpiChartHubSkeleton />;
-
-  const useMyLocation = () => {
-    if (!navigator.geolocation) return toast.error("Geolocation not available");
-    navigator.geolocation.getCurrentPosition(
-      (pos) => setCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
-      (err) => toast.error(`Location error: ${err.message}`),
-    );
-  };
 
   // Live silo microclimate from Firebase (all sensors)
   const { readings: liveSensors } = useFirebaseAllSensors();
+
+  if (isInitialLoading) return <KpiChartHubSkeleton />;
+
+  const useMyLocation = () => {
+    if (!navigator.geolocation) return toast.error(t("environmental.geolocationUnavailable"));
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+      (err) => toast.error(`${t("environmental.locationError")}: ${err.message}`),
+    );
+  };
   const firstDeviceId = Object.keys(liveSensors)[0];
   const liveSilo = firstDeviceId ? liveSensors[firstDeviceId] : null;
 
@@ -121,21 +235,44 @@ function EnvironmentalPage() {
       <NeonPatternDefs />
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent">Environmental Data</h1>
-          <p className="text-sm text-muted-foreground mt-1">OpenWeather snapshot · AQI · 5-day forecast · Live silo microclimate</p>
+          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent">
+            {t("environmental.title")}
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {t("environmental.subtitle")}
+          </p>
         </div>
       </div>
 
       <Card className="bg-gradient-to-br from-sky-50 to-blue-50/40">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><MapPin className="h-5 w-5 text-sky-600" /> Select Location</CardTitle>
-          <CardDescription>Type a city or use your current location</CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            <MapPin className="h-5 w-5 text-sky-600" /> {t("environmental.selectLocation")}
+          </CardTitle>
+          <CardDescription>{t("environmental.selectLocationDesc")}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap items-center gap-3">
-          <Input className="w-[260px]" placeholder="e.g. Lahore" value={cityQuery} onChange={(e) => setCityQuery(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") geo.mutate(cityQuery); }} />
-          <Button onClick={() => geo.mutate(cityQuery)} disabled={geo.isPending}>Search</Button>
-          <Button variant="outline" onClick={useMyLocation}>Use My Location</Button>
-          {coords && <Badge variant="outline" className="gap-1"><MapPin className="h-3 w-3" />{coords.lat.toFixed(3)}, {coords.lon.toFixed(3)}</Badge>}
+          <Input
+            className="w-[260px]"
+            placeholder={t("environmental.cityPlaceholder")}
+            value={cityQuery}
+            onChange={(e) => setCityQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") geo.mutate(cityQuery);
+            }}
+          />
+          <Button onClick={() => geo.mutate(cityQuery)} disabled={geo.isPending}>
+            {t("environmental.search")}
+          </Button>
+          <Button variant="outline" onClick={useMyLocation}>
+            {t("environmental.useMyLocation")}
+          </Button>
+          {coords && (
+            <Badge variant="outline" className="gap-1">
+              <MapPin className="h-3 w-3" />
+              {coords.lat.toFixed(3)}, {coords.lon.toFixed(3)}
+            </Badge>
+          )}
         </CardContent>
       </Card>
 
@@ -143,47 +280,110 @@ function EnvironmentalPage() {
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2"><Sun className="h-5 w-5 text-yellow-500" /> Current Weather</CardTitle>
-              <CardDescription>{current ? `${current.name ?? "Selected"}${current.sys?.country ? ", " + current.sys.country : ""} • ${new Date().toLocaleString()}` : "Waiting for data"}</CardDescription>
+              <CardTitle className="flex items-center gap-2">
+                <Sun className="h-5 w-5 text-yellow-500" /> {t("environmental.currentWeather")}
+              </CardTitle>
+              <CardDescription>
+                {current
+                  ? `${current.name ?? t("environmental.selected")}${current.sys?.country ? ", " + current.sys.country : ""} • ${new Date().toLocaleString()}`
+                  : t("environmental.waitingForData")}
+              </CardDescription>
             </div>
             {current?.weather?.[0]?.icon && (
               <div className="flex items-center gap-2">
-                <img src={`https://openweathermap.org/img/wn/${current.weather[0].icon}@2x.png`} alt="" width={56} height={56} />
-                <span className="text-sm font-medium capitalize text-slate-600">{current.weather[0].description}</span>
+                <img
+                  src={`https://openweathermap.org/img/wn/${current.weather[0].icon}@2x.png`}
+                  alt=""
+                  width={56}
+                  height={56}
+                />
+                <span className="text-sm font-medium capitalize text-slate-600">
+                  {current.weather[0].description}
+                </span>
               </div>
             )}
           </div>
         </CardHeader>
         <CardContent>
           <div className="grid gap-3 grid-cols-2 md:grid-cols-4 lg:grid-cols-6 text-sm">
-            <Metric icon={Thermometer} label="Temp" value={current?.main?.temp !== undefined ? `${current.main.temp.toFixed(1)}°C` : "--"} sub={`Feels ${current?.main?.feels_like?.toFixed(1) ?? "--"}°C`} color="orange" />
-            <Metric icon={Droplets} label="Humidity" value={`${current?.main?.humidity ?? "--"}%`} color="blue" />
-            <Metric icon={Gauge} label="Pressure" value={`${current?.main?.pressure ?? "--"} hPa`} color="purple" />
-            <Metric icon={Wind} label="Wind" value={`${current?.wind?.speed ?? "--"} m/s`} sub={windDir(current?.wind?.deg)} color="cyan" />
-            <Metric icon={CloudRain} label="Rain" value={`${current?.rain?.["1h"] ?? 0} mm/h`} color="indigo" />
-            <Metric icon={Snowflake} label="Snow" value={`${current?.snow?.["1h"] ?? 0} mm/h`} color="slate" />
+            <Metric
+              icon={Thermometer}
+              label={t("environmental.temp")}
+              value={current?.main?.temp !== undefined ? `${current.main.temp.toFixed(1)}°C` : "--"}
+              sub={`${t("environmental.feels")} ${current?.main?.feels_like?.toFixed(1) ?? "--"}°C`}
+              color="orange"
+            />
+            <Metric
+              icon={Droplets}
+              label={t("environmental.humidity")}
+              value={`${current?.main?.humidity ?? "--"}%`}
+              color="blue"
+            />
+            <Metric
+              icon={Gauge}
+              label={t("environmental.pressure")}
+              value={`${current?.main?.pressure ?? "--"} hPa`}
+              color="purple"
+            />
+            <Metric
+              icon={Wind}
+              label={t("environmental.wind")}
+              value={`${current?.wind?.speed ?? "--"} m/s`}
+              sub={windDir(current?.wind?.deg)}
+              color="cyan"
+            />
+            <Metric
+              icon={CloudRain}
+              label={t("environmental.rain")}
+              value={`${current?.rain?.["1h"] ?? 0} mm/h`}
+              color="indigo"
+            />
+            <Metric
+              icon={Snowflake}
+              label={t("environmental.snow")}
+              value={`${current?.snow?.["1h"] ?? 0} mm/h`}
+              color="slate"
+            />
           </div>
           <div className="grid gap-3 grid-cols-2 md:grid-cols-5 mt-3 text-sm">
-            <MiniMetric icon={Eye} label="Visibility" value={current?.visibility !== undefined ? `${(current.visibility / 1000).toFixed(1)} km` : "--"} />
-            <MiniMetric icon={Cloud} label="Cloudiness" value={`${current?.clouds?.all ?? "--"}%`} />
-            <MiniMetric icon={Thermometer} label="Min / Max" value={`${current?.main?.temp_min?.toFixed(1) ?? "--"}° / ${current?.main?.temp_max?.toFixed(1) ?? "--"}°`} />
-            <MiniMetric icon={Sunrise} label="Sunrise" value={fmtTime(current?.sys?.sunrise)} />
-            <MiniMetric icon={Sunset} label="Sunset" value={fmtTime(current?.sys?.sunset)} />
+            <MiniMetric
+              icon={Eye}
+              label={t("environmental.visibility")}
+              value={
+                current?.visibility !== undefined
+                  ? `${(current.visibility / 1000).toFixed(1)} km`
+                  : "--"
+              }
+            />
+            <MiniMetric
+              icon={Cloud}
+              label={t("environmental.cloudiness")}
+              value={`${current?.clouds?.all ?? "--"}%`}
+            />
+            <MiniMetric
+              icon={Thermometer}
+              label={t("environmental.minMax")}
+              value={`${current?.main?.temp_min?.toFixed(1) ?? "--"}° / ${current?.main?.temp_max?.toFixed(1) ?? "--"}°`}
+            />
+            <MiniMetric icon={Sunrise} label={t("environmental.sunrise")} value={fmtTime(current?.sys?.sunrise)} />
+            <MiniMetric icon={Sunset} label={t("environmental.sunset")} value={fmtTime(current?.sys?.sunset)} />
           </div>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><CloudLightning className="h-5 w-5 text-emerald-600" /> Air Quality Index</CardTitle>
-          <CardDescription>Real-time pollutants from OpenWeather</CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            <CloudLightning className="h-5 w-5 text-emerald-600" /> {t("environmental.airQuality")}
+          </CardTitle>
+          <CardDescription>{t("environmental.airQualityDesc")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-4 mb-4">
             <div className={`text-4xl font-bold ${aqiColor(aqi)}`}>{aqi ?? "--"}</div>
             <div>
               <div className={`text-lg font-semibold ${aqiColor(aqi)}`}>{aqiLabel(aqi)}</div>
-              <div className="text-xs text-slate-500">1 = Good … 5 = Very Poor</div>
+              <div className="text-xs text-slate-500">{t("environmental.aqiScale")}</div>
             </div>
           </div>
           {aqiComp && (
@@ -200,7 +400,10 @@ function EnvironmentalPage() {
               ].map(([label, value, color]) => (
                 <div key={String(label)} className="p-2 rounded-lg border bg-white">
                   <div className="text-xs text-slate-500">{label as string}</div>
-                  <div className={`text-lg font-bold ${color as string}`}>{typeof value === "number" ? value.toFixed(1) : "--"} <span className="text-xs font-normal text-slate-400">μg/m³</span></div>
+                  <div className={`text-lg font-bold ${color as string}`}>
+                    {typeof value === "number" ? value.toFixed(1) : "--"}{" "}
+                    <span className="text-xs font-normal text-slate-400">μg/m³</span>
+                  </div>
                 </div>
               ))}
             </div>
@@ -210,50 +413,116 @@ function EnvironmentalPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><BarChart3 className="h-4 w-4" /> 5-Day Forecast (3-hourly)</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" /> {t("environmental.forecastTitle")}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {forecastSeries.length > 0 ? (
             <HairlineGrid cols="grid-cols-1" className="!bg-transparent !border-0">
-              <NeonPanel title="Temperature & Feels-like" className="border border-border rounded-md">
+              <NeonPanel
+                title={t("environmental.chartTempFeels")}
+                className="border border-border rounded-md"
+              >
                 <ForecastChart>
                   <LineChart data={forecastSeries}>
                     <CartesianGrid {...neonGrid} />
-                    <XAxis dataKey="ts" interval={Math.floor(forecastSeries.length / 8)} {...neonAxis} />
+                    <XAxis
+                      dataKey="ts"
+                      interval={Math.floor(forecastSeries.length / 8)}
+                      {...neonAxis}
+                    />
                     <YAxis {...neonAxis} />
                     <Tooltip {...neonTooltipStyle} />
-                    <Line type="monotone" dataKey="temp" stroke={NEON.brand} strokeWidth={2} dot={false} name="Temp (°C)" />
-                    <Line type="monotone" dataKey="feels" stroke={NEON.amber} strokeWidth={1.5} strokeDasharray="4 4" dot={false} name="Feels (°C)" />
+                    <Line
+                      type="monotone"
+                      dataKey="temp"
+                      stroke={NEON.brand}
+                      strokeWidth={2}
+                      dot={false}
+                      name={t("environmental.chartTemp")}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="feels"
+                      stroke={NEON.amber}
+                      strokeWidth={1.5}
+                      strokeDasharray="4 4"
+                      dot={false}
+                      name={t("environmental.chartFeels")}
+                    />
                   </LineChart>
                 </ForecastChart>
               </NeonPanel>
-              <NeonPanel title="Precipitation" className="border border-border rounded-md">
+              <NeonPanel title={t("environmental.chartPrecipitation")} className="border border-border rounded-md">
                 <ForecastChart>
                   <AreaChart data={forecastSeries}>
                     <CartesianGrid {...neonGrid} />
-                    <XAxis dataKey="ts" interval={Math.floor(forecastSeries.length / 8)} {...neonAxis} />
+                    <XAxis
+                      dataKey="ts"
+                      interval={Math.floor(forecastSeries.length / 8)}
+                      {...neonAxis}
+                    />
                     <YAxis {...neonAxis} />
                     <Tooltip {...neonTooltipStyle} />
-                    <Area type="monotone" dataKey="rain" name="Rain mm/3h" {...neonFill(NEON.info)} />
-                    <Area type="monotone" dataKey="snow" name="Snow mm/3h" {...neonFill(NEON.brand2)} />
+                    <Area
+                      type="monotone"
+                      dataKey="rain"
+                      name={t("environmental.chartRain")}
+                      {...neonFill(NEON.info)}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="snow"
+                      name={t("environmental.chartSnow")}
+                      {...neonFill(NEON.brand2)}
+                    />
                   </AreaChart>
                 </ForecastChart>
               </NeonPanel>
-              <NeonPanel title="Humidity & Wind" className="border border-border rounded-md">
+              <NeonPanel title={t("environmental.chartHumidityWind")} className="border border-border rounded-md">
                 <ForecastChart>
                   <LineChart data={forecastSeries}>
                     <CartesianGrid {...neonGrid} />
-                    <XAxis dataKey="ts" interval={Math.floor(forecastSeries.length / 8)} {...neonAxis} />
-                    <YAxis yAxisId="left" {...neonAxis} /><YAxis yAxisId="right" orientation="right" {...neonAxis} />
+                    <XAxis
+                      dataKey="ts"
+                      interval={Math.floor(forecastSeries.length / 8)}
+                      {...neonAxis}
+                    />
+                    <YAxis yAxisId="left" {...neonAxis} />
+                    <YAxis yAxisId="right" orientation="right" {...neonAxis} />
                     <Tooltip {...neonTooltipStyle} />
-                    <Line yAxisId="left" type="monotone" dataKey="humidity" stroke={NEON.brand} strokeWidth={2} dot={false} name="Humidity %" />
-                    <Line yAxisId="right" type="monotone" dataKey="wind" stroke={NEON.info} strokeWidth={2} dot={false} name="Wind m/s" />
+                    <Line
+                      yAxisId="left"
+                      type="monotone"
+                      dataKey="humidity"
+                      stroke={NEON.brand}
+                      strokeWidth={2}
+                      dot={false}
+                      name={t("environmental.chartHumidityPct")}
+                    />
+                    <Line
+                      yAxisId="right"
+                      type="monotone"
+                      dataKey="wind"
+                      stroke={NEON.info}
+                      strokeWidth={2}
+                      dot={false}
+                      name={t("environmental.chartWindMs")}
+                    />
                   </LineChart>
                 </ForecastChart>
               </NeonPanel>
             </HairlineGrid>
           ) : (
-            <ChartEmpty label={weather.isFetching ? "Loading forecast…" : "Search for a city to see forecast."} height={200} />
+            <ChartEmpty
+              label={
+                weather.isFetching
+                  ? t("environmental.loadingForecast")
+                  : t("environmental.searchForCity")
+              }
+              height={200}
+            />
           )}
         </CardContent>
       </Card>
@@ -261,23 +530,49 @@ function EnvironmentalPage() {
       <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100/30">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Activity className="h-5 w-5 text-emerald-600" /> Indoor Silo Microclimate
-            {liveSilo && <Badge variant="outline" className="text-emerald-600 border-emerald-300 ml-auto">● Live</Badge>}
+            <Activity className="h-5 w-5 text-emerald-600" /> {t("environmental.siloMicroclimate")}
+            {liveSilo && (
+              <Badge variant="outline" className="text-emerald-600 border-emerald-300 ml-auto">
+                ● {t("environmental.live")}
+              </Badge>
+            )}
           </CardTitle>
-          <CardDescription>{liveSilo ? `Firebase RTDB · ${firstDeviceId} · ${new Date(liveSilo.ts ?? Date.now()).toLocaleString()}` : "Waiting for silo data…"}</CardDescription>
+          <CardDescription>
+            {liveSilo
+              ? `Firebase RTDB · ${firstDeviceId} · ${new Date(liveSilo.ts ?? Date.now()).toLocaleString()}`
+              : t("environmental.waitingForSilo")}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {liveSilo ? (
             <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6 text-sm">
-              <TileStat label="Temp" value={`${(liveSilo.temperature ?? 0).toFixed(1)}°C`} tone="red" />
-              <TileStat label="Humidity" value={`${(liveSilo.humidity ?? 0).toFixed(1)}%`} tone="cyan" />
+              <TileStat
+                label={t("environmental.temp")}
+                value={`${(liveSilo.temperature ?? 0).toFixed(1)}°C`}
+                tone="red"
+              />
+              <TileStat
+                label={t("environmental.humidity")}
+                value={`${(liveSilo.humidity ?? 0).toFixed(1)}%`}
+                tone="cyan"
+              />
               <TileStat label="TVOC" value={`${liveSilo.voc ?? 0} ppb`} tone="violet" />
               <TileStat label="CO₂" value={`${liveSilo.co2 ?? 0} ppm`} tone="slate" />
-              <TileStat label="Fan" value={String(liveSilo.fan_state ?? "off").toUpperCase()} tone="amber" />
-              <TileStat label="Lid" value={String(liveSilo.lid_state ?? "closed").toUpperCase()} tone="sky" />
+              <TileStat
+                label={t("environmental.fan")}
+                value={String(liveSilo.fan_state ?? "off").toUpperCase()}
+                tone="amber"
+              />
+              <TileStat
+                label={t("environmental.lid")}
+                value={String(liveSilo.lid_state ?? "closed").toUpperCase()}
+                tone="sky"
+              />
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">No live device data yet. Ensure device is streaming to Firebase RTDB /devices/{"{deviceId}"}/live.</p>
+            <p className="text-sm text-muted-foreground">
+              {t("environmental.noLiveData")}
+            </p>
           )}
         </CardContent>
       </Card>
@@ -285,19 +580,45 @@ function EnvironmentalPage() {
   );
 }
 
-function Metric({ icon: Icon, label, value, sub, color }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string; sub?: string; color: string }) {
+function Metric({
+  icon: Icon,
+  label,
+  value,
+  sub,
+  color,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  sub?: string;
+  color: string;
+}) {
   return (
-    <div className={`p-3 rounded-lg bg-gradient-to-br from-${color}-50 to-${color}-100/40 border border-${color}-100`}>
-      <div className={`text-xs uppercase text-${color}-600 flex items-center gap-1`}><Icon className="h-3 w-3" /> {label}</div>
+    <div
+      className={`p-3 rounded-lg bg-gradient-to-br from-${color}-50 to-${color}-100/40 border border-${color}-100`}
+    >
+      <div className={`text-xs uppercase text-${color}-600 flex items-center gap-1`}>
+        <Icon className="h-3 w-3" /> {label}
+      </div>
       <div className={`text-2xl font-bold text-${color}-700`}>{value}</div>
       {sub && <div className={`text-xs text-${color}-500 mt-0.5`}>{sub}</div>}
     </div>
   );
 }
-function MiniMetric({ icon: Icon, label, value }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string }) {
+function MiniMetric({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+}) {
   return (
     <div className="p-3 rounded-lg bg-slate-50 border border-slate-100">
-      <div className="text-xs uppercase text-slate-500 flex items-center gap-1"><Icon className="h-3 w-3" /> {label}</div>
+      <div className="text-xs uppercase text-slate-500 flex items-center gap-1">
+        <Icon className="h-3 w-3" /> {label}
+      </div>
       <div className="text-lg font-semibold">{value}</div>
     </div>
   );
@@ -312,6 +633,10 @@ function TileStat({ label, value, tone }: { label: string; value: string; tone: 
 }
 function ForecastChart({ children }: { children: React.ReactElement }) {
   return (
-    <div style={{ height: 220 }}><ResponsiveContainer width="100%" height="100%">{children}</ResponsiveContainer></div>
+    <div style={{ height: 220 }}>
+      <ResponsiveContainer width="100%" height="100%">
+        {children}
+      </ResponsiveContainer>
+    </div>
   );
 }

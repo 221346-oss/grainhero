@@ -28,17 +28,19 @@ const upsertSchema = z.object({
   active: z.boolean().default(true),
 });
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 export const listMetrics = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .validator((d) => z.object({
-    onlyMine: z.boolean().default(false),
-    active: z.enum(["all", "active", "inactive"]).default("all"),
-  }).parse(d))
+  .validator((d) =>
+    z
+      .object({
+        onlyMine: z.boolean().default(false),
+        active: z.enum(["all", "active", "inactive"]).default("all"),
+      })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const role = await getEffectiveRole(sb, context.userId);
     let q = sb.from("metric_registry").select("*").order("label");
@@ -55,7 +57,7 @@ export const upsertMetric = createServerFn({ method: "POST" })
   .validator((d) => upsertSchema.parse(d))
   .handler(async ({ data, context }) => {
     await requireRole(context.supabase, context.userId, ["super_admin"]);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const { data: prev } = data.id
       ? await sb.from("metric_registry").select("*").eq("id", data.id).maybeSingle()
@@ -82,10 +84,17 @@ export const toggleMetric = createServerFn({ method: "POST" })
   .validator((d) => z.object({ id: z.string().uuid(), active: z.boolean() }).parse(d))
   .handler(async ({ data, context }) => {
     await requireRole(context.supabase, context.userId, ["super_admin"]);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
-    const { data: prev } = await sb.from("metric_registry").select("key,active").eq("id", data.id).maybeSingle();
-    const { error } = await sb.from("metric_registry").update({ active: data.active }).eq("id", data.id);
+    const { data: prev } = await sb
+      .from("metric_registry")
+      .select("key,active")
+      .eq("id", data.id)
+      .maybeSingle();
+    const { error } = await sb
+      .from("metric_registry")
+      .update({ active: data.active })
+      .eq("id", data.id);
     if (error) throw error;
     await sb.rpc("record_governance_audit", {
       _action: "metric.toggle",
@@ -102,9 +111,13 @@ export const deleteMetric = createServerFn({ method: "POST" })
   .validator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await requireRole(context.supabase, context.userId, ["super_admin"]);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
-    const { data: prev } = await sb.from("metric_registry").select("*").eq("id", data.id).maybeSingle();
+    const { data: prev } = await sb
+      .from("metric_registry")
+      .select("*")
+      .eq("id", data.id)
+      .maybeSingle();
     const { error } = await sb.from("metric_registry").delete().eq("id", data.id);
     if (error) throw error;
     await sb.rpc("record_governance_audit", {
@@ -119,17 +132,23 @@ export const deleteMetric = createServerFn({ method: "POST" })
 
 export const runMetricPreview = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d) => z.object({
-    key: z.string(),
-    filters: z.record(z.string(), z.any()).default({}),
-  }).parse(d))
+  .validator((d) =>
+    z
+      .object({
+        key: z.string(),
+        filters: z.record(z.string(), z.any()).default({}),
+      })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const started = Date.now();
-    const { data: result, error } = await sb.rpc("run_metric", { _key: data.key, _filters: data.filters });
+    const { data: result, error } = await sb.rpc("run_metric", {
+      _key: data.key,
+      _filters: data.filters,
+    });
     const elapsed_ms = Date.now() - started;
     if (error) return { ok: false as const, error: error.message, elapsed_ms };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     return { ok: true as const, result: result as any, elapsed_ms };
   });

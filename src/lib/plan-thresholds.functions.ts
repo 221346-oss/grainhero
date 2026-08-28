@@ -7,7 +7,9 @@ import { logActivity } from "./activity";
 function parseOrThrow<T>(schema: z.ZodType<T>, data: unknown): T {
   const r = schema.safeParse(data);
   if (r.success) return r.data;
-  throw new Error(r.error.issues.map((i) => `${i.path.join(".") || "field"}: ${i.message}`).join(" · "));
+  throw new Error(
+    r.error.issues.map((i) => `${i.path.join(".") || "field"}: ${i.message}`).join(" · "),
+  );
 }
 
 async function assertSuperAdmin(supabase: any, userId: string) {
@@ -77,12 +79,12 @@ export const updatePlanThreshold = createServerFn({ method: "POST" })
     // supabaseAdmin only if the service role key is available.
     try {
       const limitPatch: Record<string, number> = {};
-      if (patch.max_silos      !== undefined) limitPatch.max_silos      = patch.max_silos;
+      if (patch.max_silos !== undefined) limitPatch.max_silos = patch.max_silos;
       if (patch.max_warehouses !== undefined) limitPatch.max_warehouses = patch.max_warehouses;
-      if (patch.max_users      !== undefined) limitPatch.max_users      = patch.max_users;
-      if (patch.max_batches    !== undefined) limitPatch.max_batches    = patch.max_batches;
-      if (patch.max_sensors    !== undefined) limitPatch.max_sensors    = patch.max_sensors;
-      if (patch.max_actuators  !== undefined) limitPatch.max_actuators  = patch.max_actuators;
+      if (patch.max_users !== undefined) limitPatch.max_users = patch.max_users;
+      if (patch.max_batches !== undefined) limitPatch.max_batches = patch.max_batches;
+      if (patch.max_sensors !== undefined) limitPatch.max_sensors = patch.max_sensors;
+      if (patch.max_actuators !== undefined) limitPatch.max_actuators = patch.max_actuators;
 
       if (Object.keys(limitPatch).length > 0) {
         // super_admin passes RLS on subscriptions — context.supabase is enough
@@ -139,15 +141,14 @@ export const updatePlanThreshold = createServerFn({ method: "POST" })
         .in("status", ["active", "trial"]);
 
       // Union and deduplicate — only keep actual tenant admins (not managers/technicians)
-      const fromProfiles = profileIds
-        .filter((id) => {
-          const roles = rolesByUser.get(id) ?? [];
-          // Include if they have admin role, or if no roles (legacy seed data), but never if manager/technician only
-          const hasManagerOrTech = roles.some((rr) => rr === "manager" || rr === "technician");
-          const hasAdmin = roles.some((rr) => rr === "admin" || rr === "super_admin");
-          if (hasManagerOrTech && !hasAdmin) return false;
-          return true;
-        });
+      const fromProfiles = profileIds.filter((id) => {
+        const roles = rolesByUser.get(id) ?? [];
+        // Include if they have admin role, or if no roles (legacy seed data), but never if manager/technician only
+        const hasManagerOrTech = roles.some((rr) => rr === "manager" || rr === "technician");
+        const hasAdmin = roles.some((rr) => rr === "admin" || rr === "super_admin");
+        if (hasManagerOrTech && !hasAdmin) return false;
+        return true;
+      });
 
       const fromSubs = (subRows ?? [])
         .map((r: { admin_id: string | null }) => r.admin_id)
@@ -158,21 +159,24 @@ export const updatePlanThreshold = createServerFn({ method: "POST" })
       if (tenantAdminIds.length > 0) {
         // Build a readable change summary
         const changes: string[] = [];
-        if (patch.max_silos !== undefined)      changes.push(`Silos: ${patch.max_silos}`);
+        if (patch.max_silos !== undefined) changes.push(`Silos: ${patch.max_silos}`);
         if (patch.max_warehouses !== undefined) changes.push(`Warehouses: ${patch.max_warehouses}`);
-        if (patch.max_users !== undefined)      changes.push(`Users: ${patch.max_users}`);
-        if (patch.max_batches !== undefined)    changes.push(`Batches: ${patch.max_batches}`);
-        if (patch.max_sensors !== undefined)    changes.push(`Sensors: ${patch.max_sensors}`);
-        if (patch.max_actuators !== undefined)  changes.push(`Actuators: ${patch.max_actuators}`);
-        if (patch.price_cents !== undefined)    changes.push(`Price: PKR ${Math.round(patch.price_cents / 100)}/mo`);
-        
-        const changesSummary = changes.length > 0 
-          ? `Limits updated instantly across all tenants on this plan. You'll see a confirmation in your notification bell.`
-          : "Your plan details have been updated.";
+        if (patch.max_users !== undefined) changes.push(`Users: ${patch.max_users}`);
+        if (patch.max_batches !== undefined) changes.push(`Batches: ${patch.max_batches}`);
+        if (patch.max_sensors !== undefined) changes.push(`Sensors: ${patch.max_sensors}`);
+        if (patch.max_actuators !== undefined) changes.push(`Actuators: ${patch.max_actuators}`);
+        if (patch.price_cents !== undefined)
+          changes.push(`Price: PKR ${Math.round(patch.price_cents / 100)}/mo`);
 
-        const detailedMessage = changes.length > 0
-          ? `Your ${planName} plan limits have been updated by GrainHero:\n\n${changes.join(" · ")}\n\nYour account reflects the new limits immediately.`
-          : "Your plan limits have been adjusted by GrainHero. Your account reflects the new limits immediately.";
+        const changesSummary =
+          changes.length > 0
+            ? `Limits updated instantly across all tenants on this plan. You'll see a confirmation in your notification bell.`
+            : "Your plan details have been updated.";
+
+        const detailedMessage =
+          changes.length > 0
+            ? `Your ${planName} plan limits have been updated by GrainHero:\n\n${changes.join(" · ")}\n\nYour account reflects the new limits immediately.`
+            : "Your plan limits have been adjusted by GrainHero. Your account reflects the new limits immediately.";
 
         const notifRows = tenantAdminIds.map((id: string) => ({
           admin_id: id,
@@ -251,8 +255,7 @@ export const requestPlanChange = createServerFn({ method: "POST" })
     if (!next) throw new Error("Requested plan not found");
     if (data.requested_plan === current) throw new Error("Already on this plan");
 
-    const direction =
-      (next.sort_order ?? 0) > (cur?.sort_order ?? 0) ? "upgrade" : "downgrade";
+    const direction = (next.sort_order ?? 0) > (cur?.sort_order ?? 0) ? "upgrade" : "downgrade";
 
     const autoApply = direction === "upgrade" && prof.auto_upgrade_enabled === true;
 
@@ -282,7 +285,7 @@ export const requestPlanChange = createServerFn({ method: "POST" })
         .update({ subscription_plan: data.requested_plan } as never)
         .eq("id", tenantAdminId);
       if (upErr) throw upErr;
-      
+
       // CRITICAL FIX: Also update subscriptions table with the plan_name
       // so computeMrr() can find it in plan_thresholds
       const planNameMap: Record<string, string> = {
@@ -295,7 +298,8 @@ export const requestPlanChange = createServerFn({ method: "POST" })
         pro: "Grain Enterprise",
         scale: "Grain Enterprise",
       };
-      const planName = planNameMap[String(data.requested_plan).toLowerCase()] ?? String(data.requested_plan);
+      const planName =
+        planNameMap[String(data.requested_plan).toLowerCase()] ?? String(data.requested_plan);
       const { error: subErr } = await context.supabase
         .from("subscriptions")
         .update({
@@ -334,7 +338,12 @@ export const requestPlanChange = createServerFn({ method: "POST" })
           p_action_url: "/platform/plans",
           p_entity_type: "plan_change_request",
           p_entity_id: inserted?.id ?? null,
-          p_metadata: { tenant_admin_id: tenantAdminId, direction, from: current, to: data.requested_plan },
+          p_metadata: {
+            tenant_admin_id: tenantAdminId,
+            direction,
+            from: current,
+            to: data.requested_plan,
+          },
         });
       }
     } catch (err) {
@@ -434,8 +443,9 @@ export const decidePlanChangeRequest = createServerFn({ method: "POST" })
           pro: "Grain Enterprise",
           scale: "Grain Enterprise",
         };
-        const planName = planNameMap[String(req.requested_plan).toLowerCase()] ?? String(req.requested_plan);
-        
+        const planName =
+          planNameMap[String(req.requested_plan).toLowerCase()] ?? String(req.requested_plan);
+
         await context.supabase
           .from("subscriptions")
           .update({
@@ -490,7 +500,11 @@ export const decidePlanChangeRequest = createServerFn({ method: "POST" })
         p_action_url: "/subscription",
         p_entity_type: "plan_change_request",
         p_entity_id: data.id,
-        p_metadata: { from: req.current_plan, to: req.requested_plan, status: data.approve ? "approved" : "rejected" },
+        p_metadata: {
+          from: req.current_plan,
+          to: req.requested_plan,
+          status: data.approve ? "approved" : "rejected",
+        },
       });
       if (rpcErr) console.warn("[decide] notification RPC failed:", rpcErr.message);
     }
@@ -521,7 +535,11 @@ export const listPlanChangeRequests = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
     parseOrThrow(
-      z.object({ status: z.enum(["all", "pending", "approved", "rejected", "auto_applied", "cancelled"]).default("all") }),
+      z.object({
+        status: z
+          .enum(["all", "pending", "approved", "rejected", "auto_applied", "cancelled"])
+          .default("all"),
+      }),
       d,
     ),
   )

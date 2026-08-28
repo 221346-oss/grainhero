@@ -34,31 +34,74 @@ export const getMySubscription = createServerFn({ method: "GET" })
     // always reflects super admin's latest values even when max_* cols are null.
     let mergedSub = sub;
     if (sub?.plan_name) {
+      // Map subscription plan_name (e.g. "Grain Enterprise") to plan_thresholds plan_id (e.g. "enterprise")
+      const planNameToId: Record<string, string> = {
+        "grain starter": "basic",
+        starter: "basic",
+        basic: "basic",
+        "grain professional": "intermediate",
+        professional: "intermediate",
+        intermediate: "intermediate",
+        growth: "intermediate",
+        "grain enterprise": "pro",
+        enterprise: "pro",
+        pro: "pro",
+        scale: "pro",
+      };
+      const planKey = planNameToId[sub.plan_name.toLowerCase()] ?? sub.plan_name.toLowerCase();
+      console.log("[getMySubscription] plan_name:", sub.plan_name, "→ planKey:", planKey);
+      console.log("[getMySubscription] Querying plan_thresholds with plan_id:", planKey);
       const { data: threshold } = await context.supabase
         .from("plan_thresholds")
         .select("max_silos, max_warehouses, max_users, max_batches, max_sensors, max_actuators")
-        .eq("plan_id", sub.plan_name)
+        .eq("plan_id", planKey)
         .maybeSingle();
       if (threshold) {
+        // Always prefer threshold values — subscription row may have stale 999999 defaults
         mergedSub = {
           ...sub,
-          max_silos:       sub.max_silos       ?? threshold.max_silos,
-          max_warehouses:  sub.max_warehouses   ?? threshold.max_warehouses,
-          max_users:       sub.max_users        ?? threshold.max_users,
-          max_batches:     sub.max_batches      ?? threshold.max_batches,
-          max_sensors:     sub.max_sensors      ?? threshold.max_sensors,
-          max_actuators:   sub.max_actuators    ?? threshold.max_actuators,
+          max_silos: threshold.max_silos ?? sub.max_silos,
+          max_warehouses: threshold.max_warehouses ?? sub.max_warehouses,
+          max_users: threshold.max_users ?? sub.max_users,
+          max_batches: threshold.max_batches ?? sub.max_batches,
+          max_sensors: threshold.max_sensors ?? sub.max_sensors,
+          max_actuators: threshold.max_actuators ?? sub.max_actuators,
         };
+        console.log("[getMySubscription] Merged threshold:", JSON.stringify(threshold));
+        console.log(
+          "[getMySubscription] Final max_batches:",
+          mergedSub.max_batches,
+          "max_users:",
+          mergedSub.max_users,
+        );
+      } else {
+        console.log("[getMySubscription] No threshold found for planKey:", planKey);
       }
     }
 
     // Live usage (tenant-scoped via RLS-safe counts on admin_id)
     const [batches, warehouses, silos, sensors, team] = await Promise.all([
-      context.supabase.from("grain_batches").select("id", { count: "exact", head: true }).eq("admin_id", adminId).is("deleted_at", null),
-      context.supabase.from("warehouses").select("id", { count: "exact", head: true }).eq("admin_id", adminId),
-      context.supabase.from("silos").select("id", { count: "exact", head: true }).eq("admin_id", adminId),
-      context.supabase.from("sensor_devices").select("id", { count: "exact", head: true }).eq("admin_id", adminId),
-      context.supabase.from("profiles").select("id", { count: "exact", head: true }).or(`id.eq.${adminId},admin_id.eq.${adminId}`),
+      context.supabase
+        .from("grain_batches")
+        .select("id", { count: "exact", head: true })
+        .eq("admin_id", adminId)
+        .is("deleted_at", null),
+      context.supabase
+        .from("warehouses")
+        .select("id", { count: "exact", head: true })
+        .eq("admin_id", adminId),
+      context.supabase
+        .from("silos")
+        .select("id", { count: "exact", head: true })
+        .eq("admin_id", adminId),
+      context.supabase
+        .from("sensor_devices")
+        .select("id", { count: "exact", head: true })
+        .eq("admin_id", adminId),
+      context.supabase
+        .from("profiles")
+        .select("id", { count: "exact", head: true })
+        .or(`id.eq.${adminId},admin_id.eq.${adminId}`),
     ]);
 
     const { data: invoices } = await context.supabase
@@ -133,11 +176,15 @@ export const getRevenueOverview = createServerFn({ method: "GET" })
 
     let invQuery = context.supabase
       .from("buyer_invoices")
-      .select("id, invoice_number, buyer_name, buyer_company, batch_ref, items, subtotal, total_amount, amount_paid, currency, payment_status, due_date, paid_at, created_at, dispatch_id, grain_dispatches:dispatch_id(dispatch_number, total_qty_kg, vehicle_number, driver_name, grain_type), grain_batches:batch_id(grain_type)");
+      .select(
+        "id, invoice_number, buyer_name, buyer_company, batch_ref, items, subtotal, total_amount, amount_paid, currency, payment_status, due_date, paid_at, created_at, dispatch_id, grain_dispatches:dispatch_id(dispatch_number, total_qty_kg, vehicle_number, driver_name, grain_type), grain_batches:batch_id(grain_type)",
+      );
 
     let payQuery = context.supabase
       .from("buyer_payments")
-      .select("id, amount, currency, payment_method, payment_reference, status, payment_date, buyer_id, invoice_id, dispatch_id, receipt_url, created_at, grain_dispatches:dispatch_id(dispatch_number, grain_type)");
+      .select(
+        "id, amount, currency, payment_method, payment_reference, status, payment_date, buyer_id, invoice_id, dispatch_id, receipt_url, created_at, grain_dispatches:dispatch_id(dispatch_number, grain_type)",
+      );
 
     // Approved-and-beyond dispatches — regardless of whether they ever went
     // through the invoice step (the wizard's "Skip invoice -> Dispatch" path
@@ -147,7 +194,9 @@ export const getRevenueOverview = createServerFn({ method: "GET" })
     // wizard before finishing the payment step has nowhere else to surface.
     let dispQuery = context.supabase
       .from("grain_dispatches")
-      .select("id, dispatch_number, grain_type, total_amount, currency, status, dispatched_at, created_at, buyers:buyer_id(name, company_name)")
+      .select(
+        "id, dispatch_number, grain_type, total_amount, currency, status, dispatched_at, created_at, buyers:buyer_id(name, company_name)",
+      )
       .in("status", ["confirmed", "in_transit", "delivered"]);
 
     if (adminId) {
@@ -170,7 +219,10 @@ export const getRevenueOverview = createServerFn({ method: "GET" })
     for (const p of payments) {
       if (!p.dispatch_id) continue;
       if ((p.status ?? "completed") !== "completed") continue;
-      paidByDispatch.set(p.dispatch_id, (paidByDispatch.get(p.dispatch_id) ?? 0) + Number(p.amount ?? 0));
+      paidByDispatch.set(
+        p.dispatch_id,
+        (paidByDispatch.get(p.dispatch_id) ?? 0) + Number(p.amount ?? 0),
+      );
     }
     const outstandingDispatches = dispatchesForPayment
       .map((d) => {
@@ -181,8 +233,12 @@ export const getRevenueOverview = createServerFn({ method: "GET" })
       .filter((d) => d.remaining > 0);
 
     const invoiced = invoices.reduce((s, x) => s + Number(x.total_amount ?? 0), 0);
-    const collected = payments.filter((p) => (p.status ?? "completed") === "completed").reduce((s, p) => s + Number(p.amount ?? 0), 0);
-    const overdueInvoices = invoices.filter((x) => x.due_date && new Date(x.due_date) < new Date() && x.payment_status !== "paid");
+    const collected = payments
+      .filter((p) => (p.status ?? "completed") === "completed")
+      .reduce((s, p) => s + Number(p.amount ?? 0), 0);
+    const overdueInvoices = invoices.filter(
+      (x) => x.due_date && new Date(x.due_date) < new Date() && x.payment_status !== "paid",
+    );
     const totals = {
       invoiced,
       // "paid" kept for back-compat with any older callers; Collected/Outstanding
@@ -192,7 +248,10 @@ export const getRevenueOverview = createServerFn({ method: "GET" })
       outstanding: Math.max(0, invoiced - collected),
       // "Due" tile — amount currently past-due (a subset of Outstanding, not
       // all of it), distinct from the count used for its caption.
-      due: overdueInvoices.reduce((s, x) => s + Math.max(0, Number(x.total_amount ?? 0) - Number(x.amount_paid ?? 0)), 0),
+      due: overdueInvoices.reduce(
+        (s, x) => s + Math.max(0, Number(x.total_amount ?? 0) - Number(x.amount_paid ?? 0)),
+        0,
+      ),
       overdue: overdueInvoices.length,
       countInvoices: invoices.length,
       countPayments: payments.length,
@@ -207,7 +266,10 @@ export const getRevenueOverview = createServerFn({ method: "GET" })
     return { invoices, payments, totals, byStatus, outstandingDispatches };
   });
 
-const markPaidInput = z.object({ id: z.string().uuid(), amount: z.number().nonnegative().optional() });
+const markPaidInput = z.object({
+  id: z.string().uuid(),
+  amount: z.number().nonnegative().optional(),
+});
 
 export const markInvoicePaid = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

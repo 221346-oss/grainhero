@@ -42,7 +42,13 @@ export const sendCheckoutConfirmationEmail = createServerFn({ method: "POST" })
       metadata?: Record<string, string>;
     };
     const paid = session.payment_status === "paid" || session.status === "complete";
-    console.log("[checkout email] session status:", session.payment_status, session.status, "paid:", paid);
+    console.log(
+      "[checkout email] session status:",
+      session.payment_status,
+      session.status,
+      "paid:",
+      paid,
+    );
     if (!paid) return { sent: false, reason: "not_paid" as const };
 
     // Load the order (best-effort — email still sends without a DB row).
@@ -59,7 +65,14 @@ export const sendCheckoutConfirmationEmail = createServerFn({ method: "POST" })
         .eq("stripe_session_id", data.sessionId)
         .maybeSingle();
       order = ((row as OrderRow | null) ?? {}) as OrderRow;
-      console.log("[checkout email] order found:", !!row, "already_sent:", !!order.confirmation_email_sent_at, "email:", order.customer_email);
+      console.log(
+        "[checkout email] order found:",
+        !!row,
+        "already_sent:",
+        !!order.confirmation_email_sent_at,
+        "email:",
+        order.customer_email,
+      );
       // Note: removed already_sent guard so email always sends during testing
     } catch (e) {
       console.warn("[checkout email] admin unavailable:", (e as Error).message);
@@ -81,7 +94,7 @@ export const sendCheckoutConfirmationEmail = createServerFn({ method: "POST" })
     const gatewayKey = process.env.LOVABLE_API_KEY;
     const resendKey = process.env.RESEND_API_KEY;
     const configFrom = process.env.RESEND_FROM_EMAIL || "GrainHero <onboarding@resend.dev>";
-    
+
     if (!resendKey) {
       console.warn("[checkout email] missing resend key");
       return { sent: false, reason: "not_configured" as const };

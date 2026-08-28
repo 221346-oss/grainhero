@@ -12,9 +12,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SB = any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 type Row = Record<string, any>;
 
 const METRIC_COLS: Record<string, string> = {
@@ -108,7 +107,9 @@ export async function writeReadingAndEvaluate(
       metric: input.metric,
       value: input.value,
     });
-  } catch (_e) { /* automation must never block ingest */ }
+  } catch (_e) {
+    /* automation must never block ingest */
+  }
 
   // Threshold evaluation
   const { data: th } = await sb
@@ -152,7 +153,8 @@ export async function writeReadingAndEvaluate(
       severity,
       message: `${input.metric} ${severity}: ${v}`,
       value: v,
-      threshold: severity === "critical" ? (t.critical_max ?? t.critical_min) : (t.max_value ?? t.min_value),
+      threshold:
+        severity === "critical" ? (t.critical_max ?? t.critical_min) : (t.max_value ?? t.min_value),
     } as never)
     .select("id")
     .single();
@@ -178,7 +180,10 @@ export const listThresholds = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((d) => z.object({ siloId: z.string().uuid().optional() }).parse(d))
   .handler(async ({ data, context }) => {
-    let q = context.supabase.from("sensor_thresholds").select("*").order("created_at", { ascending: false });
+    let q = context.supabase
+      .from("sensor_thresholds")
+      .select("*")
+      .order("created_at", { ascending: false });
     if (data.siloId) q = q.eq("silo_id", data.siloId);
     const { data: rows, error } = await q;
     if (error) throw error;
@@ -203,7 +208,11 @@ export const saveThreshold = createServerFn({ method: "POST" })
   .validator((d) => THRESHOLD_INPUT.parse(d))
   .handler(async ({ data, context }) => {
     const { assertPlanAllows } = await import("@/lib/plan-gate");
-    const { data: silo } = await context.supabase.from("silos").select("admin_id").eq("id", data.siloId).single();
+    const { data: silo } = await context.supabase
+      .from("silos")
+      .select("admin_id")
+      .eq("id", data.siloId)
+      .single();
     const adminId = (silo as Row | null)?.admin_id as string | undefined;
     if (!adminId) throw new Error("Silo not found");
 
@@ -212,7 +221,12 @@ export const saveThreshold = createServerFn({ method: "POST" })
         .from("sensor_thresholds")
         .select("id", { count: "exact", head: true })
         .eq("enabled", true);
-      await assertPlanAllows({ feature: "max_active_alert_rules", sb: context.supabase, userId: context.userId, currentUsage: count ?? 0 });
+      await assertPlanAllows({
+        feature: "max_active_alert_rules",
+        sb: context.supabase,
+        userId: context.userId,
+        currentUsage: count ?? 0,
+      });
     }
 
     const patch = {
@@ -229,16 +243,27 @@ export const saveThreshold = createServerFn({ method: "POST" })
       created_by: context.userId,
     };
     const q = data.id
-      ? context.supabase.from("sensor_thresholds").update(patch as never).eq("id", data.id).select("id").single()
-      : context.supabase.from("sensor_thresholds").upsert(patch as never, { onConflict: "silo_id,metric" }).select("id").single();
+      ? context.supabase
+          .from("sensor_thresholds")
+          .update(patch as never)
+          .eq("id", data.id)
+          .select("id")
+          .single()
+      : context.supabase
+          .from("sensor_thresholds")
+          .upsert(patch as never, { onConflict: "silo_id,metric" })
+          .select("id")
+          .single();
     const { data: saved, error } = await q;
     if (error) throw error;
 
     const { logActivity } = await import("@/lib/activity");
     await logActivity({
-      actorId: context.userId, tenantAdminId: adminId,
+      actorId: context.userId,
+      tenantAdminId: adminId,
       action: data.id ? "threshold.updated" : "threshold.created",
-      targetType: "sensor_threshold", targetId: (saved as Row).id as string,
+      targetType: "sensor_threshold",
+      targetId: (saved as Row).id as string,
       meta: { metric: data.metric, siloId: data.siloId },
     });
     return { id: (saved as Row).id as string };
@@ -257,12 +282,18 @@ export const deleteThreshold = createServerFn({ method: "POST" })
 
 export const getSiloReadings = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .validator((d) => z.object({ siloId: z.string().uuid(), hours: z.number().int().min(1).max(720).default(24) }).parse(d))
+  .validator((d) =>
+    z
+      .object({ siloId: z.string().uuid(), hours: z.number().int().min(1).max(720).default(24) })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
     const since = new Date(Date.now() - data.hours * 3600 * 1000).toISOString();
     const { data: rows, error } = await context.supabase
       .from("sensor_readings")
-      .select("reading_timestamp, temperature_value, humidity_value, moisture_value, co2_value, quality_flag, source")
+      .select(
+        "reading_timestamp, temperature_value, humidity_value, moisture_value, co2_value, quality_flag, source",
+      )
       .eq("silo_id", data.siloId)
       .gte("reading_timestamp", since)
       .order("reading_timestamp", { ascending: true })

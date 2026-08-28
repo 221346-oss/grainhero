@@ -23,10 +23,13 @@ type Reading = {
 };
 
 // Compute a heuristic spoilage risk score 0-100 for a silo if ML inference is missing.
-function computeFallbackRisk(silo: {
-  moisture_content: number | null;
-  risk_score: number | null;
-}, r: Reading | null): { score: number; level: "low" | "moderate" | "high" | "critical"; factors: string[] } {
+function computeFallbackRisk(
+  silo: {
+    moisture_content: number | null;
+    risk_score: number | null;
+  },
+  r: Reading | null,
+): { score: number; level: "low" | "moderate" | "high" | "critical"; factors: string[] } {
   const factors: string[] = [];
   let score = 0;
 
@@ -37,19 +40,40 @@ function computeFallbackRisk(silo: {
   const voc = r?.voc_value ?? null;
 
   if (temp !== null) {
-    if (temp > 30) { score += 25; factors.push(`High temp ${temp.toFixed(1)}°C`); }
-    else if (temp > 25) { score += 12; factors.push(`Elevated temp ${temp.toFixed(1)}°C`); }
+    if (temp > 30) {
+      score += 25;
+      factors.push(`High temp ${temp.toFixed(1)}°C`);
+    } else if (temp > 25) {
+      score += 12;
+      factors.push(`Elevated temp ${temp.toFixed(1)}°C`);
+    }
   }
   if (hum !== null) {
-    if (hum > 70) { score += 20; factors.push(`High humidity ${hum.toFixed(0)}%`); }
-    else if (hum > 60) { score += 10; factors.push(`Elevated humidity ${hum.toFixed(0)}%`); }
+    if (hum > 70) {
+      score += 20;
+      factors.push(`High humidity ${hum.toFixed(0)}%`);
+    } else if (hum > 60) {
+      score += 10;
+      factors.push(`Elevated humidity ${hum.toFixed(0)}%`);
+    }
   }
   if (moisture !== null) {
-    if (moisture > 14) { score += 25; factors.push(`Moisture ${moisture.toFixed(1)}% above safe`); }
-    else if (moisture > 12) { score += 10; factors.push(`Moisture ${moisture.toFixed(1)}% borderline`); }
+    if (moisture > 14) {
+      score += 25;
+      factors.push(`Moisture ${moisture.toFixed(1)}% above safe`);
+    } else if (moisture > 12) {
+      score += 10;
+      factors.push(`Moisture ${moisture.toFixed(1)}% borderline`);
+    }
   }
-  if (co2 !== null && co2 > 1500) { score += 15; factors.push(`CO₂ ${co2.toFixed(0)}ppm`); }
-  if (voc !== null && voc > 500) { score += 10; factors.push(`VOC ${voc.toFixed(0)}`); }
+  if (co2 !== null && co2 > 1500) {
+    score += 15;
+    factors.push(`CO₂ ${co2.toFixed(0)}ppm`);
+  }
+  if (voc !== null && voc > 500) {
+    score += 10;
+    factors.push(`VOC ${voc.toFixed(0)}`);
+  }
 
   if (silo.risk_score != null) score = Math.max(score, silo.risk_score);
 
@@ -76,7 +100,9 @@ export const getSiloPredictions = createServerFn({ method: "GET" })
 
     const { data: silos, error } = await context.supabase
       .from("silos")
-      .select("id, silo_id, name, capacity_kg, current_occupancy_kg, status, warehouse_id, risk_score")
+      .select(
+        "id, silo_id, name, capacity_kg, current_occupancy_kg, status, warehouse_id, risk_score",
+      )
       .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .limit(200);
@@ -89,13 +115,17 @@ export const getSiloPredictions = createServerFn({ method: "GET" })
     const [{ data: readings }, { data: batches }] = await Promise.all([
       context.supabase
         .from("sensor_readings")
-        .select("silo_id, temperature_value, humidity_value, moisture_value, co2_value, voc_value, ml_risk_score, ml_risk_class, reading_timestamp")
+        .select(
+          "silo_id, temperature_value, humidity_value, moisture_value, co2_value, voc_value, ml_risk_score, ml_risk_class, reading_timestamp",
+        )
         .in("silo_id", siloIds)
         .order("reading_timestamp", { ascending: false })
         .limit(4000),
       context.supabase
         .from("grain_batches")
-        .select("id, silo_id, grain_type, quantity_kg, dispatched_quantity_kg, remaining_kg, intake_date")
+        .select(
+          "id, silo_id, grain_type, quantity_kg, dispatched_quantity_kg, remaining_kg, intake_date",
+        )
         .in("silo_id", siloIds)
         .is("deleted_at", null)
         .order("intake_date", { ascending: true, nullsFirst: false }),
@@ -108,11 +138,21 @@ export const getSiloPredictions = createServerFn({ method: "GET" })
 
     // Oldest batch with remaining stock per silo (FIFO) — grain type +
     // storage-age context only, never required for a prediction to exist.
-    type BatchRow = { id: string; silo_id: string; grain_type: string; quantity_kg: number; dispatched_quantity_kg: number | null; remaining_kg: number | null; intake_date: string | null };
+    type BatchRow = {
+      id: string;
+      silo_id: string;
+      grain_type: string;
+      quantity_kg: number;
+      dispatched_quantity_kg: number | null;
+      remaining_kg: number | null;
+      intake_date: string | null;
+    };
     const oldestActiveBySilo = new Map<string, BatchRow>();
-    let totalRemainingBySilo = new Map<string, number>();
+    const totalRemainingBySilo = new Map<string, number>();
     for (const b of (batches ?? []) as BatchRow[]) {
-      const remaining = b.remaining_kg ?? Math.max(0, Number(b.quantity_kg ?? 0) - Number(b.dispatched_quantity_kg ?? 0));
+      const remaining =
+        b.remaining_kg ??
+        Math.max(0, Number(b.quantity_kg ?? 0) - Number(b.dispatched_quantity_kg ?? 0));
       if (remaining <= 0) continue;
       totalRemainingBySilo.set(b.silo_id, (totalRemainingBySilo.get(b.silo_id) ?? 0) + remaining);
       if (!oldestActiveBySilo.has(b.silo_id)) oldestActiveBySilo.set(b.silo_id, b);
@@ -150,7 +190,6 @@ export const getSiloPredictions = createServerFn({ method: "GET" })
     return { predictions };
   });
 
-
 export const getMLModels = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -170,7 +209,11 @@ export const getMLModels = createServerFn({ method: "GET" })
     const correct = withLabel.filter((r) => {
       const a = String(r.spoilage_label).toLowerCase();
       const b = String(r.ml_risk_class).toLowerCase();
-      return a === b || (a.includes("safe") && b.includes("low")) || (a.includes("spoil") && b.includes("high"));
+      return (
+        a === b ||
+        (a.includes("safe") && b.includes("low")) ||
+        (a.includes("spoil") && b.includes("high"))
+      );
     }).length;
     const accuracy = withLabel.length ? correct / withLabel.length : 0.91;
     const avgConf = total ? rows.reduce((s, r) => s + (r.ml_confidence ?? 0), 0) / total : 0.87;
@@ -198,7 +241,9 @@ export const getMLModels = createServerFn({ method: "GET" })
           algorithm: "Isolation Forest",
           type: "anomaly",
           status: "production",
-          accuracy: rows.length ? rows.filter((r) => r.anomaly_detected).length / rows.length : 0.06,
+          accuracy: rows.length
+            ? rows.filter((r) => r.anomaly_detected).length / rows.length
+            : 0.06,
           confidence: avgConf,
           samples: total,
           features: ["temperature", "humidity", "voc", "pressure", "airflow"],
@@ -231,7 +276,9 @@ export const getAnalyticsOverview = createServerFn({ method: "GET" })
     const [batches, alerts, silos, readings] = await Promise.all([
       context.supabase
         .from("grain_batches")
-        .select("id, grain_type, status, quantity_kg, revenue, profit, purchase_price_per_kg, sell_price_per_kg, risk_score, intake_date, created_at, spoilage_label")
+        .select(
+          "id, grain_type, status, quantity_kg, revenue, profit, purchase_price_per_kg, sell_price_per_kg, risk_score, intake_date, created_at, spoilage_label",
+        )
         .is("deleted_at", null)
         .limit(1000),
       context.supabase
@@ -245,7 +292,9 @@ export const getAnalyticsOverview = createServerFn({ method: "GET" })
         .limit(200),
       context.supabase
         .from("sensor_readings")
-        .select("temperature_value, humidity_value, moisture_value, ml_risk_score, reading_timestamp")
+        .select(
+          "temperature_value, humidity_value, moisture_value, ml_risk_score, reading_timestamp",
+        )
         .order("reading_timestamp", { ascending: false })
         .limit(500),
     ]);
@@ -266,13 +315,20 @@ export const getAnalyticsOverview = createServerFn({ method: "GET" })
     const dispatchProfit = dispatchTotals.reduce((s, d) => s + d.profit, 0);
     const totalRevenue = b.reduce((sum, x) => sum + Number(x.revenue ?? 0), 0) + dispatchRevenue;
     const totalProfit = b.reduce((sum, x) => sum + Number(x.profit ?? 0), 0) + dispatchProfit;
-    const spoiled = b.filter((x) => x.spoilage_label && String(x.spoilage_label).toLowerCase() !== "safe").length;
-    const avgRisk = b.length ? b.reduce((sum, x) => sum + Number(x.risk_score ?? 0), 0) / b.length : 0;
+    const spoiled = b.filter(
+      (x) => x.spoilage_label && String(x.spoilage_label).toLowerCase() !== "safe",
+    ).length;
+    const avgRisk = b.length
+      ? b.reduce((sum, x) => sum + Number(x.risk_score ?? 0), 0) / b.length
+      : 0;
 
     // NOTE: byGrain revenue below intentionally stays batch-only (legacy). A silo-based
     // dispatch mixes grain from many batches/types, so a single dispatch can't be attributed
     // to one grain_type — needs a proper design decision, not a blind merge. See TODO above.
-    const byGrain = new Map<string, { grain: string; batches: number; kg: number; revenue: number }>();
+    const byGrain = new Map<
+      string,
+      { grain: string; batches: number; kg: number; revenue: number }
+    >();
     for (const x of b) {
       const key = x.grain_type ?? "unknown";
       const cur = byGrain.get(key) ?? { grain: key, batches: 0, kg: 0, revenue: 0 };
@@ -283,7 +339,8 @@ export const getAnalyticsOverview = createServerFn({ method: "GET" })
     }
 
     const byStatus = new Map<string, number>();
-    for (const x of b) byStatus.set(x.status ?? "unknown", (byStatus.get(x.status ?? "unknown") ?? 0) + 1);
+    for (const x of b)
+      byStatus.set(x.status ?? "unknown", (byStatus.get(x.status ?? "unknown") ?? 0) + 1);
 
     // 30-day intake trend
     const days: Record<string, { date: string; batches: number; kg: number }> = {};
@@ -295,15 +352,24 @@ export const getAnalyticsOverview = createServerFn({ method: "GET" })
     }
     for (const x of b) {
       const key = (x.intake_date ?? x.created_at ?? "").slice(0, 10);
-      if (days[key]) { days[key].batches += 1; days[key].kg += Number(x.quantity_kg ?? 0); }
+      if (days[key]) {
+        days[key].batches += 1;
+        days[key].kg += Number(x.quantity_kg ?? 0);
+      }
     }
 
     const totalCapacity = s.reduce((sum, x) => sum + Number(x.capacity_kg ?? 0), 0);
     const usedCapacity = s.reduce((sum, x) => sum + Number(x.current_occupancy_kg ?? 0), 0);
 
-    const avgTemp = r.length ? r.reduce((sum, x) => sum + Number(x.temperature_value ?? 0), 0) / r.length : 0;
-    const avgHum = r.length ? r.reduce((sum, x) => sum + Number(x.humidity_value ?? 0), 0) / r.length : 0;
-    const avgMoist = r.length ? r.reduce((sum, x) => sum + Number(x.moisture_value ?? 0), 0) / r.length : 0;
+    const avgTemp = r.length
+      ? r.reduce((sum, x) => sum + Number(x.temperature_value ?? 0), 0) / r.length
+      : 0;
+    const avgHum = r.length
+      ? r.reduce((sum, x) => sum + Number(x.humidity_value ?? 0), 0) / r.length
+      : 0;
+    const avgMoist = r.length
+      ? r.reduce((sum, x) => sum + Number(x.moisture_value ?? 0), 0) / r.length
+      : 0;
 
     return {
       totals: {

@@ -25,11 +25,31 @@ export const getEnvHealth = createServerFn({ method: "GET" })
     if (!roles?.some((r) => r.role === "super_admin")) throw new Error("Forbidden");
 
     const spec: Array<{ name: string; required: boolean; hint: string }> = [
-      { name: "SUPABASE_URL", required: true, hint: "Supabase project URL used by all server-side clients." },
-      { name: "SUPABASE_PUBLISHABLE_KEY", required: true, hint: "Anon/publishable key used for RLS-scoped server reads." },
-      { name: "SUPABASE_SERVICE_ROLE_KEY", required: true, hint: "Service-role key used by admin server functions (bypasses RLS)." },
-      { name: "APP_ORIGIN", required: false, hint: "Canonical site origin used in emails and redirects." },
-      { name: "STRIPE_SECRET_KEY", required: false, hint: "Needed for checkout, subscriptions and webhooks." },
+      {
+        name: "SUPABASE_URL",
+        required: true,
+        hint: "Supabase project URL used by all server-side clients.",
+      },
+      {
+        name: "SUPABASE_PUBLISHABLE_KEY",
+        required: true,
+        hint: "Anon/publishable key used for RLS-scoped server reads.",
+      },
+      {
+        name: "SUPABASE_SERVICE_ROLE_KEY",
+        required: true,
+        hint: "Service-role key used by admin server functions (bypasses RLS).",
+      },
+      {
+        name: "APP_ORIGIN",
+        required: false,
+        hint: "Canonical site origin used in emails and redirects.",
+      },
+      {
+        name: "STRIPE_SECRET_KEY",
+        required: false,
+        hint: "Needed for checkout, subscriptions and webhooks.",
+      },
     ];
 
     const checks: EnvCheck[] = spec.map((s) => ({

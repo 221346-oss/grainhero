@@ -10,19 +10,21 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
     handlers: {
       POST: async ({ request }) => {
         console.log("🔍 [STRIPE WEBHOOK] Received webhook request");
-        
+
         const secret = process.env.STRIPE_WEBHOOK_SECRET;
         console.log("🔍 [STRIPE WEBHOOK] Webhook secret configured:", !!secret);
-        
+
         if (!secret) {
           // Return 200 so Stripe does not disable the endpoint while the secret is being configured.
-          console.error("[stripe-webhook] STRIPE_WEBHOOK_SECRET not configured — acknowledging without processing");
+          console.error(
+            "[stripe-webhook] STRIPE_WEBHOOK_SECRET not configured — acknowledging without processing",
+          );
           return new Response("secret_not_configured", { status: 200 });
         }
 
         const sigHeader = request.headers.get("stripe-signature");
         console.log("🔍 [STRIPE WEBHOOK] Signature header present:", !!sigHeader);
-        
+
         if (!sigHeader) return new Response("missing signature", { status: 400 });
 
         const rawBody = await request.text();
@@ -73,9 +75,8 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
           data: { object: Record<string, unknown> };
         };
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const { stripeEventAlreadyProcessed, syncSubscriptionFromStripe } = await import(
-          "@/lib/billing-sync.server"
-        );
+        const { stripeEventAlreadyProcessed, syncSubscriptionFromStripe } =
+          await import("@/lib/billing-sync.server");
 
         // Idempotency — Stripe retries deliver the same event id.
         if (event.id) {
@@ -87,7 +88,7 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
           switch (event.type) {
             case "checkout.session.completed": {
               console.log("🔍 [STRIPE WEBHOOK] Processing checkout.session.completed");
-              
+
               const s = event.data.object as {
                 customer?: string;
                 subscription?: string;
@@ -97,10 +98,10 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                 amount_total?: number;
                 currency?: string;
               };
-              
+
               console.log("🔍 [STRIPE WEBHOOK] Session metadata:", s.metadata);
               console.log("🔍 [STRIPE WEBHOOK] Client reference ID:", s.client_reference_id);
-              
+
               let userId = s.metadata?.user_id ?? null;
               console.log("🔍 [STRIPE WEBHOOK] User ID from metadata:", userId);
               if (!userId && s.metadata?.customer_email) {
@@ -112,13 +113,21 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                 userId = (profByEmail as { id?: string } | null)?.id ?? null;
               }
               const planId = s.metadata?.plan_id ?? null;
-              const hardwareOrderId = (s.metadata?.hardware_order_id || s.client_reference_id || "").toString().trim();
+              const hardwareOrderId = (s.metadata?.hardware_order_id || s.client_reference_id || "")
+                .toString()
+                .trim();
               const buyerOrderId = s.metadata?.buyer_order_id ?? null;
               const planChangeRequestId = s.metadata?.plan_change_request_id ?? null;
 
               console.log("🔍 [STRIPE WEBHOOK] Extracted IDs:");
               console.log("  - planId:", planId);
-              console.log("  - hardwareOrderId:", `"${hardwareOrderId}"`, "(length:", hardwareOrderId.length, ")");
+              console.log(
+                "  - hardwareOrderId:",
+                `"${hardwareOrderId}"`,
+                "(length:",
+                hardwareOrderId.length,
+                ")",
+              );
               console.log("  - buyerOrderId:", buyerOrderId);
               console.log("  - planChangeRequestId:", planChangeRequestId);
 
@@ -126,18 +135,24 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
               if (planChangeRequestId) {
                 const { data: req } = await supabaseAdmin
                   .from("tenant_plan_change_requests")
-                  .select("id, tenant_admin_id, requested_plan, current_plan, direction, billing_cycle, status")
+                  .select(
+                    "id, tenant_admin_id, requested_plan, current_plan, direction, billing_cycle, status",
+                  )
                   .eq("id", planChangeRequestId)
                   .maybeSingle();
                 const r = req as {
-                  id: string; tenant_admin_id: string; requested_plan: string;
-                  current_plan: string | null; direction: string | null;
-                  billing_cycle: string | null; status: string;
+                  id: string;
+                  tenant_admin_id: string;
+                  requested_plan: string;
+                  current_plan: string | null;
+                  direction: string | null;
+                  billing_cycle: string | null;
+                  status: string;
                 } | null;
                 if (r && r.status !== "approved") {
                   const cycleDays = r.billing_cycle === "yearly" ? 365 : 30;
                   const nextEnd = new Date(Date.now() + cycleDays * 86400_000).toISOString();
-                  
+
                   // Map plan_id to plan_name for the subscriptions table
                   const planNameMap: Record<string, string> = {
                     starter: "Grain Starter",
@@ -149,8 +164,9 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                     pro: "Grain Enterprise",
                     scale: "Grain Enterprise",
                   };
-                  const planName = planNameMap[String(r.requested_plan).toLowerCase()] ?? String(r.requested_plan);
-                  
+                  const planName =
+                    planNameMap[String(r.requested_plan).toLowerCase()] ?? String(r.requested_plan);
+
                   await supabaseAdmin
                     .from("profiles")
                     .update({
@@ -159,7 +175,7 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                       current_period_end: nextEnd,
                     } as never)
                     .eq("id", r.tenant_admin_id);
-                  
+
                   // CRITICAL FIX: Also update the subscriptions table with the new plan_name
                   // so that computeMrr() can find it in plan_thresholds and count it in revenue
                   await supabaseAdmin
@@ -170,7 +186,7 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                       updated_at: new Date().toISOString(),
                     } as never)
                     .eq("admin_id", r.tenant_admin_id);
-                  
+
                   await supabaseAdmin
                     .from("tenant_plan_change_requests")
                     .update({ status: "approved", decided_at: new Date().toISOString() } as never)
@@ -178,22 +194,30 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                   try {
                     const { emitNotification, emitToSuperAdmins } = await import("@/lib/notify");
                     await emitNotification(supabaseAdmin, {
-                      recipientId: r.tenant_admin_id, tenantAdminId: r.tenant_admin_id,
-                      category: "plan", severity: "success",
+                      recipientId: r.tenant_admin_id,
+                      tenantAdminId: r.tenant_admin_id,
+                      category: "plan",
+                      severity: "success",
                       title: "Plan upgraded",
                       body: `Your plan is now ${r.requested_plan} (${r.billing_cycle ?? "monthly"}).`,
                       link: "/plan-management",
-                      entityType: "plan_change_request", entityId: r.id,
+                      entityType: "plan_change_request",
+                      entityId: r.id,
                     });
                     await emitToSuperAdmins(supabaseAdmin, {
-                      category: "plan", severity: "info",
+                      category: "plan",
+                      severity: "info",
                       title: "Plan upgrade paid",
                       body: `${r.current_plan ?? "?"} → ${r.requested_plan} (${r.billing_cycle ?? "monthly"}) confirmed via Stripe.`,
                       link: "/platform/plans",
-                      entityType: "plan_change_request", entityId: r.id,
+                      entityType: "plan_change_request",
+                      entityId: r.id,
                     });
                   } catch (e) {
-                    console.warn("[stripe-webhook] plan-change notify failed:", (e as Error).message);
+                    console.warn(
+                      "[stripe-webhook] plan-change notify failed:",
+                      (e as Error).message,
+                    );
                   }
                 }
               }
@@ -203,14 +227,18 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                 const { data: bo } = await supabaseAdmin
                   .from("buyer_orders")
                   .select("id, admin_id, status, subtotal, currency, order_number, batch_id")
-                  .eq("id", buyerOrderId).maybeSingle();
+                  .eq("id", buyerOrderId)
+                  .maybeSingle();
                 const bor = bo as Record<string, unknown> | null;
                 if (bor && bor.status !== "paid" && bor.status !== "completed") {
-                  await supabaseAdmin.from("buyer_orders").update({
-                    status: "paid",
-                    paid_at: new Date().toISOString(),
-                    stripe_payment_intent: s.payment_intent ?? null,
-                  } as never).eq("id", buyerOrderId);
+                  await supabaseAdmin
+                    .from("buyer_orders")
+                    .update({
+                      status: "paid",
+                      paid_at: new Date().toISOString(),
+                      stripe_payment_intent: s.payment_intent ?? null,
+                    } as never)
+                    .eq("id", buyerOrderId);
                   await supabaseAdmin.from("buyer_order_events").insert({
                     order_id: buyerOrderId,
                     admin_id: bor.admin_id,
@@ -279,12 +307,25 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
               // retry/redelivery for an already-fulfilled order doesn't
               // re-notify super admins about an order they already saw.
               const { data: existingHardwareOrder } = hardwareOrderId
-                ? await supabaseAdmin.from("hardware_orders" as never).select("status").eq("id", hardwareOrderId).maybeSingle()
+                ? await supabaseAdmin
+                    .from("hardware_orders" as never)
+                    .select("status")
+                    .eq("id", hardwareOrderId)
+                    .maybeSingle()
                 : { data: null };
+              // Allow through orders that are still awaiting payment: pending_payment OR approved
+              // (approved = super-admin approved the silo request, waiting for admin to pay)
+              const payableStatuses = new Set(["pending_payment", "approved"]);
               const hardwareOrderAlreadyFulfilled =
-                !!existingHardwareOrder && (existingHardwareOrder as { status?: string }).status !== "pending_payment";
+                !!existingHardwareOrder &&
+                !payableStatuses.has((existingHardwareOrder as { status?: string }).status ?? "");
 
-              if (hardwareOrderId && String(hardwareOrderId).trim() && String(hardwareOrderId).length > 10 && !hardwareOrderAlreadyFulfilled) {
+              if (
+                hardwareOrderId &&
+                String(hardwareOrderId).trim() &&
+                String(hardwareOrderId).length > 10 &&
+                !hardwareOrderAlreadyFulfilled
+              ) {
                 console.log("🔍 [STRIPE WEBHOOK] Processing hardware order:", hardwareOrderId);
 
                 try {
@@ -378,16 +419,19 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                   const gatewayKey = process.env.LOVABLE_API_KEY;
                   const resendKey = process.env.RESEND_API_KEY;
                   const supportEmail = process.env.SUPPORT_EMAIL;
-                  const configFrom = process.env.RESEND_FROM_EMAIL || "GrainHero <onboarding@resend.dev>";
-                  
+                  const configFrom =
+                    process.env.RESEND_FROM_EMAIL || "GrainHero <onboarding@resend.dev>";
+
                   if (resendKey) {
                     const { data: order } = await supabaseAdmin
                       .from("hardware_orders" as never)
-                      .select("id,plan_name,hardware_quantity,hardware_total,install_address,install_city,install_country,contact_phone,preferred_install_date,notes,admin_id")
+                      .select(
+                        "id,plan_name,hardware_quantity,hardware_total,install_address,install_city,install_country,contact_phone,preferred_install_date,notes,admin_id",
+                      )
                       .eq("id", hardwareOrderId)
                       .maybeSingle();
                     const o = (order as Record<string, unknown> | null) ?? {};
-                    
+
                     // Get the admin's email from profiles table
                     const adminId = (o.admin_id as string | undefined) ?? null;
                     let adminEmail: string | null = null;
@@ -399,20 +443,23 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                         .maybeSingle();
                       adminEmail = (admin as { email?: string } | null)?.email ?? null;
                     }
-                    
+
                     // Determine email recipients: admin gets the primary email, support gets CC if configured
                     const recipients = adminEmail ? [adminEmail] : [];
                     if (supportEmail && adminEmail !== supportEmail) {
                       recipients.push(supportEmail);
                     }
-                    
+
                     // If no admin email found but support email is configured, send to support
                     if (!adminEmail && supportEmail) {
                       recipients.push(supportEmail);
                     }
-                    
+
                     if (recipients.length === 0) {
-                      console.warn("[order email] No valid recipients found for hardware order", hardwareOrderId);
+                      console.warn(
+                        "[order email] No valid recipients found for hardware order",
+                        hardwareOrderId,
+                      );
                     } else {
                       const subject = `New install order — ${o.plan_name ?? planId ?? "GrainHero"}`;
                       const html = `<h2>New install order</h2>
@@ -428,20 +475,23 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                       const trySendWebhookEmail = async (fromAddress: string) => {
                         if (gatewayKey) {
                           try {
-                            const res = await fetch("https://connector-gateway.lovable.dev/resend/emails", {
-                              method: "POST",
-                              headers: {
-                                "Content-Type": "application/json",
-                                Authorization: `Bearer ${gatewayKey}`,
-                                "X-Connection-Api-Key": resendKey,
+                            const res = await fetch(
+                              "https://connector-gateway.lovable.dev/resend/emails",
+                              {
+                                method: "POST",
+                                headers: {
+                                  "Content-Type": "application/json",
+                                  Authorization: `Bearer ${gatewayKey}`,
+                                  "X-Connection-Api-Key": resendKey,
+                                },
+                                body: JSON.stringify({
+                                  from: fromAddress,
+                                  to: recipients,
+                                  subject,
+                                  html,
+                                }),
                               },
-                              body: JSON.stringify({
-                                from: fromAddress,
-                                to: recipients,
-                                subject,
-                                html,
-                              }),
-                            });
+                            );
                             if (res.ok) return true;
                           } catch (e) {
                             console.warn("[webhook email] gateway send failed:", e);
@@ -468,12 +518,16 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                         }
                       };
 
-                      let ok = await trySendWebhookEmail(configFrom);
+                      const ok = await trySendWebhookEmail(configFrom);
                       if (!ok && !configFrom.includes("resend.dev")) {
-                        console.log("[webhook email] Retrying with sandbox onboarding@resend.dev sender");
+                        console.log(
+                          "[webhook email] Retrying with sandbox onboarding@resend.dev sender",
+                        );
                         await trySendWebhookEmail("GrainHero <onboarding@resend.dev>");
                       }
-                      console.log(`[webhook email] Hardware order ${hardwareOrderId} email sent to: ${recipients.join(", ")}`);
+                      console.log(
+                        `[webhook email] Hardware order ${hardwareOrderId} email sent to: ${recipients.join(", ")}`,
+                      );
                     }
                   }
                 } catch (e) {
@@ -490,14 +544,19 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
               const buyerOrderId = s.metadata?.buyer_order_id ?? null;
               if (buyerOrderId) {
                 const { data: bo } = await supabaseAdmin
-                  .from("buyer_orders").select("id, admin_id, status, order_number")
-                  .eq("id", buyerOrderId).maybeSingle();
+                  .from("buyer_orders")
+                  .select("id, admin_id, status, order_number")
+                  .eq("id", buyerOrderId)
+                  .maybeSingle();
                 const bor = bo as Record<string, unknown> | null;
                 if (bor && bor.status === "pending") {
                   await supabaseAdmin.from("buyer_order_events").insert({
-                    order_id: buyerOrderId, admin_id: bor.admin_id,
-                    from_state: "pending", to_state: "pending",
-                    actor_user_id: null, note: `Payment ${event.type}`,
+                    order_id: buyerOrderId,
+                    admin_id: bor.admin_id,
+                    from_state: "pending",
+                    to_state: "pending",
+                    actor_user_id: null,
+                    note: `Payment ${event.type}`,
                   } as never);
                   try {
                     const { sendBuyerOrderEmail } = await import("@/lib/buyer-emails.server");
@@ -518,13 +577,24 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                 current_period_end?: number;
                 cancel_at_period_end?: boolean;
                 metadata?: Record<string, string>;
-                items?: { data: Array<{ price: { unit_amount: number; currency: string; recurring?: { interval: string } } }> };
+                items?: {
+                  data: Array<{
+                    price: {
+                      unit_amount: number;
+                      currency: string;
+                      recurring?: { interval: string };
+                    };
+                  }>;
+                };
               };
               const hardwareOrderId = sub.metadata?.hardware_order_id ?? null;
               if (hardwareOrderId) {
                 await supabaseAdmin
                   .from("hardware_orders" as never)
-                  .update({ stripe_subscription_id: sub.id, stripe_customer_id: sub.customer } as never)
+                  .update({
+                    stripe_subscription_id: sub.id,
+                    stripe_customer_id: sub.customer,
+                  } as never)
                   .eq("id", hardwareOrderId);
               }
               try {
@@ -572,7 +642,9 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                   customerId: (subRow as any)?.customer_id ?? sub.id,
                   plan: (subRow as any)?.plan_name ?? null,
                 });
-              } catch { /* webhook telemetry only */ }
+              } catch {
+                /* webhook telemetry only */
+              }
               break;
             }
             case "invoice.payment_failed":
@@ -610,11 +682,18 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                 // computeMrr uses) — flag anything that doesn't line up as
                 // its own event rather than burying it inside the routine
                 // billing.* log above.
-                if (event.type === "invoice.paid" && (prof as { subscription_plan?: string }).subscription_plan) {
+                if (
+                  event.type === "invoice.paid" &&
+                  (prof as { subscription_plan?: string }).subscription_plan
+                ) {
                   try {
                     const { loadPlanPricing } = await import("@/lib/plan-pricing.server");
                     const planMap = await loadPlanPricing(supabaseAdmin);
-                    const plan = planMap.get(String((prof as { subscription_plan?: string }).subscription_plan).toLowerCase());
+                    const plan = planMap.get(
+                      String(
+                        (prof as { subscription_plan?: string }).subscription_plan,
+                      ).toLowerCase(),
+                    );
                     const actual = typeof inv.amount_paid === "number" ? inv.amount_paid / 100 : 0;
                     if (plan && Math.abs(actual - plan.price_rs) > 1) {
                       await supabaseAdmin.from("security_events").insert({
@@ -630,7 +709,10 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                       });
                     }
                   } catch (e) {
-                    console.warn("[stripe-webhook] payment mismatch check failed", (e as Error).message);
+                    console.warn(
+                      "[stripe-webhook] payment mismatch check failed",
+                      (e as Error).message,
+                    );
                   }
                 }
               }
@@ -643,7 +725,9 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                     amount: inv.amount_paid,
                     currency: inv.currency,
                   });
-                } catch { /* telemetry only */ }
+                } catch {
+                  /* telemetry only */
+                }
               }
               break;
             }
@@ -660,14 +744,20 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                   .eq("stripe_payment_intent", ch.payment_intent)
                   .maybeSingle();
                 if (order) {
-                  const fully = (ch.amount_refunded ?? 0) / 100 >= Number(order.subtotal ?? 0) - 0.01;
-                  await supabaseAdmin.from("buyer_orders").update({
-                    refund_status: "succeeded",
-                    status: fully ? "refunded" : order.status,
-                  }).eq("id", order.id);
+                  const fully =
+                    (ch.amount_refunded ?? 0) / 100 >= Number(order.subtotal ?? 0) - 0.01;
+                  await supabaseAdmin
+                    .from("buyer_orders")
+                    .update({
+                      refund_status: "succeeded",
+                      status: fully ? "refunded" : order.status,
+                    })
+                    .eq("id", order.id);
                   await supabaseAdmin.from("buyer_order_events").insert({
-                    order_id: order.id, admin_id: order.admin_id,
-                    from_state: order.status, to_state: fully ? "refunded" : order.status,
+                    order_id: order.id,
+                    admin_id: order.admin_id,
+                    from_state: order.status,
+                    to_state: fully ? "refunded" : order.status,
                     note: `Stripe refund confirmed (${(ch.amount_refunded ?? 0) / 100} ${ch.currency ?? ""})`,
                   });
                 }
@@ -677,48 +767,79 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
             case "payment_intent.succeeded":
             case "payment_intent.payment_failed": {
               const pi = event.data.object as {
-                id: string; status: string; amount?: number; currency?: string;
+                id: string;
+                status: string;
+                amount?: number;
+                currency?: string;
                 metadata?: Record<string, string>;
               };
               const orderId = pi.metadata?.order_id;
               if (orderId && pi.metadata?.channel === "mobile") {
-                await supabaseAdmin.from("buyer_payment_intents")
-                  .update({ status: pi.status, raw: pi as never, updated_at: new Date().toISOString() } as never)
+                await supabaseAdmin
+                  .from("buyer_payment_intents")
+                  .update({
+                    status: pi.status,
+                    raw: pi as never,
+                    updated_at: new Date().toISOString(),
+                  } as never)
                   .eq("stripe_pi_id", pi.id);
-                const { data: order } = await supabaseAdmin.from("buyer_orders")
-                  .select("id, admin_id, buyer_id, status, order_number").eq("id", orderId).maybeSingle();
-                const o = order as { id: string; admin_id: string; buyer_id: string; status: string; order_number: string } | null;
+                const { data: order } = await supabaseAdmin
+                  .from("buyer_orders")
+                  .select("id, admin_id, buyer_id, status, order_number")
+                  .eq("id", orderId)
+                  .maybeSingle();
+                const o = order as {
+                  id: string;
+                  admin_id: string;
+                  buyer_id: string;
+                  status: string;
+                  order_number: string;
+                } | null;
                 if (o) {
                   if (pi.status === "succeeded" && o.status !== "paid") {
-                    await supabaseAdmin.from("buyer_orders")
+                    await supabaseAdmin
+                      .from("buyer_orders")
                       .update({ status: "paid", paid_at: new Date().toISOString() } as never)
                       .eq("id", orderId);
                     await supabaseAdmin.from("buyer_order_events").insert({
-                      order_id: orderId, admin_id: o.admin_id,
-                      from_state: o.status ?? null, to_state: "paid",
+                      order_id: orderId,
+                      admin_id: o.admin_id,
+                      from_state: o.status ?? null,
+                      to_state: "paid",
                       note: "Mobile PaymentIntent succeeded",
                     } as never);
                     await supabaseAdmin.from("notifications").insert({
-                      admin_id: o.admin_id, user_id: o.buyer_id,
+                      admin_id: o.admin_id,
+                      user_id: o.buyer_id,
                       title: "Payment received",
                       message: `Order ${o.order_number} is paid.`,
-                      type: "success", category: "commerce",
-                      entity_type: "buyer_order", entity_id: orderId,
+                      type: "success",
+                      category: "commerce",
+                      entity_type: "buyer_order",
+                      entity_id: orderId,
                       action_url: `/orders/${orderId}`,
                     } as never);
-                  } else if (pi.status === "requires_payment_method" || event.type === "payment_intent.payment_failed") {
+                  } else if (
+                    pi.status === "requires_payment_method" ||
+                    event.type === "payment_intent.payment_failed"
+                  ) {
                     await supabaseAdmin.from("buyer_order_events").insert({
-                      order_id: orderId, admin_id: o.admin_id,
-                      from_state: o.status, to_state: o.status,
+                      order_id: orderId,
+                      admin_id: o.admin_id,
+                      from_state: o.status,
+                      to_state: o.status,
                       note: "Mobile PaymentIntent failed",
                       meta: { pi_status: pi.status } as never,
                     } as never);
                     await supabaseAdmin.from("notifications").insert({
-                      admin_id: o.admin_id, user_id: o.buyer_id,
+                      admin_id: o.admin_id,
+                      user_id: o.buyer_id,
                       title: "Payment failed",
                       message: `Payment for order ${o.order_number} did not go through.`,
-                      type: "error", category: "commerce",
-                      entity_type: "buyer_order", entity_id: orderId,
+                      type: "error",
+                      category: "commerce",
+                      entity_type: "buyer_order",
+                      entity_id: orderId,
                       action_url: `/orders/${orderId}`,
                     } as never);
                   }

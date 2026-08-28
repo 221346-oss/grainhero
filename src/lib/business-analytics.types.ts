@@ -43,12 +43,7 @@ export interface RevenueAnalytics {
 
 // ── Hardware Orders ───────────────────────────────────────────────────────────
 
-export type HardwareOrderStatus =
-  | "pending"
-  | "confirmed"
-  | "shipped"
-  | "delivered"
-  | "cancelled";
+export type HardwareOrderStatus = "pending" | "confirmed" | "shipped" | "delivered" | "cancelled";
 
 export interface HardwareOrderItem {
   id: string;
@@ -155,9 +150,7 @@ const isoDateString = z
   .regex(/^\d{4}-\d{2}-\d{2}(T[\d:.]+Z?)?$/, "Must be a valid ISO 8601 date");
 
 /** ISO 4217 currency code validator (3 uppercase letters) */
-const currencyCode = z
-  .string()
-  .regex(/^[A-Z]{3}$/, "Must be a valid ISO 4217 currency code");
+const currencyCode = z.string().regex(/^[A-Z]{3}$/, "Must be a valid ISO 4217 currency code");
 
 /** Export filename — alphanumeric, dashes, underscores only; no path traversal */
 const safeFilename = z
@@ -165,7 +158,7 @@ const safeFilename = z
   .min(1)
   .max(200)
   .regex(
-    /^[a-zA-Z0-9_\-]+$/,
+    /^[a-zA-Z0-9_-]+$/,
     "Filename must contain only letters, numbers, dashes, and underscores",
   );
 
@@ -230,10 +223,7 @@ export const HardwareOrderItemSchema = z.object({
   id: z.string().uuid(),
   admin_id: z.string().uuid(),
   plan_name: z.string().min(1),
-  hardware_quantity: z
-    .number()
-    .int()
-    .positive("Hardware quantity must be a positive integer"),
+  hardware_quantity: z.number().int().positive("Hardware quantity must be a positive integer"),
   hardware_total: z.number().nonnegative("Hardware total must be non-negative"),
   currency: currencyCode,
   status: z.enum(["pending", "confirmed", "shipped", "delivered", "cancelled"]),
@@ -326,9 +316,7 @@ export function isTicketPriority(value: unknown): value is TicketPriority {
 }
 
 /** Type guard: checks if a string is a valid HardwareOrderStatus */
-export function isHardwareOrderStatus(
-  value: unknown,
-): value is HardwareOrderStatus {
+export function isHardwareOrderStatus(value: unknown): value is HardwareOrderStatus {
   return (
     value === "pending" ||
     value === "confirmed" ||

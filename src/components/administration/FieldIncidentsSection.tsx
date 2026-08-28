@@ -4,7 +4,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { reportFieldIncident, listFieldIncidents, closeFieldIncident } from "@/lib/field-incidents.functions";
+import {
+  reportFieldIncident,
+  listFieldIncidents,
+  closeFieldIncident,
+} from "@/lib/field-incidents.functions";
 import { listTeamMembers } from "@/lib/team-settings-insurance.functions";
 import { getMyRole } from "@/lib/roles.functions";
 import { Badge } from "@/components/ui/badge";
@@ -12,8 +16,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { LocalizedContent, translateText, useI18n } from "@/i18n";
 
 const emptyForm = { title: "", description: "", recipientId: "" };
 
@@ -22,7 +40,14 @@ const ROUTING_COPY: Record<string, string> = {
   admin: "Auto-routed to the Super Admin.",
 };
 
-function ReportFieldIncidentDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
+function ReportFieldIncidentDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+}) {
+  const { locale } = useI18n();
   const qc = useQueryClient();
   const listMembersFn = useServerFn(listTeamMembers);
   const roleFn = useServerFn(getMyRole);
@@ -40,70 +65,126 @@ function ReportFieldIncidentDialog({ open, onOpenChange }: { open: boolean; onOp
   const isAdmin = myRole === "admin";
   const canAssign = isTechnician || isAdmin;
 
-  const membersQ = useQuery({ queryKey: ["team-members"], queryFn: () => listMembersFn() as Promise<any[]>, enabled: open && canAssign });
+  const membersQ = useQuery({
+    queryKey: ["team-members"],
+    queryFn: () => listMembersFn() as Promise<any[]>,
+    enabled: open && canAssign,
+  });
   // Technician picks exactly one Manager. Admin can pick a Manager or Technician.
-  const recipients = (membersQ.data ?? []).filter((m: any) => m.id !== myId && (m.role === "manager" || (isAdmin && m.role === "technician")));
+  const recipients = (membersQ.data ?? []).filter(
+    (m: any) => m.id !== myId && (m.role === "manager" || (isAdmin && m.role === "technician")),
+  );
 
   const mutation = useMutation({
     mutationFn: () =>
-      reportFn({ data: {
-        title: form.title.trim(),
-        description: form.description.trim(),
-        recipientId: (canAssign && form.recipientId && form.recipientId !== "none") ? form.recipientId : null,
-      } }),
+      reportFn({
+        data: {
+          title: form.title.trim(),
+          description: form.description.trim(),
+          recipientId:
+            canAssign && form.recipientId && form.recipientId !== "none" ? form.recipientId : null,
+        },
+      }),
     onSuccess: () => {
-      toast.success("Incident reported");
+      toast.success(translateText("Incident reported", locale));
       qc.invalidateQueries({ queryKey: ["field-incidents"] });
       setForm(emptyForm);
       onOpenChange(false);
     },
-    onError: (e: Error) => toast.error(e.message || "Could not report incident"),
+    onError: (e: Error) =>
+      toast.error(translateText(e.message || "Could not report incident", locale)),
   });
 
-  const canSubmit = form.title.trim().length >= 3 && form.description.trim().length >= 3
-    && (!isTechnician || (form.recipientId && form.recipientId !== "none")) && !!myRole;
+  const canSubmit =
+    form.title.trim().length >= 3 &&
+    form.description.trim().length >= 3 &&
+    (!isTechnician || (form.recipientId && form.recipientId !== "none")) &&
+    !!myRole;
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { onOpenChange(o); if (!o) setForm(emptyForm); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        onOpenChange(o);
+        if (!o) setForm(emptyForm);
+      }}
+    >
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Report a field incident</DialogTitle>
-          <DialogDescription>Only you and the recipient can see this — it isn&apos;t broadcast to the rest of your team.</DialogDescription>
+          <DialogDescription>
+            Only you and the recipient can see this — it isn&apos;t broadcast to the rest of your
+            team.
+          </DialogDescription>
         </DialogHeader>
-        <form className="grid gap-3 py-1" onSubmit={(e) => { e.preventDefault(); mutation.mutate(); }}>
+        <form
+          className="grid gap-3 py-1"
+          onSubmit={(e) => {
+            e.preventDefault();
+            mutation.mutate();
+          }}
+        >
           <div className="grid gap-1.5">
             <Label>Title</Label>
-            <Input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} required minLength={3} />
+            <Input
+              value={form.title}
+              onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+              required
+              minLength={3}
+            />
           </div>
           {canAssign ? (
             <div className="grid gap-1.5">
               <Label>Send to {isAdmin ? "(optional)" : "(manager)"}</Label>
-              <Select value={form.recipientId} onValueChange={(v) => setForm((f) => ({ ...f, recipientId: v }))}>
-                <SelectTrigger><SelectValue placeholder={isAdmin ? "Pick a team member or leave default" : "Pick a manager"} /></SelectTrigger>
+              <Select
+                value={form.recipientId}
+                onValueChange={(v) => setForm((f) => ({ ...f, recipientId: v }))}
+              >
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder={isAdmin ? "Pick a team member or leave default" : "Pick a manager"}
+                  />
+                </SelectTrigger>
                 <SelectContent>
                   {isAdmin && <SelectItem value="none">Route to Super Admin (Default)</SelectItem>}
                   {recipients.map((m: any) => (
-                    <SelectItem key={m.id} value={m.id}>{m.name ?? m.email} ({m.role})</SelectItem>
+                    <SelectItem key={m.id} value={m.id}>
+                      {m.name ?? m.email} ({m.role})
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {isTechnician && <p className="text-[11px] text-muted-foreground">Not acknowledged in 30 minutes? It&apos;s auto-reassigned to your Admin.</p>}
+              {isTechnician && (
+                <p className="text-[11px] text-muted-foreground">
+                  Not acknowledged in 30 minutes? It&apos;s auto-reassigned to your Admin.
+                </p>
+              )}
             </div>
           ) : myRole ? (
-            <p className="text-xs text-muted-foreground rounded-md bg-muted/40 px-3 py-2">{ROUTING_COPY[myRole] ?? "Auto-routed."}</p>
+            <p className="text-xs text-muted-foreground rounded-md bg-muted/40 px-3 py-2">
+              {ROUTING_COPY[myRole] ?? "Auto-routed."}
+            </p>
           ) : null}
           <div className="grid gap-1.5">
             <Label>What happened?</Label>
-            <Textarea rows={4} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} required minLength={3} />
+            <Textarea
+              rows={4}
+              value={form.description}
+              onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+              required
+              minLength={3}
+            />
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button
-              type="submit"
-              disabled={mutation.isPending || !canSubmit}
-              className="gap-2"
-            >
-              {mutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Flag className="h-4 w-4" />}
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={mutation.isPending || !canSubmit} className="gap-2">
+              {mutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Flag className="h-4 w-4" />
+              )}
               {mutation.isPending ? "Sending…" : "Send"}
             </Button>
           </DialogFooter>
@@ -114,6 +195,7 @@ function ReportFieldIncidentDialog({ open, onOpenChange }: { open: boolean; onOp
 }
 
 export function FieldIncidentsSection() {
+  const { locale } = useI18n();
   const listFn = useServerFn(listFieldIncidents);
   const closeFn = useServerFn(closeFieldIncident);
   const qc = useQueryClient();
@@ -124,14 +206,20 @@ export function FieldIncidentsSection() {
 
   const closeMut = useMutation({
     mutationFn: (id: string) => closeFn({ data: { id } }),
-    onSuccess: () => { toast.success("Marked closed"); qc.invalidateQueries({ queryKey: ["field-incidents"] }); },
-    onError: (e: Error) => toast.error(e.message || "Could not close"),
+    onSuccess: () => {
+      toast.success(translateText("Marked closed", locale));
+      qc.invalidateQueries({ queryKey: ["field-incidents"] });
+    },
+    onError: (e: Error) => toast.error(translateText(e.message || "Could not close", locale)),
   });
 
   return (
-    <div className="space-y-4">
+    <LocalizedContent>
+      <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-xs text-muted-foreground">Auto-routed up your chain of command — private between you and the recipient.</p>
+        <p className="text-xs text-muted-foreground">
+          Auto-routed up your chain of command — private between you and the recipient.
+        </p>
         <Button size="sm" className="gap-1.5" onClick={() => setDlgOpen(true)}>
           <Flag className="w-3.5 h-3.5" /> Report incident
         </Button>
@@ -154,10 +242,20 @@ export function FieldIncidentsSection() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="text-sm font-semibold text-foreground">{i.title}</h3>
-                    <Badge className={i.status === "closed" ? "bg-emerald-500/20 text-emerald-600" : "bg-amber-500/20 text-amber-600"}>
+                    <Badge
+                      className={
+                        i.status === "closed"
+                          ? "bg-emerald-500/20 text-emerald-600"
+                          : "bg-amber-500/20 text-amber-600"
+                      }
+                    >
                       {i.status === "closed" ? "closed" : "open"}
                     </Badge>
-                    {i.wasReassigned && <Badge variant="outline" className="text-[10px]">reassigned</Badge>}
+                    {i.wasReassigned && (
+                      <Badge variant="outline" className="text-[10px]">
+                        reassigned
+                      </Badge>
+                    )}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">{i.message}</p>
                   <div className="text-xs text-muted-foreground mt-2 flex flex-wrap gap-x-3">
@@ -168,7 +266,9 @@ export function FieldIncidentsSection() {
                   {i.status !== "closed" && (i.isMine || i.isForMe) && (
                     <div className="mt-3">
                       <Button
-                        size="sm" variant="outline" className="h-7 text-xs gap-1"
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-xs gap-1"
                         disabled={closeMut.isPending}
                         onClick={() => closeMut.mutate(i.id)}
                       >
@@ -184,6 +284,7 @@ export function FieldIncidentsSection() {
       )}
 
       <ReportFieldIncidentDialog open={dlgOpen} onOpenChange={setDlgOpen} />
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }

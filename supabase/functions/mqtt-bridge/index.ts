@@ -39,15 +39,15 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
-const MQTT_BROKER_URL     = Deno.env.get("MQTT_BROKER_URL") ?? "";
-const MQTT_USERNAME       = Deno.env.get("MQTT_USERNAME") ?? "";
-const MQTT_PASSWORD       = Deno.env.get("MQTT_PASSWORD") ?? "";
+const MQTT_BROKER_URL = Deno.env.get("MQTT_BROKER_URL") ?? "";
+const MQTT_USERNAME = Deno.env.get("MQTT_USERNAME") ?? "";
+const MQTT_PASSWORD = Deno.env.get("MQTT_PASSWORD") ?? "";
 const SUPABASE_INGEST_URL = Deno.env.get("SUPABASE_INGEST_URL") ?? "";
 const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_KEY") ?? "";
 
-const TELEMETRY_TOPIC     = "grainhero/telemetry/#";
+const TELEMETRY_TOPIC = "grainhero/telemetry/#";
 const COLLECTION_WINDOW_MS = 25_000; // collect for 25 seconds then exit
-const MAX_RETRIES          = 3;
+const MAX_RETRIES = 3;
 
 // ─── HTTP helper with retry ───────────────────────────────────────────────────
 
@@ -57,7 +57,7 @@ async function postToIngest(payload: Record<string, unknown>, attempt = 1): Prom
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${SUPABASE_SERVICE_KEY}`,
+        Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
       },
       body: JSON.stringify(payload),
     });
@@ -70,7 +70,9 @@ async function postToIngest(payload: Record<string, unknown>, attempt = 1): Prom
   } catch (err) {
     if (attempt <= MAX_RETRIES) {
       const delay = 1000 * attempt;
-      console.warn(`[mqtt-bridge] ⚠️ POST failed (attempt ${attempt}/${MAX_RETRIES}): ${(err as Error).message}. Retry in ${delay}ms`);
+      console.warn(
+        `[mqtt-bridge] ⚠️ POST failed (attempt ${attempt}/${MAX_RETRIES}): ${(err as Error).message}. Retry in ${delay}ms`,
+      );
       await new Promise((r) => setTimeout(r, delay));
       return postToIngest(payload, attempt + 1);
     }
@@ -89,7 +91,10 @@ serve(async (req) => {
   // Validate env
   if (!MQTT_BROKER_URL) {
     return new Response(
-      JSON.stringify({ error: "MQTT_BROKER_URL not configured. Set it via: supabase secrets set MQTT_BROKER_URL=mqtt://..." }),
+      JSON.stringify({
+        error:
+          "MQTT_BROKER_URL not configured. Set it via: supabase secrets set MQTT_BROKER_URL=mqtt://...",
+      }),
       { status: 500, headers: { "Content-Type": "application/json" } },
     );
   }
@@ -114,9 +119,7 @@ serve(async (req) => {
    */
 
   const messages: Array<{ topic: string; payload: Record<string, unknown> }> = [];
-  let wsUrl = MQTT_BROKER_URL
-    .replace("mqtt://", "ws://")
-    .replace("mqtts://", "wss://");
+  let wsUrl = MQTT_BROKER_URL.replace("mqtt://", "ws://").replace("mqtts://", "wss://");
 
   // Default MQTT-over-WebSocket port if not specified
   if (!wsUrl.includes(":8083") && !wsUrl.includes(":443")) {
@@ -142,9 +145,7 @@ serve(async (req) => {
       };
 
       ws.onmessage = async (event) => {
-        const data = event.data instanceof ArrayBuffer
-          ? new Uint8Array(event.data)
-          : event.data;
+        const data = event.data instanceof ArrayBuffer ? new Uint8Array(event.data) : event.data;
 
         if (!connected) {
           // First message should be CONNACK
@@ -174,7 +175,11 @@ serve(async (req) => {
       ws.onerror = (e) => {
         console.error("[mqtt-bridge] WebSocket error", e);
         clearTimeout(timeout);
-        reject(new Error("WebSocket connection failed. Check MQTT_BROKER_URL and ensure broker supports WebSocket on port 8083."));
+        reject(
+          new Error(
+            "WebSocket connection failed. Check MQTT_BROKER_URL and ensure broker supports WebSocket on port 8083.",
+          ),
+        );
       };
 
       ws.onclose = () => {
@@ -184,7 +189,10 @@ serve(async (req) => {
     });
   } catch (err) {
     return new Response(
-      JSON.stringify({ error: (err as Error).message, hint: "Ensure broker supports MQTT-over-WebSocket. See function comments." }),
+      JSON.stringify({
+        error: (err as Error).message,
+        hint: "Ensure broker supports MQTT-over-WebSocket. See function comments.",
+      }),
       { status: 502, headers: { "Content-Type": "application/json" } },
     );
   } finally {
@@ -193,10 +201,9 @@ serve(async (req) => {
     }
   }
 
-  return new Response(
-    JSON.stringify({ ok: true, messages_forwarded: messages.length }),
-    { headers: { "Content-Type": "application/json" } },
-  );
+  return new Response(JSON.stringify({ ok: true, messages_forwarded: messages.length }), {
+    headers: { "Content-Type": "application/json" },
+  });
 });
 
 // ─── Minimal MQTT v3.1.1 packet builders ─────────────────────────────────────
@@ -223,8 +230,13 @@ function buildMQTTConnect(clientId: string, username: string, password: string):
   const passwordBytes = password ? encodeString(password) : new Uint8Array(0);
 
   const payload = new Uint8Array([
-    ...protocolName, ...protocolLevel, ...connectFlags, ...keepAlive,
-    ...clientIdBytes, ...usernameBytes, ...passwordBytes,
+    ...protocolName,
+    ...protocolLevel,
+    ...connectFlags,
+    ...keepAlive,
+    ...clientIdBytes,
+    ...usernameBytes,
+    ...passwordBytes,
   ]);
 
   const remainingLength = payload.length;
@@ -248,7 +260,8 @@ function parseMQTTPublish(data: Uint8Array): { topic: string; payload: string } 
 
   let pos = 1;
   // Decode remaining length (variable encoding)
-  let multiplier = 1, remainingLen = 0;
+  let multiplier = 1,
+    remainingLen = 0;
   while (true) {
     if (pos >= data.length) return null;
     const byte = data[pos++];

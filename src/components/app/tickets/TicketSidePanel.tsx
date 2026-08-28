@@ -18,16 +18,12 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { TicketCardForm } from "./TicketCardForm";
 import { TicketDetailSheet } from "./TicketDetailSheet";
 import { TicketDiscussion } from "./TicketDiscussion";
 import { Plus, Hash } from "lucide-react";
+import { useTranslation } from "@/i18n";
 
 const PRIORITY_DOT: Record<string, string> = {
   low: "bg-slate-400",
@@ -41,11 +37,11 @@ const PRIORITY_BADGE: Record<string, string> = {
   high: "bg-red-50 text-red-700 border-red-200",
 };
 
-function timeAgo(iso: string) {
+function timeAgo(iso: string, t: (key: string, params?: Record<string, string | number>) => string) {
   const d = (Date.now() - new Date(iso).getTime()) / 1000;
-  if (d < 60) return "just now";
-  if (d < 3600) return `${Math.floor(d / 60)}m ago`;
-  if (d < 86400) return `${Math.floor(d / 3600)}h ago`;
+  if (d < 60) return t("ticketsPanel.justNow");
+  if (d < 3600) return t("ticketsPanel.minutesAgo", { count: Math.floor(d / 60) });
+  if (d < 86400) return t("ticketsPanel.hoursAgo", { count: Math.floor(d / 3600) });
   return new Date(iso).toLocaleDateString();
 }
 
@@ -71,6 +67,7 @@ export function TicketSidePanel({
   const [discuss, setDiscuss] = useState<TicketRow | null>(null);
   const [currentUserId, setCurrentUserId] = useState("");
   const qc = useQueryClient();
+  const { t } = useTranslation();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setCurrentUserId(data.user?.id ?? ""));
@@ -78,7 +75,11 @@ export function TicketSidePanel({
 
   const listFn = useServerFn(listTickets);
 
-  const { data, isLoading, error: ticketsError } = useQuery({
+  const {
+    data,
+    isLoading,
+    error: ticketsError,
+  } = useQuery({
     queryKey: ["field-tickets", "open"],
     queryFn: () => listFn({ data: { status: "open" } }),
     staleTime: 30_000,
@@ -138,7 +139,7 @@ export function TicketSidePanel({
           )}
         >
           <Hash className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline text-xs font-medium">tickets</span>
+          <span className="hidden sm:inline text-xs font-medium">{t("ticketsPanel.tickets")}</span>
           {openCount > 0 && (
             <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-slate-700 text-white text-[10px] font-bold grid place-items-center">
               {openCount > 99 ? "99+" : openCount}
@@ -149,22 +150,22 @@ export function TicketSidePanel({
 
       {/* ── Main panel ── */}
       <Sheet open={panelOpen} onOpenChange={setPanelOpen}>
-        <SheetContent side="right" className="w-full sm:max-w-md p-0 flex flex-col overflow-hidden">
+        <SheetContent side="right" className="gh-english-surface w-full sm:max-w-md p-0 flex flex-col overflow-hidden">
           <SheetHeader className="px-5 pt-5 pb-3 border-b border-slate-200 shrink-0">
             <SheetTitle className="flex items-center gap-1.5 text-base font-bold text-slate-900 pr-8">
               <Hash className="h-4 w-4 text-slate-500" />
-              tickets
+              {t("ticketsPanel.tickets")}
               {openCount > 0 && (
                 <Badge variant="outline" className="ml-1 text-[10px] font-semibold">
-                  {openCount} open
+                  {openCount} {t("ticketsPanel.open")}
                 </Badge>
               )}
             </SheetTitle>
             <div className="flex items-center justify-between mt-2">
               <p className="text-xs text-slate-500">
                 {isSuperAdmin
-                  ? "Open incident tickets from all admins"
-                  : "Your open incident tickets"}
+                  ? t("ticketsPanel.openIncidentTicketsAll")
+                  : t("ticketsPanel.openIncidentTickets")}
               </p>
               {!isSuperAdmin && (
                 <Button
@@ -174,7 +175,7 @@ export function TicketSidePanel({
                   onClick={() => setShowForm((v) => !v)}
                 >
                   <Plus className="h-3 w-3" />
-                  {showForm ? "Cancel" : "New"}
+                  {showForm ? t("ticketsPanel.cancel") : t("ticketsPanel.new")}
                 </Button>
               )}
             </div>
@@ -184,41 +185,44 @@ export function TicketSidePanel({
             {/* Inline form (admin only) */}
             {showForm && !isSuperAdmin && (
               <div className="px-4 pt-4 pb-2 border-b border-slate-100 shrink-0">
-                <TicketCardForm
-                  onSuccess={handleFormSuccess}
-                  onCancel={() => setShowForm(false)}
-                />
+                <TicketCardForm onSuccess={handleFormSuccess} onCancel={() => setShowForm(false)} />
               </div>
             )}
 
             <ScrollArea className="flex-1">
               <div className="px-4 py-3 space-y-2">
                 {isLoading ? (
-                  <div className="py-10 text-center text-sm text-slate-400">Loading…</div>
+                  <div className="py-10 text-center text-sm text-slate-400">{t("ticketsPanel.loading")}</div>
                 ) : ticketsError ? (
                   <div className="py-6 text-center space-y-1">
-                    <p className="text-sm font-medium text-red-600">Failed to load tickets</p>
+                    <p className="text-sm font-medium text-red-600">{t("ticketsPanel.failedToLoad")}</p>
                     <p className="text-xs text-slate-500 px-4">{(ticketsError as Error).message}</p>
                   </div>
                 ) : tickets.length === 0 ? (
                   <div className="py-10 text-center space-y-2">
-                    <p className="text-sm text-slate-500">No open tickets</p>
+                    <p className="text-sm text-slate-500">{t("ticketsPanel.noOpenTickets")}</p>
                     {!isSuperAdmin && (
-                      <Button size="sm" variant="outline" onClick={() => setShowForm(true)} className="text-xs">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setShowForm(true)}
+                        className="text-xs"
+                      >
                         <Plus className="h-3.5 w-3.5 mr-1" />
-                        Report an incident
+                        {t("ticketsPanel.reportAnIncident")}
                       </Button>
                     )}
                   </div>
                 ) : (
-                  tickets.map((t) => (
+                  tickets.map((ticket) => (
                     <TicketListItem
-                      key={t.id}
-                      ticket={t}
+                      key={ticket.id}
+                      ticket={ticket}
                       isSuperAdmin={isSuperAdmin}
-                      unread={unreadFor(t.id)}
-                      onClick={() => setSelected(t)}
-                      onDiscuss={() => openDiscuss(t)}
+                      unread={unreadFor(ticket.id)}
+                      onClick={() => setSelected(ticket)}
+                      onDiscuss={() => openDiscuss(ticket)}
+                      t={t}
                     />
                   ))
                 )}
@@ -231,7 +235,7 @@ export function TicketSidePanel({
                   href="/platform/reporting?tab=tickets"
                   className="text-[11px] font-medium text-emerald-700 hover:text-emerald-800 block text-center"
                 >
-                  View all closed tickets in Reporting →
+                  {t("ticketsPanel.viewAllClosed")}
                 </a>
               </div>
             )}
@@ -239,11 +243,7 @@ export function TicketSidePanel({
         </SheetContent>
       </Sheet>
 
-      <TicketDetailSheet
-        ticket={selected}
-        open={!!selected}
-        onClose={handleDetailClose}
-      />
+      <TicketDetailSheet ticket={selected} open={!!selected} onClose={handleDetailClose} />
 
       {/* Discussion popup from panel */}
       {discuss && (
@@ -253,7 +253,7 @@ export function TicketSidePanel({
           open={!!discuss}
           onClose={() => setDiscuss(null)}
           currentUserId={currentUserId}
-          currentUserLabel={isSuperAdmin ? "Super Admin" : "Admin"}
+          currentUserLabel={isSuperAdmin ? t("ticketsPanel.superAdmin") : t("ticketsPanel.admin")}
         />
       )}
     </>
@@ -268,12 +268,14 @@ function TicketListItem({
   unread,
   onClick,
   onDiscuss,
+  t,
 }: {
   ticket: TicketRow;
   isSuperAdmin: boolean;
   unread: number;
   onClick: () => void;
   onDiscuss: () => void;
+  t: (key: string, params?: Record<string, string | number>) => string;
 }) {
   return (
     <div className="rounded-lg border border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 transition-colors p-3 space-y-1.5">
@@ -302,12 +304,12 @@ function TicketListItem({
           <span className="mx-1 opacity-50">·</span>
           <span className="capitalize">{ticket.reporter_role}</span>
         </span>
-        <span className="ml-auto shrink-0 whitespace-nowrap">{timeAgo(ticket.created_at)}</span>
+        <span className="ml-auto shrink-0 whitespace-nowrap">{timeAgo(ticket.created_at, t)}</span>
       </div>
 
       {isSuperAdmin && (ticket.admin_name || ticket.admin_email) && (
         <p className="text-[11px] text-slate-400 truncate">
-          From: {ticket.admin_name ?? ticket.admin_email}
+          {t("ticketsPanel.from")} {ticket.admin_name ?? ticket.admin_email}
         </p>
       )}
 
@@ -318,7 +320,7 @@ function TicketListItem({
           onClick={onClick}
           className="text-[10px] text-emerald-700 font-medium hover:underline"
         >
-          View details →
+          {t("ticketsPanel.viewDetails")}
         </button>
         {/* Discuss button with unread badge */}
         <button
@@ -326,7 +328,7 @@ function TicketListItem({
           onClick={onDiscuss}
           className="relative text-[10px] font-semibold text-slate-500 border border-slate-200 rounded px-2 py-0.5 hover:border-emerald-400 hover:text-emerald-700 transition"
         >
-          Discuss
+          {t("ticketsPanel.discuss")}
           {unread > 0 && (
             <span className="absolute -top-1.5 -right-1.5 min-w-[14px] h-[14px] rounded-full bg-red-500 text-white text-[9px] font-bold grid place-items-center px-0.5 leading-none ring-1 ring-white">
               {unread > 9 ? "9+" : unread}

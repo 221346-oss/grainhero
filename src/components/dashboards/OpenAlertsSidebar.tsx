@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { getOpenAlerts } from "@/lib/open-alerts.functions";
 import { X, Clock, User, AlertTriangle, AlertCircle, Shield, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LocalizedContent } from "@/i18n";
 
 interface OpenAlertsSidebarProps {
   isOpen: boolean;
@@ -22,12 +23,12 @@ export function OpenAlertsSidebar({ isOpen, onClose }: OpenAlertsSidebarProps) {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", { 
+    return date.toLocaleDateString("en-US", {
       year: "numeric",
-      month: "short", 
+      month: "short",
       day: "numeric",
       hour: "2-digit",
-      minute: "2-digit"
+      minute: "2-digit",
     });
   };
 
@@ -36,7 +37,7 @@ export function OpenAlertsSidebar({ isOpen, onClose }: OpenAlertsSidebarProps) {
       critical: "bg-red-100 text-red-800 border-red-200",
       high: "bg-orange-100 text-orange-800 border-orange-200",
       medium: "bg-yellow-100 text-yellow-800 border-yellow-200",
-      low: "bg-blue-100 text-blue-800 border-blue-200"
+      low: "bg-blue-100 text-blue-800 border-blue-200",
     };
     return colors[priority] || "bg-gray-100 text-gray-800 border-gray-200";
   };
@@ -45,23 +46,28 @@ export function OpenAlertsSidebar({ isOpen, onClose }: OpenAlertsSidebarProps) {
     const colors: Record<string, string> = {
       pending: "bg-red-100 text-red-800",
       acknowledged: "bg-yellow-100 text-yellow-800",
-      escalated: "bg-orange-100 text-orange-800"
+      escalated: "bg-orange-100 text-orange-800",
     };
     return colors[status] || "bg-gray-100 text-gray-800";
   };
 
   const getPriorityIcon = (priority: string) => {
     switch (priority) {
-      case 'critical': return <AlertTriangle className="h-4 w-4 text-red-500" />;
-      case 'high': return <AlertCircle className="h-4 w-4 text-orange-500" />;
-      case 'medium': return <Shield className="h-4 w-4 text-yellow-500" />;
-      case 'low': return <Zap className="h-4 w-4 text-blue-500" />;
-      default: return <AlertCircle className="h-4 w-4 text-gray-400" />;
+      case "critical":
+        return <AlertTriangle className="h-4 w-4 text-red-500" />;
+      case "high":
+        return <AlertCircle className="h-4 w-4 text-orange-500" />;
+      case "medium":
+        return <Shield className="h-4 w-4 text-yellow-500" />;
+      case "low":
+        return <Zap className="h-4 w-4 text-blue-500" />;
+      default:
+        return <AlertCircle className="h-4 w-4 text-gray-400" />;
     }
   };
 
   const formatStatus = (status: string) => {
-    return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    return status.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
   };
 
   const formatPriority = (priority: string) => {
@@ -69,29 +75,31 @@ export function OpenAlertsSidebar({ isOpen, onClose }: OpenAlertsSidebarProps) {
   };
 
   return (
-    <>
+    <LocalizedContent>
+      <>
       {/* Backdrop - only render when open (no shadow) */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-40 transition-opacity duration-300 ease-in-out"
           onClick={onClose}
           style={{
-            opacity: isOpen ? 1 : 0
+            opacity: isOpen ? 1 : 0,
           }}
         />
       )}
-      
+
       {/* Sliding Container - always render for smooth animation */}
-      <div className={`
+      <div
+        className={`
         fixed top-0 right-0 h-full w-[500px] bg-white dark:bg-gray-900 z-50 
         transform transition-all duration-300 ease-in-out border-l
         border-gray-200 dark:border-gray-700
-        ${isOpen ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}
+        ${isOpen ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"}
       `}
-      style={{
-        visibility: isOpen ? 'visible' : 'hidden',
-        transitionDelay: isOpen ? '0ms' : '300ms'
-      }}
+        style={{
+          visibility: isOpen ? "visible" : "hidden",
+          transitionDelay: isOpen ? "0ms" : "300ms",
+        }}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b bg-red-50 dark:bg-red-900/20">
@@ -104,12 +112,7 @@ export function OpenAlertsSidebar({ isOpen, onClose }: OpenAlertsSidebarProps) {
               {alerts.length} active alerts requiring attention
             </p>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            className="h-8 w-8 p-0"
-          >
+          <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0">
             <X className="h-4 w-4" />
           </Button>
         </div>
@@ -134,9 +137,13 @@ export function OpenAlertsSidebar({ isOpen, onClose }: OpenAlertsSidebarProps) {
                 <div
                   key={alert.id}
                   className={`bg-white dark:bg-gray-800 rounded-lg p-4 border-l-4 ${
-                    alert.priority === 'critical' ? 'border-l-red-500' : 
-                    alert.priority === 'high' ? 'border-l-orange-500' :
-                    alert.priority === 'medium' ? 'border-l-yellow-500' : 'border-l-blue-500'
+                    alert.priority === "critical"
+                      ? "border-l-red-500"
+                      : alert.priority === "high"
+                        ? "border-l-orange-500"
+                        : alert.priority === "medium"
+                          ? "border-l-yellow-500"
+                          : "border-l-blue-500"
                   } border border-gray-200 dark:border-gray-700`}
                 >
                   {/* Alert Header */}
@@ -147,10 +154,14 @@ export function OpenAlertsSidebar({ isOpen, onClose }: OpenAlertsSidebarProps) {
                         {alert.title || alert.alert_id}
                       </h3>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(alert.priority)}`}>
+                        <span
+                          className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(alert.priority)}`}
+                        >
                           {formatPriority(alert.priority)}
                         </span>
-                        <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(alert.status)}`}>
+                        <span
+                          className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(alert.status)}`}
+                        >
                           {formatStatus(alert.status)}
                         </span>
                       </div>
@@ -172,7 +183,7 @@ export function OpenAlertsSidebar({ isOpen, onClose }: OpenAlertsSidebarProps) {
                       <div>
                         <p className="text-gray-600 dark:text-gray-400">Type</p>
                         <p className="font-medium text-gray-900 dark:text-gray-100">
-                          {alert.alert_type || 'General'}
+                          {alert.alert_type || "General"}
                         </p>
                       </div>
                     </div>
@@ -242,6 +253,7 @@ export function OpenAlertsSidebar({ isOpen, onClose }: OpenAlertsSidebarProps) {
           )}
         </div>
       </div>
-    </>
+      </>
+    </LocalizedContent>
   );
 }

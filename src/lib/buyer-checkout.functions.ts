@@ -6,25 +6,33 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { stripeFetch, stripeForm } from "@/lib/stripe-api.server";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 export const startBuyerCheckout = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d) => z.object({
-    orderId: z.string().uuid(),
-    origin: z.string().url(),
-  }).parse(d))
+  .validator((d) =>
+    z
+      .object({
+        orderId: z.string().uuid(),
+        origin: z.string().url(),
+      })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
-    const { data: account } = await sb.from("buyer_accounts")
-      .select("id").eq("user_id", context.userId).maybeSingle();
+    const { data: account } = await sb
+      .from("buyer_accounts")
+      .select("id")
+      .eq("user_id", context.userId)
+      .maybeSingle();
     if (!account) throw new Error("Buyer account required");
 
-    const { data: order } = await sb.from("buyer_orders")
+    const { data: order } = await sb
+      .from("buyer_orders")
       .select("id, order_number, subtotal, currency, status, quantity_kg, grain_listings(title)")
-      .eq("id", data.orderId).eq("buyer_account_id", (account as Row).id).maybeSingle();
+      .eq("id", data.orderId)
+      .eq("buyer_account_id", (account as Row).id)
+      .maybeSingle();
     const o = order as Row | null;
     if (!o) throw new Error("Order not found");
     if (o.status !== "pending" && o.status !== "confirmed" && o.status !== "invoiced") {
@@ -51,10 +59,13 @@ export const startBuyerCheckout = createServerFn({ method: "POST" })
     });
     const session = await stripeFetch("/checkout/sessions", body);
 
-    await sb.from("buyer_orders").update({
-      stripe_session_id: session.id,
-      checkout_url: session.url,
-    } as never).eq("id", o.id);
+    await sb
+      .from("buyer_orders")
+      .update({
+        stripe_session_id: session.id,
+        checkout_url: session.url,
+      } as never)
+      .eq("id", o.id);
 
     return { url: session.url as string };
   });

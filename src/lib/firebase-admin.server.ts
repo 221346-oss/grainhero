@@ -39,14 +39,10 @@ export async function fetchFirebaseNode<T = unknown>(path: string): Promise<T | 
 // legacy path. This preserves full backward compatibility with deployed ESP32
 // firmware that still writes to /sensor_data/{id}/latest without requiring any
 // firmware update.
-export async function fetchLivePayload(
-  deviceId: string,
-): Promise<Record<string, unknown> | null> {
+export async function fetchLivePayload(deviceId: string): Promise<Record<string, unknown> | null> {
   // Try GH2 path: /devices/{deviceId}/live
   try {
-    const primary = await fetchFirebaseNode<Record<string, unknown>>(
-      `devices/${deviceId}/live`,
-    );
+    const primary = await fetchFirebaseNode<Record<string, unknown>>(`devices/${deviceId}/live`);
     if (primary && typeof primary === "object" && Object.keys(primary).length > 0) {
       return primary;
     }
@@ -77,16 +73,12 @@ export async function fetchLivePayload(
 //
 // Returns a map keyed by device_id with a unified live payload.
 // Devices present in both trees are merged (GH2 path wins on conflicts).
-export async function fetchAllDevicePayloads(): Promise<
-  Record<string, Record<string, unknown>>
-> {
+export async function fetchAllDevicePayloads(): Promise<Record<string, Record<string, unknown>>> {
   const result: Record<string, Record<string, unknown>> = {};
 
   // 1. Read GH1 legacy tree: /sensor_data
   try {
-    const legacy = await fetchFirebaseDevices<{ latest?: Record<string, unknown> }>(
-      "sensor_data",
-    );
+    const legacy = await fetchFirebaseDevices<{ latest?: Record<string, unknown> }>("sensor_data");
     for (const [deviceId, node] of Object.entries(legacy)) {
       const payload = node?.latest ?? (node as Record<string, unknown>);
       if (payload && typeof payload === "object" && Object.keys(payload).length > 0) {
@@ -99,9 +91,7 @@ export async function fetchAllDevicePayloads(): Promise<
 
   // 2. Read GH2 tree: /devices — overlays on top of legacy (GH2 wins)
   try {
-    const modern = await fetchFirebaseDevices<{ live?: Record<string, unknown> }>(
-      "devices",
-    );
+    const modern = await fetchFirebaseDevices<{ live?: Record<string, unknown> }>("devices");
     for (const [deviceId, node] of Object.entries(modern)) {
       const payload = node?.live;
       if (payload && typeof payload === "object" && Object.keys(payload).length > 0) {

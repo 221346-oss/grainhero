@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -10,27 +10,63 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { listBuyers, upsertBuyer, deleteBuyer } from "@/lib/operations.functions";
 import { ExportMenu } from "@/components/app/ExportMenu";
 import type { ExportColumn } from "@/lib/csv-pdf-export";
+import { useTranslation } from "@/i18n";
 
-const BUYER_TYPES = ["local_mill","exporter","wholesaler","retailer","government"] as const;
-const GRAIN_TYPES = ["Wheat","Rice","Maize","Barley","Sorghum"] as const;
-type BuyerType = typeof BUYER_TYPES[number];
-type GrainType = typeof GRAIN_TYPES[number];
+const BUYER_TYPES = ["local_mill", "exporter", "wholesaler", "retailer", "government"] as const;
+const GRAIN_TYPES = ["Wheat", "Rice", "Maize", "Barley", "Sorghum"] as const;
+type BuyerType = (typeof BUYER_TYPES)[number];
+type GrainType = (typeof GRAIN_TYPES)[number];
 type Status = "active" | "paused" | "inactive";
 
 type Buyer = {
-  id: string; name: string; contact_name: string;
-  contact_email: string | null; contact_phone: string | null; contact_designation: string | null;
-  company_name: string | null; buyer_type: BuyerType | null; status: Status | null;
-  address: string | null; city: string | null; state: string | null; country: string | null;
-  preferred_grain_types: GrainType[] | null; preferred_payment_terms: string | null;
-  rating: number | null; tags: string[] | null; notes: string | null;
-  last_order_at: string | null; last_interaction_at: string | null;
+  id: string;
+  name: string;
+  contact_name: string;
+  contact_email: string | null;
+  contact_phone: string | null;
+  contact_designation: string | null;
+  company_name: string | null;
+  buyer_type: BuyerType | null;
+  status: Status | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  country: string | null;
+  preferred_grain_types: GrainType[] | null;
+  preferred_payment_terms: string | null;
+  rating: number | null;
+  tags: string[] | null;
+  notes: string | null;
+  last_order_at: string | null;
+  last_interaction_at: string | null;
   created_at: string | null;
 };
 
@@ -46,22 +82,43 @@ const buyerExportColumns: ExportColumn<Buyer>[] = [
 
 type Form = {
   id?: string;
-  name: string; contact_name: string; contact_email: string; contact_phone: string;
-  contact_designation: string; company_name: string;
-  buyer_type: BuyerType | ""; status: Status;
-  address: string; city: string; state: string; country: string;
+  name: string;
+  contact_name: string;
+  contact_email: string;
+  contact_phone: string;
+  contact_designation: string;
+  company_name: string;
+  buyer_type: BuyerType | "";
+  status: Status;
+  address: string;
+  city: string;
+  state: string;
+  country: string;
   preferred_grain_types: GrainType[];
   preferred_payment_terms: string;
-  rating: string; tags: string; notes: string;
+  rating: string;
+  tags: string;
+  notes: string;
 };
 
 const empty: Form = {
-  name: "", contact_name: "", contact_email: "", contact_phone: "",
-  contact_designation: "", company_name: "",
-  buyer_type: "", status: "active",
-  address: "", city: "", state: "", country: "",
-  preferred_grain_types: [], preferred_payment_terms: "",
-  rating: "", tags: "", notes: "",
+  name: "",
+  contact_name: "",
+  contact_email: "",
+  contact_phone: "",
+  contact_designation: "",
+  company_name: "",
+  buyer_type: "",
+  status: "active",
+  address: "",
+  city: "",
+  state: "",
+  country: "",
+  preferred_grain_types: [],
+  preferred_payment_terms: "",
+  rating: "",
+  tags: "",
+  notes: "",
 };
 
 const STATUS_CLASS: Record<Status, string> = {
@@ -71,6 +128,7 @@ const STATUS_CLASS: Record<Status, string> = {
 };
 
 export function BuyersSection() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const listFn = useServerFn(listBuyers);
   const upsertFn = useServerFn(upsertBuyer);
@@ -124,28 +182,33 @@ export function BuyersSection() {
           preferred_grain_types: fs.preferred_grain_types.length ? fs.preferred_grain_types : null,
           preferred_payment_terms: fs.preferred_payment_terms.trim() || null,
           rating: fs.rating ? Number(fs.rating) : null,
-          tags: fs.tags ? fs.tags.split(",").map(t => t.trim()).filter(Boolean) : null,
+          tags: fs.tags
+            ? fs.tags
+                .split(",")
+                .map((t) => t.trim())
+                .filter(Boolean)
+            : null,
           notes: fs.notes.trim() || null,
         },
       }),
     onSuccess: () => {
-      toast.success(form.id ? "Buyer updated" : "Buyer created");
+      toast.success(form.id ? t("buyers.updated") : t("buyers.created"));
       qc.invalidateQueries({ queryKey: ["buyers"] });
       qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
       setEditOpen(false);
       setForm(empty);
     },
-    onError: (e: Error) => toast.error(e.message || "Save failed"),
+    onError: (e: Error) => toast.error(e.message || t("common.error")),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteFn({ data: { id } }),
     onSuccess: () => {
-      toast.success("Buyer deleted");
+      toast.success(t("buyers.deleted"));
       qc.invalidateQueries({ queryKey: ["buyers"] });
       setDeleteId(null);
     },
-    onError: (e: Error) => toast.error(e.message || "Delete failed"),
+    onError: (e: Error) => toast.error(e.message || t("common.error")),
   });
 
   function openCreate() {
@@ -179,177 +242,337 @@ export function BuyersSection() {
   return (
     <div className="space-y-3">
       <div className="flex flex-col sm:flex-row gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search buyer, contact…" className="pl-9 h-9" />
-          </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full sm:w-40 h-9"><SelectValue placeholder="Status" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All statuses</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="paused">Paused</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
-            </SelectContent>
-          </Select>
-          <ExportMenu filename="buyers" title="Buyers" rows={rows} columns={buyerExportColumns} />
-          <Button onClick={openCreate} className="gap-2 h-9 whitespace-nowrap"><Plus className="w-4 h-4" /> New buyer</Button>
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <Input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder={t("buyers.searchPlaceholder")}
+            className="pl-9 h-9"
+          />
         </div>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-full sm:w-40 h-9">
+            <SelectValue placeholder={t("common.status")} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t("buyers.allStatuses")}</SelectItem>
+            <SelectItem value="active">{t("buyers.active")}</SelectItem>
+            <SelectItem value="paused">{t("buyers.paused")}</SelectItem>
+            <SelectItem value="inactive">{t("buyers.inactive")}</SelectItem>
+          </SelectContent>
+        </Select>
+        <ExportMenu filename="buyers" title={t("buyers.title")} rows={rows} columns={buyerExportColumns} />
+        <Button onClick={openCreate} className="gap-2 h-9 whitespace-nowrap">
+          <Plus className="w-4 h-4" /> {t("buyers.newBuyer")}
+        </Button>
+      </div>
 
-        {isLoading ? (
-          <div className="flex items-center justify-center py-8 text-muted-foreground">
-            <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading…
-          </div>
-        ) : rows.length === 0 ? (
-          <div className="py-8 text-center text-muted-foreground">
-            <p className="text-sm">No buyers yet.</p>
-          </div>
-        ) : (
-          // Fixed height container for 4 entries with vertical scroll
-          <div className="h-[280px] overflow-y-auto overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/50 border-b border-border">
-                <tr>
-                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Buyer</th>
-                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Contact</th>
-                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Company</th>
-                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Type</th>
-                  <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Status</th>
-                  <th className="px-3 py-2 text-center font-semibold text-muted-foreground text-xs uppercase tracking-wider">Actions</th>
+      {isLoading ? (
+        <div className="flex items-center justify-center py-8 text-muted-foreground">
+          <Loader2 className="w-5 h-5 animate-spin mr-2" /> {t("common.loading")}
+        </div>
+      ) : rows.length === 0 ? (
+        <div className="py-8 text-center text-muted-foreground">
+          <p className="text-sm">{t("buyers.noBuyers")}</p>
+        </div>
+      ) : (
+        // Fixed height container for 4 entries with vertical scroll
+        <div className="h-[280px] overflow-y-auto overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50 border-b border-border">
+              <tr>
+                <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+                  {t("buyers.buyer")}
+                </th>
+                <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+                  {t("buyers.contact")}
+                </th>
+                <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+                  {t("buyers.company")}
+                </th>
+                <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+                  {t("buyers.type")}
+                </th>
+                <th className="px-3 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+                  {t("common.status")}
+                </th>
+                <th className="px-3 py-2 text-center font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+                  {t("common.actions")}
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {rows.map((b) => (
+                <tr
+                  key={b.id}
+                  className="hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5 transition-colors"
+                >
+                  <td className="px-3 py-2 text-foreground font-medium">{b.name}</td>
+                  <td className="px-3 py-2 text-muted-foreground text-xs">
+                    {b.contact_phone ?? b.contact_email ?? "—"}
+                  </td>
+                  <td className="px-3 py-2 text-muted-foreground text-xs">
+                    {b.company_name ?? "—"}
+                  </td>
+                  <td className="px-3 py-2 text-muted-foreground text-xs">
+                    {b.buyer_type ? t(`buyers.${b.buyer_type}`) : "—"}
+                  </td>
+                  <td className="px-3 py-2">
+                    <StatusBadgeCustom value={b.status} />
+                  </td>
+                  <td className="px-3 py-2">
+                    <div className="flex items-center justify-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setSelected(b);
+                          setViewOpen(true);
+                        }}
+                        className="h-7 w-7 p-0"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openEdit(b)}
+                        className="h-7 w-7 p-0"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setDeleteId(b.id)}
+                        className="h-7 w-7 p-0 text-rose-600 hover:text-rose-700"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {rows.map((b) => (
-                  <tr key={b.id} className="hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5 transition-colors">
-                    <td className="px-3 py-2 text-foreground font-medium">{b.name}</td>
-                    <td className="px-3 py-2 text-muted-foreground text-xs">{b.contact_phone ?? b.contact_email ?? "—"}</td>
-                    <td className="px-3 py-2 text-muted-foreground text-xs">{b.company_name ?? "—"}</td>
-                    <td className="px-3 py-2 text-muted-foreground text-xs">{b.buyer_type?.replace("_", " ") ?? "—"}</td>
-                    <td className="px-3 py-2"><StatusBadgeCustom value={b.status} /></td>
-                    <td className="px-3 py-2">
-                      <div className="flex items-center justify-center gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => { setSelected(b); setViewOpen(true); }} className="h-7 w-7 p-0"><Eye className="w-3.5 h-3.5" /></Button>
-                        <Button variant="ghost" size="sm" onClick={() => openEdit(b)} className="h-7 w-7 p-0"><Edit2 className="w-3.5 h-3.5" /></Button>
-                        <Button variant="ghost" size="sm" onClick={() => setDeleteId(b.id)} className="h-7 w-7 p-0 text-rose-600 hover:text-rose-700"><Trash2 className="w-3.5 h-3.5" /></Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Edit Dialog */}
-      <Dialog open={editOpen} onOpenChange={(o) => { setEditOpen(o); if (!o) setForm(empty); }}>
+      <Dialog
+        open={editOpen}
+        onOpenChange={(o) => {
+          setEditOpen(o);
+          if (!o) setForm(empty);
+        }}
+      >
         <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{form.id ? "Edit buyer" : "New buyer"}</DialogTitle>
+          <DialogTitle>{form.id ? t("buyers.editBuyer") : t("buyers.newBuyer")}</DialogTitle>
             <DialogDescription>
-              {form.id ? "Update buyer details." : "Add a new grain buyer."}
+              {form.id ? t("buyers.updateBuyerDetails") : t("buyers.addBuyerDescription")}
             </DialogDescription>
           </DialogHeader>
-          <form id="buyer-form" className="grid gap-4 py-2" onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(form); }}>
+          <form
+            id="buyer-form"
+            className="grid gap-4 py-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              saveMutation.mutate(form);
+            }}
+          >
             <div className="grid sm:grid-cols-2 gap-3">
               <div>
-                <Label>Name *</Label>
-                <Input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                <Label>{t("common.name")} *</Label>
+                <Input
+                  required
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                />
               </div>
               <div>
-                <Label>Contact name *</Label>
-                <Input required value={form.contact_name} onChange={(e) => setForm({ ...form, contact_name: e.target.value })} />
+                <Label>{t("buyers.contactName")} *</Label>
+                <Input
+                  required
+                  value={form.contact_name}
+                  onChange={(e) => setForm({ ...form, contact_name: e.target.value })}
+                />
               </div>
               <div>
-                <Label>Company</Label>
-                <Input value={form.company_name} onChange={(e) => setForm({ ...form, company_name: e.target.value })} />
+                <Label>{t("buyers.company")}</Label>
+                <Input
+                  value={form.company_name}
+                  onChange={(e) => setForm({ ...form, company_name: e.target.value })}
+                />
               </div>
               <div>
-                <Label>Designation</Label>
-                <Input value={form.contact_designation} onChange={(e) => setForm({ ...form, contact_designation: e.target.value })} />
+                <Label>{t("buyers.designation")}</Label>
+                <Input
+                  value={form.contact_designation}
+                  onChange={(e) => setForm({ ...form, contact_designation: e.target.value })}
+                />
               </div>
               <div>
-                <Label>Phone</Label>
-                <Input type="tel" value={form.contact_phone} onChange={(e) => setForm({ ...form, contact_phone: e.target.value })} />
+                <Label>{t("common.phone")}</Label>
+                <Input
+                  type="tel"
+                  value={form.contact_phone}
+                  onChange={(e) => setForm({ ...form, contact_phone: e.target.value })}
+                />
               </div>
               <div>
-                <Label>Email</Label>
-                <Input type="email" value={form.contact_email} onChange={(e) => setForm({ ...form, contact_email: e.target.value })} />
+                <Label>{t("common.email")}</Label>
+                <Input
+                  type="email"
+                  value={form.contact_email}
+                  onChange={(e) => setForm({ ...form, contact_email: e.target.value })}
+                />
               </div>
               <div>
-                <Label>Type</Label>
-                <Select value={form.buyer_type} onValueChange={(v) => setForm({ ...form, buyer_type: v as BuyerType })}>
-                  <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
+                <Label>{t("buyers.type")}</Label>
+                <Select
+                  value={form.buyer_type}
+                  onValueChange={(v) => setForm({ ...form, buyer_type: v as BuyerType })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("buyers.selectType")} />
+                  </SelectTrigger>
                   <SelectContent>
-                    {BUYER_TYPES.map(t => <SelectItem key={t} value={t}>{t.replace("_", " ")}</SelectItem>)}
+                    {BUYER_TYPES.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {t(`buyers.${type}`)}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>Status</Label>
-                <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as Status })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                <Label>{t("common.status")}</Label>
+                <Select
+                  value={form.status}
+                  onValueChange={(v) => setForm({ ...form, status: v as Status })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="paused">Paused</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectItem value="active">{t("buyers.active")}</SelectItem>
+                    <SelectItem value="paused">{t("buyers.paused")}</SelectItem>
+                    <SelectItem value="inactive">{t("buyers.inactive")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>Address</Label>
-                <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
+                <Label>{t("common.address")}</Label>
+                <Input
+                  value={form.address}
+                  onChange={(e) => setForm({ ...form, address: e.target.value })}
+                />
               </div>
               <div>
-                <Label>City</Label>
-                <Input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
+                <Label>{t("buyers.city")}</Label>
+                <Input
+                  value={form.city}
+                  onChange={(e) => setForm({ ...form, city: e.target.value })}
+                />
               </div>
               <div>
-                <Label>State</Label>
-                <Input value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} />
+                <Label>{t("buyers.state")}</Label>
+                <Input
+                  value={form.state}
+                  onChange={(e) => setForm({ ...form, state: e.target.value })}
+                />
               </div>
               <div>
-                <Label>Country</Label>
-                <Input value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} />
+                <Label>{t("buyers.country")}</Label>
+                <Input
+                  value={form.country}
+                  onChange={(e) => setForm({ ...form, country: e.target.value })}
+                />
               </div>
               <div className="sm:col-span-2">
-                <Label>Preferred grains</Label>
+                <Label>{t("buyers.preferredGrains")}</Label>
                 <div className="flex flex-wrap gap-2">
-                  {GRAIN_TYPES.map(g => (
+                  {GRAIN_TYPES.map((g) => (
                     <label key={g} className="flex items-center gap-2 cursor-pointer">
-                      <input type="checkbox" checked={form.preferred_grain_types.includes(g)} onChange={(e) => {
-                        if (e.target.checked) {
-                          setForm({ ...form, preferred_grain_types: [...form.preferred_grain_types, g] });
-                        } else {
-                          setForm({ ...form, preferred_grain_types: form.preferred_grain_types.filter(x => x !== g) });
-                        }
-                      }} />
-                      <span className="text-sm">{g}</span>
+                      <input
+                        type="checkbox"
+                        checked={form.preferred_grain_types.includes(g)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setForm({
+                              ...form,
+                              preferred_grain_types: [...form.preferred_grain_types, g],
+                            });
+                          } else {
+                            setForm({
+                              ...form,
+                              preferred_grain_types: form.preferred_grain_types.filter(
+                                (x) => x !== g,
+                              ),
+                            });
+                          }
+                        }}
+                      />
+                      <span className="text-sm">{t(`business.${g.toLowerCase()}`)}</span>
                     </label>
                   ))}
                 </div>
               </div>
               <div className="sm:col-span-2">
-                <Label>Payment terms</Label>
-                <Input value={form.preferred_payment_terms} onChange={(e) => setForm({ ...form, preferred_payment_terms: e.target.value })} placeholder="e.g. Net 30" />
+                <Label>{t("buyers.paymentTerms")}</Label>
+                <Input
+                  value={form.preferred_payment_terms}
+                  onChange={(e) => setForm({ ...form, preferred_payment_terms: e.target.value })}
+                  placeholder={t("buyers.paymentTermsPlaceholder")}
+                />
               </div>
               <div>
-                <Label>Rating (0-5)</Label>
-                <Input type="number" min={0} max={5} step={0.5} value={form.rating} onChange={(e) => setForm({ ...form, rating: e.target.value })} />
+                <Label>{t("buyers.rating")}</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={5}
+                  step={0.5}
+                  value={form.rating}
+                  onChange={(e) => setForm({ ...form, rating: e.target.value })}
+                />
               </div>
               <div>
-                <Label>Tags</Label>
-                <Input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="Comma-separated" />
+                <Label>{t("buyers.tags")}</Label>
+                <Input
+                  value={form.tags}
+                  onChange={(e) => setForm({ ...form, tags: e.target.value })}
+                  placeholder={t("buyers.tagsPlaceholder")}
+                />
               </div>
               <div className="sm:col-span-2">
-                <Label>Notes</Label>
-                <Textarea rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+                <Label>{t("buyers.notes")}</Label>
+                <Textarea
+                  rows={2}
+                  value={form.notes}
+                  onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                />
               </div>
             </div>
           </form>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
-            <Button form="buyer-form" type="submit" disabled={saveMutation.isPending || !form.name || !form.contact_name}>
-              {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : form.id ? "Save changes" : "Create buyer"}
+            <Button variant="outline" onClick={() => setEditOpen(false)}>
+              {t("common.cancel")}
+            </Button>
+            <Button
+              form="buyer-form"
+              type="submit"
+              disabled={saveMutation.isPending || !form.name || !form.contact_name}
+            >
+              {saveMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : form.id ? (
+                t("common.save")
+              ) : (
+                t("buyers.create")
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -365,21 +588,43 @@ export function BuyersSection() {
                 <DialogDescription>{selected.contact_name}</DialogDescription>
               </DialogHeader>
               <div className="space-y-2 text-sm py-2">
-                {selected.company_name && <Row label="Company">{selected.company_name}</Row>}
-                {selected.contact_phone && <Row label="Phone">{selected.contact_phone}</Row>}
-                {selected.contact_email && <Row label="Email">{selected.contact_email}</Row>}
-                {selected.buyer_type && <Row label="Type">{selected.buyer_type.replace("_", " ")}</Row>}
-                <Row label="Status"><StatusBadgeCustom value={selected.status} /></Row>
-                {selected.address && <Row label="Address">{selected.address}</Row>}
-                {selected.city && <Row label="City">{selected.city}</Row>}
-                {selected.preferred_grain_types && selected.preferred_grain_types.length > 0 && (
-                  <Row label="Prefers">{selected.preferred_grain_types.join(", ")}</Row>
+                {selected.company_name && <Row label={t("buyers.company")}>{selected.company_name}</Row>}
+                {selected.contact_phone && <Row label={t("common.phone")}>{selected.contact_phone}</Row>}
+                {selected.contact_email && <Row label={t("common.email")}>{selected.contact_email}</Row>}
+                {selected.buyer_type && (
+                  <Row label={t("buyers.type")}>{t(`buyers.${selected.buyer_type}`)}</Row>
                 )}
-                {selected.rating != null && <Row label="Rating">{selected.rating.toFixed(1)}/5</Row>}
-                {selected.notes && <Row label="Notes"><span className="whitespace-pre-wrap">{selected.notes}</span></Row>}
+                <Row label={t("common.status")}>
+                  <StatusBadgeCustom value={selected.status} />
+                </Row>
+                {selected.address && <Row label={t("common.address")}>{selected.address}</Row>}
+                {selected.city && <Row label={t("buyers.city")}>{selected.city}</Row>}
+                {selected.preferred_grain_types && selected.preferred_grain_types.length > 0 && (
+                  <Row label={t("buyers.preferredGrains")}>
+                    {selected.preferred_grain_types.map((grain) => t(`business.${grain.toLowerCase()}`)).join(", ")}
+                  </Row>
+                )}
+                {selected.rating != null && (
+                  <Row label={t("buyers.rating")}>{selected.rating.toFixed(1)}/5</Row>
+                )}
+                {selected.notes && (
+                  <Row label={t("buyers.notes")}>
+                    <span className="whitespace-pre-wrap">{selected.notes}</span>
+                  </Row>
+                )}
               </div>
               <DialogFooter>
-                <Button variant="outline" size="sm" onClick={() => { setViewOpen(false); openEdit(selected); }} className="gap-1"><Edit2 className="w-4 h-4" /> Edit</Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setViewOpen(false);
+                    openEdit(selected);
+                  }}
+                  className="gap-1"
+                >
+                  <Edit2 className="w-4 h-4" /> {t("common.edit")}
+                </Button>
               </DialogFooter>
             </>
           )}
@@ -390,15 +635,18 @@ export function BuyersSection() {
       <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete buyer?</AlertDialogTitle>
+            <AlertDialogTitle>{t("buyers.deleteBuyer")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This permanently removes the buyer record.
+              {t("buyers.deleteBuyerDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => deleteId && deleteMutation.mutate(deleteId)} className="bg-rose-600 hover:bg-rose-700">
-              {deleteMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Delete"}
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteId && deleteMutation.mutate(deleteId)}
+              className="bg-rose-600 hover:bg-rose-700"
+            >
+              {deleteMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : t("common.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -417,7 +665,8 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 }
 
 function StatusBadgeCustom({ value }: { value: string | null | undefined }) {
+  const { t } = useTranslation();
   if (!value) return <span className="text-slate-400">—</span>;
   const cls = STATUS_CLASS[value as Status] ?? "bg-slate-100 text-slate-700";
-  return <Badge className={`${cls} hover:${cls}`}>{value}</Badge>;
+  return <Badge className={`${cls} hover:${cls}`}>{t(`buyers.${value}`)}</Badge>;
 }

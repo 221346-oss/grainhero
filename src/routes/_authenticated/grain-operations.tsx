@@ -5,15 +5,26 @@ import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState, type ComponentType } from "react";
+import { useTranslation } from "@/i18n";
 import { BatchesSection } from "@/components/grain-operations/BatchesSection";
 import { SilosSection } from "@/components/grain-operations/SilosSection";
-
+import { WarehousesSection } from "@/components/grain-operations/WarehousesSection";
 import { BuyersSection } from "@/components/grain-operations/BuyersSection";
 import { PendingApprovalsSection } from "@/components/grain-operations/PendingApprovalsSection";
-import { Package, Warehouse, Users, TrendingUp, TrendingDown, Maximize2, Truck } from "lucide-react";
+import {
+  Package,
+  Warehouse,
+  Building2,
+  Users,
+  TrendingUp,
+  TrendingDown,
+  Maximize2,
+  Truck,
+} from "lucide-react";
 import {
   listGrainBatches,
   listSilos,
+  listWarehouses,
   listBuyers,
 } from "@/lib/operations.functions";
 import { getMyRole } from "@/lib/roles.functions";
@@ -23,9 +34,9 @@ import { BATCH_TONE } from "@/components/grain-operations/SiloOperationsCard";
 import { listPendingApprovalBatches } from "@/lib/batch-qc.functions";
 import { KpiChartHubSkeleton } from "@/components/app/skeletons";
 
-type Tab = "batches" | "silos" | "buyers";
+type Tab = "batches" | "silos" | "warehouses" | "buyers";
 
-const TAB_KEYS: Tab[] = ["batches", "silos", "buyers"];
+const TAB_KEYS: Tab[] = ["batches", "silos", "warehouses", "buyers"];
 
 // `status` is genuinely optional here (not just runtime-undefined) so every
 // other page that links to /grain-operations?tab=... without a status
@@ -36,9 +47,16 @@ export const Route = createFileRoute("/_authenticated/grain-operations")({
   head: () => ({
     meta: [
       { title: "Grain Operations — Grain Hero" },
-      { name: "description", content: "Grain Operations workspace in the Grain Hero platform — private, sign-in required." },
+      {
+        name: "description",
+        content:
+          "Grain Operations workspace in the Grain Hero platform — private, sign-in required.",
+      },
       { property: "og:title", content: "Grain Operations — Grain Hero" },
-      { property: "og:description", content: "Grain Operations workspace in the Grain Hero platform." },
+      {
+        property: "og:description",
+        content: "Grain Operations workspace in the Grain Hero platform.",
+      },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
@@ -51,16 +69,20 @@ export const Route = createFileRoute("/_authenticated/grain-operations")({
   component: GrainOperationsWorkspace,
 });
 
-const ALL_TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
-  { key: "batches", label: "Grain Batches", icon: Package },
-  { key: "silos", label: "Silos", icon: Warehouse },
-  { key: "buyers", label: "Buyers", icon: Users },
-];
+
 
 function GrainOperationsWorkspace() {
   const { tab, status } = Route.useSearch();
   const navigate = Route.useNavigate();
   const [activeTab, setActiveTabState] = useState<Tab>(tab);
+  const { t } = useTranslation();
+
+  const ALL_TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
+    { key: "batches", label: t("grainOps.grainBatches"), icon: Package },
+    { key: "silos", label: t("grainOps.silos"), icon: Warehouse },
+    { key: "warehouses", label: t("grainOps.warehouses"), icon: Building2 },
+    { key: "buyers", label: t("grainOps.buyers"), icon: Users },
+  ];
 
   // Fetch user role to determine which tabs to show
   const roleFn = useServerFn(getMyRole);
@@ -84,6 +106,7 @@ function GrainOperationsWorkspace() {
 
   const listBatchesFn = useServerFn(listGrainBatches);
   const listSilosFn = useServerFn(listSilos);
+  const listWarehousesFn = useServerFn(listWarehouses);
   const listBuyersFn = useServerFn(listBuyers);
   const listPendingApprovalsFn = useServerFn(listPendingApprovalBatches);
 
@@ -92,14 +115,19 @@ function GrainOperationsWorkspace() {
     queryFn: () => listBatchesFn(),
   });
   const { data: silos } = useQuery({ queryKey: ["silos"], queryFn: () => listSilosFn() });
+  const { data: warehouses } = useQuery({
+    queryKey: ["warehouses"],
+    queryFn: () => listWarehousesFn(),
+  });
   const { data: buyers } = useQuery({ queryKey: ["buyers"], queryFn: () => listBuyersFn() });
 
-  // Fetch pending approvals for admins
+  // Fetch pending approvals for admins and managers/technicians with QC responsibilities
   const isAdmin = ["super_admin", "admin"].includes(userRole);
+  const isManagerOrTech = ["manager", "technician"].includes(userRole);
   const { data: pendingApprovals } = useQuery({
     queryKey: ["pending-approval-batches"],
     queryFn: () => listPendingApprovalsFn(),
-    enabled: isAdmin,
+    enabled: isAdmin || isManagerOrTech,
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
@@ -108,6 +136,7 @@ function GrainOperationsWorkspace() {
   const counts = {
     batches: Array.isArray(batches) ? batches.length : 0,
     silos: Array.isArray(silos) ? silos.length : 0,
+    warehouses: Array.isArray(warehouses) ? warehouses.length : 0,
     buyers: Array.isArray(buyers) ? buyers.length : 0,
   };
 
@@ -128,7 +157,12 @@ function GrainOperationsWorkspace() {
   // used on each silo card, just aggregated for the bird's-eye view.
   const statusPieData: StatusSlice[] = (() => {
     const byTone: Record<FlowGroup["tone"], number> = {
-      yellow: 0, orange: 0, green: 0, blue: 0, purple: 0, red: 0,
+      yellow: 0,
+      orange: 0,
+      green: 0,
+      blue: 0,
+      purple: 0,
+      red: 0,
     };
     if (Array.isArray(batches)) {
       for (const b of batches as Array<{ status?: string | null }>) {
@@ -165,15 +199,15 @@ function GrainOperationsWorkspace() {
         {/* Header */}
         <div>
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-foreground">
-            <VariableFontText text="Grain Operations" base={650} hover={900} staggerMs={20} />
+            <VariableFontText text={t("grainOps.title")} base={650} hover={900} staggerMs={20} />
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Manage batches, silos, and buyers from one workspace
+            {t("grainOps.subtitle")}
           </p>
         </div>
 
-        {/* Pending Approvals Section - Only for Admins */}
-        {isAdmin && pendingCount > 0 && (
+        {/* Pending Approvals Section - For Admins, Managers, and Technicians */}
+        {(isAdmin || isManagerOrTech) && pendingCount > 0 && (
           <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 border-2 border-amber-200 dark:border-amber-800 rounded-2xl p-6">
             <PendingApprovalsSection />
           </div>
@@ -184,7 +218,7 @@ function GrainOperationsWorkspace() {
           {/* Batch status breakdown — pie chart, replacing the old plain bar list */}
           <div className="lg:col-span-2 bg-card border border-border rounded-2xl p-6">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2">
-              Batch Status Breakdown
+              {t("grainOps.batchStatusBreakdown")}
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] items-center gap-4">
               <SiloStatusPie data={statusPieData} />
@@ -206,33 +240,38 @@ function GrainOperationsWorkspace() {
           <div className="bg-card border border-border rounded-[2rem] p-6 lg:p-8 flex flex-col justify-between relative h-full">
             <div className="flex justify-between items-start mb-6">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
-                Key Metrics
+                {t("grainOps.keyMetrics")}
               </p>
               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest bg-muted px-2 py-1 rounded-md">
-                Last 12 Cycles
+                {t("grainOps.lastCycles")}
               </p>
             </div>
-            
+
             <div className="space-y-6 flex-1 flex flex-col justify-center mt-2">
               {/* Metric 1: Total Grain */}
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center w-[45%] min-w-[120px]">
                   <div className="truncate">
-                    <p className="text-xs font-medium text-muted-foreground">Total Grain</p>
-                    <p className="text-base font-black text-foreground truncate">{totalKg.toLocaleString()} kg</p>
+                    <p className="text-xs font-medium text-muted-foreground">{t("grainOps.totalGrain")}</p>
+                    <p className="text-base font-black text-foreground truncate">
+                      {totalKg.toLocaleString()} kg
+                    </p>
                   </div>
                 </div>
                 <div className="flex-1 flex items-center justify-center px-2">
                   <div className="w-full h-1 bg-muted rounded-full relative overflow-hidden">
                     {/* Placeholder static progress for demo */}
-                    <div className="absolute left-0 top-0 bottom-0 bg-amber-500 rounded-full" style={{ width: '0%' }} />
+                    <div
+                      className="absolute left-0 top-0 bottom-0 bg-amber-500 rounded-full"
+                      style={{ width: "0%" }}
+                    />
                   </div>
                 </div>
                 <div className="text-right w-12 shrink-0">
                   <span className="text-sm font-bold text-muted-foreground">0.0%</span>
                 </div>
               </div>
-              
+
               {/* Divider */}
               <div className="h-px w-full bg-border" />
 
@@ -240,13 +279,18 @@ function GrainOperationsWorkspace() {
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center w-[45%] min-w-[120px]">
                   <div className="truncate">
-                    <p className="text-xs font-medium text-muted-foreground">Active Silos</p>
-                    <p className="text-base font-black text-foreground truncate">{activeSilos} online</p>
+                    <p className="text-xs font-medium text-muted-foreground">{t("grainOps.activeSilos")}</p>
+                    <p className="text-base font-black text-foreground truncate">
+                      {activeSilos} {t("grainOps.online")}
+                    </p>
                   </div>
                 </div>
                 <div className="flex-1 flex items-center justify-center px-2">
                   <div className="w-full h-1 bg-muted rounded-full relative overflow-hidden">
-                    <div className="absolute left-0 top-0 bottom-0 bg-emerald-500 rounded-full" style={{ width: '0%' }} />
+                    <div
+                      className="absolute left-0 top-0 bottom-0 bg-emerald-500 rounded-full"
+                      style={{ width: "0%" }}
+                    />
                   </div>
                 </div>
                 <div className="text-right w-12 shrink-0">
@@ -261,13 +305,18 @@ function GrainOperationsWorkspace() {
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center w-[45%] min-w-[120px]">
                   <div className="truncate">
-                    <p className="text-xs font-medium text-muted-foreground">Dispatched</p>
-                    <p className="text-base font-black text-foreground truncate">{dispatchedKg.toLocaleString()} kg</p>
+                    <p className="text-xs font-medium text-muted-foreground">{t("grainOps.dispatched")}</p>
+                    <p className="text-base font-black text-foreground truncate">
+                      {dispatchedKg.toLocaleString()} kg
+                    </p>
                   </div>
                 </div>
                 <div className="flex-1 flex items-center justify-center px-2">
                   <div className="w-full h-1 bg-muted rounded-full relative overflow-hidden">
-                    <div className="absolute left-0 top-0 bottom-0 bg-blue-500 rounded-full" style={{ width: '0%' }} />
+                    <div
+                      className="absolute left-0 top-0 bottom-0 bg-blue-500 rounded-full"
+                      style={{ width: "0%" }}
+                    />
                   </div>
                 </div>
                 <div className="text-right w-12 shrink-0">
@@ -325,6 +374,7 @@ function GrainOperationsWorkspace() {
           <div className="p-4 md:p-6">
             {activeTab === "batches" && <BatchesSection initialStatus={status} />}
             {activeTab === "silos" && <SilosSection />}
+            {activeTab === "warehouses" && <WarehousesSection />}
             {activeTab === "buyers" && <BuyersSection />}
           </div>
         </div>

@@ -3,14 +3,21 @@ import { useQuery } from "@tanstack/react-query";
 import { listMyOrders } from "@/lib/buyer-portal.functions";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { LocalizedContent } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/buyer/orders")({
   head: () => ({
     meta: [
       { title: "Buyer · Orders — Grain Hero" },
-      { name: "description", content: "Buyer · Orders workspace in the Grain Hero platform — private, sign-in required." },
+      {
+        name: "description",
+        content: "Buyer · Orders workspace in the Grain Hero platform — private, sign-in required.",
+      },
       { property: "og:title", content: "Buyer · Orders — Grain Hero" },
-      { property: "og:description", content: "Buyer · Orders workspace in the Grain Hero platform." },
+      {
+        property: "og:description",
+        content: "Buyer · Orders workspace in the Grain Hero platform.",
+      },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
@@ -35,13 +42,18 @@ function MyOrders() {
   const orders = data?.orders ?? [];
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-6">
+    <LocalizedContent>
+      <div className="max-w-6xl mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">My marketplace orders</h1>
-          <p className="text-sm text-muted-foreground">Every order you placed on the GrainHero marketplace.</p>
+          <p className="text-sm text-muted-foreground">
+            Every order you placed on the GrainHero marketplace.
+          </p>
         </div>
-        <Link to="/marketplace" className="text-sm text-emerald-600 hover:underline">Browse listings →</Link>
+        <Link to="/marketplace" className="text-sm text-emerald-600 hover:underline">
+          Browse listings →
+        </Link>
       </div>
 
       {isLoading ? (
@@ -50,7 +62,9 @@ function MyOrders() {
         <Card>
           <CardContent className="p-10 text-center space-y-3">
             <div className="font-medium">No orders yet</div>
-            <Link to="/marketplace" className="text-sm text-emerald-600 hover:underline">Explore the marketplace</Link>
+            <Link to="/marketplace" className="text-sm text-emerald-600 hover:underline">
+              Explore the marketplace
+            </Link>
           </CardContent>
         </Card>
       ) : (
@@ -62,19 +76,33 @@ function MyOrders() {
                   <div className="flex items-center gap-4 min-w-0">
                     <div className="h-12 w-12 rounded-md bg-muted flex items-center justify-center shrink-0 overflow-hidden">
                       {o.grain_listings?.cover_image_url && (
-                        <img src={o.grain_listings.cover_image_url} alt="" className="w-full h-full object-cover" />
+                        <img
+                          src={o.grain_listings.cover_image_url}
+                          alt=""
+                          className="w-full h-full object-cover"
+                        />
                       )}
                     </div>
                     <div className="min-w-0">
-                      <div className="font-medium truncate">{o.grain_listings?.title ?? "Listing"}</div>
+                      <div className="font-medium truncate">
+                        {o.grain_listings?.title ?? "Listing"}
+                      </div>
                       <div className="text-xs text-muted-foreground">
-                        {o.order_number} · {Number(o.quantity_kg).toLocaleString()} kg · {new Date(o.created_at).toLocaleDateString()}
+                        {o.order_number} · {Number(o.quantity_kg).toLocaleString()} kg ·{" "}
+                        {new Date(o.created_at).toLocaleDateString()}
                       </div>
                     </div>
                   </div>
                   <div className="text-right shrink-0 space-y-1">
-                    <div className="text-sm font-semibold">{o.currency} {Number(o.subtotal).toFixed(2)}</div>
-                    <Badge variant="outline" className={`capitalize ${STATUS_TONE[o.status] ?? ""}`}>{o.status}</Badge>
+                    <div className="text-sm font-semibold">
+                      {o.currency} {Number(o.subtotal).toFixed(2)}
+                    </div>
+                    <Badge
+                      variant="outline"
+                      className={`capitalize ${STATUS_TONE[o.status] ?? ""}`}
+                    >
+                      {o.status}
+                    </Badge>
                   </div>
                 </CardContent>
               </Card>
@@ -82,6 +110,7 @@ function MyOrders() {
           ))}
         </div>
       )}
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }

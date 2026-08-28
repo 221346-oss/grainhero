@@ -25,7 +25,16 @@ type Props = {
  * above the band at all times (flipping to ink for contrast), so the row
  * remains readable at every point of the animation.
  */
-export function FlowingNavItem({ label, to, active, collapsed, badge, dataTour, marqueeItems, icon: Icon }: Props) {
+export function FlowingNavItem({
+  label,
+  to,
+  active,
+  collapsed,
+  badge,
+  dataTour,
+  marqueeItems,
+  icon: Icon,
+}: Props) {
   const rowRef = React.useRef<HTMLDivElement>(null);
   const marqueeRef = React.useRef<HTMLDivElement>(null);
   const innerRef = React.useRef<HTMLDivElement>(null);
@@ -48,7 +57,8 @@ export function FlowingNavItem({ label, to, active, collapsed, badge, dataTour, 
     if (active || !marqueeRef.current || !innerRef.current) return;
     const edge = edgeOf(ev);
     killRunning();
-    tlRef.current = gsap.timeline({ defaults: { duration: 0.4, ease: "expo.out", overwrite: "auto" } })
+    tlRef.current = gsap
+      .timeline({ defaults: { duration: 0.4, ease: "expo.out", overwrite: "auto" } })
       .set(marqueeRef.current, { y: edge === "top" ? "-101%" : "101%" }, 0)
       .set(innerRef.current, { y: edge === "top" ? "101%" : "-101%" }, 0)
       .to([marqueeRef.current, innerRef.current], { y: "0%" }, 0);
@@ -58,7 +68,8 @@ export function FlowingNavItem({ label, to, active, collapsed, badge, dataTour, 
     if (active || !marqueeRef.current || !innerRef.current) return;
     const edge = edgeOf(ev);
     killRunning();
-    tlRef.current = gsap.timeline({ defaults: { duration: 0.4, ease: "expo.out", overwrite: "auto" } })
+    tlRef.current = gsap
+      .timeline({ defaults: { duration: 0.4, ease: "expo.out", overwrite: "auto" } })
       .to(marqueeRef.current, { y: edge === "top" ? "-101%" : "101%" }, 0)
       .to(innerRef.current, { y: edge === "top" ? "101%" : "-101%" }, 0);
   };
@@ -124,9 +135,7 @@ export function FlowingNavItem({ label, to, active, collapsed, badge, dataTour, 
         onMouseLeave={leave}
         className={cn(
           "relative z-10 flex h-10 items-center justify-between px-4 text-[11px] font-black uppercase tracking-[0.12em] transition-opacity duration-200",
-          active
-            ? "text-[--fusion-ink]"
-            : "text-sidebar-foreground group-hover:opacity-0",
+          active ? "text-[--fusion-ink]" : "text-sidebar-foreground group-hover:opacity-0",
         )}
       >
         <VariableFontText text={label} base={600} hover={900} className="truncate" />

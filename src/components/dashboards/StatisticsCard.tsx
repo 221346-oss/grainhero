@@ -33,7 +33,8 @@ export function StatisticsCard({
       className={cn(
         "relative overflow-hidden flex flex-col items-stretch rounded-xl border border-white/10 text-white shadow-xs",
         VARIANT_BG[variant],
-        to && "transition-transform duration-200 group-hover:scale-[1.02] group-hover:shadow-lg cursor-pointer",
+        to &&
+          "transition-transform duration-200 group-hover:scale-[1.02] group-hover:shadow-lg cursor-pointer",
         className,
       )}
     >
@@ -64,8 +65,7 @@ export function StatisticsCard({
           )}
         </div>
         <div className="text-xs text-white/80 mt-2 border-t border-white/20 pt-2.5">
-          Vs last month:{" "}
-          <span className="font-medium text-white">{lastPeriod ?? "—"}</span>
+          Vs last month: <span className="font-medium text-white">{lastPeriod ?? "—"}</span>
         </div>
       </div>
     </div>

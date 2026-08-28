@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { Loader2, Thermometer, Droplets, Wind } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -32,7 +32,9 @@ export function EnvironmentalSection() {
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <Thermometer className="w-4 h-4" /> Temperature
                     </div>
-                    <span className="text-foreground font-semibold">{s.current_conditions.temperature.value}°C</span>
+                    <span className="text-foreground font-semibold">
+                      {s.current_conditions.temperature.value}°C
+                    </span>
                   </div>
                 )}
                 {s.current_conditions?.humidity && (
@@ -40,7 +42,9 @@ export function EnvironmentalSection() {
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <Droplets className="w-4 h-4" /> Humidity
                     </div>
-                    <span className="text-foreground font-semibold">{s.current_conditions.humidity.value}%</span>
+                    <span className="text-foreground font-semibold">
+                      {s.current_conditions.humidity.value}%
+                    </span>
                   </div>
                 )}
                 {s.current_conditions?.co2 && (
@@ -48,7 +52,9 @@ export function EnvironmentalSection() {
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <Wind className="w-4 h-4" /> CO2
                     </div>
-                    <span className="text-foreground font-semibold">{s.current_conditions.co2.value} ppm</span>
+                    <span className="text-foreground font-semibold">
+                      {s.current_conditions.co2.value} ppm
+                    </span>
                   </div>
                 )}
               </div>

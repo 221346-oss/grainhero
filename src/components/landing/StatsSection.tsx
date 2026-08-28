@@ -1,13 +1,14 @@
-import { motion } from 'framer-motion'
-
-const stats = [
-  { value: '10,000+', label: 'Tons monitored' },
-  { value: '99.2%', label: 'Prediction accuracy' },
-  { value: '50%', label: 'Loss reduction' },
-  { value: '24/7', label: 'Uptime' },
-]
+import { motion } from "framer-motion";
+import { useTranslation } from "@/i18n";
 
 export function StatsSection() {
+  const { t } = useTranslation();
+  const stats = [
+    { value: "10,000+", label: t("stats.tonsMonitored") },
+    { value: "99.2%", label: t("stats.predictionAccuracy") },
+    { value: "50%", label: t("stats.lossReduction") },
+    { value: "24/7", label: t("stats.uptime") },
+  ];
   return (
     <section id="stats-section" className="bg-[#2FA84F] py-16 sm:py-20">
       <div className="gh-stagger mx-auto grid max-w-6xl grid-cols-2 gap-y-12 px-5 sm:px-8 lg:grid-cols-4">
@@ -30,5 +31,5 @@ export function StatsSection() {
         ))}
       </div>
     </section>
-  )
+  );
 }

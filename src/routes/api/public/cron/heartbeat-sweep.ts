@@ -33,11 +33,15 @@ export const Route = createFileRoute("/api/public/cron/heartbeat-sweep")({
           const { emitNotification } = await import("@/lib/notify");
           for (const d of goingOffline as Array<{ device_id: string; admin_id: string }>) {
             await emitNotification(supabaseAdmin, {
-              recipientId: d.admin_id, tenantAdminId: d.admin_id,
-              category: "ops", severity: "warning",
+              recipientId: d.admin_id,
+              tenantAdminId: d.admin_id,
+              category: "ops",
+              severity: "warning",
               title: "Device offline",
               body: "A sensor stopped reporting for over 5 minutes.",
-              link: "/sensors", entityType: "sensor_device", entityId: d.device_id,
+              link: "/sensors",
+              entityType: "sensor_device",
+              entityId: d.device_id,
             });
           }
         }

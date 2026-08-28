@@ -29,7 +29,10 @@ export const sendWelcomeEmail = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: profile } = await supabaseAdmin
-      .from("profiles").select("email, name").eq("id", context.userId).maybeSingle();
+      .from("profiles")
+      .select("email, name")
+      .eq("id", context.userId)
+      .maybeSingle();
     if (!profile?.email) return { skipped: true };
 
     // Idempotent guard.
@@ -46,7 +49,10 @@ export const sendWelcomeEmail = createServerFn({ method: "POST" })
       const res = await sendEmailViaResend({
         to: profile.email,
         subject: "Welcome to GrainHero 🌾",
-        html: welcomeEmailHTML(firstNameOf(profile.name, profile.email), `${appOrigin()}/dashboard`),
+        html: welcomeEmailHTML(
+          firstNameOf(profile.name, profile.email),
+          `${appOrigin()}/dashboard`,
+        ),
       });
       await supabaseAdmin.from("email_send_log").insert({
         user_id: context.userId,
@@ -74,12 +80,18 @@ export type LifecycleStage = "day3" | "day10" | "trial_ending" | "reengagement";
 export async function sendLifecycleEmail(userId: string, stage: LifecycleStage) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: profile } = await supabaseAdmin
-    .from("profiles").select("email, name, trial_ends_at").eq("id", userId).maybeSingle();
+    .from("profiles")
+    .select("email, name, trial_ends_at")
+    .eq("id", userId)
+    .maybeSingle();
   if (!profile?.email) return { skipped: true };
 
   const { data: existing } = await supabaseAdmin
-    .from("email_send_log").select("id")
-    .eq("user_id", userId).eq("email_type", stage).maybeSingle();
+    .from("email_send_log")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("email_type", stage)
+    .maybeSingle();
   if (existing) return { skipped: true };
 
   const firstName = firstNameOf(profile.name, profile.email);
@@ -87,7 +99,9 @@ export async function sendLifecycleEmail(userId: string, stage: LifecycleStage) 
 
   // Silo count (best-effort).
   const { count: siloCountRaw } = await supabaseAdmin
-    .from("silos").select("id", { count: "exact", head: true }).eq("admin_id", userId);
+    .from("silos")
+    .select("id", { count: "exact", head: true })
+    .eq("admin_id", userId);
   const siloCount = siloCountRaw ?? 0;
   const storageGB = Math.max(1, siloCount * 2);
 
@@ -104,7 +118,12 @@ export async function sendLifecycleEmail(userId: string, stage: LifecycleStage) 
       break;
     case "trial_ending": {
       const daysLeft = profile.trial_ends_at
-        ? Math.max(0, Math.ceil((new Date(profile.trial_ends_at).getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
+        ? Math.max(
+            0,
+            Math.ceil(
+              (new Date(profile.trial_ends_at).getTime() - Date.now()) / (24 * 60 * 60 * 1000),
+            ),
+          )
         : 3;
       subject = `Your GrainHero trial ends in ${daysLeft} days`;
       html = trialEndingEmailHTML(firstName, daysLeft, `${origin}/plans`);

@@ -15,8 +15,8 @@ import path from "path";
 
 export type SpoilagePredictionResult = {
   risk_class: "low" | "moderate" | "high" | "critical";
-  risk_score: number;          // 0–100
-  confidence: number;          // 0–1
+  risk_score: number; // 0–100
+  confidence: number; // 0–1
   factors: string[];
   source: "api" | "python_local";
   trustworthy: boolean;
@@ -46,7 +46,6 @@ export type MLInferenceInput = {
  * tenant to attribute the request to).
  */
 export type MLLogContext = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: any;
   adminId?: string | null;
   siloId?: string | null;
@@ -56,7 +55,13 @@ export type MLLogContext = {
 
 async function logInferenceRequest(
   log: MLLogContext | undefined,
-  outcome: { success: boolean; source: SpoilagePredictionResult["source"] | "cascade_failed"; result: SpoilagePredictionResult | null; error: string | null; startedAt: number },
+  outcome: {
+    success: boolean;
+    source: SpoilagePredictionResult["source"] | "cascade_failed";
+    result: SpoilagePredictionResult | null;
+    error: string | null;
+    startedAt: number;
+  },
 ) {
   if (!log) return;
   try {
@@ -94,7 +99,9 @@ function scoreFromRiskClass(cls: "low" | "moderate" | "high" | "critical"): numb
 
 // ─── Primary: HuggingFace remote API ─────────────────────────────────────────
 
-async function callHuggingFaceAPI(data: MLInferenceInput): Promise<SpoilagePredictionResult | null> {
+async function callHuggingFaceAPI(
+  data: MLInferenceInput,
+): Promise<SpoilagePredictionResult | null> {
   const mlUrl = process.env.GRAINHERO_ML_API_URL;
   if (!mlUrl) return null;
 
@@ -136,12 +143,17 @@ async function callHuggingFaceAPI(data: MLInferenceInput): Promise<SpoilagePredi
           trustworthy: false,
         };
       }
-      const score = Math.max(0, Math.min(100, Math.round(Number(raw.risk_score ?? raw.riskScore ?? 0))));
+      const score = Math.max(
+        0,
+        Math.min(100, Math.round(Number(raw.risk_score ?? raw.riskScore ?? 0))),
+      );
       const confidence = Math.max(0, Math.min(1, Number(raw.confidence ?? 0)));
       const labelFromRaw = String(raw.risk_class ?? raw.prediction ?? raw.predicted_class ?? "");
-      const riskClass = labelFromRaw ? labelToRiskClass(labelFromRaw) : labelToRiskClass(
-        score >= 80 ? "critical" : score >= 60 ? "high" : score >= 30 ? "moderate" : "low"
-      );
+      const riskClass = labelFromRaw
+        ? labelToRiskClass(labelFromRaw)
+        : labelToRiskClass(
+            score >= 80 ? "critical" : score >= 60 ? "high" : score >= 30 ? "moderate" : "low",
+          );
       return {
         risk_class: riskClass,
         risk_score: score || scoreFromRiskClass(riskClass),
@@ -149,8 +161,8 @@ async function callHuggingFaceAPI(data: MLInferenceInput): Promise<SpoilagePredi
         factors: Array.isArray(raw.primary_risk_factors)
           ? raw.primary_risk_factors.map(String)
           : Array.isArray(raw.factors)
-          ? raw.factors.map(String)
-          : [],
+            ? raw.factors.map(String)
+            : [],
         source: "api",
         trustworthy: raw.trustworthy !== false && confidence > 0,
       };
@@ -180,8 +192,12 @@ async function callLocalPython(data: MLInferenceInput): Promise<SpoilagePredicti
 
     let outputData = "";
     let errorData = "";
-    pythonProcess.stdout.on("data", (chunk: Buffer) => { outputData += chunk.toString(); });
-    pythonProcess.stderr.on("data", (chunk: Buffer) => { errorData += chunk.toString(); });
+    pythonProcess.stdout.on("data", (chunk: Buffer) => {
+      outputData += chunk.toString();
+    });
+    pythonProcess.stderr.on("data", (chunk: Buffer) => {
+      errorData += chunk.toString();
+    });
 
     pythonProcess.on("close", (code) => {
       if (code !== 0) {
@@ -223,14 +239,23 @@ async function callLocalPython(data: MLInferenceInput): Promise<SpoilagePredicti
  * Falls back to the local Python subprocess if the API is unreachable.
  * Returns null if BOTH methods fail (caller should apply a safety guardrail).
  */
-export async function runMLInference(data: MLInferenceInput, log?: MLLogContext): Promise<SpoilagePredictionResult | null> {
+export async function runMLInference(
+  data: MLInferenceInput,
+  log?: MLLogContext,
+): Promise<SpoilagePredictionResult | null> {
   const startedAt = Date.now();
 
   // Box 1: Remote API
   try {
     const apiResult = await callHuggingFaceAPI(data);
     if (apiResult) {
-      await logInferenceRequest(log, { success: true, source: "api", result: apiResult, error: null, startedAt });
+      await logInferenceRequest(log, {
+        success: true,
+        source: "api",
+        result: apiResult,
+        error: null,
+        startedAt,
+      });
       return apiResult;
     }
   } catch (err) {
@@ -240,13 +265,22 @@ export async function runMLInference(data: MLInferenceInput, log?: MLLogContext)
   // Box 2: Local Python fallback
   try {
     const pythonResult = await callLocalPython(data);
-    await logInferenceRequest(log, { success: true, source: "python_local", result: pythonResult, error: null, startedAt });
+    await logInferenceRequest(log, {
+      success: true,
+      source: "python_local",
+      result: pythonResult,
+      error: null,
+      startedAt,
+    });
     return pythonResult;
   } catch (err) {
     console.warn("[ML] Local Python fallback also failed:", (err as Error).message);
     await logInferenceRequest(log, {
-      success: false, source: "cascade_failed", result: null,
-      error: (err as Error).message.slice(0, 500), startedAt,
+      success: false,
+      source: "cascade_failed",
+      result: null,
+      error: (err as Error).message.slice(0, 500),
+      startedAt,
     });
   }
 

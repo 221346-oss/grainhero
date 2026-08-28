@@ -10,7 +10,6 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { loadMarketplaceSettings } from "@/lib/marketplace-settings.functions";
 import type { Database } from "@/integrations/supabase/types";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 function publicClient() {
@@ -21,7 +20,8 @@ function publicClient() {
     global: {
       fetch: (input, init) => {
         const h = new Headers(init?.headers);
-        if (key.startsWith("sb_") && h.get("Authorization") === `Bearer ${key}`) h.delete("Authorization");
+        if (key.startsWith("sb_") && h.get("Authorization") === `Bearer ${key}`)
+          h.delete("Authorization");
         h.set("apikey", key);
         return fetch(input, { ...init, headers: h });
       },
@@ -30,7 +30,10 @@ function publicClient() {
 }
 
 export interface ReputationBadge {
-  key: string; label: string; minScore: number; colorToken: string;
+  key: string;
+  label: string;
+  minScore: number;
+  colorToken: string;
 }
 
 export function computeScore(
@@ -63,9 +66,12 @@ export const getSellerReputation = createServerFn({ method: "GET" })
   .validator((d) => z.object({ adminId: z.string().uuid() }).parse(d))
   .handler(async ({ data }) => {
     const sb = publicClient();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const { data: row } = await (sb as any)
-      .from("seller_reputation").select("*").eq("admin_id", data.adminId).maybeSingle();
+      .from("seller_reputation")
+      .select("*")
+      .eq("admin_id", data.adminId)
+      .maybeSingle();
     const settings = await loadSettingsPublic();
     if (!row) {
       return {
@@ -89,20 +95,26 @@ export const getSellerReputation = createServerFn({ method: "GET" })
 
 export const listSellerRankings = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .validator((d: unknown) => z.object({ limit: z.number().int().min(1).max(200).default(50) }).parse(d ?? {}))
+  .validator((d: unknown) =>
+    z.object({ limit: z.number().int().min(1).max(200).default(50) }).parse(d ?? {}),
+  )
   .handler(async ({ data, context }) => {
     // Requires super_admin
-    const { data: isAdmin } = await context.supabase.rpc("is_super_admin", { _user_id: context.userId });
+    const { data: isAdmin } = await context.supabase.rpc("is_super_admin", {
+      _user_id: context.userId,
+    });
     if (!isAdmin) throw new Error("Forbidden");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const { data: rows } = await sb.from("seller_reputation").select("*").limit(data.limit);
     const list = (rows ?? []) as Row[];
     if (!list.length) return { sellers: [] };
     const settings = await loadMarketplaceSettings(context.supabase);
     const ids = list.map((r) => r.admin_id).filter(Boolean);
-    const { data: profs } = await sb.from("profiles")
-      .select("id, name, email, company_name, city, country").in("id", ids);
+    const { data: profs } = await sb
+      .from("profiles")
+      .select("id, name, email, company_name, city, country")
+      .in("id", ids);
     const pMap = new Map<string, Row>();
     ((profs ?? []) as Row[]).forEach((p) => pMap.set(p.id, p));
     const sellers: Row[] = list.map((r) => {
@@ -125,14 +137,25 @@ export const getPublicSellerStorefront = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const sb = publicClient();
     const settings = await loadSettingsPublic();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const anon = sb as any;
     const [profRes, repRes, revRes, listRes] = await Promise.all([
-      anon.from("profiles").select("id, name, company_name, city, country, business_type").eq("id", data.adminId).maybeSingle(),
+      anon
+        .from("profiles")
+        .select("id, name, company_name, city, country, business_type")
+        .eq("id", data.adminId)
+        .maybeSingle(),
       anon.from("seller_reputation").select("*").eq("admin_id", data.adminId).maybeSingle(),
-      anon.from("buyer_reviews").select("id, rating, title, body, seller_response, seller_response_at, helpful_count, created_at")
-        .eq("admin_id", data.adminId).eq("status", "published").eq("direction", "buyer_to_seller")
-        .order("created_at", { ascending: false }).limit(20),
+      anon
+        .from("buyer_reviews")
+        .select(
+          "id, rating, title, body, seller_response, seller_response_at, helpful_count, created_at",
+        )
+        .eq("admin_id", data.adminId)
+        .eq("status", "published")
+        .eq("direction", "buyer_to_seller")
+        .order("created_at", { ascending: false })
+        .limit(20),
       anon.from("public_listings_v").select("*").eq("admin_id", data.adminId).limit(24),
     ]);
     const stats = (repRes.data ?? null) as Row | null;
@@ -140,14 +163,17 @@ export const getPublicSellerStorefront = createServerFn({ method: "GET" })
     return {
       seller: (profRes.data ?? null) as Row | null,
       reputation: {
-        stats, score,
+        stats,
+        score,
         badges: badgesFor(score, settings.reputation.badges),
         verified: score >= settings.reputation.verifiedMinScore,
       },
       reviews: (revRes.data ?? []) as Row[],
       listings: (listRes.data ?? []) as Row[],
       brand: {
-        brandName: settings.brandName, tagline: settings.tagline, currency: settings.currency,
+        brandName: settings.brandName,
+        tagline: settings.tagline,
+        currency: settings.currency,
       },
     };
   });

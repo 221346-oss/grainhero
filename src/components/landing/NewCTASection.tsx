@@ -1,19 +1,20 @@
-import { motion } from 'framer-motion'
-import { Link } from '@tanstack/react-router'
-import { ArrowRight } from 'lucide-react'
+import { motion } from "framer-motion";
+import { Link } from "@tanstack/react-router";
+import { ArrowRight } from "lucide-react";
+import { LocalizedContent } from "@/i18n";
 
 export function NewCTASection() {
   return (
-    <section className="relative py-14 sm:py-20 overflow-hidden bg-[#111512]">
+    <LocalizedContent><section className="relative py-14 sm:py-20 overflow-hidden bg-[#111512]">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-10">
         <div
           style={{
             backgroundImage:
-              'radial-gradient(circle at 2px 2px, rgba(47,172,12,0.4) 1px, transparent 0)',
-            backgroundSize: '40px 40px',
-            width: '100%',
-            height: '100%',
+              "radial-gradient(circle at 2px 2px, rgba(47,172,12,0.4) 1px, transparent 0)",
+            backgroundSize: "40px 40px",
+            width: "100%",
+            height: "100%",
           }}
         />
       </div>
@@ -60,7 +61,7 @@ export function NewCTASection() {
             </Link>
             <button
               onClick={() => {
-                window.location.href = 'mailto:grainhero@gmail.com?subject=Schedule Demo Request'
+                window.location.href = "mailto:grainhero@gmail.com?subject=Schedule Demo Request";
               }}
               className="bg-transparent border-2 border-[#FAFAF7]/30 text-[#FAFAF7] px-10 py-4 rounded-full text-lg font-semibold hover:bg-[#FAFAF7]/10 hover:border-[#FAFAF7] transition-all duration-300 hover:scale-105"
             >
@@ -80,6 +81,6 @@ export function NewCTASection() {
           </motion.p>
         </motion.div>
       </div>
-    </section>
-  )
+    </section></LocalizedContent>
+  );
 }

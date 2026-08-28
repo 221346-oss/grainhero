@@ -1,48 +1,54 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { useState } from 'react'
-import { motion } from 'framer-motion'
-import { Mail, Phone, MapPin, Send, MessageSquare, CheckCircle, AlertCircle } from 'lucide-react'
-import { NewGlassNav } from '@/components/landing/NewGlassNav'
-import { NewFooter } from '@/components/landing/NewFooter'
-import { sendContactEmail } from '@/lib/contact-email.functions'
+import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { Mail, Phone, MapPin, Send, MessageSquare, CheckCircle, AlertCircle } from "lucide-react";
+import { NewGlassNav } from "@/components/landing/NewGlassNav";
+import { NewFooter } from "@/components/landing/NewFooter";
+import { sendContactEmail } from "@/lib/contact-email.functions";
+import { LocalizedContent } from "@/i18n";
 
-export const Route = createFileRoute('/contact')({
+export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
-      { title: 'Contact Us — GrainHero' },
+      { title: "Contact Us — GrainHero" },
       {
-        name: 'description',
-        content: 'Get in touch with GrainHero. We\'re here to help with any questions about our grain storage monitoring platform.',
+        name: "description",
+        content:
+          "Get in touch with GrainHero. We're here to help with any questions about our grain storage monitoring platform.",
       },
-      { property: 'og:title', content: "Contact Us — GrainHero" },
-      { property: 'og:description', content: "Get in touch with GrainHero. We're here to help with questions about grain storage monitoring." },
-      { property: 'og:url', content: 'https://grainhero.app/contact' },
-      { property: 'og:type', content: 'website' },
-      { name: 'twitter:card', content: 'summary_large_image' },
+      { property: "og:title", content: "Contact Us — GrainHero" },
+      {
+        property: "og:description",
+        content:
+          "Get in touch with GrainHero. We're here to help with questions about grain storage monitoring.",
+      },
+      { property: "og:url", content: "https://grainhero.app/contact" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [{ rel: 'canonical', href: 'https://grainhero.app/contact' }],
+    links: [{ rel: "canonical", href: "https://grainhero.app/contact" }],
   }),
   component: ContactPage,
-})
+});
 
 function ContactPage() {
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    subject: '',
-    message: '',
-  })
+    name: "",
+    email: "",
+    phone: "",
+    subject: "",
+    message: "",
+  });
 
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle')
-  const [errorMessage, setErrorMessage] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
-    setSubmitStatus('idle')
-    setErrorMessage('')
+    e.preventDefault();
+    setIsSubmitting(true);
+    setSubmitStatus("idle");
+    setErrorMessage("");
 
     try {
       const result = await sendContactEmail({
@@ -53,43 +59,45 @@ function ContactPage() {
           subject: formData.subject,
           message: formData.message,
         },
-      })
+      });
 
       if (result.success) {
-        setSubmitStatus('success')
+        setSubmitStatus("success");
         setFormData({
-          name: '',
-          email: '',
-          phone: '',
-          subject: '',
-          message: '',
-        })
-        
+          name: "",
+          email: "",
+          phone: "",
+          subject: "",
+          message: "",
+        });
+
         setTimeout(() => {
-          setSubmitStatus('idle')
-        }, 5000)
+          setSubmitStatus("idle");
+        }, 5000);
       } else {
-        setSubmitStatus('error')
-        setErrorMessage(result.error || 'Failed to send message. Please try again.')
+        setSubmitStatus("error");
+        setErrorMessage(result.error || "Failed to send message. Please try again.");
       }
     } catch (error) {
-      console.error('Error submitting contact form:', error)
-      setSubmitStatus('error')
-      setErrorMessage('Failed to send message. Please email us directly at grainhero@gmail.com')
+      console.error("Error submitting contact form:", error);
+      setSubmitStatus("error");
+      setErrorMessage("Failed to send message. Please email us directly at grainhero@gmail.com");
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+  ) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
-    })
-  }
+    });
+  };
 
   return (
-    <main className="min-h-screen bg-[#EDE9D4]">
+    <LocalizedContent><main className="min-h-screen bg-[#EDE9D4]">
       <NewGlassNav />
 
       {/* Hero Section */}
@@ -98,10 +106,10 @@ function ContactPage() {
           <div
             style={{
               backgroundImage:
-                'radial-gradient(circle at 2px 2px, rgba(47,172,12,0.4) 1px, transparent 0)',
-              backgroundSize: '40px 40px',
-              width: '100%',
-              height: '100%',
+                "radial-gradient(circle at 2px 2px, rgba(47,172,12,0.4) 1px, transparent 0)",
+              backgroundSize: "40px 40px",
+              width: "100%",
+              height: "100%",
             }}
           />
         </div>
@@ -158,9 +166,7 @@ function ContactPage() {
                     >
                       grainhero@gmail.com
                     </a>
-                    <p className="text-sm text-[#404F44]/60 mt-1">
-                      We'll respond within 24 hours
-                    </p>
+                    <p className="text-sm text-[#404F44]/60 mt-1">We'll respond within 24 hours</p>
                   </div>
                 </div>
 
@@ -176,9 +182,7 @@ function ContactPage() {
                     >
                       +92 345 5904427
                     </a>
-                    <p className="text-sm text-[#404F44]/60 mt-1">
-                      Mon-Fri, 9am-6pm PKT
-                    </p>
+                    <p className="text-sm text-[#404F44]/60 mt-1">Mon-Fri, 9am-6pm PKT</p>
                   </div>
                 </div>
 
@@ -189,7 +193,7 @@ function ContactPage() {
                   <div>
                     <h3 className="font-bold text-[#252d26] mb-1">Live Chat</h3>
                     <p className="text-[#404F44]">Available 24/7</p>
-                   </div>
+                  </div>
                 </div>
 
                 <div className="flex items-start gap-4 bg-white p-6 rounded-xl shadow-sm border border-[#2FAC0C]/10">
@@ -236,7 +240,10 @@ function ContactPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="email" className="block text-sm font-semibold text-[#252d26] mb-2">
+                  <label
+                    htmlFor="email"
+                    className="block text-sm font-semibold text-[#252d26] mb-2"
+                  >
                     Email Address *
                   </label>
                   <input
@@ -252,7 +259,10 @@ function ContactPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="phone" className="block text-sm font-semibold text-[#252d26] mb-2">
+                  <label
+                    htmlFor="phone"
+                    className="block text-sm font-semibold text-[#252d26] mb-2"
+                  >
                     Phone Number
                   </label>
                   <input
@@ -267,7 +277,10 @@ function ContactPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="subject" className="block text-sm font-semibold text-[#252d26] mb-2">
+                  <label
+                    htmlFor="subject"
+                    className="block text-sm font-semibold text-[#252d26] mb-2"
+                  >
                     Subject *
                   </label>
                   <select
@@ -288,7 +301,10 @@ function ContactPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="message" className="block text-sm font-semibold text-[#252d26] mb-2">
+                  <label
+                    htmlFor="message"
+                    className="block text-sm font-semibold text-[#252d26] mb-2"
+                  >
                     Message *
                   </label>
                   <textarea
@@ -322,7 +338,7 @@ function ContactPage() {
                 </button>
 
                 {/* Success Message */}
-                {submitStatus === 'success' && (
+                {submitStatus === "success" && (
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -336,16 +352,14 @@ function ContactPage() {
                 )}
 
                 {/* Error Message */}
-                {submitStatus === 'error' && (
+                {submitStatus === "error" && (
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="flex items-start gap-2 p-4 bg-red-50 border-2 border-red-200 rounded-lg"
                   >
                     <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
-                    <p className="text-red-800 text-sm">
-                      {errorMessage}
-                    </p>
+                    <p className="text-red-800 text-sm">{errorMessage}</p>
                   </motion.div>
                 )}
               </form>
@@ -355,6 +369,6 @@ function ContactPage() {
       </section>
 
       <NewFooter />
-    </main>
-  )
+    </main></LocalizedContent>
+  );
 }

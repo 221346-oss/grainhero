@@ -1,10 +1,11 @@
-import { motion } from 'framer-motion'
+import { motion } from "framer-motion";
+import { LocalizedContent } from "@/i18n";
 
-const partners = ['NICAT', 'HUAWEI', 'NUST', 'HEC', 'NCRA', 'PARC']
+const partners = ["NICAT", "HUAWEI", "NUST", "HEC", "NCRA", "PARC"];
 
 export function PartnersStrip() {
   return (
-    <section className="gh-grain relative border-y border-[#111512]/10 bg-[#FAFAF7] py-12 dark:bg-background sm:py-14">
+    <LocalizedContent><section className="gh-grain relative border-y border-[#111512]/10 bg-[#FAFAF7] py-12 dark:bg-background sm:py-14">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <div className="gh-stagger flex flex-wrap items-center justify-center gap-x-8 gap-y-6 sm:gap-x-20 sm:gap-y-8">
           {partners.map((p, i) => (
@@ -21,6 +22,6 @@ export function PartnersStrip() {
           ))}
         </div>
       </div>
-    </section>
-  )
+    </section></LocalizedContent>
+  );
 }

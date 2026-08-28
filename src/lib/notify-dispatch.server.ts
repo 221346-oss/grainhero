@@ -10,7 +10,13 @@
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { sendEmailViaResend } from "@/lib/resend.server";
-import { loadUserDevices, markDeviceError, markDeviceRevoked, markDeviceSuccess, sendPush } from "@/lib/push-dispatch.server";
+import {
+  loadUserDevices,
+  markDeviceError,
+  markDeviceRevoked,
+  markDeviceSuccess,
+  sendPush,
+} from "@/lib/push-dispatch.server";
 
 type Channel = "email" | "sms" | "push";
 type Severity = "info" | "success" | "warning" | "critical";
@@ -47,15 +53,13 @@ function forceEmail(category: string | null, severity: Severity): boolean {
   return false;
 }
 
-function channelAllowed(
-  channel: Channel,
-  category: string | null,
-  prefs: Prefs,
-): boolean {
+function channelAllowed(channel: Channel, category: string | null, prefs: Prefs): boolean {
   const base =
-    channel === "email" ? prefs.email_enabled :
-    channel === "sms" ? prefs.sms_enabled :
-    prefs.push_enabled;
+    channel === "email"
+      ? prefs.email_enabled
+      : channel === "sms"
+        ? prefs.sms_enabled
+        : prefs.push_enabled;
   if (!base) return false;
   if (!category || !prefs.categories) return true;
   const catPrefs = prefs.categories[category];
@@ -75,20 +79,18 @@ async function recordDelivery(
     attempts?: number;
   },
 ) {
-  await sb
-    .from("notification_deliveries")
-    .upsert(
-      {
-        notification_id: input.notificationId,
-        channel: input.channel,
-        provider: input.provider,
-        status: input.status,
-        provider_message_id: input.providerMessageId ?? null,
-        error: input.error ?? null,
-        attempts: input.attempts ?? 1,
-      } as never,
-      { onConflict: "notification_id,channel" },
-    );
+  await sb.from("notification_deliveries").upsert(
+    {
+      notification_id: input.notificationId,
+      channel: input.channel,
+      provider: input.provider,
+      status: input.status,
+      provider_message_id: input.providerMessageId ?? null,
+      error: input.error ?? null,
+      attempts: input.attempts ?? 1,
+    } as never,
+    { onConflict: "notification_id,channel" },
+  );
 }
 
 function escapeHtml(s: string) {
@@ -102,7 +104,11 @@ function escapeHtml(s: string) {
 function buildEmailHtml(n: NotifRow, appOrigin: string) {
   const title = escapeHtml(n.title ?? "GrainHero notification");
   const message = escapeHtml(n.message ?? "");
-  const link = n.action_url ? (n.action_url.startsWith("http") ? n.action_url : `${appOrigin}${n.action_url}`) : appOrigin;
+  const link = n.action_url
+    ? n.action_url.startsWith("http")
+      ? n.action_url
+      : `${appOrigin}${n.action_url}`
+    : appOrigin;
   const cta = n.action_url
     ? `<p style="margin:24px 0 0"><a href="${link}" style="background:#059669;color:#fff;padding:10px 16px;border-radius:6px;text-decoration:none;font-weight:600">Open in GrainHero</a></p>`
     : "";
@@ -172,7 +178,8 @@ export async function dispatchNotification(
   const category = n.category ?? null;
 
   const shouldEmail =
-    (forceEmail(category, severity) || channelAllowed("email", category, prefs)) && !!profile?.email;
+    (forceEmail(category, severity) || channelAllowed("email", category, prefs)) &&
+    !!profile?.email;
   const shouldSms = channelAllowed("sms", category, prefs) && !!profile?.phone_e164;
   const appOrigin = process.env.APP_ORIGIN ?? "https://grainhero.app";
 
@@ -213,7 +220,10 @@ export async function dispatchNotification(
   // SMS
   if (shouldSms) {
     try {
-      const sid = await sendSmsViaTwilio(profile!.phone_e164!, `${n.title ?? ""}\n\n${n.message ?? ""}`);
+      const sid = await sendSmsViaTwilio(
+        profile!.phone_e164!,
+        `${n.title ?? ""}\n\n${n.message ?? ""}`,
+      );
       await recordDelivery(supabaseAdmin, {
         notificationId,
         channel: "sms",
@@ -246,8 +256,11 @@ export async function dispatchNotification(
     const devices = await loadUserDevices(supabaseAdmin, n.user_id);
     if (devices.length === 0) {
       await recordDelivery(supabaseAdmin, {
-        notificationId, channel: "push", provider: "fcm",
-        status: "skipped", error: "no-devices",
+        notificationId,
+        channel: "push",
+        provider: "fcm",
+        status: "skipped",
+        error: "no-devices",
       });
     } else {
       const highPri = severity === "critical" || category === "security" || category === "billing";
@@ -264,7 +277,8 @@ export async function dispatchNotification(
         if ("skipped" in res) {
           lastError = res.reason;
         } else if (res.ok) {
-          anySent = true; lastMessageId = res.messageId;
+          anySent = true;
+          lastMessageId = res.messageId;
           await markDeviceSuccess(supabaseAdmin, dev.id);
         } else {
           lastError = res.error;
@@ -273,8 +287,10 @@ export async function dispatchNotification(
         }
       }
       await recordDelivery(supabaseAdmin, {
-        notificationId, channel: "push", provider: "fcm",
-        status: anySent ? "sent" : (lastError === "not-configured" ? "skipped" : "failed"),
+        notificationId,
+        channel: "push",
+        provider: "fcm",
+        status: anySent ? "sent" : lastError === "not-configured" ? "skipped" : "failed",
         providerMessageId: lastMessageId,
         error: anySent ? null : lastError,
         attempts: devices.length,
@@ -282,8 +298,11 @@ export async function dispatchNotification(
     }
   } else {
     await recordDelivery(supabaseAdmin, {
-      notificationId, channel: "push", provider: "fcm",
-      status: "skipped", error: "opt-out",
+      notificationId,
+      channel: "push",
+      provider: "fcm",
+      status: "skipped",
+      error: "opt-out",
     });
   }
 }

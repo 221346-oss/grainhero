@@ -8,14 +8,15 @@ import { requireRole } from "@/lib/rbac.server";
 import { z } from "zod";
 import { logActivity } from "@/lib/activity";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 /** FIFO-allocate `qtyKg` of `grainType` out of `siloId`'s available batches, oldest first. */
 async function computeFifoAllocation(sb: Row, siloId: string, grainType: string, qtyKg: number) {
   const { data: batchesRaw, error: bErr } = await sb
     .from("grain_batches")
-    .select("id, batch_id, quantity_kg, dispatched_quantity_kg, remaining_kg, purchase_price_per_kg, grain_type")
+    .select(
+      "id, batch_id, quantity_kg, dispatched_quantity_kg, remaining_kg, purchase_price_per_kg, grain_type",
+    )
     .eq("silo_id", siloId)
     .eq("grain_type", grainType as never)
     .order("harvest_date", { ascending: true, nullsFirst: false })
@@ -27,12 +28,16 @@ async function computeFifoAllocation(sb: Row, siloId: string, grainType: string,
   const batches: Row[] = ((batchesRaw ?? []) as Row[])
     .map((b) => ({
       ...b,
-      remaining_kg: b.remaining_kg ?? Math.max(0, Number(b.quantity_kg ?? 0) - Number(b.dispatched_quantity_kg ?? 0)),
+      remaining_kg:
+        b.remaining_kg ??
+        Math.max(0, Number(b.quantity_kg ?? 0) - Number(b.dispatched_quantity_kg ?? 0)),
     }))
     .filter((b) => Number(b.remaining_kg) > 0);
   const totalAvailable = batches.reduce((s, b) => s + Number(b.remaining_kg ?? 0), 0);
   if (totalAvailable < qtyKg) {
-    throw new Error(`Not enough ${grainType} in silo (have ${totalAvailable} kg, need ${qtyKg} kg)`);
+    throw new Error(
+      `Not enough ${grainType} in silo (have ${totalAvailable} kg, need ${qtyKg} kg)`,
+    );
   }
 
   const allocs: { batch_id: string; qty_kg: number; unit_cost: number | null }[] = [];
@@ -85,11 +90,15 @@ const createInput = z.object({
 
 export const listSiloAvailableBatches = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .validator((d) => z.object({ siloId: z.string().uuid(), grainType: z.string().optional() }).parse(d))
+  .validator((d) =>
+    z.object({ siloId: z.string().uuid(), grainType: z.string().optional() }).parse(d),
+  )
   .handler(async ({ data, context }) => {
     let q = context.supabase
       .from("grain_batches")
-      .select("id, batch_id, grain_type, quantity_kg, dispatched_quantity_kg, remaining_kg, purchase_price_per_kg, harvest_date, created_at, supplier_name, farmer_name")
+      .select(
+        "id, batch_id, grain_type, quantity_kg, dispatched_quantity_kg, remaining_kg, purchase_price_per_kg, harvest_date, created_at, supplier_name, farmer_name",
+      )
       .eq("silo_id", data.siloId)
       .order("harvest_date", { ascending: true, nullsFirst: false })
       .order("created_at", { ascending: true });
@@ -104,7 +113,9 @@ export const listSiloAvailableBatches = createServerFn({ method: "GET" })
     const batches: Row[] = ((rows ?? []) as Row[])
       .map((b) => ({
         ...b,
-        remaining_kg: b.remaining_kg ?? Math.max(0, Number(b.quantity_kg ?? 0) - Number(b.dispatched_quantity_kg ?? 0)),
+        remaining_kg:
+          b.remaining_kg ??
+          Math.max(0, Number(b.quantity_kg ?? 0) - Number(b.dispatched_quantity_kg ?? 0)),
       }))
       .filter((b) => Number(b.remaining_kg) > 0);
     return { batches };
@@ -125,7 +136,9 @@ export const listSilosWithActiveDispatch = createServerFn({ method: "GET" })
       .select("silo_id, dispatch_number, status")
       .not("status", "in", "(delivered,cancelled)");
     if (error) throw error;
-    return { active: (data ?? []) as Array<{ silo_id: string; dispatch_number: string; status: string }> };
+    return {
+      active: (data ?? []) as Array<{ silo_id: string; dispatch_number: string; status: string }>,
+    };
   });
 
 /**
@@ -165,7 +178,9 @@ export const createDispatchFromSilo = createServerFn({ method: "POST" })
     if (existingErr) throw existingErr;
     if (existingDispatch) {
       const ed = existingDispatch as Row;
-      throw new Error(`This silo already has a pending dispatch (${ed.dispatch_number}, status: ${ed.status}) — resolve it before starting a new one.`);
+      throw new Error(
+        `This silo already has a pending dispatch (${ed.dispatch_number}, status: ${ed.status}) — resolve it before starting a new one.`,
+      );
     }
 
     // If this dispatch is fulfilling a Step-1 invoice/quote, pull the buyer off
@@ -188,7 +203,12 @@ export const createDispatchFromSilo = createServerFn({ method: "POST" })
     // Preview-only FIFO simulation, purely for the cost/profit estimate shown
     // to whoever is creating the request — the real allocation is redone at
     // approval time against then-current stock.
-    const { allocs, avgCost } = await computeFifoAllocation(sb, data.siloId, data.grainType, data.qtyKg);
+    const { allocs, avgCost } = await computeFifoAllocation(
+      sb,
+      data.siloId,
+      data.grainType,
+      data.qtyKg,
+    );
     const totalCostVal = avgCost != null ? Number((avgCost * data.qtyKg).toFixed(2)) : null;
     const totalAmount = Number((data.pricePerKg * data.qtyKg).toFixed(2));
     const profit = totalCostVal != null ? Number((totalAmount - totalCostVal).toFixed(2)) : null;
@@ -264,7 +284,13 @@ export const createDispatchFromSilo = createServerFn({ method: "POST" })
       action: "dispatch.requested",
       targetType: "grain_dispatch",
       targetId: dispatchId,
-      meta: { siloId: data.siloId, qtyKg: data.qtyKg, pricePerKg: data.pricePerKg, totalAmount, profit },
+      meta: {
+        siloId: data.siloId,
+        qtyKg: data.qtyKg,
+        pricePerKg: data.pricePerKg,
+        totalAmount,
+        profit,
+      },
     });
 
     // Notify tenant admins — this was missing entirely, regardless of which
@@ -285,7 +311,15 @@ export const createDispatchFromSilo = createServerFn({ method: "POST" })
       console.warn("[createDispatchFromSilo] Failed to emit admin notification:", e);
     }
 
-    return { id: dispatchId, dispatchNumber, totalAmount, avgCost, profit, allocations: allocs.length, status: "draft" as const };
+    return {
+      id: dispatchId,
+      dispatchNumber,
+      totalAmount,
+      avgCost,
+      profit,
+      allocations: allocs.length,
+      status: "draft" as const,
+    };
   });
 
 /**
@@ -313,14 +347,19 @@ export const confirmDispatchBuyer = createServerFn({ method: "POST" })
     if (fullErr) throw fullErr;
     if (!full) throw new Error("Dispatch not found");
     const disp = full as Row;
-    if (disp.status !== "draft") throw new Error(`Dispatch isn't awaiting confirmation (currently ${disp.status})`);
-    if (disp.buyer_confirmed_at) throw new Error("Buyer confirmation is already recorded for this dispatch");
+    if (disp.status !== "draft")
+      throw new Error(`Dispatch isn't awaiting confirmation (currently ${disp.status})`);
+    if (disp.buyer_confirmed_at)
+      throw new Error("Buyer confirmation is already recorded for this dispatch");
 
     const confirmedAt = new Date().toISOString();
-    const { error: updErr } = await sb.from("grain_dispatches").update({
-      buyer_confirmed_at: confirmedAt,
-      buyer_confirmed_by: context.userId,
-    } as never).eq("id", data.id);
+    const { error: updErr } = await sb
+      .from("grain_dispatches")
+      .update({
+        buyer_confirmed_at: confirmedAt,
+        buyer_confirmed_by: context.userId,
+      } as never)
+      .eq("id", data.id);
     if (updErr) throw updErr;
 
     await logActivity({
@@ -364,14 +403,18 @@ export const approveDispatch = createServerFn({ method: "POST" })
 
     const { data: full, error: fullErr } = await sb
       .from("grain_dispatches")
-      .select("id, admin_id, silo_id, grain_type, total_qty_kg, price_per_kg, stage, status, buyer_confirmed_at")
+      .select(
+        "id, admin_id, silo_id, grain_type, total_qty_kg, price_per_kg, stage, status, buyer_confirmed_at",
+      )
       .eq("id", data.id)
       .maybeSingle();
     if (fullErr) throw fullErr;
     if (!full) throw new Error("Dispatch not found");
     const disp = full as Row;
-    if (disp.status !== "draft") throw new Error(`Dispatch isn't awaiting approval (currently ${disp.status})`);
-    if (!disp.buyer_confirmed_at) throw new Error("Buyer confirmation is required before approving this dispatch");
+    if (disp.status !== "draft")
+      throw new Error(`Dispatch isn't awaiting approval (currently ${disp.status})`);
+    if (!disp.buyer_confirmed_at)
+      throw new Error("Buyer confirmation is required before approving this dispatch");
 
     const { data: silo, error: sErr } = await sb
       .from("silos")
@@ -382,30 +425,43 @@ export const approveDispatch = createServerFn({ method: "POST" })
 
     // Re-run FIFO now — this is the real allocation, superseding the preview
     // computed when the draft was created.
-    const { allocs, avgCost } = await computeFifoAllocation(sb, disp.silo_id, disp.grain_type, Number(disp.total_qty_kg));
-    const totalCostVal = avgCost != null ? Number((avgCost * Number(disp.total_qty_kg)).toFixed(2)) : null;
+    const { allocs, avgCost } = await computeFifoAllocation(
+      sb,
+      disp.silo_id,
+      disp.grain_type,
+      Number(disp.total_qty_kg),
+    );
+    const totalCostVal =
+      avgCost != null ? Number((avgCost * Number(disp.total_qty_kg)).toFixed(2)) : null;
     const totalAmount = Number((Number(disp.price_per_kg) * Number(disp.total_qty_kg)).toFixed(2));
     const profit = totalCostVal != null ? Number((totalAmount - totalCostVal).toFixed(2)) : null;
 
-    const { error: aErr } = await sb.from("grain_dispatch_allocations").insert(
-      allocs.map((a) => ({ ...a, dispatch_id: data.id })) as never,
-    );
+    const { error: aErr } = await sb
+      .from("grain_dispatch_allocations")
+      .insert(allocs.map((a) => ({ ...a, dispatch_id: data.id })) as never);
     if (aErr) throw aErr;
 
-    const newOcc = Math.max(0, Number((silo as Row).current_occupancy_kg ?? 0) - Number(disp.total_qty_kg));
-    const { error: occErr } = await sb.from("silos")
+    const newOcc = Math.max(
+      0,
+      Number((silo as Row).current_occupancy_kg ?? 0) - Number(disp.total_qty_kg),
+    );
+    const { error: occErr } = await sb
+      .from("silos")
       .update({ current_occupancy_kg: newOcc, updated_by: context.userId } as never)
       .eq("id", disp.silo_id);
     if (occErr) throw occErr;
 
-    const { error: updErr } = await sb.from("grain_dispatches").update({
-      status: "confirmed",
-      avg_unit_cost: avgCost,
-      total_cost: totalCostVal,
-      profit,
-      avg_cost_snapshot: avgCost,
-      dispatched_at: disp.stage === "staged" ? null : new Date().toISOString(),
-    } as never).eq("id", data.id);
+    const { error: updErr } = await sb
+      .from("grain_dispatches")
+      .update({
+        status: "confirmed",
+        avg_unit_cost: avgCost,
+        total_cost: totalCostVal,
+        profit,
+        avg_cost_snapshot: avgCost,
+        dispatched_at: disp.stage === "staged" ? null : new Date().toISOString(),
+      } as never)
+      .eq("id", data.id);
     if (updErr) throw updErr;
 
     await logActivity({
@@ -423,16 +479,25 @@ export const approveDispatch = createServerFn({ method: "POST" })
 /** Admin-only: rejects a draft dispatch. No stock was ever committed, so this is a pure status flip. */
 export const rejectDispatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d) => z.object({ id: z.string().uuid(), reason: z.string().trim().max(500).optional().nullable() }).parse(d))
+  .validator((d) =>
+    z
+      .object({ id: z.string().uuid(), reason: z.string().trim().max(500).optional().nullable() })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
     await requireRole(context.supabase, context.userId, ["admin"]);
     const { data: disp, error: dErr } = await context.supabase
-      .from("grain_dispatches").select("id, admin_id, silo_id, status").eq("id", data.id).maybeSingle();
+      .from("grain_dispatches")
+      .select("id, admin_id, silo_id, status")
+      .eq("id", data.id)
+      .maybeSingle();
     if (dErr) throw dErr;
     if (!disp) throw new Error("Dispatch not found");
-    if ((disp as Row).status !== "draft") throw new Error(`Dispatch isn't awaiting approval (currently ${(disp as Row).status})`);
+    if ((disp as Row).status !== "draft")
+      throw new Error(`Dispatch isn't awaiting approval (currently ${(disp as Row).status})`);
 
-    const { error } = await context.supabase.from("grain_dispatches")
+    const { error } = await context.supabase
+      .from("grain_dispatches")
       .update({ status: "cancelled", notes: data.reason ?? null } as never)
       .eq("id", data.id);
     if (error) throw error;
@@ -477,17 +542,21 @@ export const listDispatches = createServerFn({ method: "GET" })
 export const updateDispatchStage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d) =>
-    z.object({
-      id: z.string().uuid(),
-      stage: z.enum(["staged", "in_transit", "delivered"]),
-    }).parse(d),
+    z
+      .object({
+        id: z.string().uuid(),
+        stage: z.enum(["staged", "in_transit", "delivered"]),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     const patch: Row = { stage: data.stage };
     if (data.stage === "in_transit") patch.dispatched_at = new Date().toISOString();
     if (data.stage === "delivered") patch.status = "delivered";
     const { error } = await context.supabase
-      .from("grain_dispatches").update(patch as never).eq("id", data.id);
+      .from("grain_dispatches")
+      .update(patch as never)
+      .eq("id", data.id);
     if (error) throw error;
     await logActivity({
       actorId: context.userId,
@@ -505,7 +574,9 @@ export const getDispatchDetail = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     const { data: d1, error: e1 } = await context.supabase
       .from("grain_dispatches")
-      .select("*, silos:silo_id(id, silo_id, name), buyers:buyer_id(id, name, company_name, contact_phone)")
+      .select(
+        "*, silos:silo_id(id, silo_id, name), buyers:buyer_id(id, name, company_name, contact_phone)",
+      )
       .eq("id", data.id)
       .single();
     if (e1) throw e1;
@@ -526,18 +597,20 @@ export const createDispatchPhotoUploadUrl = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d) => z.object({ filename: z.string().min(1).max(200) }).parse(d))
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: adminId } = await (context.supabase as any).rpc("get_tenant_admin_id", { _user_id: context.userId });
+    const { data: adminId } = await (context.supabase as any).rpc("get_tenant_admin_id", {
+      _user_id: context.userId,
+    });
     // Falling back to context.userId here (instead of failing loudly like
     // createReceiptUploadUrl's tenantAdminId() helper does) would silently
     // put the upload in a folder the "dispatch photos: tenant insert" RLS
     // policy can never match — get_tenant_admin_id(auth.uid()) is
     // re-evaluated fresh at INSERT time and would never equal a bare
     // userId once a real admin_id exists, so WITH CHECK fails.
-    if (!adminId) throw new Error("No tenant admin found for this account — cannot upload a dispatch photo");
+    if (!adminId)
+      throw new Error("No tenant admin found for this account — cannot upload a dispatch photo");
     const safe = data.filename.replace(/[^a-zA-Z0-9._-]/g, "_");
     const path = `${adminId}/${Date.now()}-${safe}`;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const { data: signed, error } = await (context.supabase as any).storage
       .from("dispatch-photos")
       .createSignedUploadUrl(path);
@@ -549,7 +622,6 @@ export const getDispatchPhotoSignedUrl = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d) => z.object({ path: z.string().min(1) }).parse(d))
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: signed, error } = await (context.supabase as any).storage
       .from("dispatch-photos")
       .createSignedUrl(data.path, 60 * 10);

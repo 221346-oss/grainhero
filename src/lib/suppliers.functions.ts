@@ -7,7 +7,6 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { logActivity } from "@/lib/activity";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 const kinds = ["external", "own_farm", "internal_transfer", "anonymous"] as const;
@@ -41,7 +40,7 @@ export const listSuppliers = createServerFn({ method: "GET" })
     if (error) throw error;
     // enrich with totals
     const ids = (rows ?? []).map((r: Row) => r.id);
-    let totals: Record<string, { kg: number; last: string | null; avg_cost: number | null }> = {};
+    const totals: Record<string, { kg: number; last: string | null; avg_cost: number | null }> = {};
     if (ids.length > 0) {
       const { data: agg } = await context.supabase
         .from("grain_batches")
@@ -93,7 +92,13 @@ export const upsertSupplier = createServerFn({ method: "POST" })
         .select("*")
         .single();
       if (error) throw error;
-      await logActivity({ actorId: context.userId, tenantAdminId: adminId, action: "supplier.updated", targetType: "supplier", targetId: data.id });
+      await logActivity({
+        actorId: context.userId,
+        tenantAdminId: adminId,
+        action: "supplier.updated",
+        targetType: "supplier",
+        targetId: data.id,
+      });
       return row;
     }
     const { data: row, error } = await context.supabase
@@ -113,7 +118,13 @@ export const upsertSupplier = createServerFn({ method: "POST" })
       .select("*")
       .single();
     if (error) throw error;
-    await logActivity({ actorId: context.userId, tenantAdminId: adminId, action: "supplier.created", targetType: "supplier", targetId: (row as Row).id });
+    await logActivity({
+      actorId: context.userId,
+      tenantAdminId: adminId,
+      action: "supplier.created",
+      targetType: "supplier",
+      targetId: (row as Row).id,
+    });
     return row;
   });
 
@@ -123,7 +134,12 @@ export const deleteSupplier = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.from("suppliers").delete().eq("id", data.id);
     if (error) throw error;
-    await logActivity({ actorId: context.userId, action: "supplier.deleted", targetType: "supplier", targetId: data.id });
+    await logActivity({
+      actorId: context.userId,
+      action: "supplier.deleted",
+      targetType: "supplier",
+      targetId: data.id,
+    });
     return { ok: true };
   });
 
@@ -139,7 +155,9 @@ export const getSupplierDetail = createServerFn({ method: "GET" })
     if (error) throw error;
     const { data: batches } = await context.supabase
       .from("grain_batches")
-      .select("id, batch_id, grain_type, quantity_kg, remaining_kg, unit_cost, currency, intake_date, created_at, silo_id, silos:silo_id(name, silo_id)")
+      .select(
+        "id, batch_id, grain_type, quantity_kg, remaining_kg, unit_cost, currency, intake_date, created_at, silo_id, silos:silo_id(name, silo_id)",
+      )
       .eq("supplier_id", data.id)
       .order("created_at", { ascending: false })
       .limit(200);
@@ -172,11 +190,13 @@ export const getPriceSettings = createServerFn({ method: "GET" })
 export const savePriceSettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) =>
-    z.object({
-      default_margin_pct: z.number().min(0).max(500),
-      currency: z.string().min(3).max(3).default("PKR"),
-      per_grain_margin: z.record(z.string(), z.number()).optional(),
-    }).parse(d),
+    z
+      .object({
+        default_margin_pct: z.number().min(0).max(500),
+        currency: z.string().min(3).max(3).default("PKR"),
+        per_grain_margin: z.record(z.string(), z.number()).optional(),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     // Resolve tenant admin id — settings are a single shared row per tenant.
@@ -186,15 +206,13 @@ export const savePriceSettings = createServerFn({ method: "POST" })
       .eq("id", context.userId)
       .maybeSingle();
     const tenantAdminId = prof?.admin_id ?? prof?.id ?? context.userId;
-    const { error } = await context.supabase
-      .from("tenant_price_settings")
-      .upsert({
-        admin_id: tenantAdminId,
-        default_margin_pct: data.default_margin_pct,
-        currency: data.currency,
-        per_grain_margin: data.per_grain_margin ?? {},
-        updated_by: context.userId,
-      } as never);
+    const { error } = await context.supabase.from("tenant_price_settings").upsert({
+      admin_id: tenantAdminId,
+      default_margin_pct: data.default_margin_pct,
+      currency: data.currency,
+      per_grain_margin: data.per_grain_margin ?? {},
+      updated_by: context.userId,
+    } as never);
     if (error) throw error;
     return { ok: true };
   });

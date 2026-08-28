@@ -41,8 +41,11 @@ export type QuoteResult = {
 };
 
 export async function loadCommerceConfig(supabase: SupabaseClient<Database>): Promise<CommerceCfg> {
-  const { data, error } = await supabase.from("mobile_commerce_settings")
-    .select("*").limit(1).maybeSingle();
+  const { data, error } = await supabase
+    .from("mobile_commerce_settings")
+    .select("*")
+    .limit(1)
+    .maybeSingle();
   if (error) throw new Error(error.message);
   if (!data) throw new Error("commerce_disabled");
   const row = data as unknown as Record<string, unknown>;
@@ -63,21 +66,50 @@ export async function loadCommerceConfig(supabase: SupabaseClient<Database>): Pr
 }
 
 async function loadListings(supabase: SupabaseClient<Database>, ids: string[]) {
-  if (ids.length === 0) return new Map<string, { admin_id: string; batch_id: string | null; price_per_kg: number; available_kg: number; currency: string; status: string }>();
-  const { data, error } = await supabase.from("grain_listings")
+  if (ids.length === 0)
+    return new Map<
+      string,
+      {
+        admin_id: string;
+        batch_id: string | null;
+        price_per_kg: number;
+        available_kg: number;
+        currency: string;
+        status: string;
+      }
+    >();
+  const { data, error } = await supabase
+    .from("grain_listings")
     .select("id, admin_id, batch_id, price_per_kg, available_kg, currency, status")
     .in("id", ids);
   if (error) throw new Error(error.message);
-  const map = new Map<string, { admin_id: string; batch_id: string | null; price_per_kg: number; available_kg: number; currency: string; status: string }>();
+  const map = new Map<
+    string,
+    {
+      admin_id: string;
+      batch_id: string | null;
+      price_per_kg: number;
+      available_kg: number;
+      currency: string;
+      status: string;
+    }
+  >();
   for (const r of (data ?? []) as Array<{
-    id: string; admin_id: string; batch_id: string | null;
-    price_per_kg: number | string; available_kg: number | string;
-    currency: string; status: string;
+    id: string;
+    admin_id: string;
+    batch_id: string | null;
+    price_per_kg: number | string;
+    available_kg: number | string;
+    currency: string;
+    status: string;
   }>) {
     map.set(r.id, {
-      admin_id: r.admin_id, batch_id: r.batch_id,
-      price_per_kg: Number(r.price_per_kg), available_kg: Number(r.available_kg),
-      currency: r.currency, status: r.status,
+      admin_id: r.admin_id,
+      batch_id: r.batch_id,
+      price_per_kg: Number(r.price_per_kg),
+      available_kg: Number(r.available_kg),
+      currency: r.currency,
+      status: r.status,
     });
   }
   return map;
@@ -86,13 +118,22 @@ async function loadListings(supabase: SupabaseClient<Database>, ids: string[]) {
 async function loadTaxRate(supabase: SupabaseClient<Database>, region: string | null) {
   if (!region) return 0;
   const today = new Date().toISOString().slice(0, 10);
-  const { data } = await supabase.from("tax_rules")
+  const { data } = await supabase
+    .from("tax_rules")
     .select("rate_pct, effective_from, effective_to, active")
-    .eq("region", region).eq("active", true).limit(50);
-  const rows = (data ?? []) as Array<{ rate_pct: number | string; effective_from: string | null; effective_to: string | null }>;
-  const applicable = rows.find((r) =>
-    (!r.effective_from || r.effective_from <= today) &&
-    (!r.effective_to || r.effective_to >= today));
+    .eq("region", region)
+    .eq("active", true)
+    .limit(50);
+  const rows = (data ?? []) as Array<{
+    rate_pct: number | string;
+    effective_from: string | null;
+    effective_to: string | null;
+  }>;
+  const applicable = rows.find(
+    (r) =>
+      (!r.effective_from || r.effective_from <= today) &&
+      (!r.effective_to || r.effective_to >= today),
+  );
   return applicable ? Number(applicable.rate_pct) : 0;
 }
 
@@ -116,18 +157,25 @@ export async function computeQuote(
 
   for (const item of items) {
     const l = listings.get(item.listing_id);
-    if (!l) { warnings.push(`listing_missing:${item.listing_id}`); continue; }
+    if (!l) {
+      warnings.push(`listing_missing:${item.listing_id}`);
+      continue;
+    }
     if (l.status !== "active") warnings.push(`listing_inactive:${item.listing_id}`);
     if (item.quantity_kg > l.available_kg) warnings.push(`insufficient_stock:${item.listing_id}`);
     // Trust server pricing — ignore client unit_price_cents drift, but surface it.
     const serverUnitCents = Math.round(l.price_per_kg * 100);
-    if (serverUnitCents !== item.unit_price_cents) warnings.push(`price_updated:${item.listing_id}`);
+    if (serverUnitCents !== item.unit_price_cents)
+      warnings.push(`price_updated:${item.listing_id}`);
     currency = l.currency ?? currency;
     const lineSubtotal = Math.round(item.quantity_kg * serverUnitCents);
     subtotal += lineSubtotal;
     lines.push({
-      listing_id: item.listing_id, admin_id: l.admin_id, batch_id: l.batch_id,
-      quantity_kg: item.quantity_kg, unit_price_cents: serverUnitCents,
+      listing_id: item.listing_id,
+      admin_id: l.admin_id,
+      batch_id: l.batch_id,
+      quantity_kg: item.quantity_kg,
+      unit_price_cents: serverUnitCents,
       subtotal_cents: lineSubtotal,
     });
   }
@@ -136,12 +184,16 @@ export async function computeQuote(
 
   let region: string | null = null;
   if (addressId) {
-    const { data: addr } = await supabase.from("buyer_addresses")
-      .select("region, country, buyer_id").eq("id", addressId).maybeSingle();
+    const { data: addr } = await supabase
+      .from("buyer_addresses")
+      .select("region, country, buyer_id")
+      .eq("id", addressId)
+      .maybeSingle();
     if (!addr) throw new Error("address_not_found");
     if ((addr as { buyer_id: string }).buyer_id !== userId) throw new Error("address_forbidden");
-    region = (addr as { region: string | null; country: string }).region
-      ?? (addr as { country: string }).country;
+    region =
+      (addr as { region: string | null; country: string }).region ??
+      (addr as { country: string }).country;
   }
 
   const taxRate = await loadTaxRate(supabase, region);
@@ -150,7 +202,8 @@ export async function computeQuote(
   const total = subtotal + taxCents + feeCents;
 
   if (total < cfg.min_order_cents) warnings.push(`below_min:${cfg.min_order_cents}`);
-  if (cfg.max_order_cents > 0 && total > cfg.max_order_cents) warnings.push(`above_max:${cfg.max_order_cents}`);
+  if (cfg.max_order_cents > 0 && total > cfg.max_order_cents)
+    warnings.push(`above_max:${cfg.max_order_cents}`);
 
   return {
     currency: currency.toUpperCase(),

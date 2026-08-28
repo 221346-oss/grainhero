@@ -12,7 +12,6 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireRole } from "@/lib/rbac.server";
 import { logActivity, logManagerAction } from "@/lib/activity";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 async function resolveTenantAdminId(supabase: Row, userId: string): Promise<string> {
@@ -61,7 +60,9 @@ export const listAvailableTechnicians = createServerFn({ method: "GET" })
 async function loadBatchForTransition(supabase: Row, batchId: string) {
   const { data, error } = await supabase
     .from("grain_batches")
-    .select("id, admin_id, batch_id, status, assigned_technician_id, silo_id, quantity_kg, qc_passed_at, manager_override_approval, manager_override_at, created_by")
+    .select(
+      "id, admin_id, batch_id, status, assigned_technician_id, silo_id, quantity_kg, qc_passed_at, manager_override_approval, manager_override_at, created_by",
+    )
     .eq("id", batchId)
     .maybeSingle();
   if (error) throw error;
@@ -140,16 +141,16 @@ export const reviewBatchQC = createServerFn({ method: "POST" })
       throw new Error(`Batch isn't awaiting manager review (currently ${b.status})`);
 
     const toStatus = data.decision === "pass" ? "qc_passed" : "qc_failed";
-    const updateData: any = { 
-      status: toStatus as never, 
-      updated_by: context.userId 
+    const updateData: any = {
+      status: toStatus as never,
+      updated_by: context.userId,
     };
-    
+
     // Add timestamp when QC passes to track 6-hour admin approval window
     if (data.decision === "pass") {
       updateData.qc_passed_at = new Date().toISOString();
     }
-    
+
     const { error } = await context.supabase
       .from("grain_batches")
       .update(updateData as never)
@@ -250,7 +251,7 @@ export const managerOverrideApproval = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await requireRole(context.supabase, context.userId, ["manager"]);
     const b = await loadBatchForTransition(context.supabase, data.batchId);
-    
+
     if (b.status !== "qc_passed")
       throw new Error(`Batch isn't awaiting approval (currently ${b.status})`);
 
@@ -266,7 +267,7 @@ export const managerOverrideApproval = createServerFn({ method: "POST" })
     if (elapsedTime < sixHoursInMs) {
       const remainingMinutes = Math.ceil((sixHoursInMs - elapsedTime) / (60 * 1000));
       throw new Error(
-        `Admin approval period hasn't expired yet. ${remainingMinutes} minutes remaining.`
+        `Admin approval period hasn't expired yet. ${remainingMinutes} minutes remaining.`,
       );
     }
 
@@ -300,8 +301,8 @@ export const managerOverrideApproval = createServerFn({ method: "POST" })
 
     const { error } = await context.supabase
       .from("grain_batches")
-      .update({ 
-        status: "stored" as never, 
+      .update({
+        status: "stored" as never,
         updated_by: context.userId,
         manager_override_approval: true,
         manager_override_at: new Date().toISOString(),
@@ -316,7 +317,7 @@ export const managerOverrideApproval = createServerFn({ method: "POST" })
       action: "batch.manager_override_approval",
       targetType: "grain_batch",
       targetId: data.batchId,
-      meta: { 
+      meta: {
         batchId: b.batch_id,
         hoursWaited: (elapsedTime / (60 * 60 * 1000)).toFixed(1),
         reason: "Admin approval timeout exceeded (6 hours)",

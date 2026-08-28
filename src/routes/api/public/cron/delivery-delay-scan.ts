@@ -15,14 +15,17 @@ export const Route = createFileRoute("/api/public/cron/delivery-delay-scan")({
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { loadMarketplaceSettings } = await import("@/lib/marketplace-settings.functions");
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         const sb = supabaseAdmin as any;
         const settings = await loadMarketplaceSettings(sb);
         const graceMs = settings.logistics.deliveryDelayGraceMinutes * 60_000;
         const cutoff = new Date(Date.now() - graceMs).toISOString();
 
-        const { data: rows } = await sb.from("shipment_assignments")
-          .select("id, shipment_id, planned_delivery_at, status, buyer_shipments(id, order_id, admin_id)")
+        const { data: rows } = await sb
+          .from("shipment_assignments")
+          .select(
+            "id, shipment_id, planned_delivery_at, status, buyer_shipments(id, order_id, admin_id)",
+          )
           .in("status", ["planned", "in_transit"])
           .lt("planned_delivery_at", cutoff)
           .limit(200);
@@ -30,10 +33,15 @@ export const Route = createFileRoute("/api/public/cron/delivery-delay-scan")({
         let flagged = 0;
         for (const row of (rows ?? []) as Array<Record<string, unknown>>) {
           await sb.from("shipment_assignments").update({ status: "exception" }).eq("id", row.id);
-          const ship = (row as any).buyer_shipments as { id: string; order_id: string; admin_id: string } | null;
+          const ship = (row as any).buyer_shipments as {
+            id: string;
+            order_id: string;
+            admin_id: string;
+          } | null;
           if (ship) {
             await sb.from("buyer_shipment_events").insert({
-              shipment_id: ship.id, code: "delivery_delayed",
+              shipment_id: ship.id,
+              code: "delivery_delayed",
               label: "Delivery window exceeded — flagged as exception",
               source: "system",
             });

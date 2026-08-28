@@ -38,11 +38,12 @@ interface Props {
 
 function RoleBadge({ role }: { role: string }) {
   const r = role.toLowerCase();
-  const cls = r === "manager" || r === "admin" || r === "super_admin"
-    ? "bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-200/50"
-    : r === "technician"
-      ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200/50"
-      : "bg-slate-500/10 text-slate-700 dark:text-slate-300 border-slate-200/50";
+  const cls =
+    r === "manager" || r === "admin" || r === "super_admin"
+      ? "bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-200/50"
+      : r === "technician"
+        ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200/50"
+        : "bg-slate-500/10 text-slate-700 dark:text-slate-300 border-slate-200/50";
 
   return (
     <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded border ${cls}`}>
@@ -70,7 +71,8 @@ export function TicketDiscussionDialog({ open, onOpenChange, incident, currentUs
   });
 
   // Parse response — server now returns { comments, isParticipant }
-  const responseData = data as { comments: CommentRow[]; isParticipant: boolean } | CommentRow[] | undefined;
+  const responseData = data as
+    { comments: CommentRow[]; isParticipant: boolean } | CommentRow[] | undefined;
   const comments: CommentRow[] = Array.isArray(responseData)
     ? responseData
     : (responseData?.comments ?? []);
@@ -115,16 +117,18 @@ export function TicketDiscussionDialog({ open, onOpenChange, incident, currentUs
     <>
       {/* Backdrop with fade effect */}
       {open && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 z-40 transition-all duration-300"
           onClick={() => onOpenChange(false)}
         />
       )}
-      
+
       {/* Sliding Container */}
-      <div className={`fixed top-1/2 right-4 w-[32rem] max-h-[85vh] bg-background border rounded-lg shadow-2xl z-50 transition-all duration-300 ease-out transform -translate-y-1/2 ${
-        open ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'
-      } flex flex-col overflow-hidden`}>
+      <div
+        className={`fixed top-1/2 right-4 w-[32rem] max-h-[85vh] bg-background border rounded-lg shadow-2xl z-50 transition-all duration-300 ease-out transform -translate-y-1/2 ${
+          open ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"
+        } flex flex-col overflow-hidden`}
+      >
         {/* Discussion Header */}
         <div className="p-4 border-b bg-card/60 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -162,29 +166,40 @@ export function TicketDiscussionDialog({ open, onOpenChange, incident, currentUs
             comments.map((c) => (
               <div key={c.id} className="space-y-1">
                 {/* Sender Name & Time */}
-                <div className={`flex items-center gap-2 text-[10px] ${
-                  c.user_id === currentUserId ? 'justify-end' : 'justify-start'
-                }`}>
-                  <span className={`font-bold text-[9px] uppercase px-1.5 py-0.5 rounded ${
-                    c.user_id === currentUserId 
-                      ? "text-black"
-                      : c.author_role.toLowerCase() === "manager" || c.author_role.toLowerCase() === "admin" || c.author_role.toLowerCase() === "super_admin"
-                        ? "text-black"
-                        : c.author_role.toLowerCase() === "technician"
-                          ? "text-black"
-                          : "text-black"
+                <div
+                  className={`flex items-center gap-2 text-[10px] ${
+                    c.user_id === currentUserId ? "justify-end" : "justify-start"
                   }`}
-                  style={{ backgroundColor: '#C8F0A4' }}>
+                >
+                  <span
+                    className={`font-bold text-[9px] uppercase px-1.5 py-0.5 rounded ${
+                      c.user_id === currentUserId
+                        ? "text-black"
+                        : c.author_role.toLowerCase() === "manager" ||
+                            c.author_role.toLowerCase() === "admin" ||
+                            c.author_role.toLowerCase() === "super_admin"
+                          ? "text-black"
+                          : c.author_role.toLowerCase() === "technician"
+                            ? "text-black"
+                            : "text-black"
+                    }`}
+                    style={{ backgroundColor: "#C8F0A4" }}
+                  >
                     {c.user_id === currentUserId ? "You" : c.author_role}
                   </span>
                   <span className="text-muted-foreground">
-                    {new Date(c.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    {new Date(c.created_at).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
                   </span>
                 </div>
                 {/* Message Bubble */}
-                <div className={`flex gap-2.5 items-start text-xs ${
-                  c.user_id === currentUserId ? "flex-row-reverse" : ""
-                }`}>
+                <div
+                  className={`flex gap-2.5 items-start text-xs ${
+                    c.user_id === currentUserId ? "flex-row-reverse" : ""
+                  }`}
+                >
                   <div className="h-7 w-7 rounded-full bg-muted/60 grid place-items-center shrink-0 text-muted-foreground mt-0.5">
                     <User className="h-3.5 w-3.5" />
                   </div>
@@ -219,7 +234,11 @@ export function TicketDiscussionDialog({ open, onOpenChange, incident, currentUs
             disabled={!message.trim() || sendMut.isPending}
             className="bg-amber-600 hover:bg-amber-700 text-white shrink-0 gap-1 h-10 px-3"
           >
-            {sendMut.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+            {sendMut.isPending ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Send className="h-3.5 w-3.5" />
+            )}
             Send
           </Button>
         </div>

@@ -24,8 +24,12 @@ type PlanId = (typeof PLAN_IDS)[number];
 
 const PLAN_RANK: Record<PlanId, number> = { basic: 1, intermediate: 2, pro: 3 };
 
-function cycleDays(c: Cycle) { return c === "yearly" ? 365 : 30; }
-function yearlyPriceRs(monthlyRs: number) { return monthlyRs * 10; }
+function cycleDays(c: Cycle) {
+  return c === "yearly" ? 365 : 30;
+}
+function yearlyPriceRs(monthlyRs: number) {
+  return monthlyRs * 10;
+}
 function priceForCycle(monthlyRs: number, c: Cycle) {
   return c === "yearly" ? yearlyPriceRs(monthlyRs) : monthlyRs;
 }
@@ -50,7 +54,9 @@ type PlanRow = {
 async function loadPlans(supabase: any) {
   const { data, error } = await supabase
     .from("plan_thresholds")
-    .select("plan_id, name, price_cents, currency, max_users, max_silos, max_batches, max_sensors, sort_order")
+    .select(
+      "plan_id, name, price_cents, currency, max_users, max_silos, max_batches, max_sensors, sort_order",
+    )
     .eq("is_active", true)
     .order("sort_order", { ascending: true });
   if (error) throw error;
@@ -60,7 +66,9 @@ async function loadPlans(supabase: any) {
 async function loadProfile(supabase: any, userId: string) {
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, admin_id, subscription_plan, billing_cycle, current_period_end, plan_usage_silos, plan_usage_users, plan_usage_sensors, plan_usage_actuators, retention_discount_pct, retention_discount_until, retention_offer_used_at, stripe_customer_id, stripe_subscription_id, stripe_subscription_item_id, stripe_subscription_status, stripe_schedule_id")
+    .select(
+      "id, admin_id, subscription_plan, billing_cycle, current_period_end, plan_usage_silos, plan_usage_users, plan_usage_sensors, plan_usage_actuators, retention_discount_pct, retention_discount_until, retention_offer_used_at, stripe_customer_id, stripe_subscription_id, stripe_subscription_item_id, stripe_subscription_status, stripe_schedule_id",
+    )
     .eq("id", userId)
     .maybeSingle();
   if (error) throw error;
@@ -104,9 +112,8 @@ function computeProration(args: {
   // Yearly plans are billed as a full annual charge up front (with credit for
   // any unused portion of the current cycle). Monthly plans stay prorated
   // over the days remaining in the new cycle.
-  const newCharge = args.newCycle === "yearly"
-    ? args.newPriceRs
-    : (args.newPriceRs * daysRemaining) / newDays;
+  const newCharge =
+    args.newCycle === "yearly" ? args.newPriceRs : (args.newPriceRs * daysRemaining) / newDays;
   const proratedRs = Math.max(0, Math.round(newCharge - credit));
   return { daysRemaining, proratedRs, periodEndIso: new Date(periodEnd).toISOString() };
 }
@@ -215,8 +222,7 @@ export const previewPlanChange = createServerFn({ method: "POST" })
     else direction = "same";
 
     const applyNow =
-      direction === "upgrade" ||
-      (direction === "cycle_change" && newPriceRs > currentPriceRs);
+      direction === "upgrade" || (direction === "cycle_change" && newPriceRs > currentPriceRs);
 
     // Fallback estimate — used before a Stripe subscription exists or if the
     // upcoming-invoice preview fails. UI shows this as "estimate".
@@ -249,13 +255,19 @@ export const previewPlanChange = createServerFn({ method: "POST" })
         stripeQuoteCurrency = quote.currency.toUpperCase();
         quoteSource = "stripe";
       } catch (e) {
-        console.warn("[preview] Stripe upcoming-invoice failed, using estimate:", (e as Error).message);
+        console.warn(
+          "[preview] Stripe upcoming-invoice failed, using estimate:",
+          (e as Error).message,
+        );
       }
     }
 
-    const chargeRs = stripeQuoteCents !== null
-      ? Math.round(stripeQuoteCents / 100)
-      : (applyNow ? fallback.proratedRs : 0);
+    const chargeRs =
+      stripeQuoteCents !== null
+        ? Math.round(stripeQuoteCents / 100)
+        : applyNow
+          ? fallback.proratedRs
+          : 0;
 
     return {
       direction,
@@ -309,7 +321,8 @@ export const initiatePlanChange = createServerFn({ method: "POST" })
     if (newRank > curRank) direction = "upgrade";
     else if (newRank < curRank) direction = "downgrade";
     else direction = "cycle_change";
-    const applyNow = direction === "upgrade" || (direction === "cycle_change" && newPriceRs > currentPriceRs);
+    const applyNow =
+      direction === "upgrade" || (direction === "cycle_change" && newPriceRs > currentPriceRs);
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { emitToSuperAdmins } = await import("@/lib/notify");
@@ -327,8 +340,9 @@ export const initiatePlanChange = createServerFn({ method: "POST" })
 
     // Fallback period-end estimate for scheduled downgrades.
     const nowMs = Date.now();
-    const defaultPeriodEndIso = profile.current_period_end
-      ?? new Date(nowMs + cycleDays(currentCycle) * 86400_000).toISOString();
+    const defaultPeriodEndIso =
+      profile.current_period_end ??
+      new Date(nowMs + cycleDays(currentCycle) * 86400_000).toISOString();
 
     if (!applyNow) {
       // ────── DOWNGRADE / same-price cycle switch ──────
@@ -337,20 +351,30 @@ export const initiatePlanChange = createServerFn({ method: "POST" })
       let applyAt = defaultPeriodEndIso;
       if (profile.stripe_subscription_id) {
         try {
-          const sub = await stripeFetch(
-            `/subscriptions/${profile.stripe_subscription_id}`, null, "GET",
-          ) as { current_period_end: number; items: { data: Array<{ id: string; price: { id: string } }> } };
+          const sub = (await stripeFetch(
+            `/subscriptions/${profile.stripe_subscription_id}`,
+            null,
+            "GET",
+          )) as {
+            current_period_end: number;
+            items: { data: Array<{ id: string; price: { id: string } }> };
+          };
           const periodEndSec = sub.current_period_end;
           const currentPriceId = sub.items.data[0]?.price.id;
           applyAt = new Date(periodEndSec * 1000).toISOString();
 
           if (profile.stripe_schedule_id) {
-            await stripeFetch(`/subscription_schedules/${profile.stripe_schedule_id}/cancel`,
-              new URLSearchParams()).catch(() => null);
+            await stripeFetch(
+              `/subscription_schedules/${profile.stripe_schedule_id}/cancel`,
+              new URLSearchParams(),
+            ).catch(() => null);
           }
-          const created = await stripeFetch("/subscription_schedules", stripeForm({
-            from_subscription: profile.stripe_subscription_id,
-          })) as { id: string };
+          const created = (await stripeFetch(
+            "/subscription_schedules",
+            stripeForm({
+              from_subscription: profile.stripe_subscription_id,
+            }),
+          )) as { id: string };
           const phaseBody = new URLSearchParams();
           phaseBody.set("end_behavior", "release");
           phaseBody.set("phases[0][items][0][price]", currentPriceId);
@@ -362,11 +386,15 @@ export const initiatePlanChange = createServerFn({ method: "POST" })
           phaseBody.set("phases[1][proration_behavior]", "none");
           await stripeFetch(`/subscription_schedules/${created.id}`, phaseBody);
 
-          await supabaseAdmin.from("profiles")
+          await supabaseAdmin
+            .from("profiles")
             .update({ stripe_schedule_id: created.id } as never)
             .eq("id", tenantAdminId);
         } catch (e) {
-          console.warn("[plan-schedule] Stripe schedule failed, falling back to cron:", (e as Error).message);
+          console.warn(
+            "[plan-schedule] Stripe schedule failed, falling back to cron:",
+            (e as Error).message,
+          );
         }
       }
 
@@ -399,7 +427,9 @@ export const initiatePlanChange = createServerFn({ method: "POST" })
         entityId: (inserted as { id?: string } | null)?.id ?? null,
       });
       await logActivity({
-        sb: supabaseAdmin, tenantAdminId, actorId: context.userId,
+        sb: supabaseAdmin,
+        tenantAdminId,
+        actorId: context.userId,
         action: "billing.plan_change_scheduled",
         targetType: "plan_change_request",
         targetId: (inserted as { id?: string } | null)?.id ?? null,
@@ -412,21 +442,41 @@ export const initiatePlanChange = createServerFn({ method: "POST" })
     // Case A: no active Stripe subscription yet → Checkout in subscription mode.
     if (!profile.stripe_subscription_id) {
       const customerId = await ensureStripeCustomer(supabaseAdmin, context.userId);
-      const originHeader = (context as any)?.request?.headers?.get?.("origin")
-        ?? (context as any)?.request?.headers?.get?.("referer")
-        ?? process.env.PUBLIC_APP_URL ?? "";
-      const origin = originHeader ? new URL(originHeader).origin : "";
+      // Try multiple sources for origin, falling back to APP_ORIGIN env var
+      let origin = "";
+      try {
+        const originHeader =
+          (context as any)?.request?.headers?.get?.("origin") ??
+          (context as any)?.request?.headers?.get?.("referer") ??
+          "";
+        if (originHeader) origin = new URL(originHeader).origin;
+      } catch {
+        /* ignore invalid URL */
+      }
+      if (!origin) origin = process.env.APP_ORIGIN ?? process.env.PUBLIC_APP_URL ?? "";
+      if (!origin)
+        throw new Error("Cannot determine app origin for Stripe redirect. Set APP_ORIGIN in .env");
       const success = `${origin}/plan-management?upgrade=success`;
       const cancel = `${origin}/plan-management?upgrade=cancel`;
 
-      const { data: req, error: reqErr } = await supabaseAdmin.from("tenant_plan_change_requests").insert({
-        tenant_admin_id: tenantAdminId, requested_plan: data.requested_plan,
-        current_plan: currentPlanId, direction, status: "pending",
-        billing_cycle: data.billing_cycle, requested_by: context.userId,
-        note: "Awaiting Stripe checkout payment",
-      } as never).select("id").single();
+      const { data: req, error: reqErr } = await supabaseAdmin
+        .from("tenant_plan_change_requests")
+        .insert({
+          tenant_admin_id: tenantAdminId,
+          requested_plan: data.requested_plan,
+          current_plan: currentPlanId,
+          direction,
+          status: "pending",
+          billing_cycle: data.billing_cycle,
+          requested_by: context.userId,
+          note: "Awaiting Stripe checkout payment",
+        } as never)
+        .select("id")
+        .single();
       if (reqErr || !req) {
-        throw new Error(`Failed to create plan change request: ${reqErr?.message ?? "no row returned"}`);
+        throw new Error(
+          `Failed to create plan change request: ${reqErr?.message ?? "no row returned"}`,
+        );
       }
       const requestId = (req as { id: string }).id;
 
@@ -443,24 +493,34 @@ export const initiatePlanChange = createServerFn({ method: "POST" })
       body.set("metadata[plan_change_request_id]", requestId);
       body.set("metadata[user_id]", context.userId);
 
-      const session = await stripeFetch("/checkout/sessions", body) as { id: string; url: string };
-      await supabaseAdmin.from("tenant_plan_change_requests")
-        .update({ stripe_session_id: session.id } as never).eq("id", requestId);
+      const session = (await stripeFetch("/checkout/sessions", body)) as {
+        id: string;
+        url: string;
+      };
+      await supabaseAdmin
+        .from("tenant_plan_change_requests")
+        .update({ stripe_session_id: session.id } as never)
+        .eq("id", requestId);
       return { scheduled: false, apply_now: true, url: session.url, id: requestId };
     }
 
     // Case B: active subscription → subscription.update with proration_behavior=always_invoice.
     try {
-      const sub = await stripeFetch(
-        `/subscriptions/${profile.stripe_subscription_id}`, null, "GET",
-      ) as { items: { data: Array<{ id: string }> } };
+      const sub = (await stripeFetch(
+        `/subscriptions/${profile.stripe_subscription_id}`,
+        null,
+        "GET",
+      )) as { items: { data: Array<{ id: string }> } };
       const currentItemId = sub.items.data[0]?.id;
       if (!currentItemId) throw new Error("Subscription has no item to update");
 
       if (profile.stripe_schedule_id) {
-        await stripeFetch(`/subscription_schedules/${profile.stripe_schedule_id}/cancel`,
-          new URLSearchParams()).catch(() => null);
-        await supabaseAdmin.from("profiles")
+        await stripeFetch(
+          `/subscription_schedules/${profile.stripe_schedule_id}/cancel`,
+          new URLSearchParams(),
+        ).catch(() => null);
+        await supabaseAdmin
+          .from("profiles")
           .update({ stripe_schedule_id: null } as never)
           .eq("id", tenantAdminId);
       }
@@ -475,19 +535,31 @@ export const initiatePlanChange = createServerFn({ method: "POST" })
       await stripeFetch(`/subscriptions/${profile.stripe_subscription_id}`, updBody);
 
       // Cache locally; webhook confirms.
-      await supabaseAdmin.from("profiles").update({
-        subscription_plan: data.requested_plan,
-        billing_cycle: data.billing_cycle,
-      } as never).eq("id", tenantAdminId);
+      await supabaseAdmin
+        .from("profiles")
+        .update({
+          subscription_plan: data.requested_plan,
+          billing_cycle: data.billing_cycle,
+        } as never)
+        .eq("id", tenantAdminId);
 
       await logActivity({
-        sb: supabaseAdmin, tenantAdminId, actorId: context.userId,
+        sb: supabaseAdmin,
+        tenantAdminId,
+        actorId: context.userId,
         action: "billing.plan_upgrade_applied",
-        targetType: "profile", targetId: tenantAdminId,
-        meta: { direction, from: currentPlanId, to: data.requested_plan, cycle: data.billing_cycle },
+        targetType: "profile",
+        targetId: tenantAdminId,
+        meta: {
+          direction,
+          from: currentPlanId,
+          to: data.requested_plan,
+          cycle: data.billing_cycle,
+        },
       });
       await emitToSuperAdmins(supabaseAdmin, {
-        category: "plan", severity: "success",
+        category: "plan",
+        severity: "success",
         title: "Plan upgraded",
         body: `${currentPlanId} → ${data.requested_plan} (${data.billing_cycle}) — invoiced by Stripe.`,
         link: "/platform/plans",
@@ -496,7 +568,7 @@ export const initiatePlanChange = createServerFn({ method: "POST" })
     } catch (e) {
       throw new Error(
         `Upgrade could not be charged automatically: ${(e as Error).message}. ` +
-        `Open the billing portal to update your payment method and try again.`,
+          `Open the billing portal to update your payment method and try again.`,
       );
     }
   });
@@ -535,8 +607,10 @@ export const acceptRetentionOffer = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!prof) throw new Error("Profile not found");
     const p = prof as {
-      id: string; admin_id: string | null;
-      subscription_plan: string | null; billing_cycle: Cycle | null;
+      id: string;
+      admin_id: string | null;
+      subscription_plan: string | null;
+      billing_cycle: Cycle | null;
       retention_offer_used_at: string | null;
     };
     if (p.retention_offer_used_at) throw new Error("Retention offer already used");
@@ -563,9 +637,12 @@ export const acceptRetentionOffer = createServerFn({ method: "POST" })
       .eq("status", "scheduled");
 
     await logActivity({
-      sb: supabaseAdmin, tenantAdminId: p.admin_id ?? p.id, actorId: context.userId,
+      sb: supabaseAdmin,
+      tenantAdminId: p.admin_id ?? p.id,
+      actorId: context.userId,
       action: "billing.retention_offer_accepted",
-      targetType: "profile", targetId: p.id,
+      targetType: "profile",
+      targetId: p.id,
       meta: { discount_pct: 20, until, plan: p.subscription_plan, cycle },
     });
     await emitToSuperAdmins(supabaseAdmin, {
@@ -591,13 +668,24 @@ export const openBillingPortal = createServerFn({ method: "POST" })
     const { ensureStripeCustomer } = await import("@/lib/stripe-billing.server");
     const { stripeFetch, stripeForm } = await import("@/lib/stripe-api.server");
     const customerId = await ensureStripeCustomer(supabaseAdmin, context.userId);
-    const originHeader = (context as any)?.request?.headers?.get?.("origin")
-      ?? (context as any)?.request?.headers?.get?.("referer")
-      ?? process.env.PUBLIC_APP_URL ?? "";
-    const origin = originHeader ? new URL(originHeader).origin : "";
-    const session = await stripeFetch("/billing_portal/sessions", stripeForm({
-      customer: customerId,
-      return_url: `${origin}/plan-management`,
-    })) as { url: string };
+    let origin = "";
+    try {
+      const originHeader =
+        (context as any)?.request?.headers?.get?.("origin") ??
+        (context as any)?.request?.headers?.get?.("referer") ??
+        "";
+      if (originHeader) origin = new URL(originHeader).origin;
+    } catch {
+      /* ignore invalid URL */
+    }
+    if (!origin) origin = process.env.APP_ORIGIN ?? process.env.PUBLIC_APP_URL ?? "";
+    if (!origin) throw new Error("Cannot determine app origin. Set APP_ORIGIN in .env");
+    const session = (await stripeFetch(
+      "/billing_portal/sessions",
+      stripeForm({
+        customer: customerId,
+        return_url: `${origin}/plan-management`,
+      }),
+    )) as { url: string };
     return { url: session.url };
   });

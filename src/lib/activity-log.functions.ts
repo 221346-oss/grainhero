@@ -89,26 +89,28 @@ export async function logActivity(params: LogActivityParams) {
  */
 export const listActivityLogs = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator(z.object({
-    page: z.number().default(1),
-    limit: z.number().default(50),
-    category: z.string().optional(),
-    severity: z.string().optional(),
-    userId: z.string().optional(),
-    entityType: z.string().optional(),
-    startDate: z.string().optional(),
-    endDate: z.string().optional(),
-    search: z.string().optional(),
-  }).optional())
+  .inputValidator(
+    z
+      .object({
+        page: z.number().default(1),
+        limit: z.number().default(50),
+        category: z.string().optional(),
+        severity: z.string().optional(),
+        userId: z.string().optional(),
+        entityType: z.string().optional(),
+        startDate: z.string().optional(),
+        endDate: z.string().optional(),
+        search: z.string().optional(),
+      })
+      .optional(),
+  )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const args = data ?? { page: 1, limit: 50 };
     const page = args.page ?? 1;
     const limit = args.limit ?? 50;
 
-    let query = supabase
-      .from("activity_logs")
-      .select("*", { count: "exact" });
+    let query = supabase.from("activity_logs").select("*", { count: "exact" });
 
     if (args.category) query = query.eq("category", args.category);
     if (args.severity) query = query.eq("severity", args.severity);
@@ -116,9 +118,11 @@ export const listActivityLogs = createServerFn({ method: "POST" })
     if (args.entityType) query = query.eq("entity_type", args.entityType);
     if (args.startDate) query = query.gte("created_at", args.startDate);
     if (args.endDate) query = query.lte("created_at", args.endDate);
-    
+
     if (args.search) {
-      query = query.or(`action.ilike.%${args.search}%,description.ilike.%${args.search}%,entity_ref.ilike.%${args.search}%`);
+      query = query.or(
+        `action.ilike.%${args.search}%,description.ilike.%${args.search}%,entity_ref.ilike.%${args.search}%`,
+      );
     }
 
     // Pagination
@@ -137,7 +141,7 @@ export const listActivityLogs = createServerFn({ method: "POST" })
         limit,
         total: count ?? 0,
         totalPages: Math.ceil((count ?? 0) / limit),
-      }
+      },
     };
   });
 
@@ -147,9 +151,13 @@ export const listActivityLogs = createServerFn({ method: "POST" })
  */
 export const getActivityLogsSummary = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator(z.object({
-    days: z.number().default(7),
-  }).optional())
+  .inputValidator(
+    z
+      .object({
+        days: z.number().default(7),
+      })
+      .optional(),
+  )
   .handler(async ({ data, context }) => {
     const { supabase } = context;
     const days = data?.days ?? 7;
@@ -169,10 +177,10 @@ export const getActivityLogsSummary = createServerFn({ method: "POST" })
       timeline: {} as Record<string, number>,
     };
 
-    logs.forEach(log => {
+    logs.forEach((log) => {
       // Category count
       summary.byCategory[log.category] = (summary.byCategory[log.category] || 0) + 1;
-      
+
       // Severity count
       summary.bySeverity[log.severity] = (summary.bySeverity[log.severity] || 0) + 1;
 

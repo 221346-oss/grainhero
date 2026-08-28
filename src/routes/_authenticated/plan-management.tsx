@@ -2,8 +2,22 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Check, Loader2, AlertTriangle, Clock, Sparkles, TrendingUp, Users, Boxes, Cpu,
-  ShieldCheck, Zap, Flame, HeartHandshake, ArrowRight, CreditCard, ExternalLink,
+  Check,
+  Loader2,
+  AlertTriangle,
+  Clock,
+  Sparkles,
+  TrendingUp,
+  Users,
+  Boxes,
+  Cpu,
+  ShieldCheck,
+  Zap,
+  Flame,
+  HeartHandshake,
+  ArrowRight,
+  CreditCard,
+  ExternalLink,
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -21,21 +35,34 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Progress } from "@/components/ui/progress";
 import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
+import { useTranslation } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/plan-management")({
   head: () => ({
     meta: [
       { title: "Plan Management — Grain Hero" },
-      { name: "description", content: "Plan Management workspace in the Grain Hero platform — private, sign-in required." },
+      {
+        name: "description",
+        content:
+          "Plan Management workspace in the Grain Hero platform — private, sign-in required.",
+      },
       { property: "og:title", content: "Plan Management — Grain Hero" },
-      { property: "og:description", content: "Plan Management workspace in the Grain Hero platform." },
+      {
+        property: "og:description",
+        content: "Plan Management workspace in the Grain Hero platform.",
+      },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
@@ -59,9 +86,18 @@ function fmtPKR(n: number) {
   return `Rs. ${Math.round(n).toLocaleString("en-PK")}`;
 }
 
+function localizePlanName(
+  id: string,
+  fallback: string,
+  t: (key: string, params?: Record<string, string | number>) => string,
+) {
+  return t(`planManagement.${id}`) === `planManagement.${id}` ? fallback : t(`planManagement.${id}`);
+}
+
 function PlanManagementPage() {
   const navigate = useNavigate();
   const { role, isLoading: roleLoading } = useIsSuperAdmin();
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!roleLoading && role && role !== "admin") {
@@ -115,11 +151,12 @@ function PlanManagementPage() {
 
   const initiateMut = useMutation({
     mutationFn: (v: {
-      requested_plan: string; billing_cycle: Cycle;
-      downgrade_reason?: string; downgrade_reason_details?: string;
+      requested_plan: string;
+      billing_cycle: Cycle;
+      downgrade_reason?: string;
+      downgrade_reason_details?: string;
       retention_offer_declined?: boolean;
-    }) =>
-      initiate({ data: v as any }),
+    }) => initiate({ data: v as any }),
     onSuccess: (res: any) => {
       if (res?.url) {
         toast.success("Redirecting to Stripe checkout…");
@@ -181,7 +218,12 @@ function PlanManagementPage() {
   );
   const pending = state?.pending ?? null;
   const usage = state?.usage ?? { silos: 0, users: 0, sensors: 0, actuators: 0 };
-  const retention = state?.retention ?? { discount_pct: 0, active_until: null, offer_used_at: null, offer_available: true };
+  const retention = state?.retention ?? {
+    discount_pct: 0,
+    active_until: null,
+    offer_used_at: null,
+    offer_available: true,
+  };
 
   // Recommend a plan when usage is >= 70% of current limits on any dimension.
   const recommendedPlanId = useMemo(() => {
@@ -200,7 +242,7 @@ function PlanManagementPage() {
 
   if (roleLoading || (role === "admin" && stateQ.isLoading)) {
     return (
-      <AdminPageShell title="Plan management">
+      <AdminPageShell title={t("planManagement.title")}>
         <div className="grid place-items-center py-24 text-muted-foreground">
           <Loader2 className="h-6 w-6 animate-spin" />
         </div>
@@ -238,12 +280,12 @@ function PlanManagementPage() {
 
   return (
     <AdminPageShell
-      title="Grow with GrainHero"
-      subtitle="See exactly how much capacity you're using, what unlocks at each tier, and get an instant prorated upgrade."
+      title={t("planManagement.title")}
+      subtitle={t("planManagement.subtitle")}
     >
       {/* Hero + usage snapshot */}
       <HeroBanner
-        planName={currentPlanRow?.name ?? currentPlan}
+        planName={localizePlanName(currentPlan, currentPlanRow?.name ?? currentPlan, t)}
         cycle={currentCycle}
         periodEnd={state?.current_period_end ?? null}
         billing={billing}
@@ -267,16 +309,18 @@ function PlanManagementPage() {
           <Clock className="h-5 w-5 mt-0.5 shrink-0" />
           <div className="flex-1 text-sm">
             <div className="font-semibold">
-              {pending.status === "scheduled" ? "Scheduled plan change" : "Awaiting Stripe payment"}
+              {pending.status === "scheduled" ? t("planManagement.scheduledChange") : t("planManagement.awaitingPayment")}
             </div>
             <div>
-              {pending.current_plan ?? currentPlan} → <b>{pending.requested_plan}</b>{" "}
-              ({pending.billing_cycle ?? "monthly"})
-              {pending.apply_at ? ` — applies on ${new Date(pending.apply_at).toLocaleDateString()}` : ""}
+              {pending.current_plan ?? currentPlan} → <b>{pending.requested_plan}</b> (
+                  {pending.billing_cycle === "yearly" ? t("planManagement.yearly") : t("planManagement.monthly")})
+              {pending.apply_at
+                ? ` — ${t("planManagement.appliesOn", { date: new Date(pending.apply_at).toLocaleDateString() })}`
+                : ""}
             </div>
           </div>
           <Button size="sm" variant="outline" onClick={() => cancelMut.mutate(pending.id)}>
-            Cancel
+            {t("planManagement.cancel")}
           </Button>
         </div>
       )}
@@ -291,10 +335,10 @@ function PlanManagementPage() {
           const rank = PLAN_RANK[p.plan_id] ?? 0;
           const isDowngrade = rank < currentRank;
           const features = [
-            `${p.limits.users === 999 ? "Unlimited" : p.limits.users} team members`,
-            `${p.limits.silos} silos`,
-            `${p.limits.batches === 9999 ? "Unlimited" : p.limits.batches} grain batches`,
-            `${p.limits.sensors === 999 ? "Unlimited" : p.limits.sensors} IoT sensors`,
+            `${p.limits.users === 999 ? t("planManagement.unlimited") : p.limits.users} ${t("planManagement.teamMembers")}`,
+            `${p.limits.silos} ${t("silos.title")}`,
+            `${p.limits.batches === 9999 ? t("planManagement.unlimited") : p.limits.batches} ${t("grainOps.grainBatches")}`,
+            `${p.limits.sensors === 999 ? t("planManagement.unlimited") : p.limits.sensors} ${t("planManagement.iotSensors")}`,
           ];
           return (
             <div
@@ -303,25 +347,23 @@ function PlanManagementPage() {
                 isRecommended
                   ? "border-emerald-500 ring-2 ring-emerald-500/50 bg-gradient-to-b from-emerald-500/15 via-card to-card shadow-lg"
                   : isCurrent
-                  ? "border-emerald-500 ring-1 ring-emerald-500/40 bg-gradient-to-b from-emerald-500/10 via-card to-card shadow-md"
-                  : "border-border bg-card hover:shadow-md"
+                    ? "border-emerald-500 ring-1 ring-emerald-500/40 bg-gradient-to-b from-emerald-500/10 via-card to-card shadow-md"
+                    : "border-border bg-card hover:shadow-md"
               }`}
             >
               {isRecommended && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
                   <div className="inline-flex items-center gap-1 rounded-full bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wider px-3 py-1 shadow-md">
-                    <Sparkles className="h-3 w-3" /> Best for you
+                    <Sparkles className="h-3 w-3" /> {t("planManagement.bestForYou")}
                   </div>
                 </div>
               )}
               <div className="flex items-center justify-between">
                 <h3 className="text-base font-bold text-foreground flex items-center gap-2">
-                  {p.name}
+                  {localizePlanName(p.plan_id, p.name, t)}
                   {p.plan_id === "pro" && <Flame className="h-3.5 w-3.5 text-amber-500" />}
                 </h3>
-                {isCurrent && (
-                  <Badge className="bg-emerald-600 text-white border-0">Current</Badge>
-                )}
+                {isCurrent && <Badge className="bg-emerald-600 text-white border-0">{t("planManagement.current")}</Badge>}
               </div>
               <div className="mt-4 flex items-baseline gap-1.5 h-10">
                 <AnimatePresence mode="popLayout" initial={false}>
@@ -337,11 +379,11 @@ function PlanManagementPage() {
                   </motion.span>
                 </AnimatePresence>
                 <span className="text-xs font-medium text-muted-foreground">
-                  /{billing === "yearly" ? "yr" : "mo"}
+                  {billing === "yearly" ? t("planManagement.year") : t("planManagement.month")}
                 </span>
               </div>
               <div className="h-4 text-[11px] text-muted-foreground">
-                {billing === "yearly" && `≈ ${fmtPKR(monthlyEquiv)}/mo · 2 months free`}
+                {billing === "yearly" && `≈ ${fmtPKR(monthlyEquiv)}${t("planManagement.month")} · ${t("planManagement.monthsFree")}`}
               </div>
               <ul className="mt-4 space-y-2 flex-1">
                 {features.map((f) => (
@@ -358,16 +400,20 @@ function PlanManagementPage() {
                   isCurrent
                     ? "bg-muted text-muted-foreground pointer-events-none"
                     : isDowngrade
-                    ? "bg-card border border-border text-foreground hover:bg-muted"
-                    : "bg-emerald-600 hover:bg-emerald-700 text-white"
+                      ? "bg-card border border-border text-foreground hover:bg-muted"
+                      : "bg-emerald-600 hover:bg-emerald-700 text-white"
                 }`}
                 variant={isDowngrade ? "outline" : "default"}
                 disabled={isCurrent}
                 onClick={() => openIntent(p.plan_id)}
               >
-                {isCurrent ? "Current plan" : isDowngrade ? "Downgrade" : (
+                {isCurrent ? (
+                  t("planManagement.currentPlanButton")
+                ) : isDowngrade ? (
+                  t("planManagement.downgrade")
+                ) : (
                   <span className="inline-flex items-center gap-1.5">
-                    Upgrade now <ArrowRight className="h-3.5 w-3.5" />
+                    {t("planManagement.upgradeNow")} <ArrowRight className="h-3.5 w-3.5" />
                   </span>
                 )}
               </Button>
@@ -382,9 +428,7 @@ function PlanManagementPage() {
           loading={previewQ.isLoading}
           preview={previewQ.data}
           onCancel={() => setSelected(null)}
-          onConfirm={() =>
-            initiateMut.mutate({ requested_plan: selected, billing_cycle: billing })
-          }
+          onConfirm={() => initiateMut.mutate({ requested_plan: selected, billing_cycle: billing })}
           pending={initiateMut.isPending}
         />
       )}
@@ -399,7 +443,7 @@ function PlanManagementPage() {
 
       {/* Retention save-offer dialog */}
       <Dialog open={retentionOpen} onOpenChange={setRetentionOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="gh-english-surface sm:max-w-lg">
           <DialogHeader>
             <div className="mx-auto mb-2 grid h-12 w-12 place-items-center rounded-full bg-emerald-500/15 text-emerald-600">
               <HeartHandshake className="h-6 w-6" />
@@ -416,10 +460,18 @@ function PlanManagementPage() {
               <span>Your next {currentCycle} bill</span>
               <span className="text-right">
                 <span className="line-through text-muted-foreground mr-2">
-                  {fmtPKR(currentCycle === "yearly" ? (currentPlanRow?.price_yearly_pkr ?? 0) : (currentPlanRow?.price_monthly_pkr ?? 0))}
+                  {fmtPKR(
+                    currentCycle === "yearly"
+                      ? (currentPlanRow?.price_yearly_pkr ?? 0)
+                      : (currentPlanRow?.price_monthly_pkr ?? 0),
+                  )}
                 </span>
                 <b className="text-emerald-600">
-                  {fmtPKR((currentCycle === "yearly" ? (currentPlanRow?.price_yearly_pkr ?? 0) : (currentPlanRow?.price_monthly_pkr ?? 0)) * 0.8)}
+                  {fmtPKR(
+                    (currentCycle === "yearly"
+                      ? (currentPlanRow?.price_yearly_pkr ?? 0)
+                      : (currentPlanRow?.price_monthly_pkr ?? 0)) * 0.8,
+                  )}
                 </b>
               </span>
             </div>
@@ -435,7 +487,10 @@ function PlanManagementPage() {
             <Button
               variant="ghost"
               className="w-full text-muted-foreground hover:text-foreground"
-              onClick={() => { setRetentionOpen(false); setReasonOpen(true); }}
+              onClick={() => {
+                setRetentionOpen(false);
+                setReasonOpen(true);
+              }}
             >
               No thanks, continue downgrade
             </Button>
@@ -445,7 +500,7 @@ function PlanManagementPage() {
 
       {/* Reason capture dialog */}
       <Dialog open={reasonOpen} onOpenChange={setReasonOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="gh-english-surface sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Help us do better</DialogTitle>
             <DialogDescription>
@@ -495,7 +550,14 @@ function PlanManagementPage() {
   );
 }
 
-function BillingToggle({ billing, setBilling }: { billing: Cycle; setBilling: (c: Cycle) => void }) {
+function BillingToggle({
+  billing,
+  setBilling,
+}: {
+  billing: Cycle;
+  setBilling: (c: Cycle) => void;
+}) {
+  const { t } = useTranslation();
   return (
     <div className="inline-flex items-center rounded-full border border-border bg-muted/40 p-1">
       {(["monthly", "yearly"] as const).map((period) => {
@@ -516,12 +578,14 @@ function BillingToggle({ billing, setBilling }: { billing: Cycle; setBilling: (c
                 transition={{ type: "spring", stiffness: 400, damping: 32 }}
               />
             )}
-            <span className="relative z-10 capitalize">{period}</span>
+            <span className="relative z-10">{period === "monthly" ? t("planManagement.monthly") : t("planManagement.yearly")}</span>
             {period === "yearly" && (
-              <span className={`relative z-10 ml-1.5 text-[9px] font-black px-1.5 py-0.5 rounded-full ${
-                isActive ? "bg-white/20 text-white" : "bg-emerald-500/15 text-emerald-600"
-              }`}>
-                2 MOS FREE
+              <span
+                className={`relative z-10 ml-1.5 text-[9px] font-black px-1.5 py-0.5 rounded-full ${
+                  isActive ? "bg-white/20 text-white" : "bg-emerald-500/15 text-emerald-600"
+                }`}
+              >
+                {t("planManagement.twoMonthsFree")}
               </span>
             )}
           </button>
@@ -534,38 +598,65 @@ function BillingToggle({ billing, setBilling }: { billing: Cycle; setBilling: (c
 /* ------------------------- Hero + Usage + Persuasion ------------------------- */
 
 function HeroBanner({
-  planName, cycle, periodEnd, billing, setBilling, retention, onManageBilling, portalLoading,
+  planName,
+  cycle,
+  periodEnd,
+  billing,
+  setBilling,
+  retention,
+  onManageBilling,
+  portalLoading,
 }: {
-  planName: string; cycle: Cycle; periodEnd: string | null;
-  billing: Cycle; setBilling: (c: Cycle) => void;
-  retention: { discount_pct: number; active_until: string | null; offer_used_at: string | null; offer_available: boolean };
-  onManageBilling: () => void; portalLoading: boolean;
+  planName: string;
+  cycle: Cycle;
+  periodEnd: string | null;
+  billing: Cycle;
+  setBilling: (c: Cycle) => void;
+  retention: {
+    discount_pct: number;
+    active_until: string | null;
+    offer_used_at: string | null;
+    offer_available: boolean;
+  };
+  onManageBilling: () => void;
+  portalLoading: boolean;
 }) {
-  const hasDiscount = retention.discount_pct > 0 && retention.active_until && new Date(retention.active_until) > new Date();
+  const { t } = useTranslation();
+  const hasDiscount =
+    retention.discount_pct > 0 &&
+    retention.active_until &&
+    new Date(retention.active_until) > new Date();
   return (
     <div className="relative overflow-hidden rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 via-card to-card p-5 md:p-6">
       <div className="absolute -top-16 -right-16 h-52 w-52 rounded-full bg-emerald-500/15 blur-3xl pointer-events-none" />
       <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 text-[10px] font-black uppercase tracking-wider px-2.5 py-1">
-            <ShieldCheck className="h-3 w-3" /> Your current plan
+            <ShieldCheck className="h-3 w-3" /> {t("planManagement.currentPlan")}
           </div>
           <h2 className="mt-2 text-2xl md:text-3xl font-black tracking-tight text-foreground">
             {planName} <span className="text-muted-foreground font-medium">·</span>{" "}
-            <span className="capitalize text-emerald-600">{cycle}</span>
+            <span className="text-emerald-600">{cycle === "monthly" ? t("planManagement.monthly") : t("planManagement.yearly")}</span>
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
             {periodEnd
-              ? `Renews on ${new Date(periodEnd).toLocaleDateString()}`
-              : "First cycle starts on your next change."}
+              ? t("planManagement.renewsOn", { date: new Date(periodEnd).toLocaleDateString() })
+              : t("planManagement.firstCycle")}
             {hasDiscount && (
-              <> · <span className="text-emerald-600 font-semibold">{retention.discount_pct}% loyalty discount active</span> until {new Date(retention.active_until!).toLocaleDateString()}</>
+              <>
+                {" "}
+                ·{" "}
+                <span className="text-emerald-600 font-semibold">
+                  {t("planManagement.discountActive", { pct: retention.discount_pct })}
+                </span>{" "}
+                {t("planManagement.renewsOn", { date: new Date(retention.active_until!).toLocaleDateString() })}
+              </>
             )}
           </p>
         </div>
         <div className="flex flex-col items-start md:items-end gap-2">
           <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/40 bg-amber-500/10 text-amber-800 dark:text-amber-300 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1">
-            <Zap className="h-3 w-3" /> Limited: 2 months free on yearly
+            <Zap className="h-3 w-3" /> {t("planManagement.limitedOffer")}
           </div>
           <BillingToggle billing={billing} setBilling={setBilling} />
           <button
@@ -575,7 +666,7 @@ function HeroBanner({
             className="mt-1 inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 disabled:opacity-50"
           >
             <CreditCard className="h-3.5 w-3.5" />
-            {portalLoading ? "Opening…" : "Manage billing & invoices"}
+            {portalLoading ? t("planManagement.opening") : t("planManagement.manageBilling")}
             <ExternalLink className="h-3 w-3" />
           </button>
         </div>
@@ -585,27 +676,30 @@ function HeroBanner({
 }
 
 function UsageStrip({
-  limits, usage, hasRecommendation,
+  limits,
+  usage,
+  hasRecommendation,
 }: {
   limits: { users: number; silos: number; batches: number; sensors: number };
   usage: { silos: number; users: number; sensors: number; actuators: number };
   hasRecommendation: boolean;
 }) {
+  const { t } = useTranslation();
   const items = [
-    { icon: Boxes, label: "Silos", used: usage.silos, cap: limits.silos },
-    { icon: Users, label: "Team members", used: usage.users, cap: limits.users },
-    { icon: Cpu, label: "IoT sensors", used: usage.sensors, cap: limits.sensors },
+    { icon: Boxes, label: t("silos.title"), used: usage.silos, cap: limits.silos },
+    { icon: Users, label: t("planManagement.teamMembers"), used: usage.users, cap: limits.users },
+    { icon: Cpu, label: t("planManagement.iotSensors"), used: usage.sensors, cap: limits.sensors },
   ];
   return (
     <Card className={hasRecommendation ? "border-amber-400/40" : ""}>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-semibold text-foreground">
-            Where you are on your plan
+            {t("planManagement.usageTitle")}
           </CardTitle>
           {hasRecommendation && (
             <Badge className="bg-amber-500 text-white border-0 gap-1">
-              <TrendingUp className="h-3 w-3" /> Nearing limits
+              <TrendingUp className="h-3 w-3" /> {t("planManagement.nearingLimits")}
             </Badge>
           )}
         </div>
@@ -623,7 +717,9 @@ function UsageStrip({
                     <it.icon className="h-3.5 w-3.5" />
                     {it.label}
                   </span>
-                  <span className={`font-bold ${critical ? "text-red-600" : hot ? "text-amber-600" : "text-foreground"}`}>
+                  <span
+                    className={`font-bold ${critical ? "text-red-600" : hot ? "text-amber-600" : "text-foreground"}`}
+                  >
                     {it.used} / {it.cap === 999 || it.cap === 9999 ? "∞" : it.cap}
                   </span>
                 </div>
@@ -632,7 +728,11 @@ function UsageStrip({
                   className={`mt-2 h-2 ${critical ? "[&>div]:bg-red-500" : hot ? "[&>div]:bg-amber-500" : "[&>div]:bg-emerald-500"}`}
                 />
                 <div className="mt-1 text-[10px] text-muted-foreground">
-                  {critical ? "You're about to hit the ceiling" : hot ? "Getting close — upgrade unlocks more" : "Plenty of room"}
+                  {critical
+                    ? t("planManagement.ceiling")
+                    : hot
+                      ? t("planManagement.closeUpgrade")
+                      : t("planManagement.plentyRoom")}
                 </div>
               </div>
             );
@@ -644,26 +744,32 @@ function UsageStrip({
 }
 
 function RoiCalculator({ currentPlan }: { currentPlan: string }) {
+  const { t } = useTranslation();
   // A simple, honest ROI card — spoilage prevention alone typically pays back the upgrade.
-  const spoilagePctSavings = currentPlan === "basic" ? 1.5 : currentPlan === "intermediate" ? 0.75 : 0.25;
+  const spoilagePctSavings =
+    currentPlan === "basic" ? 1.5 : currentPlan === "intermediate" ? 0.75 : 0.25;
   return (
     <Card className="md:col-span-1 relative overflow-hidden">
       <div className="absolute -top-8 -right-8 h-28 w-28 rounded-full bg-emerald-500/10 blur-2xl pointer-events-none" />
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
-          <TrendingUp className="h-4 w-4 text-emerald-600" /> Estimated upside
+          <TrendingUp className="h-4 w-4 text-emerald-600" /> {t("planManagement.estimatedUpside")}
         </CardTitle>
-        <CardDescription className="text-xs">If you upgrade to the next tier</CardDescription>
+        <CardDescription className="text-xs">{t("planManagement.upgradeNextTier")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
-        <Row label="Extra silos monitored" value="+2 to +5" />
-        <Row label="Sensor coverage" value="+50%" />
+        <Row label={t("planManagement.extraSilos")} value="+2 to +5" />
+        <Row label={t("planManagement.sensorCoverage")} value="+50%" />
         <Row
-          label="Est. spoilage reduction"
-          value={<span className="text-emerald-600 font-bold">~{spoilagePctSavings}% of stock value</span>}
+          label={t("planManagement.spoilageReduction")}
+          value={
+            <span className="text-emerald-600 font-bold">
+              ~{spoilagePctSavings}% of stock value
+            </span>
+          }
         />
         <div className="rounded-md border border-dashed border-emerald-500/40 bg-emerald-500/5 p-2.5 text-[11px] text-foreground/80">
-          For a mid-size operator, that's typically <b className="text-emerald-600">10×</b> the upgrade cost recovered each month.
+          {t("planManagement.monthlyRecovery")}
         </div>
       </CardContent>
     </Card>
@@ -680,27 +786,34 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
 }
 
 function ValueMatrix({ plans, currentPlanId }: { plans: any[]; currentPlanId: string }) {
+  const { t } = useTranslation();
   const rows: { label: string; key: keyof any; format?: (n: number) => string }[] = [
-    { label: "Team members", key: "users", format: (n) => (n >= 999 ? "Unlimited" : String(n)) },
-    { label: "Silos", key: "silos" },
-    { label: "Grain batches", key: "batches", format: (n) => (n >= 9999 ? "Unlimited" : String(n)) },
-    { label: "IoT sensors", key: "sensors", format: (n) => (n >= 999 ? "Unlimited" : String(n)) },
+    { label: t("planManagement.teamMembers"), key: "users", format: (n) => (n >= 999 ? t("planManagement.unlimited") : String(n)) },
+    { label: t("silos.title"), key: "silos" },
+    {
+      label: t("grainOps.grainBatches"),
+      key: "batches",
+      format: (n) => (n >= 9999 ? t("planManagement.unlimited") : String(n)),
+    },
+    { label: t("planManagement.iotSensors"), key: "sensors", format: (n) => (n >= 999 ? t("planManagement.unlimited") : String(n)) },
   ];
   return (
     <Card className="md:col-span-2">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold">What you unlock at each tier</CardTitle>
-        <CardDescription className="text-xs">Side-by-side so there's no guessing.</CardDescription>
+        <CardTitle className="text-sm font-semibold">{t("planManagement.unlockTitle")}</CardTitle>
+        <CardDescription className="text-xs">{t("planManagement.sideBySide")}</CardDescription>
       </CardHeader>
       <CardContent className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="text-xs text-muted-foreground">
-              <th className="text-left font-medium py-2 pr-2">Capability</th>
+              <th className="text-left font-medium py-2 pr-2">{t("planManagement.capability")}</th>
               {plans.map((p) => (
                 <th key={p.plan_id} className="text-right font-semibold py-2 px-2">
-                  <span className={p.plan_id === currentPlanId ? "text-emerald-600" : "text-foreground"}>
-                    {p.name}
+                  <span
+                    className={p.plan_id === currentPlanId ? "text-emerald-600" : "text-foreground"}
+                  >
+                    {localizePlanName(p.plan_id, p.name, t)}
                   </span>
                 </th>
               ))}
@@ -727,9 +840,9 @@ function ValueMatrix({ plans, currentPlanId }: { plans: any[]; currentPlanId: st
               </tr>
             ))}
             <tr className="border-t border-border">
-              <td className="py-2 pr-2 text-foreground/80">Priority support</td>
-              <td className="py-2 px-2 text-right text-muted-foreground">Email</td>
-              <td className="py-2 px-2 text-right font-semibold">Chat + Email</td>
+              <td className="py-2 pr-2 text-foreground/80">{t("planManagement.prioritySupport")}</td>
+              <td className="py-2 px-2 text-right text-muted-foreground">{t("planManagement.email")}</td>
+              <td className="py-2 px-2 text-right font-semibold">{t("planManagement.chatEmail")}</td>
               <td className="py-2 px-2 text-right font-semibold text-emerald-600">24×7 + SLA</td>
             </tr>
           </tbody>
@@ -740,6 +853,7 @@ function ValueMatrix({ plans, currentPlanId }: { plans: any[]; currentPlanId: st
 }
 
 function SocialProofStrip() {
+  const { t } = useTranslation();
   return (
     <div className="rounded-2xl border border-border bg-card p-4 md:p-5">
       <div className="flex flex-col md:flex-row md:items-center gap-4">
@@ -755,14 +869,17 @@ function SocialProofStrip() {
             ))}
           </div>
           <div>
-            <div className="font-semibold text-foreground">Trusted by 120+ grain operators</div>
-            <div className="text-xs text-muted-foreground">Across Punjab, Sindh, and KP</div>
+            <div className="font-semibold text-foreground">{t("planManagement.trusted")}</div>
+            <div className="text-xs text-muted-foreground">{t("planManagement.acrossRegions")}</div>
           </div>
         </div>
         <div className="hidden md:block h-8 w-px bg-border" />
         <blockquote className="text-sm text-foreground/80 italic">
-          "Upgrading to Professional paid for itself in the first month — we caught two moisture spikes before they became losses."
-          <span className="not-italic text-xs text-muted-foreground block mt-0.5">— Farm operator, Multan</span>
+          "Upgrading to Professional paid for itself in the first month — we caught two moisture
+          spikes before they became losses."
+          <span className="not-italic text-xs text-muted-foreground block mt-0.5">
+            — Farm operator, Multan
+          </span>
         </blockquote>
       </div>
     </div>
@@ -770,7 +887,11 @@ function SocialProofStrip() {
 }
 
 function PreviewPanel({
-  loading, preview, onCancel, onConfirm, pending,
+  loading,
+  preview,
+  onCancel,
+  onConfirm,
+  pending,
 }: {
   loading: boolean;
   preview: any;
@@ -793,7 +914,10 @@ function PreviewPanel({
         ) : (
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <SummaryTile label="From" value={`${preview.current_plan} (${preview.current_cycle})`} />
+              <SummaryTile
+                label="From"
+                value={`${preview.current_plan} (${preview.current_cycle})`}
+              />
               <SummaryTile label="To" value={`${preview.new_plan} (${preview.new_cycle})`} />
               <SummaryTile
                 label="Days remaining"
@@ -811,8 +935,10 @@ function PreviewPanel({
                   {fmtPKR(preview.prorated_charge_pkr)}
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">
-                  Full {preview.new_cycle} price {fmtPKR(preview.new_price_pkr)}. Stripe applies proration credit for unused days.
-                  {preview.quote_source !== "stripe" && " Final amount is confirmed on Stripe's invoice."}
+                  Full {preview.new_cycle} price {fmtPKR(preview.new_price_pkr)}. Stripe applies
+                  proration credit for unused days.
+                  {preview.quote_source !== "stripe" &&
+                    " Final amount is confirmed on Stripe's invoice."}
                 </div>
                 <Button
                   onClick={onConfirm}
@@ -825,7 +951,9 @@ function PreviewPanel({
                       ? `Charge ${fmtPKR(preview.prorated_charge_pkr)} to card on file`
                       : `Subscribe — ${fmtPKR(preview.prorated_charge_pkr)}`}
                 </Button>
-                <Button variant="outline" onClick={onCancel} className="mt-4 ml-2">Cancel</Button>
+                <Button variant="outline" onClick={onCancel} className="mt-4 ml-2">
+                  Cancel
+                </Button>
               </div>
             ) : (
               <div className="rounded-lg border border-amber-400/40 bg-amber-500/5 p-4">
@@ -834,8 +962,8 @@ function PreviewPanel({
                 </div>
                 <div className="text-sm text-foreground mt-1">
                   This is a {preview.direction}. It will apply on{" "}
-                  <b>{new Date(preview.current_period_end).toLocaleDateString()}</b>.
-                  You keep your current plan features until then, and no refund is issued.
+                  <b>{new Date(preview.current_period_end).toLocaleDateString()}</b>. You keep your
+                  current plan features until then, and no refund is issued.
                 </div>
                 <Button
                   onClick={onConfirm}
@@ -844,7 +972,9 @@ function PreviewPanel({
                 >
                   {pending ? "Scheduling…" : "Schedule at period end"}
                 </Button>
-                <Button variant="outline" onClick={onCancel} className="mt-4 ml-2">Cancel</Button>
+                <Button variant="outline" onClick={onCancel} className="mt-4 ml-2">
+                  Cancel
+                </Button>
               </div>
             )}
           </div>
@@ -857,7 +987,9 @@ function PreviewPanel({
 function SummaryTile({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-lg border border-border bg-card p-3">
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">{label}</div>
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+        {label}
+      </div>
       <div className="text-sm font-semibold text-foreground mt-0.5">{value}</div>
     </div>
   );

@@ -1,15 +1,11 @@
-import { motion } from 'framer-motion'
-import { Link } from '@tanstack/react-router'
-import { ArrowRight } from 'lucide-react'
-
-const specs = [
-  ['Edge controller', 'Keeps logging when the network drops.'],
-  ['Multi-depth probes', 'Temperature, moisture and CO₂ per layer.'],
-  ['LoRa + Wi-Fi', 'Works across remote yards, no new cabling.'],
-  ['2-hour install', 'Retro-fits onto silos you already own.'],
-]
+import { motion } from "framer-motion";
+import { Link } from "@tanstack/react-router";
+import { ArrowRight } from "lucide-react";
+import { useTranslation } from "@/i18n";
 
 export function HardwareSection() {
+  const { t, raw } = useTranslation();
+  const specs = raw.hardware.specs.map((s) => [s.title, s.desc] as const);
   return (
     <section
       id="hardware"
@@ -23,11 +19,10 @@ export function HardwareSection() {
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         >
           <h2 className="text-[1.75rem] font-black leading-[1.02] tracking-tight text-[#111512] dark:text-foreground sm:text-5xl">
-            Start with the silo.{' '}
-            <span className="text-[#2FA84F]">Software comes with it.</span>
+            {t("hardware.heading1")} <span className="text-[#2FA84F]">{t("hardware.heading2")}</span>
           </h2>
           <p className="mt-4 max-w-lg text-sm leading-relaxed text-[#4A554C] dark:text-muted-foreground sm:text-base">
-            Every unit ships paired to the dashboard.
+            {t("hardware.subtitle")}
           </p>
         </motion.div>
 
@@ -57,11 +52,11 @@ export function HardwareSection() {
             to="/marketplace"
             className="group inline-flex items-center gap-2 rounded-full border-2 border-[#111512]/20 px-7 py-3.5 text-sm font-bold text-[#111512] transition-all duration-300 hover:border-[#2FA84F] hover:bg-[#2FA84F] hover:text-white dark:border-border dark:text-foreground"
           >
-            Shop hardware
+            {t("hardware.shopCta")}
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
           </Link>
         </div>
       </div>
     </section>
-  )
+  );
 }

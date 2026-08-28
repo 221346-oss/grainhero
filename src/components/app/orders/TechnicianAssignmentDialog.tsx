@@ -1,29 +1,37 @@
 /**
- * Technician Assignment Dialog with Warehouse and Availability Tracking
+ * Technician Assignment Sheet with Warehouse and Availability Tracking
+ * Opens from the right side instead of as a modal popup
  */
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { 
-  getAdminWarehouses, 
+import {
+  getAdminWarehouses,
   getTechniciansForWarehouse,
   assignTechnicianToOrder,
 } from "@/lib/warehouse-assignment.functions";
 import { Loader2, MapPin, User, Clock, CheckCircle2, AlertCircle, XCircle } from "lucide-react";
+import { translateText, useI18n } from "@/i18n";
 
 interface TechnicianAssignmentDialogProps {
   open: boolean;
@@ -32,6 +40,8 @@ interface TechnicianAssignmentDialogProps {
     id: string;
     admin_id: string;
     warehouse_id?: string | null;
+    assigned_technician_id?: string | null;
+    scheduled_install_date?: string | null;
     install_city?: string | null;
     plan_name?: string | null;
   };
@@ -65,10 +75,24 @@ export function TechnicianAssignmentDialog({
   onOpenChange,
   order,
 }: TechnicianAssignmentDialogProps) {
+  const { locale } = useI18n();
   const qc = useQueryClient();
   const [selectedWarehouse, setSelectedWarehouse] = useState<string>(order.warehouse_id || "");
-  const [selectedTechnician, setSelectedTechnician] = useState<string>("");
-  const [scheduledFor, setScheduledFor] = useState<string>("");
+  const [selectedTechnician, setSelectedTechnician] = useState<string>(order.assigned_technician_id || "");
+  // Pre-fill date/time from existing scheduled_install_date
+  const [scheduleDate, setScheduleDate] = useState<string>(() => {
+    if (order.scheduled_install_date) {
+      return new Date(order.scheduled_install_date).toISOString().slice(0, 10);
+    }
+    return "";
+  });
+  const [scheduleTime, setScheduleTime] = useState<string>(() => {
+    if (order.scheduled_install_date) {
+      const d = new Date(order.scheduled_install_date);
+      return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+    }
+    return "09:00";
+  });
 
   const getWarehouses = useServerFn(getAdminWarehouses);
   const getTechnicians = useServerFn(getTechniciansForWarehouse);
@@ -82,7 +106,11 @@ export function TechnicianAssignmentDialog({
   });
 
   // Fetch technicians for selected warehouse
-  const { data: techniciansData, isLoading: loadingTechnicians } = useQuery({
+  const {
+    data: techniciansData,
+    isLoading: loadingTechnicians,
+    error: techniciansError,
+  } = useQuery({
     queryKey: ["warehouse-technicians", selectedWarehouse],
     queryFn: () => getTechnicians({ data: { warehouseId: selectedWarehouse || null } }),
     enabled: open,
@@ -96,18 +124,27 @@ export function TechnicianAssignmentDialog({
       scheduledFor?: string | null;
     }) => assignTech({ data }),
     onSuccess: () => {
-      toast.success("Technician assigned successfully");
+      toast.success(translateText("Technician assigned successfully", locale));
       qc.invalidateQueries({ queryKey: ["platform-orders"] });
       qc.invalidateQueries({ queryKey: ["platform.order", order.id] });
+      // Refresh technician list so job counts and availability update
+      qc.invalidateQueries({ queryKey: ["warehouse-technicians"] });
+      qc.invalidateQueries({ queryKey: ["my-technician-profile"] });
       onOpenChange(false);
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to assign technician");
+      toast.error(error.message || translateText("Failed to assign technician", locale));
     },
   });
 
   const warehouses = warehousesData?.warehouses ?? [];
-  const technicians = techniciansData?.technicians ?? [];
+  const technicians = (techniciansData?.technicians ?? [])
+    // Available technicians first, then busy, then offline/on-leave.
+    .slice()
+    .sort((a: any, b: any) => {
+      const rank = (s: string | null | undefined) => (s === "available" ? 0 : s === "busy" ? 1 : 2);
+      return rank(a.technician_status) - rank(b.technician_status);
+    });
   const isFiltered = techniciansData?.filtered_by_warehouse ?? false;
 
   // Auto-select warehouse if only one exists
@@ -119,7 +156,29 @@ export function TechnicianAssignmentDialog({
 
   const handleAssign = () => {
     if (!selectedTechnician) {
-      toast.error("Please select a technician");
+      toast.error(translateText("Please select a technician", locale));
+      return;
+    }
+
+    // Build ISO datetime from separate date + time fields
+    let isoScheduled: string | null = null;
+    if (scheduleDate) {
+      const time = scheduleTime || "09:00";
+      isoScheduled = new Date(`${scheduleDate}T${time}:00`).toISOString();
+    }
+
+    // Warn if re-assigning same technician
+    if (
+      order.assigned_technician_id &&
+      order.assigned_technician_id === selectedTechnician &&
+      !isoScheduled
+    ) {
+      toast.warning(
+        translateText(
+          "This technician is already assigned. Add a schedule date or pick a different technician.",
+          locale,
+        ),
+      );
       return;
     }
 
@@ -127,31 +186,35 @@ export function TechnicianAssignmentDialog({
       orderId: order.id,
       technicianId: selectedTechnician,
       warehouseId: selectedWarehouse || null,
-      scheduledFor: scheduledFor || null,
+      scheduledFor: isoScheduled,
     });
   };
 
   const selectedTech = technicians.find((t: any) => t.id === selectedTechnician);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Assign Technician</DialogTitle>
-          <DialogDescription>
-            Order: {order.plan_name} · {order.id.slice(0, 8)}
-            {order.install_city && (
-              <span className="flex items-center gap-1 mt-1 text-xs">
-                <MapPin className="h-3 w-3" />
-                {order.install_city}
-              </span>
-            )}
-          </DialogDescription>
-        </DialogHeader>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="w-full sm:w-[450px] sm:max-w-[450px] overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle>Assign Technician to Installation</SheetTitle>
+          <SheetDescription>
+            <div className="mt-2 space-y-1">
+              <div className="font-mono text-xs">{order.id.slice(0, 8)}</div>
+              <div className="text-sm">{order.plan_name}</div>
+              {order.install_city && (
+                <div className="flex items-center gap-1 text-xs">
+                  <MapPin className="h-3 w-3" />
+                  {order.install_city}
+                </div>
+              )}
+            </div>
+          </SheetDescription>
+        </SheetHeader>
 
-        <div className="space-y-4 py-4">
-          {/* Warehouse Selection */}
-          {warehouses.length > 1 && (
+        <div className="space-y-5 py-6">
+          {/* Warehouse Selection — shown whenever the customer has a warehouse,
+              so the super admin sees where the technician will be assigned. */}
+          {warehouses.length >= 1 && (
             <div className="space-y-2">
               <Label>Warehouse</Label>
               {loadingWarehouses ? (
@@ -160,8 +223,8 @@ export function TechnicianAssignmentDialog({
                   Loading warehouses...
                 </div>
               ) : warehouses.length === 0 ? (
-                <div className="text-sm text-muted-foreground">
-                  No warehouses found for this customer. They may need to set up a warehouse first.
+                <div className="text-sm text-muted-foreground p-3 bg-muted rounded-lg">
+                  No warehouses found for this customer.
                 </div>
               ) : (
                 <Select
@@ -183,17 +246,22 @@ export function TechnicianAssignmentDialog({
               )}
               {isFiltered && selectedWarehouse && (
                 <p className="text-xs text-muted-foreground">
-                  Showing technicians assigned to this warehouse only
+                  Showing technicians assigned to this warehouse first, then other available
+                  technicians
                 </p>
               )}
             </div>
           )}
 
           {/* Technician Selection */}
-          <div className="space-y-2">
-            <Label>Technician</Label>
-            {loadingTechnicians ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="space-y-3">
+            <Label>Select Technician</Label>
+            {techniciansError ? (
+              <div className="p-4 border border-dashed border-red-300 rounded-lg text-center text-sm text-red-600">
+                Failed to load technicians: {(techniciansError as Error).message}
+              </div>
+            ) : loadingTechnicians ? (
+              <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Loading technicians...
               </div>
@@ -204,9 +272,11 @@ export function TechnicianAssignmentDialog({
                   : "No technicians available in the system."}
               </div>
             ) : (
-              <div className="space-y-2 max-h-[300px] overflow-y-auto border rounded-lg p-2">
+              <div className="space-y-2 max-h-[400px] overflow-y-auto">
                 {technicians.map((tech: any) => {
-                  const statusConfig = TECH_STATUS_CONFIG[tech.technician_status as keyof typeof TECH_STATUS_CONFIG] || TECH_STATUS_CONFIG.available;
+                  const statusConfig =
+                    TECH_STATUS_CONFIG[tech.technician_status as keyof typeof TECH_STATUS_CONFIG] ||
+                    TECH_STATUS_CONFIG.available;
                   const StatusIcon = statusConfig.icon;
 
                   return (
@@ -220,29 +290,37 @@ export function TechnicianAssignmentDialog({
                       }`}
                     >
                       <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
                           <User className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
-                          <div>
+                          <div className="min-w-0">
                             <div className="font-medium text-sm">{tech.name}</div>
-                            <div className="text-xs text-muted-foreground">{tech.email}</div>
+                            <div className="text-xs text-muted-foreground truncate">
+                              {tech.email}
+                            </div>
                             {tech.phone && (
                               <div className="text-xs text-muted-foreground">{tech.phone}</div>
                             )}
                           </div>
                         </div>
                         <div className="flex flex-col items-end gap-1 shrink-0">
-                          <Badge variant="outline" className={`text-xs ${statusConfig.color}`}>
+                          <Badge
+                            variant="outline"
+                            className={`text-xs whitespace-nowrap ${statusConfig.color}`}
+                          >
                             <StatusIcon className="h-3 w-3 mr-1" />
                             {statusConfig.label}
                           </Badge>
-                          {tech.is_primary && (
-                            <Badge variant="secondary" className="text-xs">
-                              Primary
-                            </Badge>
-                          )}
-                          {(tech.current_job_count !== undefined && tech.max_concurrent_jobs !== undefined) && (
-                            <span className="text-xs text-muted-foreground">
-                              {tech.current_job_count}/{tech.max_concurrent_jobs} jobs
+                          {tech.current_job_count !== undefined &&
+                            tech.max_concurrent_jobs !== undefined && (
+                              <span className="text-xs text-muted-foreground">
+                                {tech.current_job_count}/{tech.max_concurrent_jobs}
+                              </span>
+                            )}
+                          {!tech.is_available && (
+                            <span className="text-[10px] font-semibold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">
+                              {tech.current_job_count >= tech.max_concurrent_jobs
+                                ? "At capacity"
+                                : "Unavailable"}
                             </span>
                           )}
                         </div>
@@ -256,42 +334,92 @@ export function TechnicianAssignmentDialog({
 
           {/* Selected Technician Summary */}
           {selectedTech && (
-            <div className="p-3 bg-muted/50 rounded-lg border">
-              <div className="text-sm font-medium mb-2">Selected: {selectedTech.name}</div>
-              <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                <span>Status: {TECH_STATUS_CONFIG[selectedTech.technician_status as keyof typeof TECH_STATUS_CONFIG]?.label || "Unknown"}</span>
-                <span>Current jobs: {selectedTech.current_job_count ?? 0}/{selectedTech.max_concurrent_jobs ?? 3}</span>
-                {!selectedTech.is_available && (
-                  <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-300">
-                    At capacity
+            <div className="p-3 bg-muted/50 rounded-lg border border-border space-y-2">
+              <div className="text-sm font-medium">Selected Technician</div>
+              <div className="space-y-1 text-xs text-muted-foreground">
+                <div>
+                  <span className="font-medium">Name:</span> {selectedTech.name}
+                </div>
+                <div>
+                  <span className="font-medium">Email:</span> {selectedTech.email}
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="font-medium">Status:</span>
+                  <Badge
+                    variant="outline"
+                    className={`text-xs ${TECH_STATUS_CONFIG[selectedTech.technician_status as keyof typeof TECH_STATUS_CONFIG]?.color || ""}`}
+                  >
+                    {TECH_STATUS_CONFIG[
+                      selectedTech.technician_status as keyof typeof TECH_STATUS_CONFIG
+                    ]?.label || "Unknown"}
                   </Badge>
-                )}
+                </div>
+                <div>
+                  <span className="font-medium">Current jobs:</span>{" "}
+                  {selectedTech.current_job_count ?? 0}/{selectedTech.max_concurrent_jobs ?? 3}
+                </div>
               </div>
+              {!selectedTech.is_available && (
+                <p className="text-xs text-amber-700 pt-1">
+                  This technician is not available (on leave / offline or at capacity). Assigning is
+                  blocked until they free a slot or set themselves available.
+                </p>
+              )}
             </div>
           )}
 
-          {/* Schedule Date/Time */}
+          {/* Same-technician reassignment warning */}
+          {order.assigned_technician_id &&
+            order.assigned_technician_id === selectedTechnician && (
+              <div className="p-2 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800">
+                ⚠️ This technician is already assigned to this order. Updating will change the
+                schedule.
+              </div>
+            )}
+
+          {/* Schedule Date + Time (separate inputs for reliable UX) */}
           <div className="space-y-2">
             <Label>Scheduled Installation (Optional)</Label>
-            <Input
-              type="datetime-local"
-              value={scheduledFor}
-              onChange={(e) => setScheduledFor(e.target.value)}
-              min={new Date().toISOString().slice(0, 16)}
-            />
+            <div className="flex gap-2">
+              <Input
+                type="date"
+                value={scheduleDate}
+                onChange={(e) => {
+                  setScheduleDate(e.target.value);
+                  if (!scheduleTime) setScheduleTime("09:00");
+                }}
+                min={new Date().toISOString().slice(0, 10)}
+                className="h-9 flex-1"
+                placeholder="Select date"
+              />
+              <Input
+                type="time"
+                value={scheduleTime}
+                onChange={(e) => setScheduleTime(e.target.value)}
+                className="h-9 w-28"
+                placeholder="09:00"
+              />
+            </div>
             <p className="text-xs text-muted-foreground">
-              Leave empty to schedule later. Customer will be notified once scheduled.
+              {scheduleDate
+                ? `Scheduled for ${new Date(scheduleDate + "T" + (scheduleTime || "09:00")).toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })} at ${scheduleTime || "09:00"}`
+                : "Leave empty to schedule later. Customer will be notified once scheduled."}
             </p>
           </div>
         </div>
 
-        <DialogFooter>
+        <SheetFooter className="gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
           <Button
             onClick={handleAssign}
-            disabled={!selectedTechnician || assignMutation.isPending}
+            disabled={
+              !selectedTechnician ||
+              (!selectedTech?.is_available &&
+                selectedTechnician !== order.assigned_technician_id) ||
+              assignMutation.isPending
+            }
           >
             {assignMutation.isPending ? (
               <>
@@ -299,11 +427,13 @@ export function TechnicianAssignmentDialog({
                 Assigning...
               </>
             ) : (
-              "Assign Technician"
+              order.assigned_technician_id === selectedTechnician
+                ? "Update Schedule"
+                : "Assign Technician"
             )}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }

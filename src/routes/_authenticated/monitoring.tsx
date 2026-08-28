@@ -28,12 +28,16 @@ import { getDeviceHealth, getMaintenanceOverview } from "@/lib/operations2.funct
 import { getIncidents } from "@/lib/monitoring.functions";
 import { getMyRole } from "@/lib/roles.functions";
 import { KpiChartHubSkeleton } from "@/components/app/skeletons";
+import { LocalizedContent } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/monitoring")({
   head: () => ({
     meta: [
       { title: "Monitoring — Grain Hero" },
-      { name: "description", content: "Monitoring workspace in the Grain Hero platform — private, sign-in required." },
+      {
+        name: "description",
+        content: "Monitoring workspace in the Grain Hero platform — private, sign-in required.",
+      },
       { property: "og:title", content: "Monitoring — Grain Hero" },
       { property: "og:description", content: "Monitoring workspace in the Grain Hero platform." },
       { name: "robots", content: "noindex, nofollow" },
@@ -96,17 +100,17 @@ function MonitoringWorkspace() {
 
   const userRole = roleData?.role ?? "pending";
 
-  if (!roleData) return <KpiChartHubSkeleton />;
-
-  // Filter tabs based on role - manager only sees Incidents tab
-  const visibleTabs = userRole === "manager" ? TABS.filter((t) => t.key === "incidents") : TABS;
-
   // Set default tab based on role
   useEffect(() => {
     if (userRole === "manager" && activeTab !== "incidents") {
       setActiveTab("incidents");
     }
   }, [userRole, activeTab]);
+
+  if (!roleData) return <KpiChartHubSkeleton />;
+
+  // Filter tabs based on role - manager only sees Incidents tab
+  const visibleTabs = userRole === "manager" ? TABS.filter((t) => t.key === "incidents") : TABS;
 
   const counts = {
     sensors: Array.isArray(sensors) ? sensors.length : 0,
@@ -124,7 +128,13 @@ function MonitoringWorkspace() {
   const maxCount = Math.max(...Object.values(counts), 1);
 
   const stats = [
-    { label: "Open Incidents", value: Array.isArray(incidents) ? incidents.filter((i: any) => i.status !== "resolved").length : 0, up: false },
+    {
+      label: "Open Incidents",
+      value: Array.isArray(incidents)
+        ? incidents.filter((i: any) => i.status !== "resolved").length
+        : 0,
+      up: false,
+    },
     { label: "Total Incidents", value: Array.isArray(incidents) ? incidents.length : 0, up: true },
     // Hidden until sensors are defined:
     // { label: "Online Devices", value: health?.totals?.online ?? 0, up: true },
@@ -133,14 +143,15 @@ function MonitoringWorkspace() {
   ];
 
   return (
-    <div
-      className="min-h-screen bg-background p-4 md:p-8"
-      style={{
-        fontFamily: "'Geist Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px)",
-        backgroundSize: "28px 28px",
-      }}
-    >
+    <LocalizedContent>
+      <div
+        className="min-h-screen bg-background p-4 md:p-8"
+        style={{
+          fontFamily: "'Geist Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px)",
+          backgroundSize: "28px 28px",
+        }}
+      >
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <div>
@@ -213,7 +224,10 @@ function MonitoringWorkspace() {
                     </div>
                     <div className="flex-1 flex items-center justify-center px-2">
                       <div className="w-full h-1 bg-muted rounded-full relative overflow-hidden">
-                        <div className={`absolute left-0 top-0 bottom-0 rounded-full ${s.up ? 'bg-emerald-500' : 'bg-rose-500'}`} style={{ width: '0%' }} />
+                        <div
+                          className={`absolute left-0 top-0 bottom-0 rounded-full ${s.up ? "bg-emerald-500" : "bg-rose-500"}`}
+                          style={{ width: "0%" }}
+                        />
                       </div>
                     </div>
                     <div className="text-right w-12 shrink-0">
@@ -283,6 +297,7 @@ function MonitoringWorkspace() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }

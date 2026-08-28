@@ -15,7 +15,6 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getEffectiveRole } from "@/lib/rbac.server";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 const input = z.object({ batchId: z.string().uuid() });
@@ -29,7 +28,9 @@ export const getBatchTraceability = createServerFn({ method: "GET" })
 
     const { data: logs, error } = await context.supabase
       .from("activity_logs")
-      .select("id, action, description, category, severity, user_id, user_name, user_role, metadata, created_at")
+      .select(
+        "id, action, description, category, severity, user_id, user_name, user_role, metadata, created_at",
+      )
       .eq("entity_type", "grain_batch")
       .eq("entity_id", data.batchId)
       .order("created_at", { ascending: true });
@@ -46,11 +47,16 @@ export const getBatchTraceability = createServerFn({ method: "GET" })
       .order("created_at", { ascending: true });
 
     const actorIds = Array.from(new Set((logs ?? []).map((l: Row) => l.user_id).filter(Boolean)));
-    const incidentPeopleIds = (incidents ?? []).flatMap((i: Row) => [i.created_by, i.recipient_id]).filter(Boolean);
+    const incidentPeopleIds = (incidents ?? [])
+      .flatMap((i: Row) => [i.created_by, i.recipient_id])
+      .filter(Boolean);
     const allIds = Array.from(new Set([...actorIds, ...incidentPeopleIds]));
     let profiles: Row[] = [];
     if (allIds.length > 0) {
-      const { data: profs } = await context.supabase.from("profiles").select("id, name, email").in("id", allIds);
+      const { data: profs } = await context.supabase
+        .from("profiles")
+        .select("id, name, email")
+        .in("id", allIds);
       profiles = profs ?? [];
     }
     const nameOf = new Map(profiles.map((p) => [p.id, p.name ?? p.email ?? p.id]));

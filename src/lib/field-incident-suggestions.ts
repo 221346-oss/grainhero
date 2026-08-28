@@ -60,8 +60,8 @@ export const INCIDENT_SUGGESTIONS: Record<"technician" | "admin" | "manager", st
 /** Flat deduplicated list of all suggestions (all roles). */
 export const ALL_SUGGESTIONS: string[] = Array.from(
   new Set([
-    ...INCIDENT_SUGGESTIONS.technician, 
-    ...INCIDENT_SUGGESTIONS.admin, 
-    ...INCIDENT_SUGGESTIONS.manager
+    ...INCIDENT_SUGGESTIONS.technician,
+    ...INCIDENT_SUGGESTIONS.admin,
+    ...INCIDENT_SUGGESTIONS.manager,
   ]),
 );

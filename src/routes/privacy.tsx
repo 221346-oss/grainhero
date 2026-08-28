@@ -1,128 +1,140 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { motion } from 'framer-motion'
-import { Shield, Lock, Eye, Database, UserCheck, FileText } from 'lucide-react'
-import { NewGlassNav } from '@/components/landing/NewGlassNav'
-import { NewFooter } from '@/components/landing/NewFooter'
+import { createFileRoute } from "@tanstack/react-router";
+import { motion } from "framer-motion";
+import { Shield, Lock, Eye, Database, UserCheck, FileText } from "lucide-react";
+import { NewGlassNav } from "@/components/landing/NewGlassNav";
+import { NewFooter } from "@/components/landing/NewFooter";
+import { LocalizedContent } from "@/i18n";
 
-export const Route = createFileRoute('/privacy')({
+export const Route = createFileRoute("/privacy")({
   head: () => ({
     meta: [
-      { title: 'Privacy Policy — GrainHero' },
+      { title: "Privacy Policy — GrainHero" },
       {
-        name: 'description',
-        content: 'GrainHero Privacy Policy. Learn how we collect, use, and protect your personal information.',
+        name: "description",
+        content:
+          "GrainHero Privacy Policy. Learn how we collect, use, and protect your personal information.",
       },
-      { property: 'og:title', content: "Privacy Policy — GrainHero" },
-      { property: 'og:description', content: "GrainHero Privacy Policy. Learn how we collect, use, and protect your personal information." },
-      { property: 'og:url', content: 'https://grainhero.app/privacy' },
-      { property: 'og:type', content: 'website' },
-      { name: 'twitter:card', content: 'summary_large_image' },
+      { property: "og:title", content: "Privacy Policy — GrainHero" },
+      {
+        property: "og:description",
+        content:
+          "GrainHero Privacy Policy. Learn how we collect, use, and protect your personal information.",
+      },
+      { property: "og:url", content: "https://grainhero.app/privacy" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [{ rel: 'canonical', href: 'https://grainhero.app/privacy' }],
+    links: [{ rel: "canonical", href: "https://grainhero.app/privacy" }],
   }),
   component: PrivacyPolicyPage,
-})
+});
 
 function PrivacyPolicyPage() {
   const sections = [
     {
       icon: Database,
-      title: 'Information We Collect',
-      description: 'We collect various types of information to provide and improve our grain storage monitoring services. Our data collection practices are transparent and focused on delivering value to you.',
+      title: "Information We Collect",
+      description:
+        "We collect various types of information to provide and improve our grain storage monitoring services. Our data collection practices are transparent and focused on delivering value to you.",
       points: [
-        'Personal information including name, email address, and company details',
-        'Account credentials and authentication information',
-        'Sensor data from your grain storage monitoring systems',
-        'Temperature, humidity, and environmental readings from connected devices',
-        'Usage data and analytics to improve our services',
-        'Communication preferences and support interactions',
+        "Personal information including name, email address, and company details",
+        "Account credentials and authentication information",
+        "Sensor data from your grain storage monitoring systems",
+        "Temperature, humidity, and environmental readings from connected devices",
+        "Usage data and analytics to improve our services",
+        "Communication preferences and support interactions",
       ],
     },
     {
       icon: Eye,
-      title: 'How We Use Your Information',
-      description: 'Your information enables us to deliver, maintain, and enhance our grain storage monitoring platform. We are committed to using your data responsibly and only for legitimate business purposes.',
+      title: "How We Use Your Information",
+      description:
+        "Your information enables us to deliver, maintain, and enhance our grain storage monitoring platform. We are committed to using your data responsibly and only for legitimate business purposes.",
       points: [
-        'Provide real-time monitoring and predictive analytics for grain storage',
-        'Send technical notices, updates, and security alerts',
-        'Process your requests and provide customer support',
-        'Improve and personalize our services based on usage patterns',
-        'Protect against fraudulent or illegal activity',
-        'Generate insights and reports for your grain storage operations',
+        "Provide real-time monitoring and predictive analytics for grain storage",
+        "Send technical notices, updates, and security alerts",
+        "Process your requests and provide customer support",
+        "Improve and personalize our services based on usage patterns",
+        "Protect against fraudulent or illegal activity",
+        "Generate insights and reports for your grain storage operations",
       ],
     },
     {
       icon: Lock,
-      title: 'Data Security',
-      description: 'We implement comprehensive security measures to protect your information from unauthorized access, disclosure, alteration, and destruction.',
+      title: "Data Security",
+      description:
+        "We implement comprehensive security measures to protect your information from unauthorized access, disclosure, alteration, and destruction.",
       points: [
-        'Industry-standard encryption for all data transmission (TLS/SSL)',
-        'Secure data centers with physical and digital access controls',
-        'Regular security audits and vulnerability assessments',
-        'SOC 2 Type II compliance for data security standards',
-        'Employee training on data protection and privacy practices',
-        'Incident response procedures and breach notification protocols',
+        "Industry-standard encryption for all data transmission (TLS/SSL)",
+        "Secure data centers with physical and digital access controls",
+        "Regular security audits and vulnerability assessments",
+        "SOC 2 Type II compliance for data security standards",
+        "Employee training on data protection and privacy practices",
+        "Incident response procedures and breach notification protocols",
       ],
     },
     {
       icon: UserCheck,
-      title: 'Your Privacy Rights',
-      description: 'We respect your rights regarding your personal information and provide tools to help you control your data.',
+      title: "Your Privacy Rights",
+      description:
+        "We respect your rights regarding your personal information and provide tools to help you control your data.",
       points: [
-        'Access your personal information at any time through your account',
-        'Correct or update inaccurate information',
-        'Export your data in a portable format',
-        'Request deletion of your account and associated data',
-        'Opt-out of marketing communications',
-        'Object to certain data processing activities',
+        "Access your personal information at any time through your account",
+        "Correct or update inaccurate information",
+        "Export your data in a portable format",
+        "Request deletion of your account and associated data",
+        "Opt-out of marketing communications",
+        "Object to certain data processing activities",
       ],
     },
     {
       icon: Shield,
-      title: 'Data Retention',
-      description: 'We retain your information only as long as necessary to provide our services and comply with legal obligations.',
+      title: "Data Retention",
+      description:
+        "We retain your information only as long as necessary to provide our services and comply with legal obligations.",
       points: [
-        'Active account data retained for the duration of service use',
-        'Sensor data and analytics retained for 24 months for historical analysis',
-        'Deleted account data removed within 30 days of deletion request',
-        'Backup copies retained for up to 90 days for disaster recovery',
-        'Legal compliance data retained as required by applicable laws',
-        'You can request early deletion of your data at any time',
+        "Active account data retained for the duration of service use",
+        "Sensor data and analytics retained for 24 months for historical analysis",
+        "Deleted account data removed within 30 days of deletion request",
+        "Backup copies retained for up to 90 days for disaster recovery",
+        "Legal compliance data retained as required by applicable laws",
+        "You can request early deletion of your data at any time",
       ],
     },
     {
       icon: FileText,
-      title: 'Third-Party Services',
-      description: 'We partner with trusted service providers to deliver our platform. All third parties are carefully vetted and contractually bound to protect your data.',
+      title: "Third-Party Services",
+      description:
+        "We partner with trusted service providers to deliver our platform. All third parties are carefully vetted and contractually bound to protect your data.",
       points: [
-        'Cloud hosting providers for secure infrastructure',
-        'Analytics services for platform improvement',
-        'Payment processors for billing and subscriptions',
-        'Email service providers for communications',
-        'Customer support and ticketing systems',
-        'All providers maintain strict data protection agreements',
+        "Cloud hosting providers for secure infrastructure",
+        "Analytics services for platform improvement",
+        "Payment processors for billing and subscriptions",
+        "Email service providers for communications",
+        "Customer support and ticketing systems",
+        "All providers maintain strict data protection agreements",
       ],
     },
-  ]
+  ];
 
   return (
-    <main className="min-h-screen bg-[#EDE9D4]">
+    <LocalizedContent><main className="min-h-screen bg-[#EDE9D4]">
       <NewGlassNav />
-      
+
       {/* Hero Section */}
       <section className="relative pt-32 pb-16 sm:pt-40 sm:pb-24 px-4 sm:px-6 lg:px-8 bg-[#252d26] overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div
             style={{
               backgroundImage:
-                'radial-gradient(circle at 2px 2px, rgba(47,172,12,0.4) 1px, transparent 0)',
-              backgroundSize: '40px 40px',
-              width: '100%',
-              height: '100%',
+                "radial-gradient(circle at 2px 2px, rgba(47,172,12,0.4) 1px, transparent 0)",
+              backgroundSize: "40px 40px",
+              width: "100%",
+              height: "100%",
             }}
           />
         </div>
-        
+
         <div className="max-w-4xl mx-auto text-center relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -138,7 +150,12 @@ function PrivacyPolicyPage() {
               Your Privacy <span className="text-[#2FAC0C]">Matters</span>
             </h1>
             <p className="text-xl text-[#EDE9D4]/80 leading-relaxed">
-              Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+              Last updated:{" "}
+              {new Date().toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
             </p>
           </motion.div>
         </div>
@@ -154,10 +171,10 @@ function PrivacyPolicyPage() {
             transition={{ duration: 0.6 }}
           >
             <p className="text-lg text-[#404F44] leading-relaxed">
-              At GrainHero, we take your privacy seriously. This Privacy Policy explains how we collect,
-              use, disclose, and safeguard your information when you use our grain storage monitoring platform.
-              Please read this privacy policy carefully. If you do not agree with the terms of this privacy
-              policy, please do not access the platform.
+              At GrainHero, we take your privacy seriously. This Privacy Policy explains how we
+              collect, use, disclose, and safeguard your information when you use our grain storage
+              monitoring platform. Please read this privacy policy carefully. If you do not agree
+              with the terms of this privacy policy, please do not access the platform.
             </p>
           </motion.div>
         </div>
@@ -182,10 +199,12 @@ function PrivacyPolicyPage() {
                   </div>
                   <div>
                     <h3 className="text-xl font-bold text-[#252d26] mb-2">{section.title}</h3>
-                    <p className="text-sm text-[#404F44]/70 leading-relaxed">{section.description}</p>
+                    <p className="text-sm text-[#404F44]/70 leading-relaxed">
+                      {section.description}
+                    </p>
                   </div>
                 </div>
-                
+
                 <div className="space-y-2.5">
                   {section.points.map((point, idx) => (
                     <div key={idx} className="flex items-start gap-2.5">
@@ -221,11 +240,10 @@ function PrivacyPolicyPage() {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <h2 className="text-3xl font-black text-[#252d26] mb-4">
-              Questions About Privacy?
-            </h2>
+            <h2 className="text-3xl font-black text-[#252d26] mb-4">Questions About Privacy?</h2>
             <p className="text-lg text-[#404F44] mb-6">
-              If you have questions or concerns about this Privacy Policy, please contact our privacy team.
+              If you have questions or concerns about this Privacy Policy, please contact our
+              privacy team.
             </p>
             <a
               href="mailto:grainhero@gmail.com"
@@ -238,6 +256,6 @@ function PrivacyPolicyPage() {
       </section>
 
       <NewFooter />
-    </main>
-  )
+    </main></LocalizedContent>
+  );
 }

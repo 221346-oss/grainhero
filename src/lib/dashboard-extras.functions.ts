@@ -78,7 +78,9 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
     ] = await Promise.all([
       context.supabase
         .from("grain_batches")
-        .select("id, batch_id, grain_type, quantity_kg, status, risk_score, created_at, purchase_price_per_kg, revenue, profit")
+        .select(
+          "id, batch_id, grain_type, quantity_kg, status, risk_score, created_at, purchase_price_per_kg, revenue, profit",
+        )
         .order("created_at", { ascending: false })
         .limit(5),
       context.supabase
@@ -97,7 +99,9 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
         .limit(6),
       context.supabase
         .from("silos")
-        .select("id, silo_id, name, capacity_kg, current_occupancy_kg, status, current_batch:grain_batches!fk_silos_current_batch(id, grain_type)")
+        .select(
+          "id, silo_id, name, capacity_kg, current_occupancy_kg, status, current_batch:grain_batches!fk_silos_current_batch(id, grain_type)",
+        )
         .order("created_at", { ascending: false })
         .limit(8),
       context.supabase
@@ -122,7 +126,9 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
       // Full list for the dashboard table (dense)
       context.supabase
         .from("grain_batches")
-        .select("id, batch_id, grain_type, quantity_kg, status, risk_score, created_at, silo_id, silos:silo_id(name)")
+        .select(
+          "id, batch_id, grain_type, quantity_kg, status, risk_score, created_at, silo_id, silos:silo_id(name)",
+        )
         .order("created_at", { ascending: false })
         .limit(50),
       context.supabase
@@ -163,16 +169,18 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
         .select("created_at, revenue, purchase_price_per_kg, quantity_kg, status")
         .eq("status", "dispatched")
         .gte("created_at", twelveMoAgo),
-      context.supabase
-        .from("grain_dispatches")
-        .select("silo_id, total_qty_kg")
-        .limit(5000),
+      context.supabase.from("grain_dispatches").select("silo_id, total_qty_kg").limit(5000),
     ]);
 
     const batches = batchesRes.data ?? [];
     const legacyRevenue = batches
       .filter((b) => b.status === "dispatched")
-      .reduce((s, b) => s + Number(b.revenue ?? (Number(b.purchase_price_per_kg ?? 0) * Number(b.quantity_kg ?? 0))), 0);
+      .reduce(
+        (s, b) =>
+          s +
+          Number(b.revenue ?? Number(b.purchase_price_per_kg ?? 0) * Number(b.quantity_kg ?? 0)),
+        0,
+      );
     // TODO(dispatch-refactor): legacyRevenue above is the old per-batch dispatch model
     // (grain_batches.revenue) and will stop growing now that dispatch happens from silos
     // (dispatchFromSilo in operations.functions.ts, writing to the `dispatches` table).
@@ -183,7 +191,9 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
     const installRows = installRes.data ?? [];
     const installCounts = {
       pending: installRows.filter((r: { status: string }) => r.status === "pending").length,
-      scheduled: installRows.filter((r: { status: string }) => ["scheduled", "in_progress"].includes(r.status)).length,
+      scheduled: installRows.filter((r: { status: string }) =>
+        ["scheduled", "in_progress"].includes(r.status),
+      ).length,
       completed: installRows.filter((r: { status: string }) => r.status === "completed").length,
       total: installRows.length,
     };
@@ -197,7 +207,9 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
     // matched a genuine QC gate). "readyToShip" still has no real signal in
     // the data model — left as-is.
     const insights = {
-      pendingQC: allBatches.filter((b) => ["pending_qc", "qc_submitted", "qc_failed"].includes(String(b.status))).length,
+      pendingQC: allBatches.filter((b) =>
+        ["pending_qc", "qc_submitted", "qc_failed"].includes(String(b.status)),
+      ).length,
       rejectedQC: allBatches.filter((b) => String(b.status) === "admin_rejected").length,
       atRisk: allBatches.filter((b) => Number(b.risk_score ?? 0) >= 70).length,
       readyToShip: allBatches.filter((b) => String(b.status) === "ready").length,
@@ -215,7 +227,10 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
     }
     const pipeline = {
       onHold: sumKg((b) => String(b.status) === "on_hold"),
-      atRisk: sumKg((b) => Number(b.risk_score ?? 0) >= 70 && !["damaged", "expired"].includes(String(b.status))),
+      atRisk: sumKg(
+        (b) =>
+          Number(b.risk_score ?? 0) >= 70 && !["damaged", "expired"].includes(String(b.status)),
+      ),
       damaged: sumKg((b) => ["damaged", "expired"].includes(String(b.status))),
       stored: sumKg((b) => String(b.status) === "stored" && Number(b.risk_score ?? 0) < 70),
     };
@@ -238,7 +253,9 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
       const k = `${d.getFullYear()}-${d.getMonth()}`;
       const b = buckets.find((x) => x.key === k);
       if (!b) continue;
-      const val = Number(r.revenue ?? (Number(r.purchase_price_per_kg ?? 0) * Number(r.quantity_kg ?? 0)));
+      const val = Number(
+        r.revenue ?? Number(r.purchase_price_per_kg ?? 0) * Number(r.quantity_kg ?? 0),
+      );
       b.total += val;
     }
     const revenueSpark = buckets.map((b) => b.total);
@@ -246,15 +263,25 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
     const revenuePrev = buckets[buckets.length - 2]?.total ?? 0;
     const revenueDeltaPct = revenuePrev
       ? Math.round(((revenueMtd - revenuePrev) / revenuePrev) * 100)
-      : (revenueMtd ? 100 : 0);
+      : revenueMtd
+        ? 100
+        : 0;
 
     function pctDelta(cur: number, prev: number) {
       if (!prev) return cur ? 100 : 0;
       return Math.round(((cur - prev) / prev) * 100);
     }
     const deltas = {
-      batches: { cur: curBatchesCount.count ?? 0, prev: prevBatchesCount.count ?? 0, pct: pctDelta(curBatchesCount.count ?? 0, prevBatchesCount.count ?? 0) },
-      alerts: { cur: curAlertsCount.count ?? 0, prev: prevAlertsCount.count ?? 0, pct: pctDelta(curAlertsCount.count ?? 0, prevAlertsCount.count ?? 0) },
+      batches: {
+        cur: curBatchesCount.count ?? 0,
+        prev: prevBatchesCount.count ?? 0,
+        pct: pctDelta(curBatchesCount.count ?? 0, prevBatchesCount.count ?? 0),
+      },
+      alerts: {
+        cur: curAlertsCount.count ?? 0,
+        prev: prevAlertsCount.count ?? 0,
+        pct: pctDelta(curAlertsCount.count ?? 0, prevAlertsCount.count ?? 0),
+      },
     };
 
     const siloOutgoingKg: Record<string, number> = {};

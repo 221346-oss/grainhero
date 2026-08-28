@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { LocalizedContent, translateText, useI18n } from "@/i18n";
 
 export function AdminDataCard({
   title,
@@ -23,14 +24,15 @@ export function AdminDataCard({
   maxHeight?: string;
   className?: string;
 }) {
+  const { locale } = useI18n();
   return (
     <Card className={cn("border-0 shadow-none", className)}>
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg">{title}</CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
+        <CardTitle className="text-lg">{translateText(title, locale)}</CardTitle>
+        {description && <CardDescription><LocalizedContent>{description}</LocalizedContent></CardDescription>}
       </CardHeader>
       <CardContent className="p-0">
-        <div className={cn("overflow-auto", maxHeight)}>{children}</div>
+        <div className={cn("overflow-auto", maxHeight)}><LocalizedContent>{children}</LocalizedContent></div>
         {totalPages && totalPages > 1 && page !== undefined && onPageChange && (
           <div className="flex items-center justify-between p-4 border-t bg-slate-50/50">
             <p className="text-sm text-slate-500">

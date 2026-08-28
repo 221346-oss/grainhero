@@ -16,9 +16,17 @@ import { listWarehousesWithTeam } from "@/lib/operations.functions";
 import { WarehouseAssignmentSidebar } from "./WarehouseAssignmentSidebar";
 import { Badge } from "@/components/ui/badge";
 import {
-  MapPin, Warehouse, Users, User, Wrench,
-  Database, AlertCircle, Loader2, ChevronDown,
+  MapPin,
+  Warehouse,
+  Users,
+  User,
+  Wrench,
+  Database,
+  AlertCircle,
+  Loader2,
+  ChevronDown,
 } from "lucide-react";
+import { LocalizedContent } from "@/i18n";
 
 type WarehouseRow = {
   id: string;
@@ -28,7 +36,14 @@ type WarehouseRow = {
   location: { description?: string | null; address?: string | null };
   total_capacity_kg: number;
   total_silos: number;
-  silos: Array<{ id: string; warehouse_id: string; name: string; silo_id: string; capacity_kg: number; status: string }>;
+  silos: Array<{
+    id: string;
+    warehouse_id: string;
+    name: string;
+    silo_id: string;
+    capacity_kg: number;
+    status: string;
+  }>;
   notes: string | null;
   manager_id: string | null;
   manager_name: string | null;
@@ -36,38 +51,120 @@ type WarehouseRow = {
   technician_names: string[];
 };
 
-// ── Extract a region label from location fields ──────────────────────────────
-// Tries location.description first, then full address for better grouping.
-// This ensures warehouses at the same location are grouped together.
-function extractRegion(loc: WarehouseRow["location"] | null): string {
+// ── Extract a region label (city) from location fields ──────────────────────
+// Extracts just the city name for grouping, not the full address.
+// e.g. "125 farm road, block a, Lahore" → "Lahore"
+//      "123 Farm road, Block A, Sialkot" → "Sialkot"
+//      "abc123, Block A" → "abc123, Block A" (no city found, use as-is)
+const KNOWN_CITIES = [
+  "Lahore",
+  "Sialkot",
+  "Karachi",
+  "Islamabad",
+  "Rawalpindi",
+  "Faisalabad",
+  "Multan",
+  "Peshawar",
+  "Quetta",
+  "Gujranwala",
+  "Sargodha",
+  "Abbottabad",
+  "Mardan",
+  "Hyderabad",
+  "Gujrat",
+  "Jhang",
+  "Sheikhupura",
+  "Sahiwal",
+  "Okara",
+  "Dera Ghazi Khan",
+];
+
+function extractCityFromAddress(addr: string): string | null {
+  const parts = addr
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  // Check each part against known cities
+  for (const part of parts) {
+    const normalized = part.toLowerCase();
+    for (const city of KNOWN_CITIES) {
+      if (normalized === city.toLowerCase()) return city;
+    }
+  }
+
+  // If no known city, try to extract city from comma-separated address
+  // Typically: "street, area, city, country" → city is second-to-last
+  if (parts.length >= 2) {
+    // Check second-to-last part (common position for city in Pakistani addresses)
+    const candidate = parts[parts.length - 2];
+    // If it's short and doesn't contain numbers, likely a city name
+    if (candidate.length <= 20 && !/\d/.test(candidate)) {
+      return candidate.charAt(0).toUpperCase() + candidate.slice(1).toLowerCase();
+    }
+  }
+
+  return null;
+}
+
+function extractRegion(loc: WarehouseRow["location"] | null, warehouseName?: string): string {
   if (!loc) return "Unassigned Region";
-  
-  // Prefer location.description if set (for custom grouping)
+
   const desc = (loc.description ?? "").trim();
-  if (desc) return desc;
-  
-  // Otherwise use full address - this groups same-location warehouses together
   const addr = (loc.address ?? "").trim();
+
+  // Location.description is now the city name (set during silo creation)
+  // Use it directly if it looks like a city name
+  if (desc) {
+    // Check if it's a known city
+    const city = extractCityFromAddress(desc);
+    if (city) return city;
+    // If not a known city but short (likely a city name), use as-is
+    if (desc.length <= 30) return desc.charAt(0).toUpperCase() + desc.slice(1).toLowerCase();
+  }
+
+  // Try to extract city from address
+  if (addr) {
+    const city = extractCityFromAddress(addr);
+    if (city) return city;
+  }
+
+  // Check warehouse name — e.g. "sialkot — D2E304" → "Sialkot"
+  if (warehouseName) {
+    const city = extractCityFromAddress(warehouseName);
+    if (city) return city;
+  }
+
+  // Fallback: use description as-is
+  if (desc) return desc;
+
+  // Last resort: use full address
   if (addr) return addr;
-  
+
   return "Unassigned Region";
 }
 
 // ── Status colour map ────────────────────────────────────────────────────────
 const STATUS_CFG: Record<string, { dot: string; badge: string; label: string }> = {
-  active:      { dot: "bg-emerald-500", badge: "bg-emerald-100 text-emerald-700",  label: "Active"      },
-  offline:     { dot: "bg-slate-400",   badge: "bg-slate-100 text-slate-600",      label: "Offline"     },
-  error:       { dot: "bg-red-500",     badge: "bg-red-100 text-red-700",          label: "Error"       },
-  maintenance: { dot: "bg-amber-500",   badge: "bg-amber-100 text-amber-700",      label: "Maintenance" },
+  active: { dot: "bg-emerald-500", badge: "bg-emerald-100 text-emerald-700", label: "Active" },
+  offline: { dot: "bg-slate-400", badge: "bg-slate-100 text-slate-600", label: "Offline" },
+  error: { dot: "bg-red-500", badge: "bg-red-100 text-red-700", label: "Error" },
+  maintenance: { dot: "bg-amber-500", badge: "bg-amber-100 text-amber-700", label: "Maintenance" },
 };
 const statusCfg = (s: string) => STATUS_CFG[s] ?? STATUS_CFG.offline;
 
 // ── Warehouse card ───────────────────────────────────────────────────────────
-function WarehouseCard({ w, onAssign }: { w: WarehouseRow; onAssign?: (warehouse: WarehouseRow) => void }) {
+function WarehouseCard({
+  w,
+  onAssign,
+}: {
+  w: WarehouseRow;
+  onAssign?: (warehouse: WarehouseRow) => void;
+}) {
   const cfg = statusCfg(w.status);
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-3 hover:border-slate-300 transition-colors">
-
+    <LocalizedContent>
+      <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-3 hover:border-slate-300 transition-colors">
       {/* Header row */}
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
@@ -77,7 +174,9 @@ function WarehouseCard({ w, onAssign }: { w: WarehouseRow; onAssign?: (warehouse
           </div>
           <span className="text-[11px] font-mono text-slate-400 ml-5">{w.warehouse_id}</span>
         </div>
-        <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${cfg.badge}`}>
+        <span
+          className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${cfg.badge}`}
+        >
           <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
           {cfg.label}
         </span>
@@ -104,14 +203,21 @@ function WarehouseCard({ w, onAssign }: { w: WarehouseRow; onAssign?: (warehouse
       {w.silos && w.silos.length > 0 ? (
         <div className="flex flex-wrap gap-1.5">
           {w.silos.map((silo) => (
-            <div key={silo.id} className="flex items-center justify-between bg-slate-50 rounded border border-slate-100 px-2.5 py-1.5 text-[11px] min-w-max">
+            <div
+              key={silo.id}
+              className="flex items-center justify-between bg-slate-50 rounded border border-slate-100 px-2.5 py-1.5 text-[11px] min-w-max"
+            >
               <div className="flex items-center gap-1.5">
-                <div className={`w-2 h-2 rounded-full shrink-0 ${
-                  silo.status === "active" ? "bg-emerald-500" : "bg-slate-300"
-                }`} />
+                <div
+                  className={`w-2 h-2 rounded-full shrink-0 ${
+                    silo.status === "active" ? "bg-emerald-500" : "bg-slate-300"
+                  }`}
+                />
                 <span className="text-slate-700 font-medium">{silo.name}</span>
               </div>
-              <span className="text-slate-500 shrink-0 ml-1.5">{(silo.capacity_kg / 1000).toFixed(0)}t</span>
+              <span className="text-slate-500 shrink-0 ml-1.5">
+                {(silo.capacity_kg / 1000).toFixed(0)}t
+              </span>
             </div>
           ))}
         </div>
@@ -124,9 +230,13 @@ function WarehouseCard({ w, onAssign }: { w: WarehouseRow; onAssign?: (warehouse
         {/* Manager */}
         <div className="flex items-center gap-2">
           <User className="w-3 h-3 text-slate-400 shrink-0" />
-          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider w-16 shrink-0">Manager</span>
+          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider w-16 shrink-0">
+            Manager
+          </span>
           {w.manager_name ? (
-            <span className="text-xs font-medium text-slate-700 truncate flex-1">{w.manager_name}</span>
+            <span className="text-xs font-medium text-slate-700 truncate flex-1">
+              {w.manager_name}
+            </span>
           ) : (
             <span className="text-xs text-slate-400 italic flex-1">Unassigned</span>
           )}
@@ -141,7 +251,10 @@ function WarehouseCard({ w, onAssign }: { w: WarehouseRow; onAssign?: (warehouse
           {w.technician_names.length > 0 ? (
             <div className="flex flex-wrap gap-1 flex-1">
               {w.technician_names.map((t, i) => (
-                <span key={i} className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-medium">
+                <span
+                  key={i}
+                  className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-medium"
+                >
                   {t}
                 </span>
               ))}
@@ -167,30 +280,42 @@ function WarehouseCard({ w, onAssign }: { w: WarehouseRow; onAssign?: (warehouse
           {w.notes}
         </p>
       )}
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }
 
 // ── Region group ─────────────────────────────────────────────────────────────
-function RegionGroup({ region, warehouses, onAssign }: { region: string; warehouses: WarehouseRow[]; onAssign?: (warehouse: WarehouseRow) => void }) {
+function RegionGroup({
+  region,
+  warehouses,
+  onAssign,
+}: {
+  region: string;
+  warehouses: WarehouseRow[];
+  onAssign?: (warehouse: WarehouseRow) => void;
+}) {
   const [expanded, setExpanded] = useState(false);
   const activeCount = warehouses.filter((w) => w.status === "active").length;
-  const totalSilos  = warehouses.reduce((s, w) => s + w.total_silos, 0);
-  const totalCap    = warehouses.reduce((s, w) => s + w.total_capacity_kg, 0);
+  const totalSilos = warehouses.reduce((s, w) => s + w.total_silos, 0);
+  const totalCap = warehouses.reduce((s, w) => s + w.total_capacity_kg, 0);
 
   // Unique team members across this region
-  const managers    = [...new Set(warehouses.map((w) => w.manager_name).filter(Boolean))] as string[];
+  const managers = [...new Set(warehouses.map((w) => w.manager_name).filter(Boolean))] as string[];
   const technicians = [...new Set(warehouses.flatMap((w) => w.technician_names))];
 
   return (
-    <div className="space-y-0 border border-slate-200 rounded-lg overflow-hidden">
+    <LocalizedContent>
+      <div className="space-y-0 border border-slate-200 rounded-lg overflow-hidden">
       {/* Region header - clickable to expand */}
       <button
         onClick={() => setExpanded(!expanded)}
         className="w-full flex flex-wrap items-center justify-between gap-3 px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors border-b border-slate-200"
       >
         <div className="flex items-center gap-3 min-w-0">
-          <ChevronDown className={`w-5 h-5 text-slate-400 shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+          <ChevronDown
+            className={`w-5 h-5 text-slate-400 shrink-0 transition-transform ${expanded ? "rotate-180" : ""}`}
+          />
           <MapPin className="w-4 h-4 text-[#2FAC0C] shrink-0" />
           <h3 className="text-sm font-semibold text-slate-800 truncate">{region}</h3>
           <span className="text-[11px] font-semibold bg-white text-slate-600 px-2 py-0.5 rounded border border-slate-200 shrink-0">
@@ -224,7 +349,10 @@ function RegionGroup({ region, warehouses, onAssign }: { region: string; warehou
                   <span className="text-slate-500 font-medium">Managers:</span>
                   <div className="flex flex-wrap gap-1">
                     {managers.map((m, i) => (
-                      <span key={i} className="bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded-full text-[10px] font-medium">
+                      <span
+                        key={i}
+                        className="bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded-full text-[10px] font-medium"
+                      >
                         {m}
                       </span>
                     ))}
@@ -237,7 +365,10 @@ function RegionGroup({ region, warehouses, onAssign }: { region: string; warehou
                   <span className="text-slate-500 font-medium">Techs:</span>
                   <div className="flex flex-wrap gap-1">
                     {technicians.map((t, i) => (
-                      <span key={i} className="bg-purple-50 text-purple-700 border border-purple-200 px-1.5 py-0.5 rounded-full text-[10px] font-medium">
+                      <span
+                        key={i}
+                        className="bg-purple-50 text-purple-700 border border-purple-200 px-1.5 py-0.5 rounded-full text-[10px] font-medium"
+                      >
                         {t}
                       </span>
                     ))}
@@ -249,11 +380,14 @@ function RegionGroup({ region, warehouses, onAssign }: { region: string; warehou
 
           {/* Warehouse cards grid */}
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {warehouses.map((w) => <WarehouseCard key={w.id} w={w} onAssign={onAssign} />)}
+            {warehouses.map((w) => (
+              <WarehouseCard key={w.id} w={w} onAssign={onAssign} />
+            ))}
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }
 
@@ -264,7 +398,7 @@ export function MultiRegionWarehousesView() {
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["warehouses-with-team"],
-    queryFn:  () => fetchFn(),
+    queryFn: () => fetchFn(),
     staleTime: 30_000,
   });
 
@@ -273,7 +407,7 @@ export function MultiRegionWarehousesView() {
     const warehouses = (data ?? []) as WarehouseRow[];
     const map = new Map<string, WarehouseRow[]>();
     for (const w of warehouses) {
-      const region = extractRegion(w.location);
+      const region = extractRegion(w.location, w.name);
       if (!map.has(region)) map.set(region, []);
       map.get(region)!.push(w);
     }
@@ -319,8 +453,8 @@ export function MultiRegionWarehousesView() {
   }
 
   // ── Summary strip ──────────────────────────────────────────────────────────
-  const totalRegions  = regionGroups.length;
-  const totalSilos    = (data ?? []).reduce((s, w) => s + (w as WarehouseRow).total_silos, 0);
+  const totalRegions = regionGroups.length;
+  const totalSilos = (data ?? []).reduce((s, w) => s + (w as WarehouseRow).total_silos, 0);
   const totalCapacity = (data ?? []).reduce((s, w) => s + (w as WarehouseRow).total_capacity_kg, 0);
 
   return (
@@ -328,13 +462,15 @@ export function MultiRegionWarehousesView() {
       {/* Summary strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "Regions",         value: totalRegions    },
-          { label: "Warehouses",      value: totalWarehouses },
-          { label: "Total silos",     value: totalSilos      },
-          { label: "Total capacity",  value: `${totalCapacity.toLocaleString()} kg` },
+          { label: "Regions", value: totalRegions },
+          { label: "Warehouses", value: totalWarehouses },
+          { label: "Total silos", value: totalSilos },
+          { label: "Total capacity", value: `${totalCapacity.toLocaleString()} kg` },
         ].map(({ label, value }) => (
           <div key={label} className="rounded-lg border border-slate-200 bg-white px-4 py-3">
-            <div className="text-lg font-bold text-slate-900 tabular-nums leading-tight">{value}</div>
+            <div className="text-lg font-bold text-slate-900 tabular-nums leading-tight">
+              {value}
+            </div>
             <div className="text-[11px] text-slate-500 mt-0.5">{label}</div>
           </div>
         ))}
@@ -342,7 +478,12 @@ export function MultiRegionWarehousesView() {
 
       {/* Region groups */}
       {regionGroups.map(([region, warehouses]) => (
-        <RegionGroup key={region} region={region} warehouses={warehouses} onAssign={setSelectedWarehouse} />
+        <RegionGroup
+          key={region}
+          region={region}
+          warehouses={warehouses}
+          onAssign={setSelectedWarehouse}
+        />
       ))}
 
       {/* Assignment sidebar */}

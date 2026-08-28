@@ -6,7 +6,6 @@ import { listMetrics } from "@/lib/metric-registry.functions";
 import { MetricWidget } from "./MetricWidget";
 import { LayoutGrid, Plus } from "lucide-react";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 /**

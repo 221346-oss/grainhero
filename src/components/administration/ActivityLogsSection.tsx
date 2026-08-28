@@ -5,7 +5,13 @@ import { useServerFn } from "@tanstack/react-start";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { RefreshCw, X, FileText } from "lucide-react";
 import { listActivityLogs } from "@/lib/notifications-audit.functions";
 import { AdminSummaryTiles } from "@/components/app/admin/AdminSummaryTiles";
@@ -14,12 +20,19 @@ import { AdminDataCard } from "@/components/app/admin/AdminDataCard";
 import { AdminDetailPanel, DetailField } from "@/components/app/admin/AdminDetailPanel";
 import { ExportMenu } from "@/components/app/ExportMenu";
 import type { ExportColumn } from "@/lib/csv-pdf-export";
+import { LocalizedContent } from "@/i18n";
 
 type Log = Awaited<ReturnType<typeof listActivityLogs>>["logs"][number];
 
 const CATEGORY_LABEL: Record<string, string> = {
-  batch: "Batch", spoilage: "Spoilage", buyer: "Buyer", dispatch: "Dispatch",
-  payment: "Payment", insurance: "Insurance", invoice: "Invoice", report: "Report",
+  batch: "Batch",
+  spoilage: "Spoilage",
+  buyer: "Buyer",
+  dispatch: "Dispatch",
+  payment: "Payment",
+  insurance: "Insurance",
+  invoice: "Invoice",
+  report: "Report",
   system: "System",
 };
 const SEVERITY_STYLE: Record<string, string> = {
@@ -30,7 +43,11 @@ const SEVERITY_STYLE: Record<string, string> = {
 
 function fmtAbs(s: string) {
   return new Date(s).toLocaleDateString("en-US", {
-    month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 function fmtRel(s: string) {
@@ -57,31 +74,51 @@ export function ActivityLogsSection() {
 
   const fetchLogs = useServerFn(listActivityLogs);
   const { data, isLoading, refetch, isFetching } = useQuery({
-    queryKey: ["activity-logs", page, search, category, severity, from, to, entityFilter, actorRole, showManagerOnly],
+    queryKey: [
+      "activity-logs",
+      page,
+      search,
+      category,
+      severity,
+      from,
+      to,
+      entityFilter,
+      actorRole,
+      showManagerOnly,
+    ],
     queryFn: () =>
       fetchLogs({
         data: {
-          page, limit: 20,
+          page,
+          limit: 20,
           search: search || null,
           category: category === "all" ? null : category,
-          severity: showManagerOnly ? "warning" : (severity === "all" ? null : severity),
+          severity: showManagerOnly ? "warning" : severity === "all" ? null : severity,
           from: from || null,
           to: to || null,
           entity_ref: entityFilter || null,
-          actor_role: showManagerOnly ? "manager" : (actorRole === "all" ? null : actorRole),
+          actor_role: showManagerOnly ? "manager" : actorRole === "all" ? null : actorRole,
         },
       }),
   });
 
   const logs = data?.logs ?? [];
-  const pagination = data?.pagination ?? { current_page: 1, total_pages: 1, total_items: 0, items_per_page: 20 };
+  const pagination = data?.pagination ?? {
+    current_page: 1,
+    total_pages: 1,
+    total_items: 0,
+    items_per_page: 20,
+  };
   const catCounts = data?.summary.categories ?? {};
   const callerRole = data?.caller_role ?? "admin";
   const isSuper = callerRole === "super_admin";
   const total = Object.values(catCounts).reduce((s, n) => s + n, 0);
   const managerActions = logs.filter((l) => l.user_role === "manager").length;
 
-  const applySearch = () => { setPage(1); setSearch(searchInput); };
+  const applySearch = () => {
+    setPage(1);
+    setSearch(searchInput);
+  };
 
   const activityLogExportColumns: ExportColumn<Log>[] = [
     { header: "Timestamp", value: (l) => new Date(l.created_at).toISOString() },
@@ -109,11 +146,17 @@ export function ActivityLogsSection() {
   ];
 
   return (
-    <div className="space-y-6">
+    <LocalizedContent>
+      <div className="space-y-6">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <p className="text-sm text-muted-foreground">{scopeText}</p>
         <div className="flex items-center gap-2">
-          <ExportMenu filename="activity-logs" title="Activity Logs" rows={logs} columns={activityLogExportColumns} />
+          <ExportMenu
+            filename="activity-logs"
+            title="Activity Logs"
+            rows={logs}
+            columns={activityLogExportColumns}
+          />
           <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
             <RefreshCw className={`h-4 w-4 mr-2 ${isFetching ? "animate-spin" : ""}`} /> Refresh
           </Button>
@@ -138,20 +181,45 @@ export function ActivityLogsSection() {
 
       <AdminFilterBar onSubmit={applySearch}>
         <AdminFilterField label="Search" width="flex-1 min-w-[200px]">
-          <Input placeholder="Search description, action, or ref…" value={searchInput} onChange={(e) => setSearchInput(e.target.value)} />
+          <Input
+            placeholder="Search description, action, or ref…"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+          />
         </AdminFilterField>
         <AdminFilterField label="Category">
-          <Select value={category} onValueChange={(v) => { setCategory(v); setPage(1); }}>
-            <SelectTrigger><SelectValue placeholder="All" /></SelectTrigger>
+          <Select
+            value={category}
+            onValueChange={(v) => {
+              setCategory(v);
+              setPage(1);
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="All" />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All categories</SelectItem>
-              {Object.entries(CATEGORY_LABEL).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+              {Object.entries(CATEGORY_LABEL).map(([k, v]) => (
+                <SelectItem key={k} value={k}>
+                  {v}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </AdminFilterField>
         <AdminFilterField label="Severity" width="w-36">
-          <Select value={showManagerOnly ? "warning" : severity} onValueChange={(v) => { setSeverity(v); setPage(1); }} disabled={showManagerOnly}>
-            <SelectTrigger><SelectValue placeholder="All" /></SelectTrigger>
+          <Select
+            value={showManagerOnly ? "warning" : severity}
+            onValueChange={(v) => {
+              setSeverity(v);
+              setPage(1);
+            }}
+            disabled={showManagerOnly}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="All" />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All severity</SelectItem>
               <SelectItem value="info">Info</SelectItem>
@@ -161,8 +229,17 @@ export function ActivityLogsSection() {
           </Select>
         </AdminFilterField>
         <AdminFilterField label="Actor role" width="w-40">
-          <Select value={showManagerOnly ? "manager" : actorRole} onValueChange={(v) => { setActorRole(v); setPage(1); }} disabled={showManagerOnly}>
-            <SelectTrigger><SelectValue placeholder="All" /></SelectTrigger>
+          <Select
+            value={showManagerOnly ? "manager" : actorRole}
+            onValueChange={(v) => {
+              setActorRole(v);
+              setPage(1);
+            }}
+            disabled={showManagerOnly}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="All" />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All roles</SelectItem>
               <SelectItem value="manager">Manager</SelectItem>
@@ -173,10 +250,24 @@ export function ActivityLogsSection() {
           </Select>
         </AdminFilterField>
         <AdminFilterField label="From">
-          <Input type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(1); }} />
+          <Input
+            type="date"
+            value={from}
+            onChange={(e) => {
+              setFrom(e.target.value);
+              setPage(1);
+            }}
+          />
         </AdminFilterField>
         <AdminFilterField label="To">
-          <Input type="date" value={to} onChange={(e) => { setTo(e.target.value); setPage(1); }} />
+          <Input
+            type="date"
+            value={to}
+            onChange={(e) => {
+              setTo(e.target.value);
+              setPage(1);
+            }}
+          />
         </AdminFilterField>
       </AdminFilterBar>
 
@@ -200,7 +291,9 @@ export function ActivityLogsSection() {
             onPageChange={setPage}
           >
             {isLoading ? (
-              <div className="p-4"><TableSkeleton rows={8} cols={4} /></div>
+              <div className="p-4">
+                <TableSkeleton rows={8} cols={4} />
+              </div>
             ) : logs.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-slate-400">
                 <FileText className="h-12 w-12 mb-3" />
@@ -210,41 +303,51 @@ export function ActivityLogsSection() {
             ) : (
               <div className="relative pl-8 pr-4 py-4 before:absolute before:left-4 before:top-4 before:bottom-4 before:w-0.5 before:bg-gradient-to-b before:from-slate-300 before:to-slate-100 space-y-4">
                 {logs.map((log) => {
-                    const isSel = selected?.id === log.id;
-                    let node = "bg-blue-400 border-blue-100";
-                    if (log.severity === "critical") node = "bg-red-500 border-red-100";
-                    else if (log.severity === "warning") node = "bg-amber-400 border-amber-100";
-                    return (
+                  const isSel = selected?.id === log.id;
+                  let node = "bg-blue-400 border-blue-100";
+                  if (log.severity === "critical") node = "bg-red-500 border-red-100";
+                  else if (log.severity === "warning") node = "bg-amber-400 border-amber-100";
+                  return (
+                    <div
+                      key={log.id}
+                      className={`relative flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-all ${isSel ? "bg-slate-50 ring-1 ring-slate-200" : "hover:bg-slate-50/60"}`}
+                      onClick={() => setSelected(log)}
+                    >
                       <div
-                        key={log.id}
-                        className={`relative flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-all ${isSel ? "bg-slate-50 ring-1 ring-slate-200" : "hover:bg-slate-50/60"}`}
-                        onClick={() => setSelected(log)}
-                      >
-                        <div className={`absolute -left-5 top-4 w-3 h-3 rounded-full border-2 ${node} z-10 shadow-sm`} />
-                        <div className="flex items-center gap-2 mt-1 flex-wrap flex-1">
-                          <span className="text-xs font-medium text-slate-700">
-                            {log.action.replace(/_/g, " ")}
-                          </span>
-                          <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${SEVERITY_STYLE[log.severity] ?? ""}`}>
-                            {log.severity}
+                        className={`absolute -left-5 top-4 w-3 h-3 rounded-full border-2 ${node} z-10 shadow-sm`}
+                      />
+                      <div className="flex items-center gap-2 mt-1 flex-wrap flex-1">
+                        <span className="text-xs font-medium text-slate-700">
+                          {log.action.replace(/_/g, " ")}
+                        </span>
+                        <Badge
+                          variant="outline"
+                          className={`text-[10px] px-1.5 py-0 ${SEVERITY_STYLE[log.severity] ?? ""}`}
+                        >
+                          {log.severity}
+                        </Badge>
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-slate-500">
+                          {CATEGORY_LABEL[log.category] ?? log.category}
+                        </Badge>
+                        {log.entity_ref && (
+                          <Badge
+                            variant="secondary"
+                            className="text-[10px] px-1.5 py-0 cursor-pointer hover:bg-blue-100"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEntityFilter(log.entity_ref!);
+                              setPage(1);
+                            }}
+                          >
+                            {log.entity_ref}
                           </Badge>
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-slate-500">
-                            {CATEGORY_LABEL[log.category] ?? log.category}
-                          </Badge>
-                          {log.entity_ref && (
-                            <Badge
-                              variant="secondary"
-                              className="text-[10px] px-1.5 py-0 cursor-pointer hover:bg-blue-100"
-                              onClick={(e) => { e.stopPropagation(); setEntityFilter(log.entity_ref!); setPage(1); }}
-                            >
-                              {log.entity_ref}
-                            </Badge>
-                          )}
-                          <span className="text-[10px] text-slate-400">
-                            {log.user_name ?? "System"} · {log.user_role ?? "—"} · {fmtRel(log.created_at)}
-                          </span>
-                        </div>
+                        )}
+                        <span className="text-[10px] text-slate-400">
+                          {log.user_name ?? "System"} · {log.user_role ?? "—"} ·{" "}
+                          {fmtRel(log.created_at)}
+                        </span>
                       </div>
+                    </div>
                   );
                 })}
               </div>
@@ -252,7 +355,11 @@ export function ActivityLogsSection() {
           </AdminDataCard>
         </div>
 
-        <AdminDetailPanel title="Event details" isEmpty={!selected} emptyText="Select an event to view details">
+        <AdminDetailPanel
+          title="Event details"
+          isEmpty={!selected}
+          emptyText="Select an event to view details"
+        >
           {selected && (
             <div className="space-y-4">
               <DetailField label="Action">
@@ -284,22 +391,27 @@ export function ActivityLogsSection() {
                 <span className="text-slate-400">({selected.user_role ?? "—"})</span>
               </DetailField>
               <DetailField label="Timestamp">{fmtAbs(selected.created_at)}</DetailField>
-              {selected.metadata && typeof selected.metadata === "object" && Object.keys(selected.metadata as object).length > 0 && (
-                <DetailField label="Details">
-                  <div className="bg-slate-50 rounded-lg p-3 space-y-1">
-                    {Object.entries(selected.metadata as Record<string, unknown>).map(([k, v]) => (
-                      <div key={k} className="flex justify-between text-xs gap-2">
-                        <span className="text-slate-500">{k.replace(/_/g, " ")}</span>
-                        <span className="text-slate-800 font-medium truncate">{String(v)}</span>
-                      </div>
-                    ))}
-                  </div>
-                </DetailField>
-              )}
+              {selected.metadata &&
+                typeof selected.metadata === "object" &&
+                Object.keys(selected.metadata as object).length > 0 && (
+                  <DetailField label="Details">
+                    <div className="bg-slate-50 rounded-lg p-3 space-y-1">
+                      {Object.entries(selected.metadata as Record<string, unknown>).map(
+                        ([k, v]) => (
+                          <div key={k} className="flex justify-between text-xs gap-2">
+                            <span className="text-slate-500">{k.replace(/_/g, " ")}</span>
+                            <span className="text-slate-800 font-medium truncate">{String(v)}</span>
+                          </div>
+                        ),
+                      )}
+                    </div>
+                  </DetailField>
+                )}
             </div>
           )}
         </AdminDetailPanel>
       </div>
-    </div>
+      </div>
+    </LocalizedContent>
   );
 }

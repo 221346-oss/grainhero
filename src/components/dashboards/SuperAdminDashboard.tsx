@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,6 +7,7 @@ import { WelcomeBanner } from "./WelcomeBanner";
 import { SuperKpiSummary } from "./SuperKpiSummary";
 import { SuperInsightsStrip } from "./SuperInsightsStrip";
 import { SuperBento } from "./SuperBento";
+import { CriticalAlertDetailSheet } from "./CriticalAlertDetailSheet";
 import { getPlatformMetrics, getPlatformOverviewWidgets } from "@/lib/platform-no-admin.functions";
 import { getSaasRevenueAnalytics } from "@/lib/revenue-analytics.functions";
 
@@ -14,6 +15,7 @@ export function SuperAdminDashboard({ name }: { name?: string }) {
   const metricsFn = useServerFn(getPlatformMetrics);
   const widgetsFn = useServerFn(getPlatformOverviewWidgets);
   const revenueFn = useServerFn(getSaasRevenueAnalytics);
+  const [alertsSheetOpen, setAlertsSheetOpen] = useState(false);
   const qc = useQueryClient();
 
   // Realtime invalidation
@@ -39,7 +41,9 @@ export function SuperAdminDashboard({ name }: { name?: string }) {
         qc.invalidateQueries({ queryKey: ["saas-revenue-dashboard"] });
       })
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [qc]);
 
   const { data: m } = useQuery({
@@ -59,8 +63,8 @@ export function SuperAdminDashboard({ name }: { name?: string }) {
   });
 
   const mrr = revenueData?.kpis?.mrr ?? m?.mrr ?? 0;
-  const mrrSpark = (revenueData?.revenueSeries ?? []).map(
-    (r: { revenue?: number }) => Number(r.revenue ?? 0),
+  const mrrSpark = (revenueData?.revenueSeries ?? []).map((r: { revenue?: number }) =>
+    Number(r.revenue ?? 0),
   );
   const mrrDelta = (() => {
     if (mrrSpark.length < 2) return 0;
@@ -88,6 +92,7 @@ export function SuperAdminDashboard({ name }: { name?: string }) {
             totalUsers={m?.totalUsers ?? 0}
             ordersOpen={w?.ordersTotal ?? 0}
             criticalAlerts={m?.criticalAlerts ?? 0}
+            onCriticalAlertsClick={() => setAlertsSheetOpen(true)}
           />
         </div>
 
@@ -99,16 +104,20 @@ export function SuperAdminDashboard({ name }: { name?: string }) {
             ticketsTotal={reporting.totalTickets ?? 0}
             pipelineTotal={w?.pipelineTotal ?? 0}
             criticalAlerts={m?.criticalAlerts ?? 0}
+            onCriticalAlertsClick={() => setAlertsSheetOpen(true)}
           />
         </div>
 
         {/* Row 3: Charts + Tables (2 column layout) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mt-2">
           {/* Left: Charts */}
-          <div><SuperBento recentSignups={w?.recentSignups ?? []} /></div>
+          <div>
+            <SuperBento recentSignups={w?.recentSignups ?? []} />
+          </div>
           {/* Right: Would add pie charts or additional metrics here */}
         </div>
       </div>
+        <CriticalAlertDetailSheet open={alertsSheetOpen} onOpenChange={setAlertsSheetOpen} />
     </TooltipProvider>
   );
 }

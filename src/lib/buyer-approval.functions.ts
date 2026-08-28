@@ -1,9 +1,9 @@
 /**
  * Buyer Approval Workflow
- * 
+ *
  * Manager creates buyer → Status: pending_approval → Admin approves/rejects
  * If admin doesn't approve within 6 hours → Buyer auto-approved → Status: active
- * 
+ *
  * Similar to batch QC workflow but simpler (no multi-step QC process)
  */
 
@@ -14,7 +14,6 @@ import { requireRole } from "@/lib/rbac.server";
 import { logActivity, logManagerAction } from "@/lib/activity";
 import { assertPlanAllows } from "@/lib/plan-gate";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 async function resolveTenantAdminId(supabase: Row, userId: string): Promise<string> {
@@ -29,7 +28,9 @@ async function resolveTenantAdminId(supabase: Row, userId: string): Promise<stri
 async function loadBuyerForTransition(supabase: Row, buyerId: string) {
   const { data, error } = await supabase
     .from("buyers")
-    .select("id, admin_id, name, status, created_at, created_by, pending_approval_at, auto_approved_at")
+    .select(
+      "id, admin_id, name, status, created_at, created_by, pending_approval_at, auto_approved_at",
+    )
     .eq("id", buyerId)
     .maybeSingle();
   if (error) throw error;
@@ -71,7 +72,7 @@ export const createBuyerForApproval = createServerFn({ method: "POST" })
   .inputValidator((d) => buyerInput.parse(d))
   .handler(async ({ data, context }) => {
     await requireRole(context.supabase, context.userId, ["manager"]);
-    
+
     // Check plan limits
     await assertPlanAllows({
       feature: "max_buyers",

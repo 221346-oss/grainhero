@@ -1,13 +1,9 @@
-import { motion } from 'framer-motion'
-
-const steps = [
-  ['01', 'Sense', 'Temperature, humidity, moisture and CO₂, around the clock.'],
-  ['02', 'Predict', 'Spoilage risk flagged 24–48 hours early.'],
-  ['03', 'Alert', 'The right person. No noise.'],
-  ['04', 'Save', 'Act early, sell at a better grade.'],
-]
+import { motion } from "framer-motion";
+import { useTranslation } from "@/i18n";
 
 export function SimpleSteps() {
+  const { t, raw } = useTranslation();
+  const steps = raw.howItWorks.steps.map((s) => [s.num, s.title, s.desc] as const);
   return (
     <section id="how-it-works" className="relative bg-[#111512] py-20 sm:py-28">
       <div className="mx-auto max-w-6xl px-5 sm:px-8">
@@ -18,9 +14,9 @@ export function SimpleSteps() {
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
           className="max-w-2xl text-[1.75rem] font-black leading-[1.02] tracking-tight text-[#FAFAF7] sm:text-5xl"
         >
-          Four steps.
+          {t("howItWorks.heading1")}
           <br />
-          <span className="text-[#2FA84F]">That&apos;s the whole system.</span>
+          <span className="text-[#2FA84F]">{t("howItWorks.heading2")}</span>
         </motion.h2>
 
         <div className="gh-stagger mt-14 grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-[#FAFAF7]/10 lg:grid-cols-4">
@@ -36,7 +32,9 @@ export function SimpleSteps() {
               <span className="font-mono text-[0.625rem] tracking-[0.3em] text-[#2FA84F]">
                 {num}
               </span>
-              <h3 className="mt-3 text-base font-black text-[#FAFAF7] sm:mt-6 sm:text-xl">{title}</h3>
+              <h3 className="mt-3 text-base font-black text-[#FAFAF7] sm:mt-6 sm:text-xl">
+                {title}
+              </h3>
               <p className="mt-1.5 text-xs leading-relaxed text-[#FAFAF7]/60 sm:mt-2 sm:text-sm">
                 {body}
               </p>
@@ -46,5 +44,5 @@ export function SimpleSteps() {
         </div>
       </div>
     </section>
-  )
+  );
 }

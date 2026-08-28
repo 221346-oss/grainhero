@@ -7,8 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { isAuthApiError, isAuthRetryableFetchError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { getCheckoutSessionSummary, claimPaidCheckoutForUser } from "@/lib/stripe-checkout.functions";
+import {
+  getCheckoutSessionSummary,
+  claimPaidCheckoutForUser,
+} from "@/lib/stripe-checkout.functions";
 import { autoConfirmUserEmail } from "@/lib/auth-verification-email.functions";
+import { LocalizedContent } from "@/i18n";
 
 const search = z.object({
   session_id: z.string().optional(),
@@ -20,14 +24,17 @@ export const Route = createFileRoute("/checkout/success")({
     meta: [
       { title: "Welcome to GrainHero 🎉" },
       { name: "description", content: "Your payment is confirmed. Setting up your account…" },
-      { property: 'og:title', content: "Welcome to GrainHero 🎉" },
-      { property: 'og:description', content: "Your payment is confirmed. Setting up your account…" },
-      { property: 'og:url', content: 'https://grainhero.app/checkout/success' },
-      { property: 'og:type', content: 'website' },
-      { name: 'twitter:card', content: 'summary_large_image' },
-      { name: 'robots', content: 'noindex, nofollow' },
+      { property: "og:title", content: "Welcome to GrainHero 🎉" },
+      {
+        property: "og:description",
+        content: "Your payment is confirmed. Setting up your account…",
+      },
+      { property: "og:url", content: "https://grainhero.app/checkout/success" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "robots", content: "noindex, nofollow" },
     ],
-    links: [{ rel: 'canonical', href: 'https://grainhero.app/checkout/success' }],
+    links: [{ rel: "canonical", href: "https://grainhero.app/checkout/success" }],
   }),
   component: SuccessPage,
 });
@@ -100,7 +107,11 @@ function SuccessPage() {
     (async () => {
       try {
         if (sessionId) {
-          try { window.localStorage.setItem(PENDING_SESSION_KEY, sessionId); } catch { /* ignore */ }
+          try {
+            window.localStorage.setItem(PENDING_SESSION_KEY, sessionId);
+          } catch {
+            /* ignore */
+          }
         }
 
         const draft = readDraft();
@@ -113,7 +124,9 @@ function SuccessPage() {
           try {
             const s = await summaryFn({ data: { sessionId } });
             email = s?.email ?? "";
-          } catch { /* ignore */ }
+          } catch {
+            /* ignore */
+          }
         }
 
         if (!email) {
@@ -123,7 +136,11 @@ function SuccessPage() {
 
         if (!password) {
           // Payment succeeded but password wasn't saved — finish signup manually.
-          try { window.localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+          try {
+            window.localStorage.removeItem(DRAFT_KEY);
+          } catch {
+            /* ignore */
+          }
           navigate({
             to: "/auth/signup",
             search: {
@@ -156,7 +173,9 @@ function SuccessPage() {
           }
 
           setStatus("error");
-          setErrorMsg("Something went wrong creating your account. Please contact support or try again.");
+          setErrorMsg(
+            "Something went wrong creating your account. Please contact support or try again.",
+          );
           return;
         }
 
@@ -169,7 +188,9 @@ function SuccessPage() {
         const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
         if (signInError) {
           setStatus("error");
-          setErrorMsg(`Payment received but sign-in failed: ${describeError(signInError)}. Try logging in with your email.`);
+          setErrorMsg(
+            `Payment received but sign-in failed: ${describeError(signInError)}. Try logging in with your email.`,
+          );
           return;
         }
 
@@ -187,7 +208,9 @@ function SuccessPage() {
         try {
           window.localStorage.removeItem(DRAFT_KEY);
           window.localStorage.removeItem(PENDING_SESSION_KEY);
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
 
         setStatus("done");
 
@@ -210,7 +233,7 @@ function SuccessPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-background checkout-inline-bg transition-colors">
+    <LocalizedContent><div className="min-h-screen flex items-center justify-center px-4 bg-background checkout-inline-bg transition-colors">
       <Card className="max-w-sm w-full shadow-xl">
         <CardContent className="p-8 text-center space-y-4">
           {status === "error" ? (
@@ -243,6 +266,6 @@ function SuccessPage() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </div></LocalizedContent>
   );
 }

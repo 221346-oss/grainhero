@@ -19,7 +19,12 @@ export const geocodeCity = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ city: z.string().min(1).max(120) }).parse(d))
   .handler(async ({ data }) => {
     const url = `${base}/geo/1.0/direct?q=${encodeURIComponent(data.city)}&limit=1&appid=${key()}`;
-    const j = (await fetchJson(url)) as Array<{ lat: number; lon: number; name: string; country: string }>;
+    const j = (await fetchJson(url)) as Array<{
+      lat: number;
+      lon: number;
+      name: string;
+      country: string;
+    }>;
     const first = Array.isArray(j) ? j[0] : null;
     if (!first) throw new Error("City not found");
     return { lat: first.lat, lon: first.lon, name: first.name, country: first.country };

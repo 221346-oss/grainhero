@@ -17,22 +17,41 @@ export const verifyRevenueIntegrity = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const [{ data: subs }, { data: profiles }] = await Promise.all([
-      supabaseAdmin.from("subscriptions").select("admin_id, status, plan_id, plan_name, price_per_month, created_at"),
-      supabaseAdmin.from("profiles").select("id, subscription_plan, created_at").not("subscription_plan", "is", null),
+      supabaseAdmin
+        .from("subscriptions")
+        .select("admin_id, status, plan_id, plan_name, price_per_month, created_at"),
+      supabaseAdmin
+        .from("profiles")
+        .select("id, subscription_plan, created_at")
+        .not("subscription_plan", "is", null),
     ]);
     const planMap = await loadPlanPricing(supabaseAdmin);
-    const mrrResult = await computeMrr({ supabase: supabaseAdmin, subscriptions: subs ?? [], profiles: profiles ?? [] });
+    const mrrResult = await computeMrr({
+      supabase: supabaseAdmin,
+      subscriptions: subs ?? [],
+      profiles: profiles ?? [],
+    });
 
     const issues: Array<{ level: "error" | "warn"; message: string }> = [];
-    if (planMap.size === 0) issues.push({ level: "error", message: "plan_thresholds is empty — every revenue chart will be blank." });
+    if (planMap.size === 0)
+      issues.push({
+        level: "error",
+        message: "plan_thresholds is empty — every revenue chart will be blank.",
+      });
     if (mrrResult.mrr === 0 && (profiles ?? []).length > 0) {
-      issues.push({ level: "warn", message: "Tenants have subscription_plan set but MRR is 0. Check plan_thresholds pricing." });
+      issues.push({
+        level: "warn",
+        message: "Tenants have subscription_plan set but MRR is 0. Check plan_thresholds pricing.",
+      });
     }
     for (const p of profiles ?? []) {
       const raw = String((p as any).subscription_plan ?? "").toLowerCase();
       if (!raw) continue;
       if (!planMap.get(raw) && !planMap.get(raw.replace(/^grain\s+/, ""))) {
-        issues.push({ level: "warn", message: `Profile ${(p as any).id} references unknown plan "${raw}".` });
+        issues.push({
+          level: "warn",
+          message: `Profile ${(p as any).id} references unknown plan "${raw}".`,
+        });
       }
     }
 

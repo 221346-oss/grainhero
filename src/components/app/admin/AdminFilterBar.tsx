@@ -1,6 +1,7 @@
 import type { ReactNode, FormEvent } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { translateText, useI18n } from "@/i18n";
 
 export function AdminFilterBar({
   children,
@@ -11,6 +12,7 @@ export function AdminFilterBar({
   onSubmit?: (e: FormEvent) => void;
   submitLabel?: string;
 }) {
+  const { locale } = useI18n();
   return (
     <Card className="border-0 shadow-none">
       <CardContent className="p-4">
@@ -23,7 +25,7 @@ export function AdminFilterBar({
         >
           {children}
           <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white">
-            {submitLabel}
+            {translateText(submitLabel, locale)}
           </Button>
         </form>
       </CardContent>
@@ -40,9 +42,10 @@ export function AdminFilterField({
   children: ReactNode;
   width?: string;
 }) {
+  const { locale } = useI18n();
   return (
     <div className={width}>
-      <label className="text-xs font-medium text-slate-500 mb-1 block">{label}</label>
+      <label className="text-xs font-medium text-slate-500 mb-1 block">{translateText(label, locale)}</label>
       {children}
     </div>
   );

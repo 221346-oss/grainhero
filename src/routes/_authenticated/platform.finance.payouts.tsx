@@ -11,17 +11,28 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { PayoutsSkeleton } from "@/components/app/skeletons";
 import {
-  listPayableSellers, createPayoutBatch, approvePayout, markPayoutPaid,
-  cancelPayout, listPayouts,
+  listPayableSellers,
+  createPayoutBatch,
+  approvePayout,
+  markPayoutPaid,
+  cancelPayout,
+  listPayouts,
 } from "@/lib/payouts.functions";
 
 export const Route = createFileRoute("/_authenticated/platform/finance/payouts")({
   head: () => ({
     meta: [
       { title: "Platform · Finance · Payouts — Grain Hero" },
-      { name: "description", content: "Platform · Finance · Payouts workspace in the Grain Hero platform — private, sign-in required." },
+      {
+        name: "description",
+        content:
+          "Platform · Finance · Payouts workspace in the Grain Hero platform — private, sign-in required.",
+      },
       { property: "og:title", content: "Platform · Finance · Payouts — Grain Hero" },
-      { property: "og:description", content: "Platform · Finance · Payouts workspace in the Grain Hero platform." },
+      {
+        property: "og:description",
+        content: "Platform · Finance · Payouts workspace in the Grain Hero platform.",
+      },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
@@ -41,13 +52,20 @@ function PayoutsPage() {
   const [reference, setReference] = useState("");
 
   const { data: payableData, isLoading: l1 } = useQuery({
-    queryKey: ["payable-sellers"], queryFn: () => payables(),
+    queryKey: ["payable-sellers"],
+    queryFn: () => payables(),
   });
   const { data: payoutData, isLoading: l2 } = useQuery({
-    queryKey: ["payouts-list"], queryFn: () => payouts({ data: {} }),
+    queryKey: ["payouts-list"],
+    queryFn: () => payouts({ data: {} }),
   });
 
-  if (l1 || l2) return <AdminPageShell title="Payouts" subtitle="Approve, batch and mark payouts as paid."><PayoutsSkeleton /></AdminPageShell>;
+  if (l1 || l2)
+    return (
+      <AdminPageShell title="Payouts" subtitle="Approve, batch and mark payouts as paid.">
+        <PayoutsSkeleton />
+      </AdminPageShell>
+    );
 
   async function runCreate() {
     if (!selected.length) return toast.error("Select at least one seller");
@@ -56,12 +74,14 @@ function PayoutsPage() {
       toast.success(`Created ${r.created.length} payout(s)`);
       setSelected([]);
       qc.invalidateQueries();
-    } catch (e: any) { toast.error(e?.message ?? "Failed"); }
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed");
+    }
   }
 
   return (
-    <AdminPageShell 
-      title="Payouts" 
+    <AdminPageShell
+      title="Payouts"
       subtitle="Approve, batch and mark payouts as paid."
       actions={
         <Button size="sm" onClick={runCreate} disabled={!selected.length}>
@@ -70,85 +90,144 @@ function PayoutsPage() {
       }
     >
       <div className="space-y-6 max-w-[1400px]">
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Payable balances</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          {(payableData?.rows ?? []).length === 0 ? (
-            <div className="text-sm text-muted-foreground text-center py-8">No sellers have reached the minimum payable amount.</div>
-          ) : (
-            <table className="w-full text-sm">
-              <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
-                <tr>
-                  <th className="p-3 text-left w-10"></th>
-                  <th className="p-3 text-left">Seller</th>
-                  <th className="p-3 text-left">Email</th>
-                  <th className="p-3 text-right">Payable</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(payableData?.rows ?? []).map((r: any) => (
-                  <tr key={r.sellerId} className="border-t hover:bg-muted/20">
-                    <td className="p-3"><Checkbox checked={selected.includes(r.sellerId)}
-                      onCheckedChange={(v) => setSelected((s) => v ? [...s, r.sellerId] : s.filter((x) => x !== r.sellerId))} /></td>
-                    <td className="p-3 font-medium">{r.name}</td>
-                    <td className="p-3 text-muted-foreground">{r.email}</td>
-                    <td className="p-3 text-right font-mono">${r.payable.toLocaleString()}</td>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Payable balances</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            {(payableData?.rows ?? []).length === 0 ? (
+              <div className="text-sm text-muted-foreground text-center py-8">
+                No sellers have reached the minimum payable amount.
+              </div>
+            ) : (
+              <table className="w-full text-sm">
+                <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
+                  <tr>
+                    <th className="p-3 text-left w-10"></th>
+                    <th className="p-3 text-left">Seller</th>
+                    <th className="p-3 text-left">Email</th>
+                    <th className="p-3 text-right">Payable</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </CardContent>
-      </Card>
+                </thead>
+                <tbody>
+                  {(payableData?.rows ?? []).map((r: any) => (
+                    <tr key={r.sellerId} className="border-t hover:bg-muted/20">
+                      <td className="p-3">
+                        <Checkbox
+                          checked={selected.includes(r.sellerId)}
+                          onCheckedChange={(v) =>
+                            setSelected((s) =>
+                              v ? [...s, r.sellerId] : s.filter((x) => x !== r.sellerId),
+                            )
+                          }
+                        />
+                      </td>
+                      <td className="p-3 font-medium">{r.name}</td>
+                      <td className="p-3 text-muted-foreground">{r.email}</td>
+                      <td className="p-3 text-right font-mono">${r.payable.toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Recent payouts</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          {(payoutData?.rows ?? []).length === 0 ? (
-            <div className="text-sm text-muted-foreground text-center py-8">No payouts yet.</div>
-          ) : (
-            <table className="w-full text-sm">
-              <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
-                <tr>
-                  <th className="p-3 text-left">Seller</th>
-                  <th className="p-3 text-left">Status</th>
-                  <th className="p-3 text-right">Net</th>
-                  <th className="p-3 text-left">Reference</th>
-                  <th className="p-3 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(payoutData?.rows ?? []).map((p: any) => (
-                  <tr key={p.id} className="border-t hover:bg-muted/20">
-                    <td className="p-3 font-mono text-xs">{p.seller_id.slice(0,8)}</td>
-                    <td className="p-3"><Badge variant={p.status === "paid" ? "default" : p.status === "cancelled" ? "destructive" : "secondary"}>{p.status}</Badge></td>
-                    <td className="p-3 text-right font-mono">{p.currency} {Number(p.net_amount).toLocaleString()}</td>
-                    <td className="p-3 text-muted-foreground">{p.reference ?? "—"}</td>
-                    <td className="p-3 text-right space-x-1">
-                      {p.status === "pending" && (
-                        <Button size="sm" variant="outline" onClick={async () => { await approve({ data: { payoutId: p.id } }); toast.success("Approved"); qc.invalidateQueries(); }}>Approve</Button>
-                      )}
-                      {p.status === "approved" && (
-                        <>
-                          <Input placeholder="Reference" value={reference} onChange={(e) => setReference(e.target.value)} className="inline-block w-32 h-8" />
-                          <Button size="sm" onClick={async () => { await pay({ data: { payoutId: p.id, reference } }); toast.success("Marked paid"); setReference(""); qc.invalidateQueries(); }}>Mark paid</Button>
-                        </>
-                      )}
-                      {(p.status === "pending" || p.status === "approved") && (
-                        <Button size="sm" variant="ghost" onClick={async () => { await cancel({ data: { payoutId: p.id } }); toast.success("Cancelled"); qc.invalidateQueries(); }}>Cancel</Button>
-                      )}
-                    </td>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Recent payouts</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            {(payoutData?.rows ?? []).length === 0 ? (
+              <div className="text-sm text-muted-foreground text-center py-8">No payouts yet.</div>
+            ) : (
+              <table className="w-full text-sm">
+                <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
+                  <tr>
+                    <th className="p-3 text-left">Seller</th>
+                    <th className="p-3 text-left">Status</th>
+                    <th className="p-3 text-right">Net</th>
+                    <th className="p-3 text-left">Reference</th>
+                    <th className="p-3 text-right">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </CardContent>
-      </Card>
+                </thead>
+                <tbody>
+                  {(payoutData?.rows ?? []).map((p: any) => (
+                    <tr key={p.id} className="border-t hover:bg-muted/20">
+                      <td className="p-3 font-mono text-xs">{p.seller_id.slice(0, 8)}</td>
+                      <td className="p-3">
+                        <Badge
+                          variant={
+                            p.status === "paid"
+                              ? "default"
+                              : p.status === "cancelled"
+                                ? "destructive"
+                                : "secondary"
+                          }
+                        >
+                          {p.status}
+                        </Badge>
+                      </td>
+                      <td className="p-3 text-right font-mono">
+                        {p.currency} {Number(p.net_amount).toLocaleString()}
+                      </td>
+                      <td className="p-3 text-muted-foreground">{p.reference ?? "—"}</td>
+                      <td className="p-3 text-right space-x-1">
+                        {p.status === "pending" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={async () => {
+                              await approve({ data: { payoutId: p.id } });
+                              toast.success("Approved");
+                              qc.invalidateQueries();
+                            }}
+                          >
+                            Approve
+                          </Button>
+                        )}
+                        {p.status === "approved" && (
+                          <>
+                            <Input
+                              placeholder="Reference"
+                              value={reference}
+                              onChange={(e) => setReference(e.target.value)}
+                              className="inline-block w-32 h-8"
+                            />
+                            <Button
+                              size="sm"
+                              onClick={async () => {
+                                await pay({ data: { payoutId: p.id, reference } });
+                                toast.success("Marked paid");
+                                setReference("");
+                                qc.invalidateQueries();
+                              }}
+                            >
+                              Mark paid
+                            </Button>
+                          </>
+                        )}
+                        {(p.status === "pending" || p.status === "approved") && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={async () => {
+                              await cancel({ data: { payoutId: p.id } });
+                              toast.success("Cancelled");
+                              qc.invalidateQueries();
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </AdminPageShell>
   );

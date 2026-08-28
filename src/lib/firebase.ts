@@ -1,9 +1,9 @@
-import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
-import { getAuth, Auth } from 'firebase/auth';
-import { getFirestore, Firestore } from 'firebase/firestore';
-import { getDatabase, Database } from 'firebase/database';
-import { getStorage, FirebaseStorage } from 'firebase/storage';
-import { getAnalytics, Analytics } from 'firebase/analytics';
+import { initializeApp, getApps, FirebaseApp } from "firebase/app";
+import { getAuth, Auth } from "firebase/auth";
+import { getFirestore, Firestore } from "firebase/firestore";
+import { getDatabase, Database } from "firebase/database";
+import { getStorage, FirebaseStorage } from "firebase/storage";
+import { getAnalytics, Analytics } from "firebase/analytics";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -17,31 +17,21 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-let app: FirebaseApp;
-let auth: Auth;
-let db: Firestore;
-let realtimeDb: Database;
-let storage: FirebaseStorage;
-let analytics: Analytics | null = null;
-
-if (!getApps().length) {
-  app = initializeApp(firebaseConfig);
-} else {
-  app = getApps()[0];
-}
+const app: FirebaseApp = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 
 // Initialize Firebase services
-auth = getAuth(app);
-db = getFirestore(app);
-realtimeDb = getDatabase(app);
-storage = getStorage(app);
+const auth: Auth = getAuth(app);
+const db: Firestore = getFirestore(app);
+const realtimeDb: Database = getDatabase(app);
+const storage: FirebaseStorage = getStorage(app);
+let analytics: Analytics | null = null;
 
 // Initialize Analytics only on client side and in production
-if (typeof window !== 'undefined' && import.meta.env.PROD) {
+if (typeof window !== "undefined" && import.meta.env.PROD) {
   try {
     analytics = getAnalytics(app);
   } catch (error) {
-    console.warn('Firebase Analytics initialization failed:', error);
+    console.warn("Firebase Analytics initialization failed:", error);
   }
 }
 

@@ -24,11 +24,12 @@ export const Route = createFileRoute("/api/public/webhooks/insurance/$carrierCod
         const rawBody = await request.text();
         const sigHeader = request.headers.get("x-signature") ?? "";
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         const sb = supabaseAdmin as any;
 
         // Carrier lookup by lowercased-name match on the code slug
-        const { data: carriers } = await sb.from("insurance_carriers")
+        const { data: carriers } = await sb
+          .from("insurance_carriers")
           .select("id, name, webhook_secret, active");
         const carrier = (carriers ?? []).find(
           (c: { id: string; name: string; webhook_secret: string | null; active: boolean }) =>
@@ -40,10 +41,19 @@ export const Route = createFileRoute("/api/public/webhooks/insurance/$carrierCod
 
         // HMAC verify
         const enc = new TextEncoder();
-        const key = await crypto.subtle.importKey("raw", enc.encode(secret),
-          { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+        const key = await crypto.subtle.importKey(
+          "raw",
+          enc.encode(secret),
+          { name: "HMAC", hash: "SHA-256" },
+          false,
+          ["sign"],
+        );
         const mac = new Uint8Array(await crypto.subtle.sign("HMAC", key, enc.encode(rawBody)));
-        const expected = "sha256=" + Array.from(mac).map((b) => b.toString(16).padStart(2, "0")).join("");
+        const expected =
+          "sha256=" +
+          Array.from(mac)
+            .map((b) => b.toString(16).padStart(2, "0"))
+            .join("");
         const a = enc.encode(expected);
         const b = enc.encode(sigHeader);
         if (a.length !== b.length) return new Response("Invalid signature", { status: 401 });
@@ -52,23 +62,40 @@ export const Route = createFileRoute("/api/public/webhooks/insurance/$carrierCod
         if (diff !== 0) return new Response("Invalid signature", { status: 401 });
 
         let payload: Record<string, unknown>;
-        try { payload = JSON.parse(rawBody); } catch { return new Response("Bad JSON", { status: 400 }); }
+        try {
+          payload = JSON.parse(rawBody);
+        } catch {
+          return new Response("Bad JSON", { status: 400 });
+        }
 
-        const externalId = String(payload.external_event_id ?? payload.event_id ?? "").slice(0, 200) || null;
+        const externalId =
+          String(payload.external_event_id ?? payload.event_id ?? "").slice(0, 200) || null;
         const eventType = String(payload.event_type ?? "unknown").slice(0, 80);
 
         // Record raw event (idempotent via unique carrier_id+external_id)
         if (externalId) {
-          const { data: dup } = await sb.from("insurance_webhook_events")
-            .select("id, status").eq("carrier_id", carrier.id).eq("external_id", externalId).maybeSingle();
+          const { data: dup } = await sb
+            .from("insurance_webhook_events")
+            .select("id, status")
+            .eq("carrier_id", carrier.id)
+            .eq("external_id", externalId)
+            .maybeSingle();
           if (dup && dup.status === "processed") return new Response("ok", { status: 200 });
         }
 
-        const { data: evtRow } = await sb.from("insurance_webhook_events").insert({
-          carrier_id: carrier.id, carrier_code: code, external_id: externalId,
-          event_type: eventType, raw: payload, headers: Object.fromEntries(request.headers.entries()),
-          status: "received",
-        }).select("id").single();
+        const { data: evtRow } = await sb
+          .from("insurance_webhook_events")
+          .insert({
+            carrier_id: carrier.id,
+            carrier_code: code,
+            external_id: externalId,
+            event_type: eventType,
+            raw: payload,
+            headers: Object.fromEntries(request.headers.entries()),
+            status: "received",
+          })
+          .select("id")
+          .single();
         const evtId = evtRow?.id as string | undefined;
 
         try {
@@ -80,17 +107,26 @@ export const Route = createFileRoute("/api/public/webhooks/insurance/$carrierCod
           });
           if (result.status === "error") throw new Error(result.error ?? "processing failed");
           if (evtId) {
-            await sb.from("insurance_webhook_events").update({
-              status: "processed", processed_at: new Date().toISOString(),
-              policy_id: result.policyId, claim_id: result.claimId,
-            }).eq("id", evtId);
+            await sb
+              .from("insurance_webhook_events")
+              .update({
+                status: "processed",
+                processed_at: new Date().toISOString(),
+                policy_id: result.policyId,
+                claim_id: result.claimId,
+              })
+              .eq("id", evtId);
           }
           return new Response("ok", { status: 200 });
         } catch (e) {
           if (evtId) {
-            await sb.from("insurance_webhook_events").update({
-              status: "error", error_message: (e as Error).message,
-            }).eq("id", evtId);
+            await sb
+              .from("insurance_webhook_events")
+              .update({
+                status: "error",
+                error_message: (e as Error).message,
+              })
+              .eq("id", evtId);
           }
           return new Response("error", { status: 500 });
         }

@@ -12,13 +12,11 @@ const CHART_TYPES = ["tile", "line", "bar", "pie", "table"] as const;
 const SIZES = ["sm", "md", "lg"] as const;
 const ROLES = ["super_admin", "admin", "manager", "technician", "buyer"] as const;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 export const listWidgetsForMe = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const role = await getEffectiveRole(sb, context.userId);
     const { data: rows, error } = await sb
@@ -35,7 +33,7 @@ export const listWidgetsForRole = createServerFn({ method: "GET" })
   .validator((d) => z.object({ role: z.enum(ROLES) }).parse(d))
   .handler(async ({ data, context }) => {
     await requireRole(context.supabase, context.userId, ["super_admin"]);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const sb = context.supabase as any;
     const { data: rows, error } = await sb
       .from("dashboard_widgets")
@@ -63,7 +61,6 @@ export const saveWidget = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d) => saveSchema.parse(d))
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const role = await getEffectiveRole(sb, context.userId);
     const isRoleWidget = !data.personal && !!data.role_scope;
@@ -79,17 +76,34 @@ export const saveWidget = createServerFn({ method: "POST" })
       role_scope: isRoleWidget ? data.role_scope! : role,
     };
     if (data.id) {
-      const { data: row, error } = await sb.from("dashboard_widgets").update(payload).eq("id", data.id).select().single();
+      const { data: row, error } = await sb
+        .from("dashboard_widgets")
+        .update(payload)
+        .eq("id", data.id)
+        .select()
+        .single();
       if (error) throw error;
       await sb.rpc("record_governance_audit", {
-        _action: "widget.update", _target_type: "widget", _target_key: row.id, _before: null, _after: row,
+        _action: "widget.update",
+        _target_type: "widget",
+        _target_key: row.id,
+        _before: null,
+        _after: row,
       });
       return { widget: row as Row };
     }
-    const { data: row, error } = await sb.from("dashboard_widgets").insert(payload).select().single();
+    const { data: row, error } = await sb
+      .from("dashboard_widgets")
+      .insert(payload)
+      .select()
+      .single();
     if (error) throw error;
     await sb.rpc("record_governance_audit", {
-      _action: "widget.create", _target_type: "widget", _target_key: row.id, _before: null, _after: row,
+      _action: "widget.create",
+      _target_type: "widget",
+      _target_key: row.id,
+      _before: null,
+      _after: row,
     });
     return { widget: row as Row };
   });
@@ -98,24 +112,36 @@ export const deleteWidget = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
-    const { data: prev } = await sb.from("dashboard_widgets").select("*").eq("id", data.id).maybeSingle();
+    const { data: prev } = await sb
+      .from("dashboard_widgets")
+      .select("*")
+      .eq("id", data.id)
+      .maybeSingle();
     const { error } = await sb.from("dashboard_widgets").delete().eq("id", data.id);
     if (error) throw error;
     await sb.rpc("record_governance_audit", {
-      _action: "widget.delete", _target_type: "widget", _target_key: data.id, _before: prev ?? null, _after: null,
+      _action: "widget.delete",
+      _target_type: "widget",
+      _target_key: data.id,
+      _before: prev ?? null,
+      _after: null,
     });
     return { ok: true };
   });
 
 export const reorderWidgets = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d) => z.object({
-    items: z.array(z.object({ id: z.string().uuid(), position: z.number().int().min(0) })).max(50),
-  }).parse(d))
+  .validator((d) =>
+    z
+      .object({
+        items: z
+          .array(z.object({ id: z.string().uuid(), position: z.number().int().min(0) }))
+          .max(50),
+      })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     for (const it of data.items) {
       await sb.from("dashboard_widgets").update({ position: it.position }).eq("id", it.id);
