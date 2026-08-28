@@ -31,10 +31,10 @@ export function AdminDashboard({ name }: { name?: string }) {
 
   return (
     <TooltipProvider delayDuration={150}>
-      <div className="min-h-screen p-4 sm:p-6 bg-gradient-to-br from-slate-50 via-white to-emerald-50/30 dark:from-slate-950 dark:via-background dark:to-emerald-950/10">
+      <div className="min-h-screen p-3 sm:p-4 md:p-6 max-w-full overflow-x-hidden bg-gradient-to-br from-slate-50 via-white to-emerald-50/30 dark:from-slate-950 dark:via-background dark:to-emerald-950/10">
         <WelcomeBanner name={name} />
 
-        <div className="space-y-3 mt-1">
+        <div className="space-y-3 mt-1 min-w-0">
           <KpiSummary
             range={range}
             onRange={setRange}
@@ -51,7 +51,6 @@ export function AdminDashboard({ name }: { name?: string }) {
             alertsOpen={extras?.deltas?.alerts?.cur}
             pipeline={extras?.pipeline}
           />
-          <DashboardSiloCards range={range} />
           <div className="grid gap-3 lg:grid-cols-3">
             <IncomingQueueCard range={range} />
             <FieldIncidentsCard />
@@ -66,25 +65,14 @@ export function AdminDashboard({ name }: { name?: string }) {
             />
           </div>
 
-          {/* Row 2: Insights Strip */}
-          <div className="w-full">
-            <InsightsStrip
-              insights={extras?.insights}
-              ordersOpen={extras?.installCounts?.pending}
-              alertsOpen={extras?.deltas?.alerts?.cur}
-              pipeline={extras?.pipeline}
-            />
-          </div>
-
           {/* Row 3: Metric Cards - 12 Column Grid
               - Health gauge card: 4 columns
               - Revenue trend metrics: 8 columns */}
-          <div className="grid grid-cols-12 gap-6 w-full">
+          <div className="grid gap-3 sm:grid-cols-12 w-full">
             {/* Health Gauge Card - 4 columns */}
-            <div className="col-span-12 lg:col-span-4">
-              <div className="bg-white dark:bg-neutral-800 rounded-lg p-6 shadow-md h-full">
+            <div className="sm:col-span-12 lg:col-span-4">
+              <div className="bg-white dark:bg-neutral-800 rounded-lg p-4 sm:p-6 shadow-md h-full">
                 <h3 className="text-lg font-semibold mb-4 text-foreground">{t("adminDash.systemHealth")}</h3>
-                {/* Placeholder for health gauge component */}
                 <div className="flex items-center justify-center h-40 bg-neutral-50 dark:bg-neutral-700 rounded text-muted-foreground">
                   {t("adminDash.healthGauge")}
                 </div>
@@ -92,10 +80,9 @@ export function AdminDashboard({ name }: { name?: string }) {
             </div>
 
             {/* Revenue Trend Metrics - 8 columns */}
-            <div className="col-span-12 lg:col-span-8">
-              <div className="bg-white dark:bg-neutral-800 rounded-lg p-6 shadow-md h-full">
+            <div className="sm:col-span-12 lg:col-span-8">
+              <div className="bg-white dark:bg-neutral-800 rounded-lg p-4 sm:p-6 shadow-md h-full">
                 <h3 className="text-lg font-semibold mb-4 text-foreground">{t("adminDash.revenueTrends")}</h3>
-                {/* Placeholder for revenue metrics component */}
                 <div className="flex items-center justify-center h-40 bg-neutral-50 dark:bg-neutral-700 rounded text-muted-foreground">
                   {t("adminDash.revenueTrendViz")}
                 </div>
@@ -103,14 +90,12 @@ export function AdminDashboard({ name }: { name?: string }) {
             </div>
           </div>
 
-          {/* Row 4: Data Tables - 12 Column Stack
-              - Silos List: Full width or 12 columns
-              - Batches List: Full width or 12 columns */}
-          <div className="grid grid-cols-12 gap-6 w-full">
+          {/* Row 4: Data Tables */}
+          <div className="grid gap-3 sm:grid-cols-2 w-full">
             {/* Silos List Table */}
-            <div className="col-span-12 lg:col-span-6">
+            <div className="w-full">
               <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-md overflow-hidden h-full flex flex-col">
-                <div className="p-6 border-b border-neutral-200 dark:border-neutral-700">
+                <div className="p-4 sm:p-6 border-b border-neutral-200 dark:border-neutral-700">
                   <h3 className="text-lg font-semibold text-foreground">{t("adminDash.silos")}</h3>
                 </div>
                 <div className="flex-1 overflow-auto">
@@ -120,9 +105,9 @@ export function AdminDashboard({ name }: { name?: string }) {
             </div>
 
             {/* Batches List Table */}
-            <div className="col-span-12 lg:col-span-6">
+            <div className="w-full">
               <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-md overflow-hidden h-full flex flex-col">
-                <div className="p-6 border-b border-neutral-200 dark:border-neutral-700">
+                <div className="p-4 sm:p-6 border-b border-neutral-200 dark:border-neutral-700">
                   <h3 className="text-lg font-semibold text-foreground">{t("adminDash.recentBatches")}</h3>
                 </div>
                 <div className="flex-1 overflow-auto">
@@ -130,13 +115,15 @@ export function AdminDashboard({ name }: { name?: string }) {
                 </div>
               </div>
             </div>
-          </div>            {/* Row 5: Incidents */}
+          </div>
+
+          {/* Row 5: Incidents */}
           <div className="w-full">
             <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-md overflow-hidden">
-              <div className="p-6 border-b border-neutral-200 dark:border-neutral-700">
+              <div className="p-4 sm:p-6 border-b border-neutral-200 dark:border-neutral-700">
                 <h3 className="text-lg font-semibold text-foreground">{t("adminDash.incidents")}</h3>
               </div>
-              <div className="p-6">
+              <div className="p-4 sm:p-6">
                 <IncidentsCard
                   onViewAll={() => setTicketPanelOpen(true)}
                   ticketPanelOpen={ticketPanelOpen}

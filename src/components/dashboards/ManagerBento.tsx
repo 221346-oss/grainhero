@@ -61,7 +61,7 @@ function BentoCard({
   headerAction?: ReactNode;
 }) {
   return (
-    <div className="rounded-xl border bg-card/60 flex flex-col h-[200px]">
+    <div className="rounded-xl border bg-card/60 flex flex-col h-[180px] sm:h-[200px]">
       <header className="flex items-center justify-between px-3 py-2 border-b bg-card/40 rounded-t-xl shrink-0">
         <div className="flex items-center gap-2 min-w-0">
           <h3 className="text-xs font-semibold truncate">{title}</h3>
@@ -354,7 +354,7 @@ export function ManagerBento({
       {/* ── Bottom Row: Field Incidents & Team on Shift ── */}
       <div className="grid gap-4 md:grid-cols-2">
         {/* Open Field Incidents */}
-        <div className="rounded-xl border bg-card/60 flex flex-col h-[200px]">
+        <div className="rounded-xl border bg-card/60 flex flex-col h-[180px] sm:h-[200px]">
           <header className="flex items-center justify-between px-3 py-2 border-b bg-card/40 rounded-t-xl shrink-0">
             <div className="flex items-center gap-2 min-w-0">
               <h3 className="text-xs font-semibold truncate">{t("sidebar.incidents")}</h3>

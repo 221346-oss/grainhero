@@ -202,7 +202,7 @@ function AuthenticatedLayout() {
       <SessionGuard />
       <OnboardingTour />
       <BugReportButton />
-      <div className="app-scope min-h-screen flex w-full bg-white">
+      <div className="app-scope min-h-screen flex w-full bg-white overflow-x-hidden">
         {!isTechnician && (
           <div data-tour="sidebar" className="contents">
             <AppSidebar mode={sidebarMode} onModeChange={setSidebarMode} />
@@ -227,7 +227,7 @@ function AuthenticatedLayout() {
                 transition: { duration: 0.25, ease: [0.55, 0.085, 0.68, 0.53] },
               },
             }}
-            className="h-14 flex items-center gap-2 sm:gap-3 bg-white/90 backdrop-blur-md px-3 sm:px-6 border-b border-border sticky top-0 z-30 w-full"
+            className="h-14 flex items-center gap-1.5 sm:gap-3 bg-white/90 backdrop-blur-md px-2 sm:px-6 border-b border-border sticky top-0 z-30 w-full min-w-0 overflow-x-hidden"
           >
             {/* Mobile menu button + logo */}
             <div className="flex md:hidden items-center gap-2 shrink-0">
@@ -295,7 +295,7 @@ function AuthenticatedLayout() {
             <NotificationBell />
             <ProfileMenu />
           </motion.header>
-          <main className="flex-1 overflow-x-hidden">
+          <main className="flex-1 min-w-0 overflow-x-hidden">
             <TicketChannelKeepAlive />
             <AnimatedOutlet />
           </main>
@@ -313,7 +313,7 @@ function AdminUpgradeLink() {
   return (
     <Link
       to="/plan-management"
-      className="shrink-0 h-9 inline-flex items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold text-[#2FAC0C] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:text-emerald-400"
+      className="hidden sm:inline-flex shrink-0 h-9 items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold text-[#2FAC0C] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:text-emerald-400"
     >
       <TextShimmer duration={2.2} baseColor="#2FAC0C99" peakColor="#4ade80">
         {t("nav.upgrade")}

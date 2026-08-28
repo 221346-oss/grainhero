@@ -460,8 +460,9 @@ export function DashboardSiloCards({ range }: { range?: string } = {}) {
           const pct = cap ? Math.round((occ / cap) * 100) : 0;
           const bar = pct >= 90 ? "bg-red-500" : pct >= 70 ? "bg-amber-500" : "bg-emerald-500";
           return (
-            <div key={s.id}>
-              <div className="flex items-center gap-2 group">
+            <div key={s.id} className="border border-border/40 rounded-lg p-2.5 space-y-2">
+              {/* Row 1: Name + Progress bar + capacity % */}
+              <div className="flex items-center gap-2">
                 <Link
                   to="/grain-operations"
                   search={{ tab: "silos" }}
@@ -477,28 +478,35 @@ export function DashboardSiloCards({ range }: { range?: string } = {}) {
                       style={{ width: `${Math.min(100, pct)}%` }}
                     />
                   </div>
-                  <p className="text-[10px] text-muted-foreground tabular-nums">
-                    {occ.toLocaleString()} / {cap.toLocaleString()} kg ({pct}%)
+                  <p className="text-[10px] text-muted-foreground tabular-nums shrink-0">
+                    {pct}%
                   </p>
-                  <div className="grid grid-cols-2 gap-1 text-[10px]">
-                    <div className="rounded border border-border/50 bg-muted/30 px-1.5 py-1">
-                        <p className="text-muted-foreground">{t("grainOps.incoming")}</p>
-                      <p className="font-semibold tabular-nums">
-                        {(incomingBySilo[s.id] ?? 0).toLocaleString()}kg
-                      </p>
-                    </div>
-                    <div className="rounded border border-border/50 bg-muted/30 px-1.5 py-1">
-                        <p className="text-muted-foreground">{t("grainOps.outgoing")}</p>
-                      <p className="font-semibold tabular-nums">
-                        {(outgoingBySilo[s.id] ?? 0).toLocaleString()}kg
-                      </p>
-                    </div>
-                  </div>
                 </Link>
-                <div className="flex items-center gap-1">
+              </div>
+              {/* Row 2: Capacity details */}
+              <p className="text-[10px] text-muted-foreground tabular-nums">
+                {occ.toLocaleString()} / {cap.toLocaleString()} kg
+              </p>
+              {/* Row 3: Incoming / Outgoing + Actions */}
+              <div className="flex items-center gap-2">
+                <div className="flex gap-1 text-[10px] flex-1 min-w-0">
+                  <div className="rounded border border-border/50 bg-muted/30 px-1.5 py-1 flex-1">
+                    <p className="text-muted-foreground truncate">{t("grainOps.incoming")}</p>
+                    <p className="font-semibold tabular-nums">
+                      {(incomingBySilo[s.id] ?? 0).toLocaleString()}kg
+                    </p>
+                  </div>
+                  <div className="rounded border border-border/50 bg-muted/30 px-1.5 py-1 flex-1">
+                    <p className="text-muted-foreground truncate">{t("grainOps.outgoing")}</p>
+                    <p className="font-semibold tabular-nums">
+                      {(outgoingBySilo[s.id] ?? 0).toLocaleString()}kg
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
                   <Button
                     size="sm"
-                    className="h-6 flex-1 text-[10px] bg-emerald-600 hover:bg-emerald-700 text-white"
+                    className="h-6 text-[10px] bg-emerald-600 hover:bg-emerald-700 text-white"
                     onClick={() => setDispatchSilo(s)}
                   >
                     {t("grainOps.sell")}
@@ -509,14 +517,15 @@ export function DashboardSiloCards({ range }: { range?: string } = {}) {
                     </Link>
                   </Button>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleRequestMore}
-                  className="w-full text-[10px] text-emerald-700 dark:text-emerald-400 hover:underline"
-                >
-                  {t("grainOps.requestMoreCapacity")}
-                </button>
               </div>
+              {/* Row 4: Request more */}
+              <button
+                type="button"
+                onClick={handleRequestMore}
+                className="w-full text-[10px] text-emerald-700 dark:text-emerald-400 hover:underline"
+              >
+                {t("grainOps.requestMoreCapacity")}
+              </button>
             </div>
           );
         })}

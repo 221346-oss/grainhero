@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { X, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
+  X,
+  ChevronRight,
   Home,
   Package,
   DollarSign,
@@ -22,11 +23,17 @@ import {
   Radio,
   ToggleRight,
   Bell,
+  CreditCard,
+  Sparkles,
+  ShieldCheck,
+  Inbox,
+  Store,
+  UserCog,
+  Container,
 } from "lucide-react";
 
 import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
 import { useIsGlobalTechnician } from "@/hooks/useIsGlobalTechnician";
-import { Sparkles, ShieldCheck, CreditCard, Inbox } from "lucide-react";
 import { useTranslation } from "@/i18n";
 
 type NavItem = {
@@ -34,6 +41,7 @@ type NavItem = {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   link: string;
+  search?: Record<string, string>;
 };
 
 type NavGroup = {
@@ -52,17 +60,70 @@ function getNavGroups(t: (key: string) => string): {
 } {
   const workspaceGroups: NavGroup[] = [
     {
-      id: "main",
-      label: t("tabs.main"),
+      id: "overview",
+      label: t("tabs.overview"),
       icon: Home,
       defaultOpen: true,
       items: [
         { id: "dashboard", label: t("tabs.overview"), icon: Home, link: "/dashboard" },
-        { id: "grain-operations", label: t("tabs.grainOperations"), icon: Wheat, link: "/grain-operations" },
-        { id: "monitoring", label: t("tabs.monitoring"), icon: Activity, link: "/monitoring" },
-        { id: "intelligence", label: t("tabs.intelligence"), icon: Sparkles, link: "/intelligence" },
-        { id: "business", label: t("tabs.business"), icon: Briefcase, link: "/business" },
-        { id: "administration", label: t("tabs.administration"), icon: ShieldCheck, link: "/administration" },
+      ],
+    },
+    {
+      id: "grain-operations",
+      label: t("tabs.grainOperations"),
+      icon: Wheat,
+      defaultOpen: true,
+      items: [
+        { id: "grain-operations-main", label: t("tabs.grainOperations"), icon: Wheat, link: "/grain-operations" },
+        { id: "silos", label: t("tabs.silos"), icon: Container, link: "/grain-operations", search: { tab: "silos" } },
+        { id: "batches", label: t("tabs.batches"), icon: Package, link: "/grain-operations", search: { tab: "batches" } },
+        { id: "marketplace", label: t("tabs.marketplace"), icon: Store, link: "/business" },
+        { id: "buyers", label: t("tabs.buyers"), icon: Users, link: "/grain-operations", search: { tab: "buyers" } },
+        { id: "orders", label: t("tabs.orders"), icon: Package, link: "/orders" },
+      ],
+    },
+    {
+      id: "monitoring",
+      label: t("tabs.monitoring"),
+      icon: Activity,
+      items: [
+        { id: "monitoring-main", label: t("tabs.monitoring"), icon: Activity, link: "/monitoring" },
+        { id: "sensors", label: t("tabs.sensors"), icon: Radio, link: "/sensors" },
+        { id: "actuators", label: t("tabs.actuators"), icon: ToggleRight, link: "/actuators" },
+      ],
+    },
+    {
+      id: "intelligence",
+      label: t("tabs.intelligence"),
+      icon: Sparkles,
+      items: [
+        { id: "intelligence-main", label: t("tabs.intelligence"), icon: Sparkles, link: "/intelligence" },
+      ],
+    },
+    {
+      id: "subscription",
+      label: t("tabs.subscriptions"),
+      icon: CreditCard,
+      items: [
+        { id: "subscription-main", label: t("tabs.subscriptions"), icon: CreditCard, link: "/subscription" },
+      ],
+    },
+    {
+      id: "business",
+      label: t("tabs.business"),
+      icon: Briefcase,
+      items: [
+        { id: "business-main", label: t("tabs.business"), icon: Briefcase, link: "/business" },
+      ],
+    },
+    {
+      id: "administration",
+      label: t("tabs.administration"),
+      icon: ShieldCheck,
+      items: [
+        { id: "administration-main", label: t("tabs.administration"), icon: ShieldCheck, link: "/administration" },
+        { id: "team", label: t("tabs.team"), icon: UserCog, link: "/team-management" },
+        { id: "upgrade", label: t("nav.upgrade"), icon: Rocket, link: "/plan-management" },
       ],
     },
   ];
@@ -277,6 +338,7 @@ export function MobileAdminNav({ isOpen, onClose }: MobileAdminNavProps) {
                             <Link
                               key={item.id}
                               to={item.link}
+                              search={item.search as never}
                               className="flex items-center gap-2.5 px-3 py-2 rounded-md hover:bg-muted/50 transition-colors text-[13px] text-foreground active:bg-muted"
                               onClick={onClose}
                             >

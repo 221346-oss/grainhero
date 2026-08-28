@@ -141,7 +141,7 @@ export function KpiSummary({
   ];
 
   return (
-    <section className="rounded-xl border border-border bg-card/60 p-4 backdrop-blur-sm">
+    <section className="rounded-xl border border-border bg-card/60 p-3 sm:p-4 backdrop-blur-sm overflow-hidden">
       {/* Header with Range Selector */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-1.5">
@@ -192,7 +192,7 @@ export function KpiSummary({
       </div>
 
       {/* Main Metrics Grid */}
-      <div className="grid gap-3 md:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-2">
         {/* Revenue Card with Neon Sparkline */}
         <Link
           to="/subscription"

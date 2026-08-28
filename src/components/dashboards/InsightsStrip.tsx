@@ -125,7 +125,7 @@ export function InsightsStrip({
   ];
 
   return (
-    <section className="rounded-xl border bg-card/60 p-3 backdrop-blur-sm">
+    <section className="rounded-xl border bg-card/60 p-3 backdrop-blur-sm overflow-hidden">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5">
           <h2 className="text-sm font-semibold text-foreground">{t("adminDash.insightsPerformance")}</h2>
