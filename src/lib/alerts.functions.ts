@@ -101,3 +101,60 @@ export const assignAlert = createServerFn({ method: "POST" })
     });
     return { ok: true };
   });
+
+/**
+ * Fetch active alerts (pending/acknowledged) for silos assigned to technician.
+ * Technician sees alerts for silos they have assigned batches.
+ */
+export const getTechnicianAlerts = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((d) => z.object({
+    status: z.enum(["all", "pending", "acknowledged"]).default("all").optional(),
+    priority: z.enum(["low", "medium", "high", "critical"]).optional(),
+    limit: z.number().int().min(1).max(500).default(50),
+  }).parse(d ?? {}))
+  .handler(async ({ data, context }) => {
+    // Step 1: Find all silos where technician has assigned batches
+    const { data: batches, error: batchError } = await context.supabase
+      .from("grain_batches")
+      .select("silo_id")
+      .eq("assigned_technician_id", context.userId)
+      .not("silo_id", "is", null);
+    
+    if (batchError) throw batchError;
+
+    const siloIds = Array.from(new Set((batches ?? []).map((b: Row) => b.silo_id as string).filter(Boolean)));
+
+    // If technician has no assigned batches/silos, return empty
+    if (siloIds.length === 0) {
+      return { alerts: [] };
+    }
+
+    // Step 2: Query grain_alerts for those silos with active status
+    let q = context.supabase
+      .from("grain_alerts")
+      .select("id, alert_id, title, message, priority, status, source, alert_type, sensor_type, silo_id, warehouse_id, batch_id, triggered_at, acknowledged_at, resolved_at, created_at, created_by, assigned_to, trigger_conditions, silos(id, silo_id, name)")
+      .in("silo_id", siloIds)
+      .order("triggered_at", { ascending: false })
+      .limit(data.limit);
+
+    // Filter by status
+    if (data.status === "pending") {
+      q = q.eq("status", "pending");
+    } else if (data.status === "acknowledged") {
+      q = q.eq("status", "acknowledged");
+    } else {
+      // "all" = show active alerts (pending or acknowledged, not resolved/escalated)
+      q = q.in("status", ["pending", "acknowledged"]);
+    }
+
+    // Filter by priority if provided
+    if (data.priority) {
+      q = q.eq("priority", data.priority);
+    }
+
+    const { data: alerts, error: alertError } = await q;
+    if (alertError) throw alertError;
+
+    return { alerts: (alerts ?? []) as unknown as Row[] };
+  });

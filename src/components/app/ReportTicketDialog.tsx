@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { reportMobileFieldIncident } from "@/lib/field-settings.functions";
+import { reportMobileFieldIncident, reportFieldIncident } from "@/lib/field-settings.functions";
 import { getMyRole } from "@/lib/roles.functions";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
@@ -17,11 +17,21 @@ import {
 import { Loader2, Ticket, ChevronDown, Upload, X } from "lucide-react";
 import { INCIDENT_SUGGESTIONS } from "@/lib/field-incident-suggestions";
 
-// ── Severity options (High removed per spec) ─────────────────────────────────
+// ── Severity options (only low, medium, critical per spec) ───────────────────
 const SEVERITY_OPTIONS = [
   { value: "critical", label: "Critical" },
   { value: "medium",   label: "Medium"   },
   { value: "low",      label: "Low"      },
+] as const;
+
+// ── Category options as requested ────────────────────────────────────────────
+const CATEGORY_OPTIONS = [
+  { value: "equipment_damage", label: "Equipment Damage" },
+  { value: "spoilage",         label: "Spoilage"         },
+  { value: "pest",             label: "Pest Infestation" },
+  { value: "structural",       label: "Structural Issue" },
+  { value: "electrical",       label: "Electrical"       },
+  { value: "other",            label: "Other"            },
 ] as const;
 
 const ROUTE_OPTIONS = [
@@ -163,9 +173,10 @@ export function ReportTicketDialog({
   silos = [],
   extraInvalidate = [],
 }: Props) {
-  const qc        = useQueryClient();
-  const reportFn  = useServerFn(reportMobileFieldIncident);
-  const getRoleFn = useServerFn(getMyRole);
+  const qc              = useQueryClient();
+  const reportMgrFn     = useServerFn(reportMobileFieldIncident);
+  const reportTechFn    = useServerFn(reportFieldIncident);
+  const getRoleFn       = useServerFn(getMyRole);
 
   const { data: roleData } = useQuery({
     queryKey: ["my-role"],
@@ -175,15 +186,18 @@ export function ReportTicketDialog({
 
   const detectedRole    = roleData?.role ?? "manager";
   const userProfileName = roleData?.profile?.name || roleData?.profile?.email || "";
+  const isTechnician    = detectedRole === "technician";
 
-  const [title,        setTitle]        = useState("");
-  const [severity,     setSeverity]     = useState<"low" | "medium" | "critical">("medium");
-  const [targetRole,   setTargetRole]   = useState<"admin" | "manager" | "technician">("technician");
-  const [reporterName, setReporterName] = useState("");
-  const [role,         setRole]         = useState("manager");
-  const [description,  setDescription]  = useState("");
-  const [siloId,       setSiloId]       = useState<string>("");
-  const [attachment,   setAttachment]   = useState<File | null>(null);
+  const [title,           setTitle]           = useState("");
+  const [category,        setCategory]        = useState<string>("other");
+  const [customCategory,  setCustomCategory]  = useState<string>("");
+  const [severity,        setSeverity]        = useState<"low" | "medium" | "critical">("medium");
+  const [targetRole,      setTargetRole]      = useState<"admin" | "manager" | "technician">("technician");
+  const [reporterName,    setReporterName]    = useState("");
+  const [role,            setRole]            = useState("manager");
+  const [description,     setDescription]     = useState("");
+  const [siloId,          setSiloId]          = useState<string>("");
+  const [attachment,      setAttachment]      = useState<File | null>(null);
 
   // Validation errors
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -200,6 +214,8 @@ export function ReportTicketDialog({
 
   function reset() {
     setTitle("");
+    setCategory("other");
+    setCustomCategory("");
     setSeverity("medium");
     setTargetRole("technician");
     setReporterName(userProfileName);
@@ -213,19 +229,40 @@ export function ReportTicketDialog({
   function validate() {
     const e: Record<string, string> = {};
     if (!title.trim())        e.title        = "Title is required.";
+    if (!category)            e.category     = "Please select a category.";
     if (!severity)            e.severity     = "Please select a severity level.";
-    if (!targetRole)          e.targetRole   = "Please select a recipient.";
-    if (!reporterName.trim()) e.reporterName = "Reporter name is required.";
+    // Technicians don't need to select target role or reporter name (auto-filled)
+    if (!isTechnician) {
+      if (!targetRole)          e.targetRole   = "Please select a recipient.";
+      if (!reporterName.trim()) e.reporterName = "Reporter name is required.";
+    }
     setErrors(e);
     return Object.keys(e).length === 0;
   }
 
   const mut = useMutation({
-    mutationFn: () =>
-      reportFn({
+    mutationFn: () => {
+      // Determine final category - use customCategory if "other" was selected
+      const finalCategory = category === "other" && customCategory.trim() 
+        ? customCategory.trim() 
+        : category;
+
+      // Technician flow: insert directly into field_incidents
+      if (isTechnician) {
+        return reportTechFn({
+          data: {
+            category:  finalCategory,
+            severity,
+            notes:     description.trim() || undefined,
+            silo_id:   siloId || null,
+          },
+        });
+      }
+      // Manager/Admin flow: route incident to admin/manager/technician
+      return reportMgrFn({
         data: {
           title:         title.trim(),
-          category:      title.trim(),
+          category:      finalCategory,
           severity,
           reporter_name: reporterName.trim() || undefined,
           reporter_role: role.trim() || undefined,
@@ -233,13 +270,16 @@ export function ReportTicketDialog({
           description:   description.trim() || undefined,
           silo_id:       siloId || null,
         },
-      }),
+      });
+    },
     onSuccess: () => {
-      toast.success(`Incident reported → ${targetRole.toUpperCase()}`);
+      const dest = isTechnician ? "system" : targetRole.toUpperCase();
+      toast.success(`Incident reported → ${dest}`);
       reset();
       onOpenChange(false);
       qc.invalidateQueries({ queryKey: ["manager-dashboard"] });
       qc.invalidateQueries({ queryKey: ["open-field-tickets"] });
+      qc.invalidateQueries({ queryKey: ["my-assigned-incidents"] });
       qc.invalidateQueries({ queryKey: ["field-incidents"] });
       extraInvalidate.forEach((key) => qc.invalidateQueries({ queryKey: key }));
     },
@@ -287,44 +327,97 @@ export function ReportTicketDialog({
             />
           </div>
 
-          {/* 2. Route Incident To — SECOND per spec */}
+          {/* 1b. Category — NEW explicit category field */}
           <div className="space-y-1">
-            <Label htmlFor="ticket-target-role" className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Route Incident To <span className="text-red-500">*</span>
+            <Label htmlFor="ticket-category" className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Category <span className="text-red-500">*</span>
             </Label>
             <Select
-              value={targetRole}
+              value={category}
               onValueChange={(v) => {
-                setTargetRole(v as "admin" | "manager" | "technician");
-                setErrors((e) => ({ ...e, targetRole: "" }));
+                setCategory(v);
+                setErrors((e) => ({ ...e, category: "" }));
               }}
             >
               <SelectTrigger
-                id="ticket-target-role"
-                className={`text-xs h-8 ${errors.targetRole ? "border-red-400 ring-1 ring-red-400/40" : ""}`}
+                id="ticket-category"
+                className={`text-xs h-8 ${errors.category ? "border-red-400 ring-1 ring-red-400/40" : ""}`}
               >
-                <SelectValue placeholder="Select recipient" />
+                <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent>
-                {ROUTE_OPTIONS.map((opt) => (
+                {CATEGORY_OPTIONS.map((opt) => (
                   <SelectItem key={opt.value} value={opt.value} className="text-xs">
                     {opt.label}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {errors.targetRole && <p className="text-[10px] text-red-500">{errors.targetRole}</p>}
+            {errors.category && <p className="text-[10px] text-red-500">{errors.category}</p>}
           </div>
+
+          {/* 1c. Custom Category Input — shown when "Other" is selected */}
+          {category === "other" && (
+            <div className="space-y-1">
+              <Label htmlFor="custom-category" className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                Specify Category <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="custom-category"
+                placeholder="Enter custom category…"
+                value={customCategory}
+                onChange={(e) => {
+                  setCustomCategory(e.target.value);
+                  setErrors((e) => ({ ...e, customCategory: "" }));
+                }}
+                className="text-xs h-8"
+              />
+              {customCategory.trim().length === 0 && (
+                <p className="text-[10px] text-amber-600">Please specify a category</p>
+              )}
+            </div>
+          )}
+
+          {/* 2. Route Incident To — ONLY for managers/admins */}
+          {!isTechnician && (
+            <div className="space-y-1">
+              <Label htmlFor="ticket-target-role" className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                Route Incident To <span className="text-red-500">*</span>
+              </Label>
+              <Select
+                value={targetRole}
+                onValueChange={(v) => {
+                  setTargetRole(v as "admin" | "manager" | "technician");
+                  setErrors((e) => ({ ...e, targetRole: "" }));
+                }}
+              >
+                <SelectTrigger
+                  id="ticket-target-role"
+                  className={`text-xs h-8 ${errors.targetRole ? "border-red-400 ring-1 ring-red-400/40" : ""}`}
+                >
+                  <SelectValue placeholder="Select recipient" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ROUTE_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.targetRole && <p className="text-[10px] text-red-500">{errors.targetRole}</p>}
+            </div>
+          )}
 
           {/* 3. Severity */}
           <div className="space-y-1">
             <Label htmlFor="ticket-severity" className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Type / Stage of Incident <span className="text-red-500">*</span>
+              Severity <span className="text-red-500">*</span>
             </Label>
             <Select
               value={severity}
               onValueChange={(v) => {
-                setSeverity(v as "low" | "medium" | "critical");
+                setSeverity(v as "low" | "medium" | "high" | "critical");
                 setErrors((e) => ({ ...e, severity: "" }));
               }}
             >
@@ -345,35 +438,37 @@ export function ReportTicketDialog({
             {errors.severity && <p className="text-[10px] text-red-500">{errors.severity}</p>}
           </div>
 
-          {/* 4. Reporter Name + My Role */}
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1">
-              <Label htmlFor="ticket-reporter" className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                Reporter Name <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="ticket-reporter"
-                placeholder="Your name"
-                value={reporterName}
-                onChange={(e) => { setReporterName(e.target.value); setErrors((er) => ({ ...er, reporterName: "" })); }}
-                className={`text-xs h-8 ${errors.reporterName ? "border-red-400 focus-visible:ring-red-400" : ""}`}
-              />
-              {errors.reporterName && <p className="text-[10px] text-red-500">{errors.reporterName}</p>}
-            </div>
+          {/* 4. Reporter Name + My Role — ONLY for managers/admins */}
+          {!isTechnician && (
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <Label htmlFor="ticket-reporter" className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Reporter Name <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="ticket-reporter"
+                  placeholder="Your name"
+                  value={reporterName}
+                  onChange={(e) => { setReporterName(e.target.value); setErrors((er) => ({ ...er, reporterName: "" })); }}
+                  className={`text-xs h-8 ${errors.reporterName ? "border-red-400 focus-visible:ring-red-400" : ""}`}
+                />
+                {errors.reporterName && <p className="text-[10px] text-red-500">{errors.reporterName}</p>}
+              </div>
 
-            <div className="space-y-1">
-              <Label htmlFor="ticket-role" className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                My Role
-              </Label>
-              <Input
-                id="ticket-role"
-                value={role}
-                readOnly
-                disabled
-                className="text-xs h-8 bg-muted/50 capitalize font-medium cursor-not-allowed"
-              />
+              <div className="space-y-1">
+                <Label htmlFor="ticket-role" className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  My Role
+                </Label>
+                <Input
+                  id="ticket-role"
+                  value={role}
+                  readOnly
+                  disabled
+                  className="text-xs h-8 bg-muted/50 capitalize font-medium cursor-not-allowed"
+                />
+              </div>
             </div>
-          </div>
+          )}
 
           {/* 5. Affected Silo (optional) */}
           {silos.length > 0 && (

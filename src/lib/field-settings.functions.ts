@@ -104,11 +104,10 @@ export const getMyAssignedIncidents = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("field_incidents")
-      .select("id, category, severity, status, notes, silo_id, created_at, assigned_at, reporter_user_id")
+      .select("id, category, severity, status, notes, silo_id, created_at, assigned_at, reporter_user_id, resolution_notes")
       .eq("assigned_to", context.userId)
-      .in("status", ["investigating", "open"] as never)
       .order("created_at", { ascending: false })
-      .limit(20);
+      .limit(100);
     if (error) throw new Error(error.message);
     return data ?? [];
   });
@@ -259,31 +258,27 @@ export const reportMobileFieldIncident = createServerFn({ method: "POST" })
 export const listOpenFieldIncidents = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    // Updated to use grain_alerts with source='field_incident' instead of field_incidents table
-    // This ensures consistency with other field incident queries across the app
-    const { data, error } = await context.supabase
-      .from("grain_alerts")
-      .select("id, title, message, status, priority, created_at, resolved_at, created_by, recipient_id, custom_fields, source")
-      .eq("source", "field_incident")
-      .in("status", ["open", "pending", "investigating"] as never)
+    // Get user profile to determine tenant
+    const { data: profile } = await context.supabase
+      .from("profiles")
+      .select("admin_id, id")
+      .eq("id", context.userId)
+      .maybeSingle();
+
+    const tenantId = (profile?.admin_id as string) ?? profile?.id ?? context.userId;
+
+    // Query field_incidents directly for all unresolved incidents
+    const { data: incidents, error } = await context.supabase
+      .from("field_incidents")
+      .select("id, category, severity, status, notes, silo_id, created_at, assigned_at, assigned_to, reporter_user_id")
+      .eq("tenant_id", tenantId)
+      .in("status", ["open", "investigating"] as never)
       .order("created_at", { ascending: false })
       .limit(50);
+    
     if (error) throw new Error(error.message);
     
-    // Map grain_alerts structure to match expected field_incidents structure for backward compatibility
-    const incidents = (data ?? []).map((incident: any) => ({
-      id: incident.id,
-      category: incident.title,
-      severity: incident.priority ?? "medium",
-      status: incident.status,
-      notes: incident.message,
-      created_at: incident.created_at,
-      reporter_user_id: incident.created_by,
-      assigned_to: incident.recipient_id,
-      silo_id: incident.custom_fields?.silo_id ?? null,
-    }));
-    
-    return incidents;
+    return incidents ?? [];
   });
 
 // ─── List Comments / Discussion for an Incident Ticket ────────────────────────
@@ -416,4 +411,82 @@ export const addIncidentComment = createServerFn({ method: "POST" })
     }
 
     return { ok: true };
+  });
+
+
+// ─── Report Field Incident (insert into field_incidents table) ─────────────────
+// Used by technicians to report incidents they encounter in the field
+// Routes incidents to manager and sends manager notifications
+export const reportFieldIncident = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((v) => z.object({
+    category: z.string().min(1).max(100),
+    severity: z.enum(["low", "medium", "critical"]),
+    notes: z.string().max(2000).optional(),
+    silo_id: z.string().uuid().nullable().optional(),
+  }).parse(v))
+  .handler(async ({ data, context }) => {
+    // Get user profile and tenant info
+    const { data: profile } = await context.supabase
+      .from("profiles")
+      .select("id, name, email, admin_id, role")
+      .eq("id", context.userId)
+      .maybeSingle();
+
+    if (!profile) throw new Error("User profile not found");
+
+    const tenantId = (profile.admin_id as string) ?? profile.id ?? context.userId;
+
+    // Find manager user for this tenant
+    const { data: managers, error: managerError } = await context.supabase
+      .from("profiles")
+      .select("id")
+      .eq("admin_id", tenantId)
+      .eq("role", "manager")
+      .limit(1);
+
+    if (managerError) throw new Error(managerError.message);
+
+    const managerId = managers?.[0]?.id;
+    if (!managerId) throw new Error("No manager found for this tenant");
+
+    // Insert incident into field_incidents table with manager as assignee
+    const { data: incident, error } = await context.supabase
+      .from("field_incidents")
+      .insert({
+        tenant_id: tenantId,
+        reporter_user_id: context.userId,
+        assigned_to: managerId,  // Assign to manager
+        category: data.category.trim(),
+        severity: data.severity,
+        notes: data.notes?.trim() || null,
+        silo_id: data.silo_id || null,
+        status: "open",
+        source: "technician_report",
+        created_at: new Date().toISOString(),
+      } as never)
+      .select("id")
+      .maybeSingle();
+
+    if (error) throw new Error(error.message);
+
+    // Notify manager of the new incident
+    try {
+      const { emitNotification } = await import("./notify");
+      await emitNotification(context.supabase, {
+        recipientId: managerId,  // Notify manager specifically
+        tenantAdminId: tenantId,
+        category: "ops",
+        severity: data.severity === "critical" ? "critical" : "high",
+        title: `New Field Incident: ${data.category}`,
+        body: `${profile.name || "A technician"} reported: ${data.notes?.slice(0, 100) || "No details provided"}`,
+        link: "/monitoring?section=incoming",  // Route to manager's monitoring page incoming section
+        entityType: "field_incident",
+        entityId: incident?.id,
+      });
+    } catch (e) {
+      console.warn("[reportFieldIncident] Failed to emit notification:", e);
+    }
+
+    return { id: incident?.id, ok: true };
   });

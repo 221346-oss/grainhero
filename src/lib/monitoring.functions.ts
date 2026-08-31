@@ -92,9 +92,16 @@ export const getIncidents = createServerFn({ method: "GET" })
     const r = await role(context.supabase, context.userId);
     requireAny(r, ["super_admin", "admin", "manager", "technician"]);
 
-    // Fetch both system alerts (high/critical priority) AND field incidents
-    // (source = field_incident, priority = medium) in one query so the
-    // Incidents tab is never empty when there are field incidents reported.
+    // Get user's profile and tenant info
+    const { data: userProfile } = await context.supabase
+      .from("profiles")
+      .select("id, admin_id")
+      .eq("id", context.userId)
+      .maybeSingle();
+
+    const userTenantId = (userProfile?.admin_id as string) ?? userProfile?.id ?? context.userId;
+
+    // Fetch system alerts (high/critical priority)
     const { data: alerts } = await context.supabase
       .from("grain_alerts")
       .select("id, alert_id, title, message, priority, status, alert_type, sensor_type, silo_id, batch_id, warehouse_id, triggered_at, acknowledged_at, resolved_at, created_at, created_by, assigned_to, escalation_level, source, recipient_id")
@@ -102,9 +109,59 @@ export const getIncidents = createServerFn({ method: "GET" })
       .order("triggered_at", { ascending: false })
       .limit(200);
 
-    const list = (alerts ?? []) as any[];
+    // Fetch field incidents from field_incidents table (technician reports)
+    // Show only:
+    // - For manager: incidents assigned to them (incoming) or they reported
+    // - For technician: incidents they reported
+    // - For admin: all incidents in their tenant
+    let fieldIncidentsQuery = context.supabase
+      .from("field_incidents")
+      .select("id, tenant_id, reporter_user_id, assigned_to, category, severity, notes, silo_id, status, source, created_at");
+
+    if (r === "manager") {
+      // Managers see incidents assigned to them
+      fieldIncidentsQuery = fieldIncidentsQuery.eq("assigned_to", context.userId);
+    } else if (r === "technician") {
+      // Technicians see incidents they reported
+      fieldIncidentsQuery = fieldIncidentsQuery.eq("reporter_user_id", context.userId);
+    } else if (r === "admin") {
+      // Admins see all incidents in their tenant
+      fieldIncidentsQuery = fieldIncidentsQuery.eq("tenant_id", userTenantId);
+    }
+
+    const { data: fieldIncidents } = await fieldIncidentsQuery
+      .order("created_at", { ascending: false })
+      .limit(200);
+
+    // Transform field_incidents to match grain_alerts structure
+    const transformedFieldIncidents = (fieldIncidents ?? []).map((fi: any) => ({
+      id: fi.id,
+      title: `Field Incident: ${fi.category}`,
+      message: fi.notes || "No details provided",
+      priority: fi.severity === "critical" ? "critical" : "medium",
+      status: fi.status,
+      triggered_at: fi.created_at,
+      acknowledged_at: null,
+      resolved_at: null,
+      created_at: fi.created_at,
+      created_by: fi.reporter_user_id,
+      assigned_to: fi.assigned_to,
+      recipient_id: fi.assigned_to, // For field incidents, recipient = assignee (manager)
+      source: "field_incident",
+      isFieldIncident: true,
+      custom_fields: {
+        category: fi.category,
+        severity: fi.severity,
+        silo_id: fi.silo_id,
+      },
+    }));
+
+    // Combine system alerts and field incidents
+    const combinedList = [...(alerts ?? []), ...transformedFieldIncidents];
+
+    // Enrich with profile names
+    const list = combinedList as any[];
     if (list.length > 0) {
-      // Include recipient_id in name lookup for field incidents
       const ids = Array.from(new Set(
         list.flatMap((x) => [x.created_by, x.assigned_to, x.recipient_id]).filter(Boolean)
       ));
@@ -115,13 +172,13 @@ export const getIncidents = createServerFn({ method: "GET" })
           x.reportedByName = x.created_by   ? (nameOf.get(x.created_by)   ?? null) : null;
           x.assignedToName = x.assigned_to  ? (nameOf.get(x.assigned_to)  ?? null) : null;
           x.recipientName  = x.recipient_id ? (nameOf.get(x.recipient_id) ?? null) : null;
-          // Convenience flag so UI can distinguish field incidents from system alerts
-          x.isFieldIncident = x.source === "field_incident";
+          // Set flags for UI
           x.isMine    = x.created_by   === context.userId;
           x.isForMe   = x.recipient_id === context.userId;
         }
       }
     }
+
     const totals = {
       total: list.length,
       open: list.filter((x) => x.status !== "resolved").length,

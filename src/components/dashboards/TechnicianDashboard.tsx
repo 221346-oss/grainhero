@@ -9,6 +9,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
+import { Link } from "@tanstack/react-router";
 import {
   getMyAssignedIncidents,
   resolveFieldIncident,
@@ -24,11 +25,15 @@ import {
   Plus,
   Ticket,
   MessageSquare,
+  QrCode,
+  ClipboardList,
+  Bell,
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { ReportTicketDialog } from "@/components/app/ReportTicketDialog";
 import { TicketDiscussionDialog, type TicketItem } from "@/components/app/TicketDiscussionDialog";
 
+// ─── Types ────────────────────────────────────────────────────────────────────────
 type AssignedIncident = {
   id: string;
   category: string;
@@ -41,13 +46,73 @@ type AssignedIncident = {
   reporter_user_id: string;
 };
 
+// ─── Quick Actions Bar ─────────────────────────────────────────────────────────
+function QuickActionsBar({ onReportIncident }: { onReportIncident: () => void }) {
+  return (
+    <div className="rounded-xl border bg-gradient-to-r from-emerald-50 to-sky-50 dark:from-emerald-950/20 dark:to-sky-950/20 p-4">
+      <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+        Quick Actions
+      </h3>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <button
+          onClick={onReportIncident}
+          className="flex flex-col items-center gap-2 p-3 rounded-lg bg-white dark:bg-slate-900 border hover:border-emerald-500 hover:shadow-md transition-all group"
+        >
+          <div className="h-10 w-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center group-hover:bg-emerald-500 transition-colors">
+            <Plus className="h-5 w-5 text-emerald-600 group-hover:text-white transition-colors" />
+          </div>
+          <span className="text-xs font-semibold text-center">Report Incident</span>
+        </button>
+
+        <Link
+          to="/technician/my-incidents"
+          className="flex flex-col items-center gap-2 p-3 rounded-lg bg-white dark:bg-slate-900 border hover:border-sky-500 hover:shadow-md transition-all group"
+        >
+          <div className="h-10 w-10 rounded-full bg-sky-100 dark:bg-sky-900/30 flex items-center justify-center group-hover:bg-sky-500 transition-colors">
+            <ClipboardList className="h-5 w-5 text-sky-600 group-hover:text-white transition-colors" />
+          </div>
+          <span className="text-xs font-semibold text-center">My Incidents</span>
+        </Link>
+
+        <Link
+          to="/monitoring"
+          search={{ tab: "alerts" as const }}
+          className="flex flex-col items-center gap-2 p-3 rounded-lg bg-white dark:bg-slate-900 border hover:border-amber-500 hover:shadow-md transition-all group"
+        >
+          <div className="h-10 w-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center group-hover:bg-amber-500 transition-colors">
+            <Bell className="h-5 w-5 text-amber-600 group-hover:text-white transition-colors" />
+          </div>
+          <span className="text-xs font-semibold text-center">View Alerts</span>
+        </Link>
+
+        <button
+          onClick={() => toast.info("QR Scanner feature coming soon")}
+          className="flex flex-col items-center gap-2 p-3 rounded-lg bg-white dark:bg-slate-900 border hover:border-purple-500 hover:shadow-md transition-all group"
+        >
+          <div className="h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center group-hover:bg-purple-500 transition-colors">
+            <QrCode className="h-5 w-5 text-purple-600 group-hover:text-white transition-colors" />
+          </div>
+          <span className="text-xs font-semibold text-center">QR Scanner</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Incident Card ─────────────────────────────────────────────────────────────
 function SevColor(s: string) {
   if (s === "critical") return "bg-red-500/10 text-red-600 border-red-200/50";
   if (s === "high") return "bg-amber-500/10 text-amber-600 border-amber-200/50";
   return "bg-sky-500/10 text-sky-600 border-sky-200/50";
 }
 
-function IncidentCard({ incident }: { incident: AssignedIncident }) {
+function IncidentCard({
+  incident,
+  onDiscuss,
+}: {
+  incident: AssignedIncident;
+  onDiscuss?: (incident: TicketItem) => void;
+}) {
   const [expanded, setExpanded] = useState(false);
   const [note, setNote] = useState("");
   const qc = useQueryClient();
@@ -73,52 +138,75 @@ function IncidentCard({ incident }: { incident: AssignedIncident }) {
 
   return (
     <div
-      className={`rounded-xl border bg-card/70 overflow-hidden transition-all ${incident.severity === "critical"
+      className={`rounded-xl border bg-card/70 overflow-hidden transition-all ${
+        incident.severity === "critical"
           ? "border-red-200/60 dark:border-red-800/40"
           : incident.severity === "high"
             ? "border-amber-200/60 dark:border-amber-800/40"
             : "border-border"
-        }`}
+      }`}
     >
       {/* Header row */}
-      <button
-        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors text-left"
-        onClick={() => setExpanded((v) => !v)}
-      >
-        <AlertTriangle
-          className={`h-4 w-4 shrink-0 ${incident.severity === "critical"
-              ? "text-red-500"
-              : incident.severity === "high"
-                ? "text-amber-500"
-                : "text-sky-500"
+      <div className="flex items-center gap-2 px-4 py-3">
+        <button
+          className="flex-1 flex items-center gap-3 hover:bg-muted/30 transition-colors text-left rounded-lg -ml-2 -my-2 p-2"
+          onClick={() => setExpanded((v) => !v)}
+        >
+          <AlertTriangle
+            className={`h-4 w-4 shrink-0 ${
+              incident.severity === "critical"
+                ? "text-red-500"
+                : incident.severity === "high"
+                  ? "text-amber-500"
+                  : "text-sky-500"
             }`}
-        />
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-semibold capitalize">
-              {incident.category.replace(/_/g, " ")}
-            </span>
-            <span
-              className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded border ${SevColor(
-                incident.severity
-              )}`}
-            >
-              {incident.severity}
-            </span>
-            <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 border border-blue-200/50">
-              {incident.status}
-            </span>
+          />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm font-semibold capitalize">
+                {incident.category.replace(/_/g, " ")}
+              </span>
+              <span
+                className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded border ${SevColor(
+                  incident.severity
+                )}`}
+              >
+                {incident.severity}
+              </span>
+              <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 border border-blue-200/50">
+                {incident.status}
+              </span>
+            </div>
+            <div className="text-xs text-muted-foreground mt-0.5">
+              Reported {new Date(incident.created_at).toLocaleString()}
+            </div>
           </div>
-          <div className="text-xs text-muted-foreground mt-0.5">
-            Reported {new Date(incident.created_at).toLocaleString()}
-          </div>
-        </div>
-        {expanded ? (
-          <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0" />
-        ) : (
-          <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+          {expanded ? (
+            <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0" />
+          ) : (
+            <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+          )}
+        </button>
+        {onDiscuss && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDiscuss({
+                id: incident.id,
+                category: incident.category,
+                severity: incident.severity,
+                status: incident.status,
+                notes: incident.notes,
+                created_at: incident.created_at,
+              });
+            }}
+            className="flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1.5 rounded-full bg-sky-500/10 text-sky-700 dark:text-sky-400 hover:bg-sky-500/20 transition-colors shrink-0"
+            title="Open discussion thread"
+          >
+            <MessageSquare className="h-3 w-3" /> Discuss
+          </button>
         )}
-      </button>
+      </div>
 
       {/* Expanded details + resolve */}
       {expanded && (
@@ -143,19 +231,21 @@ function IncidentCard({ incident }: { incident: AssignedIncident }) {
               className="text-xs"
             />
           </div>
-          <Button
-            size="sm"
-            className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
-            disabled={resolveMut.isPending}
-            onClick={() => resolveMut.mutate()}
-          >
-            {resolveMut.isPending ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <CheckCircle2 className="h-3.5 w-3.5" />
-            )}
-            Mark Resolved
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 flex-1"
+              disabled={resolveMut.isPending}
+              onClick={() => resolveMut.mutate()}
+            >
+              {resolveMut.isPending ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <CheckCircle2 className="h-3.5 w-3.5" />
+              )}
+              Mark Resolved
+            </Button>
+          </div>
         </div>
       )}
     </div>
@@ -164,6 +254,9 @@ function IncidentCard({ incident }: { incident: AssignedIncident }) {
 
 function AssignedIncidentsSection() {
   const fn = useServerFn(getMyAssignedIncidents);
+  const [discussionOpen, setDiscussionOpen] = useState(false);
+  const [activeDiscussionTicket, setActiveDiscussionTicket] = useState<TicketItem | null>(null);
+
   const { data, isLoading } = useQuery({
     queryKey: ["my-assigned-incidents"],
     queryFn: () => fn(),
@@ -172,31 +265,43 @@ function AssignedIncidentsSection() {
 
   const incidents = (data ?? []) as AssignedIncident[];
 
+  function handleDiscuss(ticket: TicketItem) {
+    setActiveDiscussionTicket(ticket);
+    setDiscussionOpen(true);
+  }
+
   return (
-    <div className="rounded-xl border bg-card/60">
-      <header className="flex items-center gap-2 px-4 py-3 border-b">
-        <ShieldAlert className="h-4 w-4 text-emerald-600" />
-        <h2 className="text-sm font-semibold">My assigned incidents</h2>
-        {incidents.length > 0 && (
-          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600">
-            {incidents.length}
-          </span>
-        )}
-      </header>
-      <div className="p-3 space-y-2">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-          </div>
-        ) : incidents.length === 0 ? (
-          <p className="text-xs text-muted-foreground px-1 py-4 text-center">
-            No incidents assigned to you. 🎉
-          </p>
-        ) : (
-          incidents.map((i) => <IncidentCard key={i.id} incident={i} />)
-        )}
+    <>
+      <div className="rounded-xl border bg-card/60">
+        <header className="flex items-center gap-2 px-4 py-3 border-b">
+          <ShieldAlert className="h-4 w-4 text-emerald-600" />
+          <h2 className="text-sm font-semibold">My assigned incidents</h2>
+          {incidents.length > 0 && (
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600">
+              {incidents.length}
+            </span>
+          )}
+        </header>
+        <div className="p-3 space-y-2">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : incidents.length === 0 ? (
+            <p className="text-xs text-muted-foreground px-1 py-4 text-center">
+              No incidents assigned to you. 🎉
+            </p>
+          ) : (
+            incidents.map((i) => <IncidentCard key={i.id} incident={i} onDiscuss={handleDiscuss} />)
+          )}
+        </div>
       </div>
-    </div>
+      <TicketDiscussionDialog
+        open={discussionOpen}
+        onOpenChange={setDiscussionOpen}
+        incident={activeDiscussionTicket}
+      />
+    </>
   );
 }
 
@@ -361,6 +466,8 @@ function AllOpenTicketsSection() {
 
 export function TechnicianDashboard({ name }: { name?: string }) {
   const { data: s } = useDashboardStats();
+  const [reportOpen, setReportOpen] = useState(false);
+  
   return (
     <AdminPageShell
       title={`Technician${name ? ` — ${name}` : ""}`}
@@ -374,38 +481,72 @@ export function TechnicianDashboard({ name }: { name?: string }) {
         </Badge>
       }
     >
+      {/* Summary Tiles - 6 counts */}
       <AdminSummaryTiles
-        columns={4}
+        columns={6}
         tiles={[
           {
-            key: "so",
-            label: "Sensors online",
+            key: "silos",
+            label: "Silos",
+            value: s?.silos ?? "—",
+          },
+          {
+            key: "sensors",
+            label: "Sensors",
             value: `${s?.sensors.online ?? 0}/${s?.sensors.total ?? 0}`,
           },
           {
-            key: "aa",
-            label: "Actuators active",
+            key: "actuators",
+            label: "Actuators",
             value: `${s?.actuators.active ?? 0}/${s?.actuators.total ?? 0}`,
           },
-          { key: "oa", label: "Open alerts", value: s?.alerts.open ?? "—" },
-          { key: "ca", label: "Critical", value: s?.alerts.critical ?? "—" },
+          {
+            key: "alerts",
+            label: "Alerts",
+            value: `${s?.alerts.open ?? 0}`,
+          },
+          {
+            key: "batches",
+            label: "Batches",
+            value: `${s?.batches.active ?? 0}`,
+          },
+          {
+            key: "incidents",
+            label: "Incidents",
+            value: `${s?.incidents.open ?? 0}`,
+          },
         ]}
       />
+
+      {/* Quick Actions Bar */}
+      <QuickActionsBar onReportIncident={() => setReportOpen(true)} />
+
       <CustomWidgetsBand />
 
-      {/* Mobile Field Reports — visible to every technician. Older mobile-sync
-          field_incidents system (field-settings.functions.ts) — not the newer
-          auto-routing Field Incidents feature under Administration. */}
-      <AllOpenTicketsSection />
-
-      {/* Assigned field incidents — action items for this technician */}
+      {/* My Assigned Incidents */}
       <AssignedIncidentsSection />
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <ActuatorsCard />
+      {/* Open Field Reports */}
+      <AllOpenTicketsSection />
+
+      {/* Existing Cards Grid */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {/* Recent Alerts */}
         <RecentAlertsCard />
+        
+        {/* Actuator Status */}
+        <ActuatorsCard />
+        
+        {/* Silo Occupancy */}
         <SilosOccupancyCard />
       </div>
+
+      {/* Report Incident Dialog */}
+      <ReportTicketDialog
+        open={reportOpen}
+        onOpenChange={setReportOpen}
+        extraInvalidate={[["open-field-tickets"], ["my-assigned-incidents"]]}
+      />
     </AdminPageShell>
   );
 }
