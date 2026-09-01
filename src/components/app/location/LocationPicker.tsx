@@ -15,14 +15,14 @@ import { Rail, SectionLabel, compact } from "@/components/app/surface";
 import type { LocationCard, LocationWarehouse, PlanUsage } from "@/lib/locations.functions";
 import { cn } from "@/lib/utils";
 
-function utilisationTone(pct: number | null): "success" | "warning" | "critical" {
+export function utilisationTone(pct: number | null): "success" | "warning" | "critical" {
   if (pct === null) return "success";
   if (pct >= 90) return "critical";
   if (pct >= 75) return "warning";
   return "success";
 }
 
-function LocationTile({ loc, onSelect }: { loc: LocationCard; onSelect: () => void }) {
+export function LocationTile({ loc, onSelect }: { loc: LocationCard; onSelect: () => void }) {
   const tone = utilisationTone(loc.utilisationPct);
 
   return (
@@ -138,7 +138,7 @@ function PlanAllowance({ plan }: { plan?: PlanUsage }) {
  * city can hold very different numbers of silos, so their data and their model
  * performance genuinely differ. Picking a city is only the way to reach one.
  */
-function WarehouseTile({ wh, onSelect }: { wh: LocationWarehouse; onSelect: () => void }) {
+export function WarehouseTile({ wh, onSelect }: { wh: LocationWarehouse; onSelect: () => void }) {
   const pct = wh.capacityKg > 0 ? Math.round((wh.occupancyKg / wh.capacityKg) * 100) : null;
 
   return (

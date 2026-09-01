@@ -1,7 +1,8 @@
-import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { ArrowUpRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -117,6 +118,17 @@ function TenantDetailSheet({ adminId, onClose }: { adminId: string; onClose: () 
               {profile.business_type ? ` · ${profile.business_type}` : ""}
             </p>
           )}
+          {/* The sheet is a quick look; the locations page is where this tenant
+              is broken out city by city and warehouse by warehouse. */}
+          <Link
+            to="/platform/tenants/$adminId"
+            params={{ adminId }}
+            search={{}}
+            className="group mt-1 flex w-fit items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-success transition-colors hover:text-success/80"
+          >
+            Locations &amp; warehouses
+            <ArrowUpRight className="h-3 w-3 transition-transform group-hover:-translate-y-px group-hover:translate-x-px" />
+          </Link>
         </SheetHeader>
 
         {isLoading && (
