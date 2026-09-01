@@ -116,14 +116,18 @@ function Stat({
 function Trail({
   adminId,
   tenantName,
-  city,
+  cityKey,
+  cityName,
   warehouseName,
 }: {
   adminId: string;
   tenantName: string;
-  city?: string;
+  /** The normalised key the URL carries — "lahore", not the "Lahore" on screen. */
+  cityKey?: string;
+  cityName?: string;
   warehouseName?: string;
 }) {
+  const city = cityName;
   const crumb = "text-[10px] font-semibold uppercase tracking-wider";
   const sep = <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground/40" aria-hidden />;
 
@@ -155,7 +159,7 @@ function Trail({
             <Link
               to="/platform/tenants/$adminId"
               params={{ adminId }}
-              search={{ loc: city }}
+              search={{ loc: cityKey }}
               className={cn(crumb, "text-muted-foreground transition-colors hover:text-foreground")}
             >
               {city}
@@ -391,7 +395,11 @@ function TenantLocationsPage() {
       });
       return;
     }
-    navigate({ to: "/platform/tenants/$adminId", params: { adminId }, search: { loc: key } });
+    navigate({
+      to: "/platform/tenants/$adminId",
+      params: { adminId },
+      search: { loc: key },
+    });
   }
 
   function openWarehouse(warehouseId: string) {
@@ -420,7 +428,8 @@ function TenantLocationsPage() {
           <Trail
             adminId={adminId}
             tenantName={tenantName}
-            city={city?.city}
+            cityKey={city?.key}
+            cityName={city?.city}
             warehouseName={warehouse?.name}
           />
           {tenant?.blocked && (
@@ -455,20 +464,15 @@ function TenantLocationsPage() {
         {/* ── Level 3 — one warehouse ── */}
         {data && tenant && warehouse && (
           <>
-            <button
-              type="button"
-              onClick={() =>
-                navigate({
-                  to: "/platform/tenants/$adminId",
-                  params: { adminId },
-                  search: city && city.warehouses.length > 1 ? { loc: city.key } : {},
-                })
-              }
-              className="group flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
+            <Link
+              to="/platform/tenants/$adminId"
+              params={{ adminId }}
+              search={city && city.warehouses.length > 1 ? { loc: city.key } : {}}
+              className="group flex w-fit items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
             >
               <ArrowLeft className="h-3 w-3 transition-transform group-hover:-translate-x-0.5" />
               {city && city.warehouses.length > 1 ? city.city : "All locations"}
-            </button>
+            </Link>
             <WarehouseDetail adminId={adminId} warehouseId={warehouse.id} />
           </>
         )}
@@ -476,16 +480,15 @@ function TenantLocationsPage() {
         {/* ── Level 2 — the warehouses inside one city ── */}
         {data && tenant && city && !warehouse && (
           <>
-            <button
-              type="button"
-              onClick={() =>
-                navigate({ to: "/platform/tenants/$adminId", params: { adminId }, search: {} })
-              }
-              className="group flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
+            <Link
+              to="/platform/tenants/$adminId"
+              params={{ adminId }}
+              search={{}}
+              className="group flex w-fit items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
             >
               <ArrowLeft className="h-3 w-3 transition-transform group-hover:-translate-x-0.5" />
               All locations
-            </button>
+            </Link>
             <div className="flex items-baseline gap-2">
               <h2 className="text-sm font-semibold text-foreground">{city.city}</h2>
               <span className="text-[11px] text-muted-foreground">

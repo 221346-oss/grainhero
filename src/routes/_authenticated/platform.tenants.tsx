@@ -1,4 +1,4 @@
-import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useChildMatches } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -357,6 +357,11 @@ function TenantsPage() {
   const [qInput, setQInput] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
+  // `/platform/tenants/$adminId` is a child of this route, so without this the
+  // list renders above the tenant page instead of being replaced by it. The
+  // child owns the whole screen when one is matched.
+  const hasChildRoute = useChildMatches().length > 0;
+
   const filtered = useMemo(
     () =>
       data.filter((t) => {
@@ -380,6 +385,10 @@ function TenantsPage() {
     monthAgo.setMonth(monthAgo.getMonth() - 1);
     return created >= monthAgo;
   }).length;
+
+  // Checked before the loading branch: a child route must not sit behind this
+  // page's skeleton while the tenant list it isn't showing finishes loading.
+  if (hasChildRoute) return <Outlet />;
 
   if (isLoading) {
     return (
