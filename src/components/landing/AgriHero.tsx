@@ -1,20 +1,20 @@
-import { useRef, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { ArrowRight } from 'lucide-react'
-import { Link } from '@tanstack/react-router'
-import heroLoop from '@/assets/silo-ai-loop-v3-web.mp4.asset.json'
-import heroPoster from '@/assets/landing/hero-poster.jpg'
-import { getAssetUrl } from '@/lib/utils'
+import { useRef, useEffect } from "react";
+import { motion } from "framer-motion";
+import { ArrowRight } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import heroLoop from "@/assets/silo-ai-loop-v3-web.mp4.asset.json";
+import heroPoster from "@/assets/landing/hero-poster.jpg";
+import { getAssetUrl } from "@/lib/utils";
 
 export function AgriHero() {
-  const videoRef = useRef<HTMLVideoElement>(null)
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    const v = videoRef.current
-    if (!v) return
-    v.muted = true
-    v.play().catch(() => {})
-  }, [])
+    const v = videoRef.current;
+    if (!v) return;
+    v.muted = true;
+    v.play().catch(() => {});
+  }, []);
 
   return (
     <div className="relative min-h-[92svh] w-full overflow-hidden bg-[#111512] sm:min-h-[100svh]">
@@ -39,8 +39,8 @@ export function AgriHero() {
       <div className="relative z-10 mx-auto flex min-h-[92svh] max-w-7xl items-center px-5 text-left sm:min-h-[100svh] sm:px-8 lg:px-12">
         <div className="max-w-4xl translate-y-12 pb-16 sm:pb-20 sm:translate-y-16">
           <motion.h1
-            initial={{ opacity: 0, y: 26, filter: 'blur(8px)' }}
-            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            initial={{ opacity: 0, y: 26, filter: "blur(8px)" }}
+            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
             transition={{ delay: 0.1, duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
             className="text-[2.75rem] font-black leading-[0.92] tracking-tight text-[#FAFAF7] sm:text-6xl lg:text-7xl"
           >
@@ -68,5 +68,5 @@ export function AgriHero() {
         </div>
       </div>
     </div>
-  )
+  );
 }

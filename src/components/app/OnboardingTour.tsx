@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
  * on the app (and can be replayed from Settings). Each step points to a real
  * UI element via `data-tour="…"`, highlights it with a spotlight, and shows
  * a friendly tooltip with next/back/skip controls.
- * 
+ *
  * Tour completion is stored per-user in Supabase profiles.preferences.onboarding_completed
  */
 
@@ -79,24 +79,26 @@ const STEPS: Step[] = [
 /** Public helper — call to replay the tour from anywhere. */
 export async function restartOnboardingTour() {
   if (typeof window === "undefined") return;
-  
+
   // Clear local storage fallback
   try {
     window.localStorage.removeItem(STORAGE_KEY);
   } catch {
     /* ignore */
   }
-  
+
   // Clear Supabase preference
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (user) {
       const { data: profile } = await supabase
         .from("profiles")
         .select("preferences")
         .eq("id", user.id)
         .single();
-      
+
       const preferences = (profile?.preferences as any) || {};
       await supabase
         .from("profiles")
@@ -111,7 +113,7 @@ export async function restartOnboardingTour() {
   } catch (error) {
     console.error("Failed to reset onboarding in database:", error);
   }
-  
+
   window.dispatchEvent(new Event(RESTART_EVENT));
 }
 
@@ -125,18 +127,20 @@ export function OnboardingTour() {
   const checkOnboardingStatus = useCallback(async () => {
     try {
       // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return true; // Not logged in, don't show tour
-      
+
       setUserId(user.id);
-      
+
       // Check Supabase first (source of truth)
       const { data: profile, error } = await supabase
         .from("profiles")
         .select("preferences")
         .eq("id", user.id)
         .single();
-      
+
       if (error) {
         console.error("Error fetching profile:", error);
         // Fallback to localStorage on database error
@@ -146,14 +150,14 @@ export function OnboardingTour() {
           return false;
         }
       }
-      
+
       const preferences = (profile?.preferences as any) || {};
-      
+
       // If onboarding_completed is explicitly set in database, use that
       if (preferences.onboarding_completed !== undefined) {
         return preferences.onboarding_completed;
       }
-      
+
       // For existing users without the flag, check localStorage as migration path
       try {
         const localDone = window.localStorage.getItem(STORAGE_KEY) === "1";
@@ -174,7 +178,7 @@ export function OnboardingTour() {
       } catch {
         /* ignore localStorage errors */
       }
-      
+
       // New user - show the tour
       return false;
     } catch (error) {
@@ -191,7 +195,7 @@ export function OnboardingTour() {
   // Kick off on first visit + listen for manual restarts.
   useEffect(() => {
     let mounted = true;
-    
+
     checkOnboardingStatus().then((done) => {
       if (mounted && !done) {
         // Small delay so the sidebar & layout have mounted.
@@ -254,7 +258,7 @@ export function OnboardingTour() {
     } catch {
       /* ignore */
     }
-    
+
     // Save to Supabase (source of truth)
     if (userId) {
       try {
@@ -263,7 +267,7 @@ export function OnboardingTour() {
           .select("preferences")
           .eq("id", userId)
           .single();
-        
+
         const preferences = (profile?.preferences as any) || {};
         await supabase
           .from("profiles")
@@ -275,14 +279,14 @@ export function OnboardingTour() {
             },
           })
           .eq("id", userId);
-        
+
         console.log("✅ Onboarding tour completed and saved to database");
       } catch (error) {
         console.error("Failed to save onboarding completion to database:", error);
         // Tour still closes, localStorage is the fallback
       }
     }
-    
+
     setActive(false);
   }, [userId]);
 
@@ -386,12 +390,9 @@ export function OnboardingTour() {
       )}
 
       {/* Tooltip card */}
-      <div
-        className="absolute pointer-events-auto animate-scale-in"
-        style={tooltipStyle}
-      >
-        <div className="bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden max-w-sm">
-          <div className="h-1 bg-slate-100">
+      <div className="absolute pointer-events-auto animate-scale-in" style={tooltipStyle}>
+        <div className="bg-card rounded-xl shadow-2xl border-border/40 overflow-hidden max-w-sm">
+          <div className="h-1 bg-muted">
             <div
               className="h-full bg-gradient-to-r from-emerald-500 via-sky-500 to-violet-500 transition-all"
               style={{ width: `${progress}%` }}
@@ -403,10 +404,10 @@ export function OnboardingTour() {
                 {stepIdx === STEPS.length - 1 && <PartyPopper className="h-4 w-4" />}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[11px] uppercase tracking-wide text-slate-500 font-semibold">
+                <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold">
                   Step {stepIdx + 1} of {STEPS.length}
                 </p>
-                <h3 className="font-semibold text-slate-900 leading-tight">{step.title}</h3>
+                <h3 className="font-semibold text-foreground leading-tight">{step.title}</h3>
               </div>
               <button
                 onClick={finish}
@@ -416,7 +417,7 @@ export function OnboardingTour() {
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <p className="text-sm text-slate-600 leading-relaxed">{step.body}</p>
+            <p className="text-sm text-muted-foreground leading-relaxed">{step.body}</p>
             <div className="flex items-center justify-between pt-2">
               <button
                 onClick={finish}

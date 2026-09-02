@@ -11,10 +11,7 @@ export const logSecurityEvent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: LogInput) => data)
   .handler(async ({ data, context }) => {
-    const ip =
-      getRequestHeader("cf-connecting-ip") ||
-      getRequestHeader("x-forwarded-for") ||
-      null;
+    const ip = getRequestHeader("cf-connecting-ip") || getRequestHeader("x-forwarded-for") || null;
     const ua = getRequestHeader("user-agent") || null;
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -42,10 +39,7 @@ export const logSecurityEvent = createServerFn({ method: "POST" })
 export const logFailedSignIn = createServerFn({ method: "POST" })
   .inputValidator((data: { email: string; reason: string }) => data)
   .handler(async ({ data }) => {
-    const ip =
-      getRequestHeader("cf-connecting-ip") ||
-      getRequestHeader("x-forwarded-for") ||
-      null;
+    const ip = getRequestHeader("cf-connecting-ip") || getRequestHeader("x-forwarded-for") || null;
     const ua = getRequestHeader("user-agent") || null;
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

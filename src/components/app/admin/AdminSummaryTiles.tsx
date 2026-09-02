@@ -1,4 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
+import { Rail } from "@/components/app/surface";
 import { cn } from "@/lib/utils";
 
 export type SummaryTile = {
@@ -19,6 +20,11 @@ export function AdminSummaryTiles({
   onSelect?: (key: string) => void;
   columns?: 3 | 4 | 5 | 6;
 }) {
+  const numeric = (v: string | number) => {
+    const n = typeof v === "number" ? v : Number(String(v).replace(/[^0-9.-]/g, ""));
+    return Number.isFinite(n) ? n : 0;
+  };
+  const max = Math.max(0, ...tiles.map((t) => numeric(t.value)));
   const colClass =
     columns === 3
       ? "md:grid-cols-3"
@@ -43,10 +49,17 @@ export function AdminSummaryTiles({
               isActive && "shadow-[0_0_20px_-4px_rgba(16,185,129,0.45)]",
             )}
           >
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-slate-900 leading-tight">{t.value}</div>
-              <p className="text-xs text-slate-500 font-medium mt-1">{t.label}</p>
-              {t.hint && <p className="text-[10px] text-slate-400 mt-0.5">{t.hint}</p>}
+            <CardContent className="p-4">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                {t.label}
+              </p>
+              <div className="mt-1.5 text-2xl font-bold tabular-nums leading-tight text-foreground">
+                {t.value}
+              </div>
+              {t.hint && <p className="mt-0.5 text-[10px] text-muted-foreground/70">{t.hint}</p>}
+              <div className="mt-3">
+                <Rail pct={max > 0 ? (numeric(t.value) / max) * 100 : 0} />
+              </div>
             </CardContent>
           </Card>
         );

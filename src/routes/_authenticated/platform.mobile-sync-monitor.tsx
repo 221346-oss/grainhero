@@ -2,22 +2,40 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { getSyncMonitorOverview, listSyncRuns, runSyncManually, listActiveSyncLocks, type SyncEndpoint } from "@/lib/mobile-sync-monitor.functions";
+import {
+  getSyncMonitorOverview,
+  listSyncRuns,
+  runSyncManually,
+  listActiveSyncLocks,
+  type SyncEndpoint,
+} from "@/lib/mobile-sync-monitor.functions";
 import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 
-const ENDPOINTS: SyncEndpoint[] = ["field-tasks", "field-incidents", "marketplace", "buyer-summary"];
+const ENDPOINTS: SyncEndpoint[] = [
+  "field-tasks",
+  "field-incidents",
+  "marketplace",
+  "buyer-summary",
+];
 
 export const Route = createFileRoute("/_authenticated/platform/mobile-sync-monitor")({
   head: () => ({
     meta: [
       { title: "Platform · Mobile Sync Monitor — Grain Hero" },
-      { name: "description", content: "Platform · Mobile Sync Monitor workspace in the Grain Hero platform — private, sign-in required." },
+      {
+        name: "description",
+        content:
+          "Platform · Mobile Sync Monitor workspace in the Grain Hero platform — private, sign-in required.",
+      },
       { property: "og:title", content: "Platform · Mobile Sync Monitor — Grain Hero" },
-      { property: "og:description", content: "Platform · Mobile Sync Monitor workspace in the Grain Hero platform." },
+      {
+        property: "og:description",
+        content: "Platform · Mobile Sync Monitor workspace in the Grain Hero platform.",
+      },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
@@ -33,26 +51,32 @@ function MobileSyncMonitorPage() {
   const [selected, setSelected] = useState<SyncEndpoint | undefined>(undefined);
 
   const { data: overview } = useQuery({
-    queryKey: ["sync-monitor-overview"], queryFn: () => loadOverview(),
+    queryKey: ["sync-monitor-overview"],
+    queryFn: () => loadOverview(),
     refetchInterval: 30_000,
   });
   const { data: locks } = useQuery({
-    queryKey: ["sync-monitor-locks"], queryFn: () => loadLocks(),
+    queryKey: ["sync-monitor-locks"],
+    queryFn: () => loadLocks(),
     refetchInterval: 5_000,
   });
   const { data: runs } = useQuery({
-    queryKey: ["sync-monitor-runs", selected], queryFn: () => loadRuns({ data: { endpoint: selected, limit: 50 } }),
+    queryKey: ["sync-monitor-runs", selected],
+    queryFn: () => loadRuns({ data: { endpoint: selected, limit: 50 } }),
   });
 
   const runNow = useMutation({
-    mutationFn: (endpoint: SyncEndpoint) => trigger({ data: { endpoint, idempotency_key: crypto.randomUUID() } }),
+    mutationFn: (endpoint: SyncEndpoint) =>
+      trigger({ data: { endpoint, idempotency_key: crypto.randomUUID() } }),
     onSuccess: (r, endpoint) => {
       if ((r as { deduped?: boolean }).deduped) {
         toast.info(`${endpoint} already run for this key`);
       } else if (r.error === "busy") {
         toast.warning(`${endpoint} is already running — try again in a moment`);
       } else {
-        toast[r.ok ? "success" : "error"](r.ok ? `${endpoint} probed OK (${r.row_count} rows)` : `${endpoint} failed: ${r.error}`);
+        toast[r.ok ? "success" : "error"](
+          r.ok ? `${endpoint} probed OK (${r.row_count} rows)` : `${endpoint} failed: ${r.error}`,
+        );
       }
       qc.invalidateQueries({ queryKey: ["sync-monitor-overview"] });
       qc.invalidateQueries({ queryKey: ["sync-monitor-runs"] });
@@ -61,9 +85,26 @@ function MobileSyncMonitorPage() {
     onError: (e) => toast.error((e as Error).message),
   });
   const [pendingEndpoint, setPendingEndpoint] = useState<SyncEndpoint | null>(null);
-  const lockedEndpoints = new Set(((locks as Array<{ endpoint: string }>) ?? []).map((l) => l.endpoint));
+  const lockedEndpoints = new Set(
+    ((locks as Array<{ endpoint: string }>) ?? []).map((l) => l.endpoint),
+  );
 
-  const ov = overview as { endpoints: Array<{ endpoint: string; total: number; success: number; failure: number; error_rate: number; p95_ms: number; last_run_at: string | null; last_error_at: string | null; last_error_message: string | null }>; totals: { total: number; error_rate: number; p95_ms: number } } | undefined;
+  const ov = overview as
+    | {
+        endpoints: Array<{
+          endpoint: string;
+          total: number;
+          success: number;
+          failure: number;
+          error_rate: number;
+          p95_ms: number;
+          last_run_at: string | null;
+          last_error_at: string | null;
+          last_error_message: string | null;
+        }>;
+        totals: { total: number; error_rate: number; p95_ms: number };
+      }
+    | undefined;
 
   return (
     <AdminPageShell
@@ -72,7 +113,9 @@ function MobileSyncMonitorPage() {
     >
       <div className="grid gap-4 xl:grid-cols-4">
         <Card className="xl:col-span-4">
-          <CardHeader><CardTitle>Endpoints (last 24h)</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Endpoints (last 24h)</CardTitle>
+          </CardHeader>
           <CardContent>
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
               {ENDPOINTS.map((endpoint) => {
@@ -86,7 +129,11 @@ function MobileSyncMonitorPage() {
                       <div className="font-medium text-sm">{endpoint}</div>
                       <div className="flex gap-1">
                         {isLocked && <Badge variant="secondary">Locked</Badge>}
-                        <Badge variant={errRate > 0.1 ? "destructive" : errRate > 0 ? "secondary" : "default"}>
+                        <Badge
+                          variant={
+                            errRate > 0.1 ? "destructive" : errRate > 0 ? "secondary" : "default"
+                          }
+                        >
                           {(errRate * 100).toFixed(1)}% err
                         </Badge>
                       </div>
@@ -95,17 +142,29 @@ function MobileSyncMonitorPage() {
                       <span>Total: {row?.total ?? 0}</span>
                       <span>Fail: {row?.failure ?? 0}</span>
                       <span>P95: {row?.p95_ms ?? 0}ms</span>
-                      <span>Last: {row?.last_run_at ? new Date(row.last_run_at).toLocaleTimeString() : "—"}</span>
+                      <span>
+                        Last:{" "}
+                        {row?.last_run_at ? new Date(row.last_run_at).toLocaleTimeString() : "—"}
+                      </span>
                     </div>
                     {row?.last_error_message && (
-                      <div className="text-xs text-destructive line-clamp-2">{row.last_error_message}</div>
+                      <div className="text-xs text-destructive line-clamp-2">
+                        {row.last_error_message}
+                      </div>
                     )}
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline" onClick={() => setSelected(endpoint)}>View runs</Button>
-                      <Button size="sm"
-                        onClick={() => { setPendingEndpoint(endpoint); runNow.mutate(endpoint); }}
+                      <Button size="sm" variant="outline" onClick={() => setSelected(endpoint)}>
+                        View runs
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          setPendingEndpoint(endpoint);
+                          runNow.mutate(endpoint);
+                        }}
                         disabled={runNow.isPending || isLocked}
-                        title={isLocked ? "A run is already in progress" : undefined}>
+                        title={isLocked ? "A run is already in progress" : undefined}
+                      >
                         {isPending ? "Running…" : isLocked ? "Locked" : "Run now"}
                       </Button>
                     </div>
@@ -122,9 +181,22 @@ function MobileSyncMonitorPage() {
           </CardHeader>
           <CardContent>
             <div className="flex gap-2 mb-3">
-              <Button size="sm" variant={selected ? "outline" : "default"} onClick={() => setSelected(undefined)}>All</Button>
+              <Button
+                size="sm"
+                variant={selected ? "outline" : "default"}
+                onClick={() => setSelected(undefined)}
+              >
+                All
+              </Button>
               {ENDPOINTS.map((e) => (
-                <Button key={e} size="sm" variant={selected === e ? "default" : "outline"} onClick={() => setSelected(e)}>{e}</Button>
+                <Button
+                  key={e}
+                  size="sm"
+                  variant={selected === e ? "default" : "outline"}
+                  onClick={() => setSelected(e)}
+                >
+                  {e}
+                </Button>
               ))}
             </div>
             <div className="overflow-x-auto">
@@ -142,18 +214,28 @@ function MobileSyncMonitorPage() {
                 <tbody>
                   {((runs as Array<Record<string, unknown>>) ?? []).map((r, i) => (
                     <tr key={i} className="border-b last:border-0">
-                      <td className="py-2 pr-3 text-xs">{new Date(r.started_at as string).toLocaleString()}</td>
+                      <td className="py-2 pr-3 text-xs">
+                        {new Date(r.started_at as string).toLocaleString()}
+                      </td>
                       <td className="py-2 pr-3">{r.endpoint as string}</td>
                       <td className="py-2 pr-3">
-                        <Badge variant={r.status === "ok" ? "default" : "destructive"}>{r.status as string}</Badge>
+                        <Badge variant={r.status === "ok" ? "default" : "destructive"}>
+                          {r.status as string}
+                        </Badge>
                       </td>
                       <td className="py-2 pr-3">{r.duration_ms as number}ms</td>
                       <td className="py-2 pr-3">{(r.row_count as number | null) ?? "—"}</td>
-                      <td className="py-2 pr-3 text-xs text-destructive max-w-md truncate">{(r.error_message as string | null) ?? ""}</td>
+                      <td className="py-2 pr-3 text-xs text-destructive max-w-md truncate">
+                        {(r.error_message as string | null) ?? ""}
+                      </td>
                     </tr>
                   ))}
                   {!runs?.length && (
-                    <tr><td colSpan={6} className="py-6 text-center text-muted-foreground text-sm">No runs yet.</td></tr>
+                    <tr>
+                      <td colSpan={6} className="py-6 text-center text-muted-foreground text-sm">
+                        No runs yet.
+                      </td>
+                    </tr>
                   )}
                 </tbody>
               </table>

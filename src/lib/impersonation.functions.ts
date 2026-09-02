@@ -10,7 +10,7 @@ export const startImpersonation = createServerFn({ method: "POST" })
     // Check if user is super_admin
     const { data: isSuperAdmin } = await context.supabase.rpc("has_role", {
       _user_id: context.userId,
-      _role: "super_admin"
+      _role: "super_admin",
     });
     if (!isSuperAdmin) throw new Error("Forbidden: super_admin only");
 
@@ -26,14 +26,18 @@ export const startImpersonation = createServerFn({ method: "POST" })
     // Check if target user has admin role
     const { data: hasAdminRole } = await context.supabase.rpc("has_role", {
       _user_id: data.adminId,
-      _role: "admin"
+      _role: "admin",
     });
 
     if (!hasAdminRole) throw new Error("Target user is not an admin");
 
-    // Return the verified admin info — state is stored client-side
+    // Return the verified admin info — state is stored client-side.
+    // `startedBy` travels with it so the session can be recognised as belonging
+    // to this super admin and discarded when anyone else signs in; localStorage
+    // is keyed to the browser, not the account.
     return {
       success: true,
+      startedBy: context.userId,
       adminName: targetUser.name || targetUser.email,
       adminId: targetUser.id,
       adminEmail: targetUser.email,
@@ -49,7 +53,7 @@ export const stopImpersonation = createServerFn({ method: "POST" })
     // Check if user is super_admin
     const { data: isSuperAdmin } = await context.supabase.rpc("has_role", {
       _user_id: context.userId,
-      _role: "super_admin"
+      _role: "super_admin",
     });
     if (!isSuperAdmin) throw new Error("Forbidden: super_admin only");
 

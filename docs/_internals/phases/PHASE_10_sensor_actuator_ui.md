@@ -17,15 +17,16 @@
 | -------------------------- | :---: | :-----: | :--------: | :---------: |
 | Sensor detail (live chart) |   ✓   |    ✓    |     ✓      |      ✓      |
 | Threshold drawer           |   ✓   |    ✓    |     —      |      —      |
-| Issue actuator command     |   ✓   |    ✓    |    ✓*      |      —      |
+| Issue actuator command     |   ✓   |    ✓    |    ✓\*     |      —      |
 | Automation rules           |   ✓   |    —    |     —      |      —      |
-| Alerts inbox               |   ✓   |    ✓    |     ✓      |    read-only|
+| Alerts inbox               |   ✓   |    ✓    |     ✓      |  read-only  |
 
 \* Technician only for maintenance / commissioning commands.
 
 ## Files to create / edit
 
 ### New components
+
 - `src/components/app/sensors/LiveReadingChart.tsx` — Recharts line, realtime subscribe to `sensor_readings` filtered by `device_id`, cleanup channel in `useEffect`.
 - `src/components/app/sensors/QualityBadge.tsx` — maps `ok|stale|out_of_range|missing` to color chip.
 - `src/components/app/sensors/ThresholdDrawer.tsx` — CRUD via `listThresholds/saveThreshold/deleteThreshold`; shows plan limit + `PlanLimitBanner` when `max_active_alert_rules` reached.
@@ -35,18 +36,22 @@
 - `src/components/app/alerts/AlertRow.tsx` — reusable row with acknowledge/assign actions.
 
 ### Route edits
+
 - `src/routes/_authenticated/sensors.tsx` — list unchanged; each row → drawer with `LiveReadingChart` + `ThresholdDrawer` trigger.
 - `src/routes/_authenticated/sensors.$sensorId.tsx` (new) — full sensor detail page for deep links from alerts.
 - `src/routes/_authenticated/actuators.tsx` — attach `CommandConsole` per actuator card.
 - `src/routes/_authenticated/grain-alerts.tsx` — replace static list with filter bar + `AlertRow` grid + realtime subscribe.
 
 ### Server-fn additions
+
 - `src/lib/alerts.functions.ts`:
   - `listAlerts({ siloId?, severity?, status?, from?, to? })`
   - `acknowledgeAlert(id)`, `assignAlert(id, userId)` — writes `logActivity` + `emitNotification` to assignee.
 
 ### Skeletons
+
 Add to `src/components/app/skeletons.tsx` and register in `src/router.tsx > PAGE_SKELETONS`:
+
 - `SensorDetailSkeleton` (chart placeholder + threshold list)
 - `ActuatorsSkeleton` (grid of command console cards)
 - `AlertsSkeleton` (filter bar + rows)
@@ -84,4 +89,5 @@ Add to `src/components/app/skeletons.tsx` and register in `src/router.tsx > PAGE
 - Bulk threshold import CSV → Phase 20 (Enterprise polish).
 
 ---
+
 **Approval prompt:** Reply **go** to build Phase 10 UI, or **edit** with changes.

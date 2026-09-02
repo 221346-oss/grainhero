@@ -16,8 +16,15 @@ import { listWarehousesWithTeam } from "@/lib/operations.functions";
 import { WarehouseAssignmentSidebar } from "./WarehouseAssignmentSidebar";
 import { Badge } from "@/components/ui/badge";
 import {
-  MapPin, Warehouse, Users, User, Wrench,
-  Database, AlertCircle, Loader2, ChevronDown,
+  MapPin,
+  Warehouse,
+  Users,
+  User,
+  Wrench,
+  Database,
+  AlertCircle,
+  Loader2,
+  ChevronDown,
 } from "lucide-react";
 
 type WarehouseRow = {
@@ -28,7 +35,14 @@ type WarehouseRow = {
   location: { description?: string | null; address?: string | null };
   total_capacity_kg: number;
   total_silos: number;
-  silos: Array<{ id: string; warehouse_id: string; name: string; silo_id: string; capacity_kg: number; status: string }>;
+  silos: Array<{
+    id: string;
+    warehouse_id: string;
+    name: string;
+    silo_id: string;
+    capacity_kg: number;
+    status: string;
+  }>;
   notes: string | null;
   manager_id: string | null;
   manager_name: string | null;
@@ -41,43 +55,50 @@ type WarehouseRow = {
 // This ensures warehouses at the same location are grouped together.
 function extractRegion(loc: WarehouseRow["location"] | null): string {
   if (!loc) return "Unassigned Region";
-  
+
   // Prefer location.description if set (for custom grouping)
   const desc = (loc.description ?? "").trim();
   if (desc) return desc;
-  
+
   // Otherwise use full address - this groups same-location warehouses together
   const addr = (loc.address ?? "").trim();
   if (addr) return addr;
-  
+
   return "Unassigned Region";
 }
 
 // ── Status colour map ────────────────────────────────────────────────────────
 const STATUS_CFG: Record<string, { dot: string; badge: string; label: string }> = {
-  active:      { dot: "bg-emerald-500", badge: "bg-emerald-100 text-emerald-700",  label: "Active"      },
-  offline:     { dot: "bg-slate-400",   badge: "bg-slate-100 text-slate-600",      label: "Offline"     },
-  error:       { dot: "bg-red-500",     badge: "bg-red-100 text-red-700",          label: "Error"       },
-  maintenance: { dot: "bg-amber-500",   badge: "bg-amber-100 text-amber-700",      label: "Maintenance" },
+  active: { dot: "bg-emerald-500", badge: "bg-emerald-100 text-emerald-700", label: "Active" },
+  offline: { dot: "bg-slate-400", badge: "bg-slate-100 text-slate-600", label: "Offline" },
+  error: { dot: "bg-red-500", badge: "bg-red-100 text-red-700", label: "Error" },
+  maintenance: { dot: "bg-amber-500", badge: "bg-amber-100 text-amber-700", label: "Maintenance" },
 };
 const statusCfg = (s: string) => STATUS_CFG[s] ?? STATUS_CFG.offline;
 
 // ── Warehouse card ───────────────────────────────────────────────────────────
-function WarehouseCard({ w, onAssign }: { w: WarehouseRow; onAssign?: (warehouse: WarehouseRow) => void }) {
+function WarehouseCard({
+  w,
+  onAssign,
+}: {
+  w: WarehouseRow;
+  onAssign?: (warehouse: WarehouseRow) => void;
+}) {
   const cfg = statusCfg(w.status);
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-3 hover:border-slate-300 transition-colors">
-
+    <div className="rounded-lg border-border/40 bg-card p-4 space-y-3 hover:border-slate-300 transition-colors">
       {/* Header row */}
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <Warehouse className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-            <span className="font-semibold text-sm text-slate-900 truncate">{w.name}</span>
+            <Warehouse className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+            <span className="font-semibold text-sm text-foreground truncate">{w.name}</span>
           </div>
-          <span className="text-[11px] font-mono text-slate-400 ml-5">{w.warehouse_id}</span>
+          <span className="text-[11px] font-mono text-muted-foreground ml-5">{w.warehouse_id}</span>
         </div>
-        <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${cfg.badge}`}>
+        <span
+          className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${cfg.badge}`}
+        >
           <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
           {cfg.label}
         </span>
@@ -85,16 +106,16 @@ function WarehouseCard({ w, onAssign }: { w: WarehouseRow; onAssign?: (warehouse
 
       {/* Address if distinct from region label */}
       {w.location?.address && (
-        <div className="flex items-start gap-1.5 text-xs text-slate-500">
-          <MapPin className="w-3 h-3 shrink-0 mt-0.5 text-slate-400" />
+        <div className="flex items-start gap-1.5 text-xs text-muted-foreground">
+          <MapPin className="w-3 h-3 shrink-0 mt-0.5 text-muted-foreground" />
           <span className="truncate">{w.location.address}</span>
         </div>
       )}
 
       {/* Capacity + silos summary */}
-      <div className="flex items-center gap-4 text-xs text-slate-500 border-b border-slate-100 pb-2">
+      <div className="flex items-center gap-4 text-xs text-muted-foreground border-b border-border/40 pb-2">
         <span className="flex items-center gap-1">
-          <Database className="w-3 h-3 text-slate-400" />
+          <Database className="w-3 h-3 text-muted-foreground" />
           {w.total_silos} silo{w.total_silos !== 1 ? "s" : ""}
         </span>
         <span>{w.total_capacity_kg.toLocaleString()} kg total</span>
@@ -104,50 +125,68 @@ function WarehouseCard({ w, onAssign }: { w: WarehouseRow; onAssign?: (warehouse
       {w.silos && w.silos.length > 0 ? (
         <div className="flex flex-wrap gap-1.5">
           {w.silos.map((silo) => (
-            <div key={silo.id} className="flex items-center justify-between bg-slate-50 rounded border border-slate-100 px-2.5 py-1.5 text-[11px] min-w-max">
+            <div
+              key={silo.id}
+              className="flex items-center justify-between bg-muted/20 rounded border border-border/40 px-2.5 py-1.5 text-[11px] min-w-max"
+            >
               <div className="flex items-center gap-1.5">
-                <div className={`w-2 h-2 rounded-full shrink-0 ${
-                  silo.status === "active" ? "bg-emerald-500" : "bg-slate-300"
-                }`} />
-                <span className="text-slate-700 font-medium">{silo.name}</span>
+                <div
+                  className={`w-2 h-2 rounded-full shrink-0 ${
+                    silo.status === "active" ? "bg-emerald-500" : "bg-slate-300"
+                  }`}
+                />
+                <span className="text-foreground font-medium">{silo.name}</span>
               </div>
-              <span className="text-slate-500 shrink-0 ml-1.5">{(silo.capacity_kg / 1000).toFixed(0)}t</span>
+              <span className="text-muted-foreground shrink-0 ml-1.5">
+                {(silo.capacity_kg / 1000).toFixed(0)}t
+              </span>
             </div>
           ))}
         </div>
       ) : (
-        <div className="text-xs text-slate-400 italic py-1">No silos in this warehouse yet</div>
+        <div className="text-xs text-muted-foreground italic py-1">
+          No silos in this warehouse yet
+        </div>
       )}
 
       {/* Team assignments with edit button */}
-      <div className="border-t border-slate-100 pt-3 space-y-2">
+      <div className="border-t border-border/40 pt-3 space-y-2">
         {/* Manager */}
         <div className="flex items-center gap-2">
-          <User className="w-3 h-3 text-slate-400 shrink-0" />
-          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider w-16 shrink-0">Manager</span>
+          <User className="w-3 h-3 text-muted-foreground shrink-0" />
+          <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider w-16 shrink-0">
+            Manager
+          </span>
           {w.manager_name ? (
-            <span className="text-xs font-medium text-slate-700 truncate flex-1">{w.manager_name}</span>
+            <span className="text-xs font-medium text-foreground truncate flex-1">
+              {w.manager_name}
+            </span>
           ) : (
-            <span className="text-xs text-slate-400 italic flex-1">Unassigned</span>
+            <span className="text-xs text-muted-foreground italic flex-1">Unassigned</span>
           )}
         </div>
 
         {/* Technicians */}
         <div className="flex items-start gap-2">
-          <Wrench className="w-3 h-3 text-slate-400 shrink-0 mt-0.5" />
-          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider w-16 shrink-0 mt-0.5">
+          <Wrench className="w-3 h-3 text-muted-foreground shrink-0 mt-0.5" />
+          <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider w-16 shrink-0 mt-0.5">
             Tech{w.technician_names.length !== 1 ? "s" : ""}
           </span>
           {w.technician_names.length > 0 ? (
             <div className="flex flex-wrap gap-1 flex-1">
               {w.technician_names.map((t, i) => (
-                <span key={i} className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-medium">
+                <span
+                  key={i}
+                  className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded font-medium"
+                >
                   {t}
                 </span>
               ))}
             </div>
           ) : (
-            <span className="text-xs text-slate-400 italic mt-0.5 flex-1">None assigned</span>
+            <span className="text-xs text-muted-foreground italic mt-0.5 flex-1">
+              None assigned
+            </span>
           )}
         </div>
 
@@ -163,7 +202,7 @@ function WarehouseCard({ w, onAssign }: { w: WarehouseRow; onAssign?: (warehouse
       </div>
 
       {w.notes && (
-        <p className="text-[11px] text-slate-400 italic leading-snug border-t border-slate-100 pt-2 line-clamp-2">
+        <p className="text-[11px] text-muted-foreground italic leading-snug border-t border-border/40 pt-2 line-clamp-2">
           {w.notes}
         </p>
       )}
@@ -172,41 +211,51 @@ function WarehouseCard({ w, onAssign }: { w: WarehouseRow; onAssign?: (warehouse
 }
 
 // ── Region group ─────────────────────────────────────────────────────────────
-function RegionGroup({ region, warehouses, onAssign }: { region: string; warehouses: WarehouseRow[]; onAssign?: (warehouse: WarehouseRow) => void }) {
+function RegionGroup({
+  region,
+  warehouses,
+  onAssign,
+}: {
+  region: string;
+  warehouses: WarehouseRow[];
+  onAssign?: (warehouse: WarehouseRow) => void;
+}) {
   const [expanded, setExpanded] = useState(false);
   const activeCount = warehouses.filter((w) => w.status === "active").length;
-  const totalSilos  = warehouses.reduce((s, w) => s + w.total_silos, 0);
-  const totalCap    = warehouses.reduce((s, w) => s + w.total_capacity_kg, 0);
+  const totalSilos = warehouses.reduce((s, w) => s + w.total_silos, 0);
+  const totalCap = warehouses.reduce((s, w) => s + w.total_capacity_kg, 0);
 
   // Unique team members across this region
-  const managers    = [...new Set(warehouses.map((w) => w.manager_name).filter(Boolean))] as string[];
+  const managers = [...new Set(warehouses.map((w) => w.manager_name).filter(Boolean))] as string[];
   const technicians = [...new Set(warehouses.flatMap((w) => w.technician_names))];
 
   return (
-    <div className="space-y-0 border border-slate-200 rounded-lg overflow-hidden">
+    <div className="space-y-0 border-border/40 rounded-lg overflow-hidden">
       {/* Region header - clickable to expand */}
       <button
         onClick={() => setExpanded(!expanded)}
         className="w-full flex flex-wrap items-center justify-between gap-3 px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors border-b border-slate-200"
       >
         <div className="flex items-center gap-3 min-w-0">
-          <ChevronDown className={`w-5 h-5 text-slate-400 shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+          <ChevronDown
+            className={`w-5 h-5 text-slate-400 shrink-0 transition-transform ${expanded ? "rotate-180" : ""}`}
+          />
           <MapPin className="w-4 h-4 text-[#2FAC0C] shrink-0" />
-          <h3 className="text-sm font-semibold text-slate-800 truncate">{region}</h3>
-          <span className="text-[11px] font-semibold bg-white text-slate-600 px-2 py-0.5 rounded border border-slate-200 shrink-0">
+          <h3 className="text-sm font-semibold text-foreground truncate">{region}</h3>
+          <span className="text-[11px] font-semibold bg-card text-muted-foreground px-2 py-0.5 rounded border border-border/40 shrink-0">
             {warehouses.length} wh
           </span>
         </div>
 
         {/* Summary chips - always visible */}
         <div className="flex flex-wrap gap-2 text-[10px] shrink-0">
-          <span className="flex items-center gap-1 text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full font-medium">
+          <span className="flex items-center gap-1 text-emerald-700 bg-emerald-50 border-emerald-200 px-2 py-0.5 rounded-full font-medium">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> {activeCount} active
           </span>
-          <span className="text-slate-600 bg-white border border-slate-200 px-2 py-0.5 rounded-full font-medium">
+          <span className="text-muted-foreground bg-card border-border/40 px-2 py-0.5 rounded-full font-medium">
             {totalSilos} silos
           </span>
-          <span className="text-slate-600 bg-white border border-slate-200 px-2 py-0.5 rounded-full font-medium">
+          <span className="text-muted-foreground bg-card border-border/40 px-2 py-0.5 rounded-full font-medium">
             {totalCap.toLocaleString()} kg
           </span>
         </div>
@@ -214,17 +263,20 @@ function RegionGroup({ region, warehouses, onAssign }: { region: string; warehou
 
       {/* Expanded content */}
       {expanded && (
-        <div className="px-4 py-3 space-y-3 bg-white">
+        <div className="px-4 py-3 space-y-3 bg-card">
           {/* Regional team summary bar */}
           {(managers.length > 0 || technicians.length > 0) && (
-            <div className="flex flex-wrap gap-3 text-xs pb-2 border-b border-slate-100">
+            <div className="flex flex-wrap gap-3 text-xs pb-2 border-b border-border/40">
               {managers.length > 0 && (
                 <div className="flex items-center gap-1.5">
-                  <User className="w-3 h-3 text-slate-400" />
-                  <span className="text-slate-500 font-medium">Managers:</span>
+                  <User className="w-3 h-3 text-muted-foreground" />
+                  <span className="text-muted-foreground font-medium">Managers:</span>
                   <div className="flex flex-wrap gap-1">
                     {managers.map((m, i) => (
-                      <span key={i} className="bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded-full text-[10px] font-medium">
+                      <span
+                        key={i}
+                        className="bg-blue-50 text-blue-700 border-blue-200 px-1.5 py-0.5 rounded-full text-[10px] font-medium"
+                      >
                         {m}
                       </span>
                     ))}
@@ -233,11 +285,14 @@ function RegionGroup({ region, warehouses, onAssign }: { region: string; warehou
               )}
               {technicians.length > 0 && (
                 <div className="flex items-center gap-1.5">
-                  <Wrench className="w-3 h-3 text-slate-400" />
-                  <span className="text-slate-500 font-medium">Techs:</span>
+                  <Wrench className="w-3 h-3 text-muted-foreground" />
+                  <span className="text-muted-foreground font-medium">Techs:</span>
                   <div className="flex flex-wrap gap-1">
                     {technicians.map((t, i) => (
-                      <span key={i} className="bg-purple-50 text-purple-700 border border-purple-200 px-1.5 py-0.5 rounded-full text-[10px] font-medium">
+                      <span
+                        key={i}
+                        className="bg-purple-50 text-purple-700 border-purple-200 px-1.5 py-0.5 rounded-full text-[10px] font-medium"
+                      >
                         {t}
                       </span>
                     ))}
@@ -249,7 +304,9 @@ function RegionGroup({ region, warehouses, onAssign }: { region: string; warehou
 
           {/* Warehouse cards grid */}
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {warehouses.map((w) => <WarehouseCard key={w.id} w={w} onAssign={onAssign} />)}
+            {warehouses.map((w) => (
+              <WarehouseCard key={w.id} w={w} onAssign={onAssign} />
+            ))}
           </div>
         </div>
       )}
@@ -264,7 +321,7 @@ export function MultiRegionWarehousesView() {
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["warehouses-with-team"],
-    queryFn:  () => fetchFn(),
+    queryFn: () => fetchFn(),
     staleTime: 30_000,
   });
 
@@ -290,7 +347,7 @@ export function MultiRegionWarehousesView() {
   // ── Loading ────────────────────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-16 text-slate-400">
+      <div className="flex items-center justify-center py-16 text-muted-foreground">
         <Loader2 className="w-4 h-4 animate-spin mr-2" /> Loading regions…
       </div>
     );
@@ -299,7 +356,7 @@ export function MultiRegionWarehousesView() {
   // ── Error ──────────────────────────────────────────────────────────────────
   if (isError) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-4 flex items-start gap-3">
+      <div className="rounded-lg border-red-200 bg-red-50 p-4 flex items-start gap-3">
         <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
         <p className="text-sm text-red-700">
           {error instanceof Error ? error.message : "Failed to load warehouses"}
@@ -311,7 +368,7 @@ export function MultiRegionWarehousesView() {
   // ── Empty ──────────────────────────────────────────────────────────────────
   if (totalWarehouses === 0) {
     return (
-      <div className="py-12 text-center text-slate-400">
+      <div className="py-12 text-center text-muted-foreground">
         <Warehouse className="w-8 h-8 mx-auto mb-2 opacity-40" />
         <p className="text-sm">No warehouses yet. Create one to see the regional view.</p>
       </div>
@@ -319,8 +376,8 @@ export function MultiRegionWarehousesView() {
   }
 
   // ── Summary strip ──────────────────────────────────────────────────────────
-  const totalRegions  = regionGroups.length;
-  const totalSilos    = (data ?? []).reduce((s, w) => s + (w as WarehouseRow).total_silos, 0);
+  const totalRegions = regionGroups.length;
+  const totalSilos = (data ?? []).reduce((s, w) => s + (w as WarehouseRow).total_silos, 0);
   const totalCapacity = (data ?? []).reduce((s, w) => s + (w as WarehouseRow).total_capacity_kg, 0);
 
   return (
@@ -328,21 +385,28 @@ export function MultiRegionWarehousesView() {
       {/* Summary strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "Regions",         value: totalRegions    },
-          { label: "Warehouses",      value: totalWarehouses },
-          { label: "Total silos",     value: totalSilos      },
-          { label: "Total capacity",  value: `${totalCapacity.toLocaleString()} kg` },
+          { label: "Regions", value: totalRegions },
+          { label: "Warehouses", value: totalWarehouses },
+          { label: "Total silos", value: totalSilos },
+          { label: "Total capacity", value: `${totalCapacity.toLocaleString()} kg` },
         ].map(({ label, value }) => (
-          <div key={label} className="rounded-lg border border-slate-200 bg-white px-4 py-3">
-            <div className="text-lg font-bold text-slate-900 tabular-nums leading-tight">{value}</div>
-            <div className="text-[11px] text-slate-500 mt-0.5">{label}</div>
+          <div key={label} className="rounded-lg border-border/40 bg-card px-4 py-3">
+            <div className="text-lg font-bold text-foreground tabular-nums leading-tight">
+              {value}
+            </div>
+            <div className="text-[11px] text-muted-foreground mt-0.5">{label}</div>
           </div>
         ))}
       </div>
 
       {/* Region groups */}
       {regionGroups.map(([region, warehouses]) => (
-        <RegionGroup key={region} region={region} warehouses={warehouses} onAssign={setSelectedWarehouse} />
+        <RegionGroup
+          key={region}
+          region={region}
+          warehouses={warehouses}
+          onAssign={setSelectedWarehouse}
+        />
       ))}
 
       {/* Assignment sidebar */}

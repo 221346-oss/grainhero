@@ -5,14 +5,22 @@ import { toast } from "sonner";
 import { reportMobileFieldIncident } from "@/lib/field-settings.functions";
 import { getMyRole } from "@/lib/roles.functions";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Loader2, Ticket, ChevronDown, Upload, X } from "lucide-react";
 import { INCIDENT_SUGGESTIONS } from "@/lib/field-incident-suggestions";
@@ -20,12 +28,12 @@ import { INCIDENT_SUGGESTIONS } from "@/lib/field-incident-suggestions";
 // ── Severity options (High removed per spec) ─────────────────────────────────
 const SEVERITY_OPTIONS = [
   { value: "critical", label: "Critical" },
-  { value: "medium",   label: "Medium"   },
-  { value: "low",      label: "Low"      },
+  { value: "medium", label: "Medium" },
+  { value: "low", label: "Low" },
 ] as const;
 
 const ROUTE_OPTIONS = [
-  { value: "admin",      label: "Admin"      },
+  { value: "admin", label: "Admin" },
   { value: "technician", label: "Technician" },
 ] as const;
 
@@ -55,9 +63,9 @@ function TitleCombobox({
   targetRole: "admin" | "manager" | "technician";
   error?: boolean;
 }) {
-  const [open, setOpen]     = useState(false);
-  const containerRef        = useRef<HTMLDivElement>(null);
-  const inputRef            = useRef<HTMLInputElement>(null);
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const suggestions = SUGGESTIONS[targetRole];
 
@@ -83,9 +91,7 @@ function TitleCombobox({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetRole]);
 
-  const filtered = suggestions.filter((s) =>
-    s.toLowerCase().includes(value.toLowerCase()),
-  );
+  const filtered = suggestions.filter((s) => s.toLowerCase().includes(value.toLowerCase()));
 
   function select(s: string) {
     onChange(s);
@@ -124,10 +130,12 @@ function TitleCombobox({
 
       {/* Dropdown with suggestions only */}
       {open && (
-        <div className="absolute z-50 mt-1 w-full rounded-md border border-border bg-popover shadow-lg max-h-56 overflow-y-auto">
+        <div className="absolute z-50 mt-1 w-full rounded-md border-border bg-popover shadow-lg max-h-56 overflow-y-auto">
           <div className="py-1">
             {filtered.length === 0 && (
-              <p className="px-3 py-2 text-xs text-muted-foreground">No matches — select "Other" or type your own.</p>
+              <p className="px-3 py-2 text-xs text-muted-foreground">
+                No matches — select "Other" or type your own.
+              </p>
             )}
             {filtered.map((s) => (
               <button
@@ -163,8 +171,8 @@ export function ReportTicketDialog({
   silos = [],
   extraInvalidate = [],
 }: Props) {
-  const qc        = useQueryClient();
-  const reportFn  = useServerFn(reportMobileFieldIncident);
+  const qc = useQueryClient();
+  const reportFn = useServerFn(reportMobileFieldIncident);
   const getRoleFn = useServerFn(getMyRole);
 
   const { data: roleData } = useQuery({
@@ -173,17 +181,17 @@ export function ReportTicketDialog({
     staleTime: 5 * 60_000,
   });
 
-  const detectedRole    = roleData?.role ?? "manager";
+  const detectedRole = roleData?.role ?? "manager";
   const userProfileName = roleData?.profile?.name || roleData?.profile?.email || "";
 
-  const [title,        setTitle]        = useState("");
-  const [severity,     setSeverity]     = useState<"low" | "medium" | "critical">("medium");
-  const [targetRole,   setTargetRole]   = useState<"admin" | "manager" | "technician">("technician");
+  const [title, setTitle] = useState("");
+  const [severity, setSeverity] = useState<"low" | "medium" | "critical">("medium");
+  const [targetRole, setTargetRole] = useState<"admin" | "manager" | "technician">("technician");
   const [reporterName, setReporterName] = useState("");
-  const [role,         setRole]         = useState("manager");
-  const [description,  setDescription]  = useState("");
-  const [siloId,       setSiloId]       = useState<string>("");
-  const [attachment,   setAttachment]   = useState<File | null>(null);
+  const [role, setRole] = useState("manager");
+  const [description, setDescription] = useState("");
+  const [siloId, setSiloId] = useState<string>("");
+  const [attachment, setAttachment] = useState<File | null>(null);
 
   // Validation errors
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -212,9 +220,9 @@ export function ReportTicketDialog({
 
   function validate() {
     const e: Record<string, string> = {};
-    if (!title.trim())        e.title        = "Title is required.";
-    if (!severity)            e.severity     = "Please select a severity level.";
-    if (!targetRole)          e.targetRole   = "Please select a recipient.";
+    if (!title.trim()) e.title = "Title is required.";
+    if (!severity) e.severity = "Please select a severity level.";
+    if (!targetRole) e.targetRole = "Please select a recipient.";
     if (!reporterName.trim()) e.reporterName = "Reporter name is required.";
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -224,14 +232,14 @@ export function ReportTicketDialog({
     mutationFn: () =>
       reportFn({
         data: {
-          title:         title.trim(),
-          category:      title.trim(),
+          title: title.trim(),
+          category: title.trim(),
           severity,
           reporter_name: reporterName.trim() || undefined,
           reporter_role: role.trim() || undefined,
-          target_role:   targetRole,
-          description:   description.trim() || undefined,
-          silo_id:       siloId || null,
+          target_role: targetRole,
+          description: description.trim() || undefined,
+          silo_id: siloId || null,
         },
       }),
     onSuccess: () => {
@@ -266,22 +274,33 @@ export function ReportTicketDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o) reset(); onOpenChange(o); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) reset();
+        onOpenChange(o);
+      }}
+    >
       <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-sm font-semibold">Report Incident</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-3 py-1">
-
           {/* 1. Title — FIRST per spec */}
           <div className="space-y-1">
-            <Label htmlFor="ticket-title" className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+            <Label
+              htmlFor="ticket-title"
+              className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+            >
               Title / Incident <span className="text-red-500">*</span>
             </Label>
             <TitleCombobox
               value={title}
-              onChange={(v) => { setTitle(v); setErrors((e) => ({ ...e, title: "" })); }}
+              onChange={(v) => {
+                setTitle(v);
+                setErrors((e) => ({ ...e, title: "" }));
+              }}
               targetRole={targetRole}
               error={!!errors.title}
             />
@@ -289,7 +308,10 @@ export function ReportTicketDialog({
 
           {/* 2. Route Incident To — SECOND per spec */}
           <div className="space-y-1">
-            <Label htmlFor="ticket-target-role" className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+            <Label
+              htmlFor="ticket-target-role"
+              className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+            >
               Route Incident To <span className="text-red-500">*</span>
             </Label>
             <Select
@@ -318,7 +340,10 @@ export function ReportTicketDialog({
 
           {/* 3. Severity */}
           <div className="space-y-1">
-            <Label htmlFor="ticket-severity" className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+            <Label
+              htmlFor="ticket-severity"
+              className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+            >
               Type / Stage of Incident <span className="text-red-500">*</span>
             </Label>
             <Select
@@ -348,21 +373,32 @@ export function ReportTicketDialog({
           {/* 4. Reporter Name + My Role */}
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
-              <Label htmlFor="ticket-reporter" className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              <Label
+                htmlFor="ticket-reporter"
+                className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+              >
                 Reporter Name <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="ticket-reporter"
                 placeholder="Your name"
                 value={reporterName}
-                onChange={(e) => { setReporterName(e.target.value); setErrors((er) => ({ ...er, reporterName: "" })); }}
+                onChange={(e) => {
+                  setReporterName(e.target.value);
+                  setErrors((er) => ({ ...er, reporterName: "" }));
+                }}
                 className={`text-xs h-8 ${errors.reporterName ? "border-red-400 focus-visible:ring-red-400" : ""}`}
               />
-              {errors.reporterName && <p className="text-[10px] text-red-500">{errors.reporterName}</p>}
+              {errors.reporterName && (
+                <p className="text-[10px] text-red-500">{errors.reporterName}</p>
+              )}
             </div>
 
             <div className="space-y-1">
-              <Label htmlFor="ticket-role" className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              <Label
+                htmlFor="ticket-role"
+                className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+              >
                 My Role
               </Label>
               <Input
@@ -389,7 +425,9 @@ export function ReportTicketDialog({
                   <SelectValue placeholder="None" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__none__" className="text-xs">None</SelectItem>
+                  <SelectItem value="__none__" className="text-xs">
+                    None
+                  </SelectItem>
                   {silos.map((s) => (
                     <SelectItem key={s.id} value={s.id} className="text-xs">
                       {s.name} ({s.silo_id})
@@ -402,8 +440,12 @@ export function ReportTicketDialog({
 
           {/* 6. Description (optional) - max 400 words */}
           <div className="space-y-1">
-            <Label htmlFor="ticket-description" className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Description <span className="text-muted-foreground font-normal">(optional, max 400 words)</span>
+            <Label
+              htmlFor="ticket-description"
+              className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+            >
+              Description{" "}
+              <span className="text-muted-foreground font-normal">(optional, max 400 words)</span>
             </Label>
             <Textarea
               id="ticket-description"
@@ -427,8 +469,14 @@ export function ReportTicketDialog({
 
           {/* 7. Attachment upload (optional) - pictures and files */}
           <div className="space-y-1">
-            <Label htmlFor="ticket-attachment" className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Attachment <span className="text-muted-foreground font-normal">(optional — picture or file, max 10MB)</span>
+            <Label
+              htmlFor="ticket-attachment"
+              className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+            >
+              Attachment{" "}
+              <span className="text-muted-foreground font-normal">
+                (optional — picture or file, max 10MB)
+              </span>
             </Label>
             {!attachment ? (
               <label
@@ -446,7 +494,7 @@ export function ReportTicketDialog({
                 />
               </label>
             ) : (
-              <div className="flex items-center justify-between gap-2 p-2 rounded-md border border-border bg-emerald-50/50 dark:bg-emerald-900/10">
+              <div className="flex items-center justify-between gap-2 p-2 rounded-md border-border bg-emerald-50/50 dark:bg-emerald-900/10">
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                   <Upload className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
                   <span className="text-xs truncate font-medium">{attachment.name}</span>
@@ -465,13 +513,15 @@ export function ReportTicketDialog({
               </div>
             )}
           </div>
-
         </div>
 
         <DialogFooter className="gap-2 pt-1">
           <Button
             variant="outline"
-            onClick={() => { reset(); onOpenChange(false); }}
+            onClick={() => {
+              reset();
+              onOpenChange(false);
+            }}
             disabled={mut.isPending}
             size="sm"
             className="text-xs"
@@ -485,10 +535,11 @@ export function ReportTicketDialog({
             size="sm"
             className="gap-1.5 bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs"
           >
-            {mut.isPending
-              ? <Loader2 className="h-3 w-3 animate-spin" />
-              : <Ticket className="h-3 w-3" />
-            }
+            {mut.isPending ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <Ticket className="h-3 w-3" />
+            )}
             Report Ticket
           </Button>
         </DialogFooter>

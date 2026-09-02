@@ -5,6 +5,22 @@ import type { Database } from "@/integrations/supabase/types";
 import { assertPlanAllows } from "@/lib/plan-gate";
 import { requireRole } from "@/lib/rbac.server";
 import { logActivity, logManagerAction } from "@/lib/activity";
+import { resolveLocationScope, byWarehouse, bySilo } from "./page-scope.server";
+
+/**
+ * Optional location scope accepted by the list endpoints.
+ *
+ * Absent means the tenant-wide view — the behaviour every caller had before
+ * locations existed, and still what managers, technicians and the "all
+ * locations" view want.
+ */
+const locInput = z.object({
+  loc: z.string().trim().min(1).optional(),
+  wh: z.string().uuid().optional(),
+});
+function parseLoc(data: unknown): { loc?: string; wh?: string } {
+  return locInput.parse(data ?? {});
+}
 
 // Roles allowed to rename a silo/warehouse — same allow-list used for team
 // invite/manage (see inviteTeamMember/updateTeamMember in
@@ -28,7 +44,7 @@ export const listWarehousesByCity = createServerFn({ method: "GET" })
     // Get user role
     const { getEffectiveRole } = await import("./rbac.server");
     const userRole = await getEffectiveRole(context.supabase, context.userId);
-    
+
     let query = context.supabase
       .from("warehouses")
       .select("*, silos:silos(id, silo_id, name, capacity_kg, current_occupancy_kg, status)")
@@ -49,7 +65,7 @@ export const listWarehousesByCity = createServerFn({ method: "GET" })
 
     // Group warehouses by city (extracted from address)
     const warehousesByCity: Record<string, any[]> = {};
-    
+
     (warehouses ?? []).forEach((warehouse) => {
       // Extract city from address - assume format like "Street, City, State"
       let city = "Unknown City";
@@ -58,26 +74,30 @@ export const listWarehousesByCity = createServerFn({ method: "GET" })
       if (typeof loc?.city === "string" && loc.city.trim()) {
         city = loc.city.trim();
       } else if (address) {
-        const addressParts = address.split(',');
+        const addressParts = address.split(",");
         if (addressParts.length >= 2) {
           city = addressParts[1].trim();
         } else {
           city = addressParts[0].trim();
         }
       }
-      
+
       if (!warehousesByCity[city]) {
         warehousesByCity[city] = [];
       }
-      
+
       warehousesByCity[city].push({
         ...warehouse,
         city,
         siloCount: warehouse.silos?.length || 0,
-        totalCapacity: warehouse.silos?.reduce((sum: number, silo: any) => 
-          sum + (silo.capacity_kg || 0), 0) || 0,
-        currentOccupancy: warehouse.silos?.reduce((sum: number, silo: any) => 
-          sum + (silo.current_occupancy_kg || 0), 0) || 0,
+        totalCapacity:
+          warehouse.silos?.reduce((sum: number, silo: any) => sum + (silo.capacity_kg || 0), 0) ||
+          0,
+        currentOccupancy:
+          warehouse.silos?.reduce(
+            (sum: number, silo: any) => sum + (silo.current_occupancy_kg || 0),
+            0,
+          ) || 0,
       });
     });
 
@@ -234,18 +254,26 @@ export const deleteWarehouse = createServerFn({ method: "POST" })
 
 export const listSilos = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator(parseLoc)
+  .handler(async ({ context, data: input }) => {
     // Get user's role
     const { getEffectiveRole } = await import("./rbac.server");
     const userRole = await getEffectiveRole(context.supabase, context.userId);
+    const scope = await resolveLocationScope(
+      context.supabase,
+      context.userId,
+      input?.loc,
+      input?.wh,
+    );
 
-    let query = context.supabase
-      .from("silos")
-      .select(
+    let query = byWarehouse(
+      context.supabase.from("silos").select(
         `id, silo_id, name, warehouse_id, capacity_kg, current_occupancy_kg, status, location, 
          batch_loaded_date, batch_dispatched_date, current_conditions, notes, created_at, updated_at,
          warehouses(id, name, warehouse_id, location, manager_id, technician_ids)`,
-      )
+      ),
+      scope,
+    )
       .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .limit(500);
@@ -259,12 +287,12 @@ export const listSilos = createServerFn({ method: "GET" })
         .or(
           userRole === "manager"
             ? `manager_id.eq.${context.userId}`
-            : `technician_ids.cs.["${context.userId}"]`
+            : `technician_ids.cs.["${context.userId}"]`,
         )
         .is("deleted_at", null);
 
       const warehouseIds = (userWarehouses ?? []).map((w) => w.id);
-      
+
       if (warehouseIds.length === 0) {
         // User is not assigned to any warehouses
         return [];
@@ -322,110 +350,113 @@ export const upsertSilo = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     console.log("[upsertSilo] Starting - isUpdate:", !!data.id, "warehouse:", data.warehouse_id);
     try {
-    if (!data.id) {
-      // Direct creation is super_admin-only — admin/manager go through the
-      // Request Silo → hardware order → payment flow instead, which
-      // provisions silos via a DB trigger (hardware_order_provision_silo),
-      // not through this function. assertPlanAllows is kept below anyway:
-      // super_admin already bypasses it (see computePlanGate's isSuper
-      // check), so it's a no-op safety net for this function's only
-      // remaining caller, not the actual gate.
-      await requireRole(context.supabase, context.userId, ["super_admin"]);
-      await assertPlanAllows({
-        feature: "max_silos",
-        sb: context.supabase,
-        userId: context.userId,
-      });
-    }
-    const location = { description: data.location_description ?? null };
-    if (data.id) {
-      // Update: silo_id (the auto-generated code) stays immutable. `name`
-      // is user-editable, but renaming (changing it) is gated to
-      // admin/manager/super_admin — same allow-list as team invite/manage —
-      // everything else in this form stays open to whoever could already
-      // edit a silo.
-      if (data.name) {
-        const { data: current } = await context.supabase
+      if (!data.id) {
+        // Direct creation is super_admin-only — admin/manager go through the
+        // Request Silo → hardware order → payment flow instead, which
+        // provisions silos via a DB trigger (hardware_order_provision_silo),
+        // not through this function. assertPlanAllows is kept below anyway:
+        // super_admin already bypasses it (see computePlanGate's isSuper
+        // check), so it's a no-op safety net for this function's only
+        // remaining caller, not the actual gate.
+        await requireRole(context.supabase, context.userId, ["super_admin"]);
+        await assertPlanAllows({
+          feature: "max_silos",
+          sb: context.supabase,
+          userId: context.userId,
+        });
+      }
+      const location = { description: data.location_description ?? null };
+      if (data.id) {
+        // Update: silo_id (the auto-generated code) stays immutable. `name`
+        // is user-editable, but renaming (changing it) is gated to
+        // admin/manager/super_admin — same allow-list as team invite/manage —
+        // everything else in this form stays open to whoever could already
+        // edit a silo.
+        if (data.name) {
+          const { data: current } = await context.supabase
+            .from("silos")
+            .select("name")
+            .eq("id", data.id)
+            .maybeSingle();
+          if (current && current.name !== data.name) {
+            await requireRole(context.supabase, context.userId, [...SILO_RENAME_ROLES]);
+          }
+        }
+        const { data: row, error } = await context.supabase
+          .from("silos")
+          .update({
+            warehouse_id: data.warehouse_id,
+            capacity_kg: data.capacity_kg,
+            location,
+            status: data.status,
+            notes: data.notes ?? null,
+            updated_by: context.userId,
+            ...(data.name ? { name: data.name } : {}),
+          })
+          .eq("id", data.id)
+          .select("*")
+          .single();
+        if (error) throw error;
+        return row;
+      }
+      // Insert: auto-generate silo_id and a unique name within the same warehouse region.
+      const siloId = data.silo_id ?? `SILO-${Date.now().toString().slice(-8)}`;
+
+      // If no name supplied, generate one like "Silo A", "Silo B", …, "Silo Z",
+      // "Silo AA", "Silo AB", … ensuring uniqueness within this warehouse.
+      let name = data.name ?? "";
+      if (!name) {
+        const { data: existingSilos } = await context.supabase
           .from("silos")
           .select("name")
-          .eq("id", data.id)
-          .maybeSingle();
-        if (current && current.name !== data.name) {
-          await requireRole(context.supabase, context.userId, [...SILO_RENAME_ROLES]);
+          .eq("warehouse_id", data.warehouse_id)
+          .is("deleted_at" as never, null);
+
+        const used = new Set(
+          (existingSilos ?? []).map((s: { name: string }) => s.name.toLowerCase()),
+        );
+
+        const ALPHA = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        let idx = 0;
+        while (true) {
+          let suffix = "";
+          let tmp = idx;
+          do {
+            suffix = ALPHA[tmp % 26] + suffix;
+            tmp = Math.floor(tmp / 26) - 1;
+          } while (tmp >= 0);
+          const candidate = `Silo ${suffix}`;
+          if (!used.has(candidate.toLowerCase())) {
+            name = candidate;
+            break;
+          }
+          idx++;
         }
       }
+      // Resolve tenant admin id — RLS requires admin_id = get_tenant_admin_id(auth.uid()).
+      const { data: prof } = await context.supabase
+        .from("profiles")
+        .select("id, admin_id")
+        .eq("id", context.userId)
+        .maybeSingle();
+      const tenantAdminId = prof?.admin_id ?? prof?.id ?? context.userId;
       const { data: row, error } = await context.supabase
         .from("silos")
-        .update({
+        .insert({
+          silo_id: siloId,
+          name,
           warehouse_id: data.warehouse_id,
           capacity_kg: data.capacity_kg,
           location,
           status: data.status,
           notes: data.notes ?? null,
-          updated_by: context.userId,
-          ...(data.name ? { name: data.name } : {}),
+          admin_id: tenantAdminId,
+          created_by: context.userId,
         })
-        .eq("id", data.id)
         .select("*")
         .single();
       if (error) throw error;
       return row;
-    }
-    // Insert: auto-generate silo_id and a unique name within the same warehouse region.
-    const siloId = data.silo_id ?? `SILO-${Date.now().toString().slice(-8)}`;
-
-    // If no name supplied, generate one like "Silo A", "Silo B", …, "Silo Z",
-    // "Silo AA", "Silo AB", … ensuring uniqueness within this warehouse.
-    let name = data.name ?? "";
-    if (!name) {
-      const { data: existingSilos } = await context.supabase
-        .from("silos")
-        .select("name")
-        .eq("warehouse_id", data.warehouse_id)
-        .is("deleted_at" as never, null);
-
-      const used = new Set(
-        (existingSilos ?? []).map((s: { name: string }) => s.name.toLowerCase()),
-      );
-
-      const ALPHA = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-      let idx = 0;
-      while (true) {
-        let suffix = "";
-        let tmp = idx;
-        do {
-          suffix = ALPHA[tmp % 26] + suffix;
-          tmp = Math.floor(tmp / 26) - 1;
-        } while (tmp >= 0);
-        const candidate = `Silo ${suffix}`;
-        if (!used.has(candidate.toLowerCase())) { name = candidate; break; }
-        idx++;
-      }
-    }
-    // Resolve tenant admin id — RLS requires admin_id = get_tenant_admin_id(auth.uid()).
-    const { data: prof } = await context.supabase
-      .from("profiles")
-      .select("id, admin_id")
-      .eq("id", context.userId)
-      .maybeSingle();
-    const tenantAdminId = prof?.admin_id ?? prof?.id ?? context.userId;
-    const { data: row, error } = await context.supabase
-      .from("silos")
-      .insert({
-        silo_id: siloId,
-        name,
-        warehouse_id: data.warehouse_id,
-        capacity_kg: data.capacity_kg,
-        location,
-        status: data.status,
-        notes: data.notes ?? null,
-        admin_id: tenantAdminId,
-        created_by: context.userId,
-      })
-      .select("*")
-      .single();
-    if (error) throw error;
-    return row;
     } catch (e) {
       console.error("[upsertSilo] Error:", e);
       throw e;
@@ -487,16 +518,26 @@ export const deleteSilo = createServerFn({ method: "POST" })
 
 export const listGrainBatches = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator(parseLoc)
+  .handler(async ({ context, data: input }) => {
     // Get user role to filter visible batches
     const { getEffectiveRole } = await import("./rbac.server");
     const userRole = await getEffectiveRole(context.supabase, context.userId);
+    const scope = await resolveLocationScope(
+      context.supabase,
+      context.userId,
+      input?.loc,
+      input?.wh,
+    );
 
-    let query = context.supabase
-      .from("grain_batches")
-      .select(
-        "*, silos:silo_id(id, silo_id, name, capacity_kg, warehouse_id), warehouses:warehouse_id(id, name, warehouse_id), buyers:buyer_id(id, name, company_name, contact_phone)",
-      )
+    let query = byWarehouse(
+      context.supabase
+        .from("grain_batches")
+        .select(
+          "*, silos:silo_id(id, silo_id, name, capacity_kg, warehouse_id), warehouses:warehouse_id(id, name, warehouse_id), buyers:buyer_id(id, name, company_name, contact_phone)",
+        ),
+      scope,
+    )
       .order("created_at", { ascending: false })
       .limit(500);
 
@@ -505,13 +546,13 @@ export const listGrainBatches = createServerFn({ method: "GET" })
       // Technicians must satisfy BOTH conditions:
       // 1. Be in warehouse's technician_ids array
       // 2. Be assigned to the specific batch (assigned_technician_id)
-      
+
       // Get warehouses where this technician is assigned
       const { data: techWarehouses } = await context.supabase
         .from("warehouses")
         .select("id")
         .contains("technician_ids", [context.userId]);
-      
+
       if (techWarehouses && techWarehouses.length > 0) {
         const warehouseIds = techWarehouses.map((w) => w.id);
         // Get silos in these warehouses
@@ -519,13 +560,11 @@ export const listGrainBatches = createServerFn({ method: "GET" })
           .from("silos")
           .select("id")
           .in("warehouse_id", warehouseIds);
-        
+
         if (silosInWarehouses && silosInWarehouses.length > 0) {
           const siloIds = silosInWarehouses.map((s) => s.id);
           // Technician sees batches in their warehouse silos that are ASSIGNED to them
-          query = query
-            .in("silo_id", siloIds)
-            .eq("assigned_technician_id", context.userId);
+          query = query.in("silo_id", siloIds).eq("assigned_technician_id", context.userId);
         } else {
           // Technician has no silos in their warehouses, return empty
           return [];
@@ -540,14 +579,14 @@ export const listGrainBatches = createServerFn({ method: "GET" })
         .from("warehouses")
         .select("id")
         .eq("manager_id", context.userId);
-      
+
       const { data: profile } = await context.supabase
         .from("profiles")
         .select("admin_id")
         .eq("id", context.userId)
         .maybeSingle();
       const tenantAdminId = profile?.admin_id ?? context.userId;
-      
+
       if (managerWarehouses && managerWarehouses.length > 0) {
         const warehouseIds = managerWarehouses.map((w) => w.id);
         // Get silos for these warehouses, then batches in these silos
@@ -555,7 +594,7 @@ export const listGrainBatches = createServerFn({ method: "GET" })
           .from("silos")
           .select("id")
           .in("warehouse_id", warehouseIds);
-        
+
         if (silosInWarehouses && silosInWarehouses.length > 0) {
           const siloIds = silosInWarehouses.map((s) => s.id);
           query = query.or(`silo_id.in.(${siloIds.join(",")}),created_by.eq.${tenantAdminId}`);
@@ -1075,14 +1114,19 @@ export const dispatchGrainBatch = createServerFn({ method: "POST" })
 // platform-overviews.functions.ts.
 export async function fetchDispatchTotals(
   supabase: any,
+  /**
+   * Restrict to these warehouses. Omit (or pass null) for the tenant-wide
+   * totals every caller wanted before locations existed — the platform
+   * overview and analytics both still do.
+   */
+  warehouseIds?: string[] | null,
 ): Promise<Array<{ admin_id: string; revenue: number; profit: number }>> {
   // grain_dispatches is the live table (written by createDispatchFromSilo in
   // dispatches.functions.ts) — its revenue column is `total_amount`, not
   // `revenue` (that was the now-dead `dispatches` table's naming).
-  const { data, error } = await supabase
-    .from("grain_dispatches")
-    .select("admin_id, total_amount, profit")
-    .limit(10000);
+  let query = supabase.from("grain_dispatches").select("admin_id, total_amount, profit");
+  if (warehouseIds) query = query.in("warehouse_id", warehouseIds);
+  const { data, error } = await query.limit(10000);
   if (error) throw error;
   const map = new Map<string, { admin_id: string; revenue: number; profit: number }>();
   for (const d of (data ?? []) as Array<{
@@ -1162,12 +1206,22 @@ export const logSpoilageEvent = createServerFn({ method: "POST" })
 
 export const listSensorDevices = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
-      .from("sensor_devices")
-      .select(
-        "*, silos:silo_id(id, silo_id, name), warehouses:warehouse_id(id, name, warehouse_id)",
-      )
+  .inputValidator(parseLoc)
+  .handler(async ({ context, data: input }) => {
+    const scope = await resolveLocationScope(
+      context.supabase,
+      context.userId,
+      input?.loc,
+      input?.wh,
+    );
+    const { data, error } = await byWarehouse(
+      context.supabase
+        .from("sensor_devices")
+        .select(
+          "*, silos:silo_id(id, silo_id, name), warehouses:warehouse_id(id, name, warehouse_id)",
+        ),
+      scope,
+    )
       .order("created_at", { ascending: false })
       .limit(500);
     if (error) throw error;
@@ -1335,10 +1389,22 @@ export const listDeviceReadings = createServerFn({ method: "POST" })
 
 export const listActuators = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
-      .from("actuators")
-      .select("*, silos(id, silo_id, name, warehouse_id, warehouses(id, name, warehouse_id))")
+  .inputValidator(parseLoc)
+  .handler(async ({ context, data: input }) => {
+    const scope = await resolveLocationScope(
+      context.supabase,
+      context.userId,
+      input?.loc,
+      input?.wh,
+    );
+    // actuators carry no warehouse_id — they hang off a silo, so the scope's
+    // resolved silo list is the only way to narrow them.
+    const { data, error } = await bySilo(
+      context.supabase
+        .from("actuators")
+        .select("*, silos(id, silo_id, name, warehouse_id, warehouses(id, name, warehouse_id))"),
+      scope,
+    )
       .order("created_at", { ascending: false })
       .limit(500);
     if (error) throw error;
@@ -1515,12 +1581,22 @@ export const controlActuator = createServerFn({ method: "POST" })
 
 export const listGrainAlerts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
-      .from("grain_alerts")
-      .select(
-        "*, silos(id, silo_id, name), warehouses(id, name, warehouse_id), grain_batches(id, batch_id, grain_type)",
-      )
+  .inputValidator(parseLoc)
+  .handler(async ({ context, data: input }) => {
+    const scope = await resolveLocationScope(
+      context.supabase,
+      context.userId,
+      input?.loc,
+      input?.wh,
+    );
+    const { data, error } = await byWarehouse(
+      context.supabase
+        .from("grain_alerts")
+        .select(
+          "*, silos(id, silo_id, name), warehouses(id, name, warehouse_id), grain_batches(id, batch_id, grain_type)",
+        ),
+      scope,
+    )
       .order("triggered_at", { ascending: false, nullsFirst: false })
       .limit(500);
     if (error) throw error;
@@ -1667,6 +1743,9 @@ export const actionGrainAlert = createServerFn({ method: "POST" })
     return row;
   });
 
+// INTENTIONALLY ACCOUNT-WIDE: a buyer is a customer of the tenant, not a
+// resident of one warehouse. `buyers` carries no warehouse_id, and scoping the
+// list by city would hide legitimate customers from whichever site is open.
 export const listBuyers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -2123,7 +2202,7 @@ export const listWarehousesWithTeam = createServerFn({ method: "GET" })
       .select("id, warehouse_id, name, silo_id, capacity_kg, status")
       .in("warehouse_id", [...warehouseIds])
       .order("name", { ascending: true });
-    
+
     const silosByWarehouse = new Map<string, any[]>();
     for (const silo of silos ?? []) {
       if (!silosByWarehouse.has(silo.warehouse_id)) {
@@ -2190,6 +2269,28 @@ export const updateWarehouseTeam = createServerFn({ method: "POST" })
 
     const sb = context.supabase;
 
+    // R13 — a manager belongs to exactly one warehouse. Two warehouses means two
+    // managers; the same person cannot cover both. Enforced here because
+    // `warehouses.manager_id` being scalar only stops the inverse (two managers
+    // on one warehouse) and nothing stopped one person being set on several.
+    // If a customer ever needs shared managers this becomes an explicit feature,
+    // not an accident.
+    if (managerId) {
+      const { data: alreadyManaging } = await sb
+        .from("warehouses")
+        .select("id, name")
+        .eq("manager_id", managerId)
+        .neq("id", warehouseId)
+        .is("deleted_at", null)
+        .limit(1);
+      const clash = alreadyManaging?.[0];
+      if (clash) {
+        throw new Error(
+          `That manager already manages "${clash.name}". A manager can only be assigned to one warehouse — free them up there first, or pick someone else.`,
+        );
+      }
+    }
+
     // Update warehouse with new assignments
     const { error: updateErr } = await sb
       .from("warehouses")
@@ -2236,12 +2337,12 @@ export const listAvailableTeam = createServerFn({ method: "GET" })
         .select("admin_id, id")
         .eq("id", context.userId)
         .maybeSingle();
-      
+
       if (profileErr) {
         console.error("[listAvailableTeam] Error fetching current profile:", profileErr);
         throw profileErr;
       }
-      
+
       const tenantId = currentProfile?.admin_id ?? currentProfile?.id;
       if (!tenantId) throw new Error("Could not determine tenant");
       console.log("[listAvailableTeam] Tenant ID:", tenantId);
@@ -2295,7 +2396,7 @@ export const listAvailableTeam = createServerFn({ method: "GET" })
           console.warn("[listAvailableTeam] No profile for user", ur.user_id);
           continue;
         }
-        
+
         const displayName = profile.name || profile.email || ur.user_id.slice(0, 8);
         const item = { id: ur.user_id, name: displayName };
 
@@ -2306,7 +2407,12 @@ export const listAvailableTeam = createServerFn({ method: "GET" })
         }
       }
 
-      console.log("[listAvailableTeam] Returning - managers:", managers.length, "technicians:", technicians.length);
+      console.log(
+        "[listAvailableTeam] Returning - managers:",
+        managers.length,
+        "technicians:",
+        technicians.length,
+      );
 
       return {
         managers: managers.sort((a, b) => a.name.localeCompare(b.name)),

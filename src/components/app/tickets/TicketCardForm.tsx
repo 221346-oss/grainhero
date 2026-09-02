@@ -29,9 +29,9 @@ type ReporterRole = "admin" | "manager" | "technician";
 // ── Issue type catalogue ──────────────────────────────────────────────────────
 
 type IssueType = {
-  value: string;       // stored as the ticket title
-  label: string;       // shown in dropdown
-  group: string;       // group header
+  value: string; // stored as the ticket title
+  label: string; // shown in dropdown
+  group: string; // group header
   placeholder: string; // description hint
   defaultPriority: Priority;
 };
@@ -42,7 +42,8 @@ const ISSUE_TYPES: IssueType[] = [
     value: "Sensor malfunction",
     label: "Sensor malfunction",
     group: "Sensor & Hardware",
-    placeholder: "Which sensor(s) are affected? Describe the readings or error observed and since when.",
+    placeholder:
+      "Which sensor(s) are affected? Describe the readings or error observed and since when.",
     defaultPriority: "high",
   },
   {
@@ -63,7 +64,8 @@ const ISSUE_TYPES: IssueType[] = [
     value: "Actuator not responding",
     label: "Actuator not responding",
     group: "Sensor & Hardware",
-    placeholder: "Which actuator? What command was sent? Describe the expected vs actual behaviour.",
+    placeholder:
+      "Which actuator? What command was sent? Describe the expected vs actual behaviour.",
     defaultPriority: "high",
   },
   {
@@ -78,7 +80,8 @@ const ISSUE_TYPES: IssueType[] = [
     value: "Grain quality alert",
     label: "Grain quality alert",
     group: "Grain & Storage",
-    placeholder: "Which batch/silo? Describe the quality concern (moisture, temperature, spoilage risk, etc.).",
+    placeholder:
+      "Which batch/silo? Describe the quality concern (moisture, temperature, spoilage risk, etc.).",
     defaultPriority: "high",
   },
   {
@@ -107,14 +110,16 @@ const ISSUE_TYPES: IssueType[] = [
     value: "Bug report",
     label: "Bug report",
     group: "Software & Platform",
-    placeholder: "Page/feature where the bug occurs, steps to reproduce, and what you expected to happen.",
+    placeholder:
+      "Page/feature where the bug occurs, steps to reproduce, and what you expected to happen.",
     defaultPriority: "medium",
   },
   {
     value: "Dashboard data mismatch",
     label: "Dashboard data mismatch",
     group: "Software & Platform",
-    placeholder: "Which metric looks wrong? What value is shown vs what you expect? Any recent changes?",
+    placeholder:
+      "Which metric looks wrong? What value is shown vs what you expect? Any recent changes?",
     defaultPriority: "medium",
   },
   {
@@ -157,14 +162,16 @@ const ISSUE_TYPES: IssueType[] = [
     value: "Network connectivity issue",
     label: "Network connectivity issue",
     group: "Operations",
-    placeholder: "Which site/device lost connectivity? Since when? Any changes to network infrastructure?",
+    placeholder:
+      "Which site/device lost connectivity? Since when? Any changes to network infrastructure?",
     defaultPriority: "high",
   },
   {
     value: "Power supply issue",
     label: "Power supply issue",
     group: "Operations",
-    placeholder: "Device/location affected, nature of the power issue, and any backup power status.",
+    placeholder:
+      "Device/location affected, nature of the power issue, and any backup power status.",
     defaultPriority: "high",
   },
   // Billing & Account
@@ -189,7 +196,7 @@ const GROUPS = [...new Set(ISSUE_TYPES.map((i) => i.group))];
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 const PRIORITY_STYLES: Record<Priority, string> = {
-  low: "bg-slate-100 text-slate-600 border-slate-200",
+  low: "bg-muted text-muted-foreground",
   medium: "bg-amber-50 text-amber-700 border-amber-200",
   high: "bg-red-50 text-red-700 border-red-200",
 };
@@ -249,8 +256,7 @@ export function TicketCardForm({ onSuccess, onCancel }: Props) {
       qc.invalidateQueries({ queryKey: ["field-tickets"] });
       onSuccess?.();
     },
-    onError: (e: unknown) =>
-      toast.error((e as Error).message ?? "Failed to create ticket"),
+    onError: (e: unknown) => toast.error((e as Error).message ?? "Failed to create ticket"),
   });
 
   const canSubmit =
@@ -260,8 +266,7 @@ export function TicketCardForm({ onSuccess, onCancel }: Props) {
     !mut.isPending;
 
   return (
-    <div className="relative rounded-xl border border-slate-200 bg-white shadow-sm p-5 space-y-4">
-
+    <div className="relative rounded-2xl bg-card/50 shadow-sm p-5 space-y-4">
       {/* Priority badge — top-right, auto-set by issue type but editable */}
       <div className="absolute top-4 right-4">
         <Select value={priority} onValueChange={(v) => setPriority(v as Priority)}>
@@ -283,10 +288,8 @@ export function TicketCardForm({ onSuccess, onCancel }: Props) {
 
       {/* Header */}
       <div className="pr-24">
-        <p className="text-sm font-semibold text-slate-900">Open-field incident</p>
-        <p className="text-xs text-slate-500 mt-0.5">
-          Sent to super admin only.
-        </p>
+        <p className="text-sm font-semibold text-foreground">Open-field incident</p>
+        <p className="text-xs text-muted-foreground mt-0.5">Sent to super admin only.</p>
       </div>
 
       {/* Issue type — replaces free-text title */}
@@ -299,7 +302,7 @@ export function TicketCardForm({ onSuccess, onCancel }: Props) {
           <SelectContent className="max-h-72">
             {GROUPS.map((group) => (
               <SelectGroup key={group}>
-                <SelectLabel className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 px-2 py-1">
+                <SelectLabel className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-2 py-1">
                   {group}
                 </SelectLabel>
                 {ISSUE_TYPES.filter((i) => i.group === group).map((issue) => (
@@ -338,17 +341,13 @@ export function TicketCardForm({ onSuccess, onCancel }: Props) {
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder={
-            selected
-              ? selected.placeholder
-              : "Select an issue type above, then describe it here…"
+            selected ? selected.placeholder : "Select an issue type above, then describe it here…"
           }
           rows={4}
           className="text-sm resize-none"
           maxLength={4000}
         />
-        <p className="text-[10px] text-slate-400 text-right">
-          {description.length}/4000
-        </p>
+        <p className="text-[10px] text-muted-foreground text-right">{description.length}/4000</p>
       </div>
 
       {/* Actions */}

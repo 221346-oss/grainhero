@@ -12,9 +12,16 @@ export const Route = createFileRoute("/_authenticated/platform/reviews")({
   head: () => ({
     meta: [
       { title: "Platform · Reviews — Grain Hero" },
-      { name: "description", content: "Platform · Reviews workspace in the Grain Hero platform — private, sign-in required." },
+      {
+        name: "description",
+        content:
+          "Platform · Reviews workspace in the Grain Hero platform — private, sign-in required.",
+      },
       { property: "og:title", content: "Platform · Reviews — Grain Hero" },
-      { property: "og:description", content: "Platform · Reviews workspace in the Grain Hero platform." },
+      {
+        property: "og:description",
+        content: "Platform · Reviews workspace in the Grain Hero platform.",
+      },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
@@ -30,7 +37,8 @@ function ReviewModerationPage() {
     queryFn: () => load(),
   });
   const mut = useMutation({
-    mutationFn: (v: { reviewId: string; decision: "published" | "rejected" }) => decide({ data: v }),
+    mutationFn: (v: { reviewId: string; decision: "published" | "rejected" }) =>
+      decide({ data: v }),
     onSuccess: () => {
       toast.success("Review updated");
       qc.invalidateQueries({ queryKey: ["review-moderation"] });
@@ -46,14 +54,19 @@ function ReviewModerationPage() {
       {isLoading ? (
         <div className="text-sm text-muted-foreground">Loading…</div>
       ) : rows.length === 0 ? (
-        <Card><CardContent className="p-6 text-sm text-muted-foreground">No reviews to moderate.</CardContent></Card>
+        <Card>
+          <CardContent className="p-6 text-sm text-muted-foreground">
+            No reviews to moderate.
+          </CardContent>
+        </Card>
       ) : (
         <div className="space-y-3">
           {rows.map((r) => (
             <Card key={r.id}>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-sm">
-                  {r.direction === "buyer_to_seller" ? "Buyer → Seller" : "Seller → Buyer"} · {"★".repeat(r.rating)}
+                  {r.direction === "buyer_to_seller" ? "Buyer → Seller" : "Seller → Buyer"} ·{" "}
+                  {"★".repeat(r.rating)}
                 </CardTitle>
                 <Badge variant={r.status === "pending" ? "secondary" : "outline"}>{r.status}</Badge>
               </CardHeader>
@@ -61,11 +74,21 @@ function ReviewModerationPage() {
                 {r.title && <div className="text-sm font-medium">{r.title}</div>}
                 <div className="text-sm whitespace-pre-wrap">{r.body}</div>
                 <div className="flex gap-2 pt-2">
-                  <Button size="sm" onClick={() => mut.mutate({ reviewId: r.id, decision: "published" })}
-                    disabled={mut.isPending || r.status === "published"}>Publish</Button>
-                  <Button size="sm" variant="outline"
+                  <Button
+                    size="sm"
+                    onClick={() => mut.mutate({ reviewId: r.id, decision: "published" })}
+                    disabled={mut.isPending || r.status === "published"}
+                  >
+                    Publish
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
                     onClick={() => mut.mutate({ reviewId: r.id, decision: "rejected" })}
-                    disabled={mut.isPending || r.status === "rejected"}>Reject</Button>
+                    disabled={mut.isPending || r.status === "rejected"}
+                  >
+                    Reject
+                  </Button>
                 </div>
               </CardContent>
             </Card>

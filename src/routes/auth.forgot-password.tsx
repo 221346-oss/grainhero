@@ -14,7 +14,10 @@ export const Route = createFileRoute("/auth/forgot-password")({
       { title: "Reset password — GrainHero" },
       { name: "description", content: "Request a password reset link for your GrainHero account." },
       { property: "og:title", content: "Reset password — GrainHero" },
-      { property: "og:description", content: "Request a password reset link for your GrainHero account." },
+      {
+        property: "og:description",
+        content: "Request a password reset link for your GrainHero account.",
+      },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
@@ -49,10 +52,20 @@ function ForgotPage() {
         <form onSubmit={submit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="fp-email">Email</Label>
-            <Input id="fp-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <Input
+              id="fp-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
           </div>
           <Message msg={msg} />
-          <Button type="submit" disabled={loading} className="w-full bg-[#00a63e] hover:bg-[#029238] text-white">
+          <Button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-[#00a63e] hover:bg-[#029238] text-white"
+          >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send reset link"}
           </Button>
         </form>

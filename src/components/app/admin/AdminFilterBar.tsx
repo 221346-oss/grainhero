@@ -42,7 +42,9 @@ export function AdminFilterField({
 }) {
   return (
     <div className={width}>
-      <label className="text-xs font-medium text-slate-500 mb-1 block">{label}</label>
+      <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1 block">
+        {label}
+      </label>
       {children}
     </div>
   );

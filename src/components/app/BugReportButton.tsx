@@ -7,8 +7,21 @@ import { Bug, Wrench, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { submitBugReport } from "@/lib/bug-reports.functions";
 
 type Category = "bug" | "maintenance";
@@ -31,7 +44,11 @@ export function BugReportButton() {
         },
       }),
     onSuccess: () => {
-      toast.success(category === "maintenance" ? "Thanks — your maintenance note was submitted." : "Thanks — your bug report was submitted.");
+      toast.success(
+        category === "maintenance"
+          ? "Thanks — your maintenance note was submitted."
+          : "Thanks — your bug report was submitted.",
+      );
       setDescription("");
       setCategory("bug");
       setOpen(false);
@@ -51,7 +68,16 @@ export function BugReportButton() {
         <Bug className="h-5 w-5" />
       </button>
 
-      <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setDescription(""); setCategory("bug"); } }}>
+      <Dialog
+        open={open}
+        onOpenChange={(o) => {
+          setOpen(o);
+          if (!o) {
+            setDescription("");
+            setCategory("bug");
+          }
+        }}
+      >
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Report an issue</DialogTitle>
@@ -61,31 +87,58 @@ export function BugReportButton() {
           </DialogHeader>
           <form
             className="grid gap-3 py-1"
-            onSubmit={(e) => { e.preventDefault(); if (description.trim().length >= 5) mutation.mutate(); }}
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (description.trim().length >= 5) mutation.mutate();
+            }}
           >
             <div className="grid gap-1.5">
               <Label>Type</Label>
               <Select value={category} onValueChange={(v) => setCategory(v as Category)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="bug"><span className="inline-flex items-center gap-1.5"><Bug className="h-3.5 w-3.5" /> Bug / app issue</span></SelectItem>
-                  <SelectItem value="maintenance"><span className="inline-flex items-center gap-1.5"><Wrench className="h-3.5 w-3.5" /> Maintenance note</span></SelectItem>
+                  <SelectItem value="bug">
+                    <span className="inline-flex items-center gap-1.5">
+                      <Bug className="h-3.5 w-3.5" /> Bug / app issue
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="maintenance">
+                    <span className="inline-flex items-center gap-1.5">
+                      <Wrench className="h-3.5 w-3.5" /> Maintenance note
+                    </span>
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <Textarea
               autoFocus
               rows={5}
-              placeholder={category === "maintenance" ? "What needs maintenance, and why?" : "What happened? What did you expect instead?"}
+              placeholder={
+                category === "maintenance"
+                  ? "What needs maintenance, and why?"
+                  : "What happened? What did you expect instead?"
+              }
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               required
               minLength={5}
             />
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={mutation.isPending || description.trim().length < 5} className="gap-2">
-                {mutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bug className="h-4 w-4" />}
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={mutation.isPending || description.trim().length < 5}
+                className="gap-2"
+              >
+                {mutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Bug className="h-4 w-4" />
+                )}
                 {mutation.isPending ? "Submitting…" : "Submit report"}
               </Button>
             </DialogFooter>

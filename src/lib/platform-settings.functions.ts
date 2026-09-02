@@ -3,11 +3,11 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export type IotPricingItem = {
-  id: string;           // e.g. "silo_standard"
-  name: string;         // e.g. "Standard Silo Kit"
+  id: string; // e.g. "silo_standard"
+  name: string; // e.g. "Standard Silo Kit"
   description: string;
-  price_pkr: number;    // unit price in PKR
-  unit: string;         // e.g. "per silo", "per sensor"
+  price_pkr: number; // unit price in PKR
+  unit: string; // e.g. "per silo", "per sensor"
 };
 
 export type PlatformConfig = {
@@ -18,9 +18,27 @@ export type PlatformConfig = {
 };
 
 const DEFAULT_IOT_PRICING: IotPricingItem[] = [
-  { id: "silo_standard",   name: "Standard Silo Kit",   description: "Full silo hardware bundle — sensors + actuators", price_pkr: 2300000, unit: "per silo" },
-  { id: "silo_premium",    name: "Premium Silo Kit",    description: "Premium bundle with extended sensor suite",        price_pkr: 2800000, unit: "per silo" },
-  { id: "sensor_add_on",   name: "Sensor Add-on",       description: "Additional sensor module for existing silo",       price_pkr: 85000,   unit: "per sensor" },
+  {
+    id: "silo_standard",
+    name: "Standard Silo Kit",
+    description: "Full silo hardware bundle — sensors + actuators",
+    price_pkr: 2300000,
+    unit: "per silo",
+  },
+  {
+    id: "silo_premium",
+    name: "Premium Silo Kit",
+    description: "Premium bundle with extended sensor suite",
+    price_pkr: 2800000,
+    unit: "per silo",
+  },
+  {
+    id: "sensor_add_on",
+    name: "Sensor Add-on",
+    description: "Additional sensor module for existing silo",
+    price_pkr: 85000,
+    unit: "per sensor",
+  },
 ];
 
 const DEFAULT_CONFIG: PlatformConfig = {
@@ -49,18 +67,18 @@ export const getPlatformSettings = createServerFn({ method: "GET" })
   });
 
 const iotPricingItemSchema = z.object({
-  id:          z.string().min(1),
-  name:        z.string().min(1),
+  id: z.string().min(1),
+  name: z.string().min(1),
   description: z.string(),
-  price_pkr:   z.number().int().min(0),
-  unit:        z.string().min(1),
+  price_pkr: z.number().int().min(0),
+  unit: z.string().min(1),
 });
 
 const configSchema = z.object({
-  maintenance_mode:   z.boolean(),
-  feature_flags:      z.record(z.string(), z.boolean()),
+  maintenance_mode: z.boolean(),
+  feature_flags: z.record(z.string(), z.boolean()),
   default_thresholds: z.record(z.string(), z.number()),
-  iot_pricing:        z.array(iotPricingItemSchema),
+  iot_pricing: z.array(iotPricingItemSchema),
 });
 
 export const updatePlatformSettings = createServerFn({ method: "POST" })

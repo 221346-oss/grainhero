@@ -10,6 +10,7 @@ These are the **absolutely critical** one-line or minimal changes needed before 
 **Line**: 253
 
 ### Current (WRONG):
+
 ```typescript
 if (hum != null && hum > 14.5) {
   alertsToCreate.push({
@@ -27,8 +28,10 @@ if (hum != null && hum > 14.5) {
 ```
 
 ### Fixed (CORRECT):
+
 ```typescript
-if (hum != null && hum > 65) {  // Changed from 14.5 to 65
+if (hum != null && hum > 65) {
+  // Changed from 14.5 to 65
   alertsToCreate.push({
     alert_id: `HUM-${Date.now()}`,
     silo_id: dev.silo_id,
@@ -45,7 +48,8 @@ if (hum != null && hum > 65) {  // Changed from 14.5 to 65
 
 **Why**: Normal grain moisture is 12-15%. A threshold of 14.5% creates false alerts on every reading.
 
-**Test**: 
+**Test**:
+
 1. Deploy fix to staging
 2. Wait for 1 cron cycle
 3. Verify NO alerts generated for humidity values 12-65%
@@ -53,13 +57,13 @@ if (hum != null && hum > 65) {  // Changed from 14.5 to 65
 
 ---
 
-
 ## Fix 2: LDR Alert Throttling
 
 **File**: `grainhero 2/src/routes/api/public/cron/sync-firebase.ts`  
 **Lines**: 260-275
 
 ### Current (NO THROTTLE):
+
 ```typescript
 if (fanState === 0 && servoState === 0 && ambientLight != null && ambientLight > 5) {
   alertsToCreate.push({
@@ -77,6 +81,7 @@ if (fanState === 0 && servoState === 0 && ambientLight != null && ambientLight >
 ```
 
 ### Fixed (WITH THROTTLE):
+
 ```typescript
 // Check for recent LDR alerts (within 30 minutes)
 const thirtyMinutesAgo = new Date(now.getTime() - 30 * 60 * 1000).toISOString();
@@ -108,6 +113,7 @@ if (!recentLDRAlert || recentLDRAlert.length === 0) {
 **Why**: Without throttle, cron creates a new alert every 5-10 minutes during an actual breach.
 
 **Test**:
+
 1. Simulate breach: Set `ambientLight=10`, `fanState=0`, `servoState=0`
 2. Wait for 1st alert
 3. Wait 10 more minutes (should NOT create 2nd alert)
@@ -115,28 +121,30 @@ if (!recentLDRAlert || recentLDRAlert.length === 0) {
 
 ---
 
-
 ## Fix 3: Duplicate Sensor Reading Prevention
 
 **File**: `grainhero 2/supabase/migrations/`  
 **Create New Migration**: `YYYYMMDDHHMMSS_add_sensor_reading_unique_constraint.sql`
 
 ### Migration SQL:
+
 ```sql
 -- Prevent duplicate sensor readings if cron runs twice
-CREATE UNIQUE INDEX IF NOT EXISTS sensor_readings_device_timestamp_unique 
+CREATE UNIQUE INDEX IF NOT EXISTS sensor_readings_device_timestamp_unique
 ON sensor_readings (device_id, reading_timestamp);
 
 -- Add constraint name for easier management
-ALTER TABLE sensor_readings 
-ADD CONSTRAINT sensor_readings_no_duplicates 
+ALTER TABLE sensor_readings
+ADD CONSTRAINT sensor_readings_no_duplicates
 UNIQUE USING INDEX sensor_readings_device_timestamp_unique;
 ```
 
 ### Update Insert Logic:
+
 **File**: `sync-firebase.ts` line 186
 
 **Current**:
+
 ```typescript
 const { error } = await supabaseAdmin.from("sensor_readings").insert({
   device_id: dev.id,
@@ -147,28 +155,31 @@ const { error } = await supabaseAdmin.from("sensor_readings").insert({
 ```
 
 **Fixed (with upsert)**:
+
 ```typescript
-const { error } = await supabaseAdmin.from("sensor_readings")
-  .upsert({
+const { error } = await supabaseAdmin.from("sensor_readings").upsert(
+  {
     device_id: dev.id,
     admin_id: dev.admin_id,
     // ... other fields
     reading_timestamp: readingTime,
-  }, {
-    onConflict: 'device_id,reading_timestamp',
-    ignoreDuplicates: true  // Skip if already exists
-  });
+  },
+  {
+    onConflict: "device_id,reading_timestamp",
+    ignoreDuplicates: true, // Skip if already exists
+  },
+);
 ```
 
 **Why**: If cron is triggered manually or runs twice due to scheduler bug, prevents duplicate rows.
 
 **Test**:
+
 1. Insert a reading with `device_id=1, timestamp='2026-07-09T10:00:00Z'`
 2. Try inserting the exact same reading again
 3. Verify: Only 1 row exists, no error thrown
 
 ---
-
 
 ## Fix 4: Robust Error Handling
 
@@ -176,14 +187,18 @@ const { error } = await supabaseAdmin.from("sensor_readings")
 **Lines**: 230-290
 
 ### Current (BRITTLE):
+
 ```typescript
 // Silo update (no error handling)
 if (dev.silo_id) {
-  await supabaseAdmin.from("silos").update({
-    current_temperature: temp,
-    current_humidity: hum,
-    current_moisture: moist,
-  }).eq("id", dev.silo_id);
+  await supabaseAdmin
+    .from("silos")
+    .update({
+      current_temperature: temp,
+      current_humidity: hum,
+      current_moisture: moist,
+    })
+    .eq("id", dev.silo_id);
 }
 
 // Alert creation (no error handling)
@@ -193,7 +208,8 @@ if (alertsToCreate.length > 0) {
 
 // Actuator sync (no error handling)
 if (dev.silo_id) {
-  await supabaseAdmin.from("actuators")
+  await supabaseAdmin
+    .from("actuators")
     .update({ is_on: !!fanOn, power_level: pwm })
     .eq("silo_id", dev.silo_id)
     .eq("actuator_type", "fan");
@@ -201,15 +217,19 @@ if (dev.silo_id) {
 ```
 
 ### Fixed (ROBUST):
+
 ```typescript
 // Silo update (with error handling)
 if (dev.silo_id) {
   try {
-    await supabaseAdmin.from("silos").update({
-      current_temperature: temp,
-      current_humidity: hum,
-      current_moisture: moist,
-    }).eq("id", dev.silo_id);
+    await supabaseAdmin
+      .from("silos")
+      .update({
+        current_temperature: temp,
+        current_humidity: hum,
+        current_moisture: moist,
+      })
+      .eq("id", dev.silo_id);
   } catch (siloErr) {
     console.error(`Silo update failed for ${dev.silo_id}:`, siloErr);
     // Continue processing other devices
@@ -229,11 +249,12 @@ if (alertsToCreate.length > 0) {
 // Actuator sync (with error handling)
 if (dev.silo_id) {
   try {
-    const { error: actuatorErr } = await supabaseAdmin.from("actuators")
+    const { error: actuatorErr } = await supabaseAdmin
+      .from("actuators")
       .update({ is_on: !!fanOn, power_level: pwm })
       .eq("silo_id", dev.silo_id)
       .eq("actuator_type", "fan");
-    
+
     if (actuatorErr) {
       console.warn(`Actuator sync warning for silo ${dev.silo_id}:`, actuatorErr);
     }
@@ -246,6 +267,7 @@ if (dev.silo_id) {
 **Why**: Current code breaks the entire sync loop if any Supabase write fails. This isolates errors per device.
 
 **Test**:
+
 1. Temporarily break permissions on `silos` table
 2. Run cron sync
 3. Verify: Other devices still sync successfully
@@ -253,12 +275,12 @@ if (dev.silo_id) {
 
 ---
 
-
 ## Testing Checklist
 
 After implementing all 4 fixes:
 
 ### Smoke Tests (30 minutes)
+
 - [ ] Deploy to staging environment
 - [ ] Trigger manual cron execution
 - [ ] Verify no false humidity alerts (humidity 12-15% should be silent)
@@ -266,6 +288,7 @@ After implementing all 4 fixes:
 - [ ] Check logs: Errors logged but sync completes
 
 ### Integration Tests (1 hour)
+
 - [ ] Simulate 3 devices with readings
 - [ ] Set device 1: humidity=70% (should alert)
 - [ ] Set device 2: humidity=15% (should NOT alert)
@@ -274,6 +297,7 @@ After implementing all 4 fixes:
 - [ ] Break `silos` table permissions → verify device 2 & 3 still sync
 
 ### Load Test (optional, 1 hour)
+
 - [ ] Simulate 50 devices
 - [ ] Run cron sync
 - [ ] Verify all 50 synced within 30 seconds
@@ -284,15 +308,16 @@ After implementing all 4 fixes:
 ## Deployment Steps
 
 ### 1. Database Migration
+
 ```bash
 cd grainhero\ 2/supabase/migrations
 # Create new migration file
 cat > 20260709120000_fix_sensor_duplicates.sql << 'EOF'
-CREATE UNIQUE INDEX IF NOT EXISTS sensor_readings_device_timestamp_unique 
+CREATE UNIQUE INDEX IF NOT EXISTS sensor_readings_device_timestamp_unique
 ON sensor_readings (device_id, reading_timestamp);
 
-ALTER TABLE sensor_readings 
-ADD CONSTRAINT sensor_readings_no_duplicates 
+ALTER TABLE sensor_readings
+ADD CONSTRAINT sensor_readings_no_duplicates
 UNIQUE USING INDEX sensor_readings_device_timestamp_unique;
 EOF
 
@@ -301,6 +326,7 @@ supabase db push
 ```
 
 ### 2. Code Changes
+
 ```bash
 # Open the sync file
 code src/routes/api/public/cron/sync-firebase.ts
@@ -317,6 +343,7 @@ git commit -m "fix: Critical IoT pipeline bugs (humidity threshold, throttling, 
 ```
 
 ### 3. Staging Deploy
+
 ```bash
 # Deploy to staging
 npm run deploy:staging
@@ -327,6 +354,7 @@ npm run logs:staging -- --filter="sync-firebase"
 ```
 
 ### 4. Production Deploy (only after testing passes)
+
 ```bash
 # Tag release
 git tag v2.1.0-iot-fixes
@@ -354,6 +382,7 @@ supabase db reset --version <previous_version>
 ```
 
 **Rollback Criteria**:
+
 - More than 10 false alerts in first hour
 - Duplicate readings appearing
 - Sync loop crashes
@@ -363,6 +392,7 @@ supabase db reset --version <previous_version>
 ## Success Criteria
 
 After 24 hours in production:
+
 - [ ] Zero false humidity alerts (for readings 12-65%)
 - [ ] Zero duplicate sensor_readings rows
 - [ ] LDR alerts max 1 per 30 minutes per silo
@@ -370,4 +400,3 @@ After 24 hours in production:
 - [ ] No sync loop crashes in logs
 
 **If all criteria met**: Proceed to Priority 2 fixes (Realtime + Buffering)
-

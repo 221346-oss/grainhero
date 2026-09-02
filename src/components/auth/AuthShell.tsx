@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Wheat, Sun, Moon } from "lucide-react";
+import { Wheat, Sun, Moon, CheckCircle2, AlertCircle, Info } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { useState, useEffect, type ReactNode } from "react";
 import { getStoredThemeMode, toggleThemeMode, type ThemeMode } from "@/lib/theme";
@@ -46,13 +46,45 @@ export function AuthShell({ children }: { children: ReactNode }) {
 
 export type Msg = { type: "success" | "error" | "info"; text: string } | null;
 
+const messageVariants = {
+  success: {
+    Icon: CheckCircle2,
+    shell: "border-emerald-500/25 bg-emerald-500/[0.07] text-emerald-700 dark:text-emerald-300",
+    badge: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
+    accent: "bg-emerald-500",
+  },
+  error: {
+    Icon: AlertCircle,
+    shell: "border-red-500/25 bg-red-500/[0.07] text-red-700 dark:text-red-300",
+    badge: "bg-red-500/15 text-red-600 dark:text-red-400",
+    accent: "bg-red-500",
+  },
+  info: {
+    Icon: Info,
+    shell: "border-sky-500/25 bg-sky-500/[0.07] text-sky-700 dark:text-sky-300",
+    badge: "bg-sky-500/15 text-sky-600 dark:text-sky-400",
+    accent: "bg-sky-500",
+  },
+} as const;
+
 export function Message({ msg }: { msg: Msg }) {
   if (!msg) return null;
-  const styles =
-    msg.type === "error"
-      ? "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800"
-      : msg.type === "success"
-        ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-950/40 dark:text-green-300 dark:border-green-800"
-        : "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800";
-  return <div className={`text-sm border rounded-md p-3 ${styles}`}>{msg.text}</div>;
+  const { Icon, shell, badge, accent } = messageVariants[msg.type];
+
+  return (
+    <div
+      role={msg.type === "error" ? "alert" : "status"}
+      aria-live={msg.type === "error" ? "assertive" : "polite"}
+      className={`relative flex items-center gap-3 overflow-hidden rounded-xl border px-3.5 py-3 backdrop-blur-sm animate-in fade-in slide-in-from-top-1 duration-300 ${shell}`}
+    >
+      <span className={`absolute inset-y-0 left-0 w-0.5 ${accent}`} aria-hidden="true" />
+      <span
+        className={`grid size-7 shrink-0 place-items-center rounded-full ${badge}`}
+        aria-hidden="true"
+      >
+        <Icon className="size-4" />
+      </span>
+      <p className="text-sm font-medium leading-snug tracking-[-0.005em]">{msg.text}</p>
+    </div>
+  );
 }

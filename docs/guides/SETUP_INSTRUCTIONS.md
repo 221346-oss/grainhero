@@ -5,6 +5,7 @@
 ### Sidebar Structure (as of latest update):
 
 **Main Pinned Navigation:**
+
 - Home
 - Batches
 - Silos
@@ -18,6 +19,7 @@
 - Buyers
 
 **More → Insights Section:**
+
 - Environmental
 - Incidents
 - Maintenance
@@ -29,11 +31,13 @@
 - Notifications
 
 **More → Business Section:**
+
 - ✅ Revenue
 - ✅ Insurance
 - ✅ Subscription
 
 **More → Platform Section (super_admin only):**
+
 - Tenants
 - Users
 - Pipeline
@@ -49,10 +53,13 @@
 ## ❌ CRITICAL ISSUE: Missing Service Role Key
 
 ### Problem:
+
 Your `.env` file is **missing** `SUPABASE_SERVICE_ROLE_KEY`, which is required for admin operations that bypass Row Level Security (RLS).
 
 ### Why You're Not Seeing Data:
+
 The platform admin functions (like `getPlatformMetrics`, `listAllUsers`, `listAllTenants`) use `supabaseAdmin` which requires the service role key to:
+
 - Read all users across all tenants
 - Access the user_roles table
 - Get full platform metrics
@@ -71,11 +78,13 @@ The platform admin functions (like `getPlatformMetrics`, `listAllUsers`, `listAl
    - Copy the entire key (starts with `eyJhbG...`)
 
 3. **Add to .env file:**
+
    ```env
    SUPABASE_SERVICE_ROLE_KEY="your_service_role_key_here"
    ```
 
 4. **Restart your dev server:**
+
    ```bash
    npm run dev
    ```
@@ -95,24 +104,27 @@ The platform admin functions (like `getPlatformMetrics`, `listAllUsers`, `listAl
 ### Files that need currency changes:
 
 1. **SuperAdminDashboard.tsx** - Line 103:
+
    ```typescript
    // Change from:
    <p className="text-3xl font-bold mt-1 text-slate-900">${(m as any)?.mrr?.toLocaleString() ?? "0"}</p>
-   
+
    // To:
    <p className="text-3xl font-bold mt-1 text-slate-900">PKR {(m as any)?.mrr?.toLocaleString() ?? "0"}</p>
    ```
 
 2. **SuperAdminDashboard.tsx** - Line 242:
+
    ```typescript
    // Change from:
    { to: "/platform/revenue", label: "Revenue", value: m ? `$${(m as any).mrr?.toLocaleString()}` : "—", icon: DollarSign },
-   
+
    // To:
    { to: "/platform/revenue", label: "Revenue", value: m ? `PKR ${(m as any).mrr?.toLocaleString()}` : "—", icon: DollarSign },
    ```
 
 3. **revenue-analytics.functions.ts** - Update currency field:
+
    ```typescript
    // Change the return statement to include:
    currency: "PKR",  // instead of "USD"
@@ -125,6 +137,7 @@ The platform admin functions (like `getPlatformMetrics`, `listAllUsers`, `listAl
 ## 📊 Dashboard Analytics
 
 The SuperAdminDashboard already has:
+
 - ✅ 6 KPI cards (Tenants, Users, Subscriptions, MRR, Alerts, Logs)
 - ✅ User Signups Chart (30 days with growth %)
 - ✅ Role Distribution Chart
@@ -139,15 +152,15 @@ The SuperAdminDashboard already has:
 
 ## 🔍 Current Status Summary
 
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Navigation Structure | ✅ Complete | Activity Logs in sidebar, Business section in More |
-| Routes Exist | ✅ Complete | All routes verified: revenue, insurance, subscription, platform pages |
-| Dashboard Charts | ✅ Complete | 4 analytics charts implemented |
-| User Role Display | ✅ Complete | Users page shows roles with badges |
-| Tenant Data Display | ✅ Complete | Tenants page shows all tenant info |
-| **Data Loading** | ❌ **BLOCKED** | **Missing SUPABASE_SERVICE_ROLE_KEY** |
-| Currency (PKR) | ⚠️ Needs Update | Manual changes needed in 3-4 files |
+| Feature              | Status          | Notes                                                                 |
+| -------------------- | --------------- | --------------------------------------------------------------------- |
+| Navigation Structure | ✅ Complete     | Activity Logs in sidebar, Business section in More                    |
+| Routes Exist         | ✅ Complete     | All routes verified: revenue, insurance, subscription, platform pages |
+| Dashboard Charts     | ✅ Complete     | 4 analytics charts implemented                                        |
+| User Role Display    | ✅ Complete     | Users page shows roles with badges                                    |
+| Tenant Data Display  | ✅ Complete     | Tenants page shows all tenant info                                    |
+| **Data Loading**     | ❌ **BLOCKED**  | **Missing SUPABASE_SERVICE_ROLE_KEY**                                 |
+| Currency (PKR)       | ⚠️ Needs Update | Manual changes needed in 3-4 files                                    |
 
 ---
 

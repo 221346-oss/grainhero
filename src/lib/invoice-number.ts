@@ -43,7 +43,9 @@ export async function nextInvoiceNumber(sb: SB, adminId: string): Promise<string
 export async function insertInvoiceWithUniqueNumber<T>(
   sb: SB,
   adminId: string,
-  insert: (invoiceNumber: string) => PromiseLike<{ data: T | null; error: { code?: string; message?: string } | null }>,
+  insert: (
+    invoiceNumber: string,
+  ) => PromiseLike<{ data: T | null; error: { code?: string; message?: string } | null }>,
   maxAttempts = 5,
 ): Promise<T> {
   let lastError: { code?: string; message?: string } | null = null;
@@ -57,5 +59,7 @@ export async function insertInvoiceWithUniqueNumber<T>(
     // again, so surface it immediately instead of burning attempts.
     if (error.code !== "23505") throw error;
   }
-  throw new Error(`Could not generate a unique invoice number after ${maxAttempts} attempts: ${lastError?.message ?? "unknown error"}`);
+  throw new Error(
+    `Could not generate a unique invoice number after ${maxAttempts} attempts: ${lastError?.message ?? "unknown error"}`,
+  );
 }

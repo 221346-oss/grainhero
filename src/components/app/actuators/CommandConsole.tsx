@@ -4,7 +4,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Loader2, Send } from "lucide-react";
 import { toast } from "sonner";
 import { issueCommand, listCommands } from "@/lib/actuators.functions";
@@ -29,22 +35,33 @@ export function CommandConsole({ actuatorId }: { actuatorId: string }) {
   useEffect(() => {
     const ch = supabase
       .channel(`cmds:${actuatorId}`)
-      .on("postgres_changes",
-        { event: "*", schema: "public", table: "actuator_commands", filter: `actuator_id=eq.${actuatorId}` },
-        () => qc.invalidateQueries({ queryKey: ["actuator-commands", actuatorId] }))
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "actuator_commands",
+          filter: `actuator_id=eq.${actuatorId}`,
+        },
+        () => qc.invalidateQueries({ queryKey: ["actuator-commands", actuatorId] }),
+      )
       .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    return () => {
+      supabase.removeChannel(ch);
+    };
   }, [actuatorId, qc]);
 
   const inFlight = (data?.commands ?? []).some((c) => c.status === "queued" || c.status === "sent");
 
   const mut = useMutation({
-    mutationFn: () => issue({
-      data: {
-        actuatorId, command,
-        params: command === "set_level" && level !== "" ? { level: Number(level) } : {},
-      },
-    }),
+    mutationFn: () =>
+      issue({
+        data: {
+          actuatorId,
+          command,
+          params: command === "set_level" && level !== "" ? { level: Number(level) } : {},
+        },
+      }),
     onSuccess: () => {
       toast.success("Command queued");
       qc.invalidateQueries({ queryKey: ["actuator-commands", actuatorId] });
@@ -57,12 +74,14 @@ export function CommandConsole({ actuatorId }: { actuatorId: string }) {
   });
 
   return (
-    <div className="rounded-lg border p-3 space-y-3">
+    <div className="rounded-lg p-3 space-y-3">
       <div className="flex items-end gap-2">
         <div className="flex-1">
           <Label className="text-xs">Command</Label>
           <Select value={command} onValueChange={(v) => setCommand(v as Cmd)}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="on">On</SelectItem>
               <SelectItem value="off">Off</SelectItem>
@@ -79,7 +98,11 @@ export function CommandConsole({ actuatorId }: { actuatorId: string }) {
           </div>
         )}
         <Button onClick={() => mut.mutate()} disabled={mut.isPending || inFlight}>
-          {mut.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
+          {mut.isPending ? (
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          ) : (
+            <Send className="h-4 w-4 mr-2" />
+          )}
           Send
         </Button>
       </div>
@@ -94,7 +117,9 @@ export function CommandConsole({ actuatorId }: { actuatorId: string }) {
               <li key={c.id as string} className="flex items-center justify-between py-1.5">
                 <div className="flex items-center gap-2">
                   <span className="font-mono capitalize">{String(c.command)}</span>
-                  <span className="text-xs text-muted-foreground">{new Date(c.created_at as string).toLocaleTimeString()}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {new Date(c.created_at as string).toLocaleTimeString()}
+                  </span>
                 </div>
                 <CommandStatusBadge status={String(c.status)} />
               </li>

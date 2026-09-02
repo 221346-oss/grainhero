@@ -10,16 +10,33 @@ import { ManagerDashboard } from "@/components/dashboards/ManagerDashboard";
 import { TechnicianDashboard } from "@/components/dashboards/TechnicianDashboard";
 import { getImpersonationSession } from "@/components/app/ImpersonationBanner";
 import { useState, useEffect } from "react";
+import { useLocationScope } from "@/components/app/location/LocationScope";
+import { WarehousePicker } from "@/components/app/location/LocationPicker";
+import { AllLocationsOverview } from "@/components/dashboards/AllLocationsOverview";
+import { PlanExpiredPrompt } from "@/components/app/PlanExpiredPrompt";
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
       { title: "Dashboard — Grain Hero" },
-      { name: "description", content: "Dashboard workspace in the Grain Hero platform — private, sign-in required." },
+      {
+        name: "description",
+        content: "Dashboard workspace in the Grain Hero platform — private, sign-in required.",
+      },
       { property: "og:title", content: "Dashboard — Grain Hero" },
       { property: "og:description", content: "Dashboard workspace in the Grain Hero platform." },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
+  // `?loc=` carries the admin's active location. Registered here so the router
+  // preserves it across navigations instead of stripping it as unknown.
+  // `loc` is the city level, `wh` the warehouse the dashboard runs on.
+  // Registered here so the router preserves them rather than stripping them.
+  validateSearch: (search: Record<string, unknown>): { loc?: string; wh?: string } => {
+    const out: { loc?: string; wh?: string } = {};
+    if (typeof search.loc === "string" && search.loc.trim()) out.loc = search.loc;
+    if (typeof search.wh === "string" && search.wh.trim()) out.wh = search.wh;
+    return out;
+  },
   component: DashboardPage,
 });
 
@@ -46,7 +63,9 @@ function DashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="p-6"><DashboardSkeleton /></div>
+      <div className="p-6">
+        <DashboardSkeleton />
+      </div>
     );
   }
   if (error) {
@@ -59,10 +78,113 @@ function DashboardPage() {
   const name = impersonating ? impersonating.adminName : (data?.profile?.name ?? undefined);
 
   switch (role) {
-    case "super_admin": return <SuperAdminDashboard name={name} />;
-    case "manager": return <ManagerDashboard name={name} />;
-    case "technician": return <TechnicianDashboard name={name} />;
+    case "super_admin":
+      return <SuperAdminDashboard name={name} />;
+    case "manager":
+      return <ManagerDashboard name={name} />;
+    case "technician":
+      return <TechnicianDashboard name={name} />;
     // "admin" and any legacy/pending role → admin dashboard by default
-    default: return <AdminDashboard name={name} />;
+    default:
+      return <AdminDashboardWithLocations name={name} />;
   }
+}
+
+/**
+ * Admins pick a location before the scoped dashboard opens — but they land on
+ * the account-wide view first, rather than on navigation alone.
+ *
+ * Scoping every page to one warehouse left nowhere in the app that answered
+ * "how is the whole business doing", which is the question an admin holding
+ * sites in several cities actually opens the app with. So the no-location state
+ * is a real overview — totals across every location, then the cards — instead
+ * of a bare picker, and the header switcher's "All locations" returns to it.
+ *
+ * The picker is shown even when there is only one location — that decision was
+ * taken deliberately, so an admin always sees where their data is coming from
+ * rather than the app quietly choosing for them. The scope itself is provided
+ * by LocationScopeGate in the authenticated layout, so the header switcher and
+ * every other page share it.
+ */
+function AdminDashboardWithLocations({ name }: { name?: string }) {
+  const scope = useLocationScope();
+
+  // No provider at all (non-admin roles) — unscoped dashboard, as before.
+  if (!scope) return <AdminDashboard name={name} />;
+
+  // Shown above whichever level the admin is on. It never blocks — an expired
+  // tenant keeps their dashboard and is routed to renewal from inside it.
+
+  // Still loading. An empty list here is indistinguishable from "no warehouses",
+  // and rendering the unscoped dashboard would flash every city's data merged.
+  if (!scope.ready) {
+    return (
+      <div className="p-6">
+        <DashboardSkeleton />
+      </div>
+    );
+  }
+
+  // A warehouse is selected — that is the scope the dashboard runs on.
+  if (scope.activeWarehouse) {
+    return (
+      <>
+        <PlanExpiredPrompt />
+        <AdminDashboard name={name} />
+      </>
+    );
+  }
+
+  // A city is selected. If it holds a single warehouse there is nothing to
+  // choose, so go straight in rather than showing a one-card second level.
+  if (scope.active) {
+    if (scope.active.warehouses.length === 1) {
+      return <SingleWarehouseRedirect scope={scope} />;
+    }
+    return (
+      <>
+        <PlanExpiredPrompt />
+        <WarehousePicker
+          location={scope.active}
+          onSelect={(id) => scope.selectWarehouse(id)}
+          onBack={() => scope.clear()}
+        />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <PlanExpiredPrompt />
+      <AllLocationsOverview
+        locations={scope.locations}
+        plan={scope.plan}
+        name={name}
+        onSelect={(key) => scope.select(key)}
+      />
+    </>
+  );
+}
+
+/**
+ * A city with one warehouse needs no second level — select it and move on.
+ *
+ * Done in an effect rather than during render because selecting navigates, and
+ * navigating from a render pass is not allowed.
+ */
+function SingleWarehouseRedirect({
+  scope,
+}: {
+  scope: NonNullable<ReturnType<typeof useLocationScope>>;
+}) {
+  const only = scope.active?.warehouses[0]?.id;
+  useEffect(() => {
+    if (only) scope.selectWarehouse(only);
+  }, [only, scope]);
+
+  return (
+    <div className="p-6">
+      <DashboardSkeleton />
+    </div>
+  );
 }

@@ -5,9 +5,7 @@ import { z } from "zod";
 function parseOrThrow<T>(schema: z.ZodType<T>, data: unknown): T {
   const r = schema.safeParse(data);
   if (r.success) return r.data;
-  const msg = r.error.issues
-    .map((i) => `${i.path.join(".") || "field"}: ${i.message}`)
-    .join(" · ");
+  const msg = r.error.issues.map((i) => `${i.path.join(".") || "field"}: ${i.message}`).join(" · ");
   throw new Error(msg);
 }
 
@@ -150,15 +148,16 @@ export const listActivityLogs = createServerFn({ method: "POST" })
     if (data.from) q = q.gte("created_at", data.from);
     if (data.to) q = q.lte("created_at", `${data.to}T23:59:59Z`);
     if (data.entity_ref) q = q.eq("entity_ref", data.entity_ref);
-    if (data.search) q = q.or(`description.ilike.%${data.search}%,action.ilike.%${data.search}%,entity_ref.ilike.%${data.search}%`);
+    if (data.search)
+      q = q.or(
+        `description.ilike.%${data.search}%,action.ilike.%${data.search}%,entity_ref.ilike.%${data.search}%`,
+      );
 
     const { data: rows, error, count } = await q.range(from, to);
     if (error) throw error;
 
     // Category summary counts (all-time within tenant scope, via RLS)
-    const { data: catRows } = await context.supabase
-      .from("activity_logs")
-      .select("category");
+    const { data: catRows } = await context.supabase.from("activity_logs").select("category");
     const categories: Record<string, number> = {};
     for (const r of catRows ?? []) {
       const k = r.category ?? "system";

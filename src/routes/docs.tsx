@@ -1,86 +1,116 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { motion } from 'framer-motion'
-import { FileText, Download, Code, Terminal, Smartphone, Cloud } from 'lucide-react'
-import { NewGlassNav } from '@/components/landing/NewGlassNav'
-import { NewFooter } from '@/components/landing/NewFooter'
+import { createFileRoute } from "@tanstack/react-router";
+import { motion } from "framer-motion";
+import { FileText, Download, Code, Terminal, Smartphone, Cloud } from "lucide-react";
+import { NewGlassNav } from "@/components/landing/NewGlassNav";
+import { NewFooter } from "@/components/landing/NewFooter";
 
-export const Route = createFileRoute('/docs')({
+export const Route = createFileRoute("/docs")({
   head: () => ({
     meta: [
-      { title: 'Documentation — GrainHero' },
+      { title: "Documentation — GrainHero" },
       {
-        name: 'description',
-        content: 'Complete technical documentation for GrainHero platform, API references, and integration guides.',
+        name: "description",
+        content:
+          "Complete technical documentation for GrainHero platform, API references, and integration guides.",
       },
-      { property: 'og:title', content: "Documentation — GrainHero" },
-      { property: 'og:description', content: "Complete technical documentation for GrainHero platform, API references, and integration guides." },
-      { property: 'og:url', content: 'https://grainhero.app/docs' },
-      { property: 'og:type', content: 'website' },
-      { name: 'twitter:card', content: 'summary_large_image' },
+      { property: "og:title", content: "Documentation — GrainHero" },
+      {
+        property: "og:description",
+        content:
+          "Complete technical documentation for GrainHero platform, API references, and integration guides.",
+      },
+      { property: "og:url", content: "https://grainhero.app/docs" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [{ rel: 'canonical', href: 'https://grainhero.app/docs' }],
+    links: [{ rel: "canonical", href: "https://grainhero.app/docs" }],
   }),
   component: DocumentationPage,
-})
+});
 
 function DocumentationPage() {
   const docSections = [
     {
       icon: FileText,
-      title: 'User Guide',
-      description: 'Complete guide to using GrainHero platform features and real-time monitoring.',
-      items: ['Dashboard & Analytics', 'Silo & Warehouse Management', 'Alert Configuration', 'Batch Tracking & Reports'],
+      title: "User Guide",
+      description: "Complete guide to using GrainHero platform features and real-time monitoring.",
+      items: [
+        "Dashboard & Analytics",
+        "Silo & Warehouse Management",
+        "Alert Configuration",
+        "Batch Tracking & Reports",
+      ],
     },
     {
       icon: Terminal,
-      title: 'API Documentation',
-      description: 'Server functions and API endpoints for grain storage operations.',
-      items: ['Supabase Authentication', 'Sensor Data Endpoints', 'AI Prediction APIs', 'Analytics Functions'],
+      title: "API Documentation",
+      description: "Server functions and API endpoints for grain storage operations.",
+      items: [
+        "Supabase Authentication",
+        "Sensor Data Endpoints",
+        "AI Prediction APIs",
+        "Analytics Functions",
+      ],
     },
     {
       icon: Code,
-      title: 'ML & AI Integration',
-      description: 'Machine learning models for spoilage prediction and anomaly detection.',
-      items: ['Python ML Inference', 'Gemini AI Insights', 'Risk Classification Models', 'Real-time Predictions'],
+      title: "ML & AI Integration",
+      description: "Machine learning models for spoilage prediction and anomaly detection.",
+      items: [
+        "Python ML Inference",
+        "Gemini AI Insights",
+        "Risk Classification Models",
+        "Real-time Predictions",
+      ],
     },
     {
       icon: Smartphone,
-      title: 'Platform Features',
-      description: 'Core features available in the GrainHero web platform.',
-      items: ['Real-time Monitoring', 'Predictive Analytics', 'Insurance & Claims', 'Team Management'],
+      title: "Platform Features",
+      description: "Core features available in the GrainHero web platform.",
+      items: [
+        "Real-time Monitoring",
+        "Predictive Analytics",
+        "Insurance & Claims",
+        "Team Management",
+      ],
     },
     {
       icon: Cloud,
-      title: 'IoT & Sensor Integration',
-      description: 'IoT sensor specifications and data collection protocols.',
-      items: ['Temperature & Humidity Sensors', 'Moisture & CO2 Monitoring', 'VOC Detection', 'Firebase Real-time Sync'],
+      title: "IoT & Sensor Integration",
+      description: "IoT sensor specifications and data collection protocols.",
+      items: [
+        "Temperature & Humidity Sensors",
+        "Moisture & CO2 Monitoring",
+        "VOC Detection",
+        "Firebase Real-time Sync",
+      ],
     },
     {
       icon: Download,
-      title: 'Data & Reports',
-      description: 'Export capabilities and reporting tools for grain storage data.',
-      items: ['Batch Analytics', 'Risk Reports', 'Traceability Logs', 'Activity History'],
+      title: "Data & Reports",
+      description: "Export capabilities and reporting tools for grain storage data.",
+      items: ["Batch Analytics", "Risk Reports", "Traceability Logs", "Activity History"],
     },
-  ]
+  ];
 
   return (
     <main className="min-h-screen bg-[#EDE9D4]">
       <NewGlassNav />
-      
+
       {/* Hero Section */}
       <section className="relative pt-32 pb-16 sm:pt-40 sm:pb-24 px-4 sm:px-6 lg:px-8 bg-[#252d26] overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div
             style={{
               backgroundImage:
-                'radial-gradient(circle at 2px 2px, rgba(47,172,12,0.4) 1px, transparent 0)',
-              backgroundSize: '40px 40px',
-              width: '100%',
-              height: '100%',
+                "radial-gradient(circle at 2px 2px, rgba(47,172,12,0.4) 1px, transparent 0)",
+              backgroundSize: "40px 40px",
+              width: "100%",
+              height: "100%",
             }}
           />
         </div>
-        
+
         <div className="max-w-4xl mx-auto text-center relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -107,15 +137,15 @@ function DocumentationPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-wrap justify-center gap-4">
             {[
-              { name: 'Getting Started', link: '/help' },
-              { name: 'API Reference', link: '#' },
-              { name: 'Tutorials', link: '/help' },
-              { name: 'FAQ', link: '/#faq' },
-              { name: 'Support', link: '/contact' },
+              { name: "Getting Started", link: "/help" },
+              { name: "API Reference", link: "#" },
+              { name: "Tutorials", link: "/help" },
+              { name: "FAQ", link: "/#faq" },
+              { name: "Support", link: "/contact" },
             ].map((link) => (
               <button
                 key={link.name}
-                onClick={() => window.location.href = link.link}
+                onClick={() => (window.location.href = link.link)}
                 className="px-6 py-2 bg-[#EDE9D4] hover:bg-[#2FAC0C]/10 rounded-full text-[#252d26] font-semibold transition-colors border border-[#2FAC0C]/20"
               >
                 {link.name}
@@ -171,15 +201,20 @@ function DocumentationPage() {
               <div className="bg-[#2FAC0C]/10 px-4 py-2 rounded-full">
                 <span className="text-[#2FAC0C] font-bold">v3.2</span>
               </div>
-              <h3 className="text-2xl font-black text-[#252d26]">ML Model: Spoilage Risk Classifier</h3>
+              <h3 className="text-2xl font-black text-[#252d26]">
+                ML Model: Spoilage Risk Classifier
+              </h3>
             </div>
             <p className="text-[#404F44] mb-6">
-              GrainHero uses advanced machine learning models including Gradient Boosted Trees for spoilage classification,
-              Isolation Forest for anomaly detection, and LSTM networks for yield forecasting. Our AI leverages temperature,
-              humidity, moisture, CO₂, VOC, and storage duration data to predict grain spoilage 24-48 hours in advance with high accuracy.
+              GrainHero uses advanced machine learning models including Gradient Boosted Trees for
+              spoilage classification, Isolation Forest for anomaly detection, and LSTM networks for
+              yield forecasting. Our AI leverages temperature, humidity, moisture, CO₂, VOC, and
+              storage duration data to predict grain spoilage 24-48 hours in advance with high
+              accuracy.
             </p>
-            <button className="bg-[#2FAC0C] text-white font-semibold px-6 py-3 rounded-full hover:bg-[#2FAC0C]/90 hover:scale-105 transition-all"
-              onClick={() => window.location.href = '/help'}
+            <button
+              className="bg-[#2FAC0C] text-white font-semibold px-6 py-3 rounded-full hover:bg-[#2FAC0C]/90 hover:scale-105 transition-all"
+              onClick={() => (window.location.href = "/help")}
             >
               View Technical Specs
             </button>
@@ -189,5 +224,5 @@ function DocumentationPage() {
 
       <NewFooter />
     </main>
-  )
+  );
 }

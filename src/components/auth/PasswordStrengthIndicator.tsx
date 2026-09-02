@@ -1,5 +1,9 @@
-import React from 'react';
-import { getPasswordStrengthColor, getPasswordStrengthText, type PasswordStrength } from '@/lib/validation';
+import React from "react";
+import {
+  getPasswordStrengthColor,
+  getPasswordStrengthText,
+  type PasswordStrength,
+} from "@/lib/validation";
 
 interface Props {
   strength: PasswordStrength;
@@ -7,7 +11,7 @@ interface Props {
 }
 
 export const PasswordStrengthIndicator: React.FC<Props> = ({ strength, showFeedback = true }) => {
-  const widthClasses = ['w-0', 'w-1/4', 'w-2/4', 'w-3/4', 'w-full'];
+  const widthClasses = ["w-0", "w-1/4", "w-2/4", "w-3/4", "w-full"];
   const clampedScore = Math.max(0, Math.min(widthClasses.length - 1, Math.round(strength.score)));
   const progressWidthClass = widthClasses[clampedScore];
 
@@ -15,7 +19,9 @@ export const PasswordStrengthIndicator: React.FC<Props> = ({ strength, showFeedb
     <div className="space-y-2">
       <div className="flex items-center gap-2">
         <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-          <div className={`h-full transition-all duration-300 ${progressWidthClass} ${getPasswordStrengthColor(strength.score)}`} />
+          <div
+            className={`h-full transition-all duration-300 ${progressWidthClass} ${getPasswordStrengthColor(strength.score)}`}
+          />
         </div>
         <span className="text-xs font-medium text-gray-600 min-w-[60px]">
           {getPasswordStrengthText(strength.score)}

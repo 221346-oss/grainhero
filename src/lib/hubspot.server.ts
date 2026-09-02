@@ -54,10 +54,12 @@ export async function hubspotCreateContact(props: HubspotContactProps) {
 
 export async function hubspotCreateDeal(companyName: string, contactId?: string) {
   const associations = contactId
-    ? [{
-        to: { id: contactId },
-        types: [{ associationCategory: "HUBSPOT_DEFINED", associationTypeId: 3 }],
-      }]
+    ? [
+        {
+          to: { id: contactId },
+          types: [{ associationCategory: "HUBSPOT_DEFINED", associationTypeId: 3 }],
+        },
+      ]
     : [];
   return req<{ id: string }>("/crm/v3/objects/deals", {
     method: "POST",

@@ -20,14 +20,14 @@ export const Route = createFileRoute("/auth/login")({
     meta: [
       { title: "Sign in — GrainHero" },
       { name: "description", content: "Sign in to your GrainHero account." },
-      { property: 'og:title', content: "Sign in — GrainHero" },
-      { property: 'og:description', content: "Sign in to your GrainHero account." },
-      { property: 'og:url', content: 'https://grainhero.app/auth/login' },
-      { property: 'og:type', content: 'website' },
-      { name: 'twitter:card', content: 'summary_large_image' },
-      { name: 'robots', content: 'noindex, nofollow' },
+      { property: "og:title", content: "Sign in — GrainHero" },
+      { property: "og:description", content: "Sign in to your GrainHero account." },
+      { property: "og:url", content: "https://grainhero.app/auth/login" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "robots", content: "noindex, nofollow" },
     ],
-    links: [{ rel: 'canonical', href: 'https://grainhero.app/auth/login' }],
+    links: [{ rel: "canonical", href: "https://grainhero.app/auth/login" }],
   }),
   component: LoginPage,
 });
@@ -100,7 +100,7 @@ function LoginPage() {
           <div className="space-y-2">
             <Label htmlFor="li-email">Email</Label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 id="li-email"
                 type="email"

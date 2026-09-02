@@ -30,12 +30,17 @@ function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: num
 
 function routeDistanceKm(stops: Array<{ lat?: number | null; lng?: number | null }>): number {
   let total = 0;
-  const pts = stops.filter((s) => s.lat != null && s.lng != null) as Array<{ lat: number; lng: number }>;
+  const pts = stops.filter((s) => s.lat != null && s.lng != null) as Array<{
+    lat: number;
+    lng: number;
+  }>;
   for (let i = 1; i < pts.length; i++) total += haversineKm(pts[i - 1], pts[i]);
   return Math.round(total * 10) / 10;
 }
 
-function nearestNeighbourOrder<T extends { lat?: number | null; lng?: number | null }>(stops: T[]): T[] {
+function nearestNeighbourOrder<T extends { lat?: number | null; lng?: number | null }>(
+  stops: T[],
+): T[] {
   if (stops.length < 3) return stops;
   const remaining = [...stops];
   const ordered: T[] = [remaining.shift()!];
@@ -50,8 +55,14 @@ function nearestNeighbourOrder<T extends { lat?: number | null; lng?: number | n
     for (let i = 0; i < remaining.length; i++) {
       const c = remaining[i];
       if (c.lat == null || c.lng == null) continue;
-      const d = haversineKm(last as { lat: number; lng: number }, c as { lat: number; lng: number });
-      if (d < bestDist) { bestDist = d; bestIdx = i; }
+      const d = haversineKm(
+        last as { lat: number; lng: number },
+        c as { lat: number; lng: number },
+      );
+      if (d < bestDist) {
+        bestDist = d;
+        bestIdx = i;
+      }
     }
     ordered.push(remaining.splice(bestIdx, 1)[0]);
   }
@@ -71,7 +82,11 @@ export const listCarriers = createServerFn({ method: "GET" })
 
 const CarrierSchema = z.object({
   id: z.string().uuid().optional(),
-  code: z.string().min(1).max(60).regex(/^[a-z0-9_-]+$/i),
+  code: z
+    .string()
+    .min(1)
+    .max(60)
+    .regex(/^[a-z0-9_-]+$/i),
   name: z.string().min(1).max(120),
   type: z.enum(["in_house", "third_party"]),
   tracking_url_template: z.string().max(500).optional().nullable(),
@@ -107,10 +122,15 @@ export const rotateCarrierWebhookSecret = createServerFn({ method: "POST" })
     await assertSuperAdmin(context);
     const bytes = new Uint8Array(32);
     crypto.getRandomValues(bytes);
-    const secret = Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
+    const secret = Array.from(bytes)
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
-    const { error } = await sb.from("carriers").update({ webhook_secret: secret }).eq("id", data.id);
+    const { error } = await sb
+      .from("carriers")
+      .update({ webhook_secret: secret })
+      .eq("id", data.id);
     if (error) throw error;
     return { secret };
   });
@@ -122,7 +142,10 @@ export const listVehicles = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
-    const { data } = await sb.from("vehicles").select("*, carriers(name, code)").order("registration_no");
+    const { data } = await sb
+      .from("vehicles")
+      .select("*, carriers(name, code)")
+      .order("registration_no");
     return { vehicles: (data ?? []) as Row[] };
   });
 
@@ -207,15 +230,19 @@ const StopSchema = z.object({
 
 export const assignShipment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d) => z.object({
-    shipmentId: z.string().uuid(),
-    carrierId: z.string().uuid(),
-    vehicleId: z.string().uuid().optional().nullable(),
-    driverId: z.string().uuid().optional().nullable(),
-    plannedPickupAt: z.string().datetime().optional().nullable(),
-    plannedDeliveryAt: z.string().datetime().optional().nullable(),
-    stops: z.array(StopSchema).max(20).default([]),
-  }).parse(d))
+  .validator((d) =>
+    z
+      .object({
+        shipmentId: z.string().uuid(),
+        carrierId: z.string().uuid(),
+        vehicleId: z.string().uuid().optional().nullable(),
+        driverId: z.string().uuid().optional().nullable(),
+        plannedPickupAt: z.string().datetime().optional().nullable(),
+        plannedDeliveryAt: z.string().datetime().optional().nullable(),
+        stops: z.array(StopSchema).max(20).default([]),
+      })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
@@ -224,7 +251,11 @@ export const assignShipment = createServerFn({ method: "POST" })
 
     // Validate driver license
     if (data.driverId) {
-      const { data: drv } = await sb.from("drivers").select("license_expiry, active").eq("id", data.driverId).maybeSingle();
+      const { data: drv } = await sb
+        .from("drivers")
+        .select("license_expiry, active")
+        .eq("id", data.driverId)
+        .maybeSingle();
       const d0 = drv as Row | null;
       if (!d0?.active) throw new Error("Driver not active");
       if (d0.license_expiry && new Date(d0.license_expiry) < new Date()) {
@@ -234,14 +265,21 @@ export const assignShipment = createServerFn({ method: "POST" })
 
     const distanceKm = routeDistanceKm(data.stops);
     const nowIso = new Date().toISOString();
-    const planned_pickup_at = data.plannedPickupAt
-      ?? new Date(Date.now() + settings.logistics.defaultPickupWindowHours * 3_600_000).toISOString();
-    const planned_delivery_at = data.plannedDeliveryAt
-      ?? new Date(Date.now() + settings.logistics.defaultDeliveryWindowHours * 3_600_000).toISOString();
+    const planned_pickup_at =
+      data.plannedPickupAt ??
+      new Date(Date.now() + settings.logistics.defaultPickupWindowHours * 3_600_000).toISOString();
+    const planned_delivery_at =
+      data.plannedDeliveryAt ??
+      new Date(
+        Date.now() + settings.logistics.defaultDeliveryWindowHours * 3_600_000,
+      ).toISOString();
 
     // Upsert assignment (one per shipment)
-    const { data: existing } = await sb.from("shipment_assignments")
-      .select("id").eq("shipment_id", data.shipmentId).maybeSingle();
+    const { data: existing } = await sb
+      .from("shipment_assignments")
+      .select("id")
+      .eq("shipment_id", data.shipmentId)
+      .maybeSingle();
 
     const assignmentPayload = {
       shipment_id: data.shipmentId,
@@ -259,11 +297,18 @@ export const assignShipment = createServerFn({ method: "POST" })
     let assignmentId: string;
     if (existing) {
       assignmentId = (existing as Row).id;
-      const { error } = await sb.from("shipment_assignments").update(assignmentPayload).eq("id", assignmentId);
+      const { error } = await sb
+        .from("shipment_assignments")
+        .update(assignmentPayload)
+        .eq("id", assignmentId);
       if (error) throw error;
       await sb.from("shipment_route_stops").delete().eq("assignment_id", assignmentId);
     } else {
-      const { data: row, error } = await sb.from("shipment_assignments").insert(assignmentPayload).select("id").single();
+      const { data: row, error } = await sb
+        .from("shipment_assignments")
+        .insert(assignmentPayload)
+        .select("id")
+        .single();
       if (error) throw error;
       assignmentId = (row as Row).id;
     }
@@ -275,20 +320,32 @@ export const assignShipment = createServerFn({ method: "POST" })
     }
 
     // Fetch shipment to log & notify
-    const { data: ship } = await sb.from("buyer_shipments")
-      .select("id, order_id, admin_id").eq("id", data.shipmentId).maybeSingle();
+    const { data: ship } = await sb
+      .from("buyer_shipments")
+      .select("id, order_id, admin_id")
+      .eq("id", data.shipmentId)
+      .maybeSingle();
     const s = ship as Row | null;
     if (s) {
-      const { data: carrier } = await sb.from("carriers").select("name, code").eq("id", data.carrierId).maybeSingle();
+      const { data: carrier } = await sb
+        .from("carriers")
+        .select("name, code")
+        .eq("id", data.carrierId)
+        .maybeSingle();
       const cName = (carrier as Row | null)?.name ?? "Carrier";
       await sb.from("buyer_shipment_events").insert({
-        shipment_id: data.shipmentId, code: "carrier_assigned",
-        label: `Carrier assigned: ${cName}`, source: "seller",
+        shipment_id: data.shipmentId,
+        code: "carrier_assigned",
+        label: `Carrier assigned: ${cName}`,
+        source: "seller",
         actor_user_id: context.userId,
       });
       await logActivity({
-        actorId: context.userId, tenantAdminId: s.admin_id as string,
-        action: "logistics.assigned", targetType: "shipment_assignment", targetId: assignmentId,
+        actorId: context.userId,
+        tenantAdminId: s.admin_id as string,
+        action: "logistics.assigned",
+        targetType: "shipment_assignment",
+        targetId: assignmentId,
         meta: { shipmentId: data.shipmentId, carrierId: data.carrierId, distanceKm },
       });
     }
@@ -307,15 +364,25 @@ export const optimizeRoute = createServerFn({ method: "POST" })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const settings = await loadMarketplaceSettings(context.supabase);
-    if (settings.logistics.routeOptimizer === "off") return { ok: false, reason: "optimizer disabled" };
-    const { data: stops } = await sb.from("shipment_route_stops")
-      .select("*").eq("assignment_id", data.assignmentId).order("sequence");
+    if (settings.logistics.routeOptimizer === "off")
+      return { ok: false, reason: "optimizer disabled" };
+    const { data: stops } = await sb
+      .from("shipment_route_stops")
+      .select("*")
+      .eq("assignment_id", data.assignmentId)
+      .order("sequence");
     const ordered = nearestNeighbourOrder((stops ?? []) as Row[]);
     for (let i = 0; i < ordered.length; i++) {
-      await sb.from("shipment_route_stops").update({ sequence: i }).eq("id", (ordered[i] as Row).id);
+      await sb
+        .from("shipment_route_stops")
+        .update({ sequence: i })
+        .eq("id", (ordered[i] as Row).id);
     }
     const distanceKm = routeDistanceKm(ordered as Row[]);
-    await sb.from("shipment_assignments").update({ distance_km: distanceKm || null }).eq("id", data.assignmentId);
+    await sb
+      .from("shipment_assignments")
+      .update({ distance_km: distanceKm || null })
+      .eq("id", data.assignmentId);
     return { ok: true, distanceKm, count: ordered.length };
   });
 
@@ -323,23 +390,30 @@ export const optimizeRoute = createServerFn({ method: "POST" })
 
 export const recordLogisticsCost = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d) => z.object({
-    assignmentId: z.string().uuid(),
-    category: z.enum(["fuel", "driver_payout", "toll", "misc"]),
-    amount: z.number().min(0),
-    currency: z.string().length(3).default("PKR"),
-    incurredAt: z.string().datetime().optional(),
-    receiptUrl: z.string().url().optional().nullable(),
-    notes: z.string().max(500).optional().nullable(),
-  }).parse(d))
+  .validator((d) =>
+    z
+      .object({
+        assignmentId: z.string().uuid(),
+        category: z.enum(["fuel", "driver_payout", "toll", "misc"]),
+        amount: z.number().min(0),
+        currency: z.string().length(3).default("PKR"),
+        incurredAt: z.string().datetime().optional(),
+        receiptUrl: z.string().url().optional().nullable(),
+        notes: z.string().max(500).optional().nullable(),
+      })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const { error } = await sb.from("logistics_cost_entries").insert({
-      assignment_id: data.assignmentId, category: data.category,
-      amount: data.amount, currency: data.currency,
+      assignment_id: data.assignmentId,
+      category: data.category,
+      amount: data.amount,
+      currency: data.currency,
       incurred_at: data.incurredAt ?? new Date().toISOString(),
-      recorded_by: context.userId, receipt_url: data.receiptUrl ?? null,
+      recorded_by: context.userId,
+      receipt_url: data.receiptUrl ?? null,
       notes: data.notes ?? null,
     });
     if (error) throw error;
@@ -352,8 +426,11 @@ export const listAssignmentCosts = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
-    const { data: rows } = await sb.from("logistics_cost_entries")
-      .select("*").eq("assignment_id", data.assignmentId).order("incurred_at", { ascending: false });
+    const { data: rows } = await sb
+      .from("logistics_cost_entries")
+      .select("*")
+      .eq("assignment_id", data.assignmentId)
+      .order("incurred_at", { ascending: false });
     return { costs: (rows ?? []) as Row[] };
   });
 
@@ -366,7 +443,11 @@ export const getLogisticsCommandCenter = createServerFn({ method: "GET" })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
     const [aRes, cRes, vRes, dRes] = await Promise.all([
-      sb.from("shipment_assignments").select("id, status, planned_delivery_at, actual_delivery_at, distance_km, carrier_id, assigned_at"),
+      sb
+        .from("shipment_assignments")
+        .select(
+          "id, status, planned_delivery_at, actual_delivery_at, distance_km, carrier_id, assigned_at",
+        ),
       sb.from("logistics_cost_entries").select("assignment_id, amount, category"),
       sb.from("vehicles").select("id, current_status, active"),
       sb.from("drivers").select("id, active, license_expiry"),
@@ -376,16 +457,24 @@ export const getLogisticsCommandCenter = createServerFn({ method: "GET" })
     const vehicles = (vRes.data ?? []) as Row[];
     const drivers = (dRes.data ?? []) as Row[];
 
-    const active = assignments.filter((a) => a.status !== "delivered" && a.status !== "cancelled").length;
+    const active = assignments.filter(
+      (a) => a.status !== "delivered" && a.status !== "cancelled",
+    ).length;
     const delivered = assignments.filter((a) => a.status === "delivered");
-    const onTime = delivered.filter((a) => !a.planned_delivery_at || !a.actual_delivery_at
-      || new Date(a.actual_delivery_at) <= new Date(a.planned_delivery_at)).length;
+    const onTime = delivered.filter(
+      (a) =>
+        !a.planned_delivery_at ||
+        !a.actual_delivery_at ||
+        new Date(a.actual_delivery_at) <= new Date(a.planned_delivery_at),
+    ).length;
     const onTimePct = delivered.length ? Math.round((onTime / delivered.length) * 100) : 0;
     const totalCost = costs.reduce((s, c) => s + Number(c.amount ?? 0), 0);
     const totalKg = 0; // hooked later via join to buyer_orders.quantity_kg
     const costPerKg = totalKg ? totalCost / totalKg : 0;
     const fleetActive = vehicles.filter((v) => v.active).length;
-    const fleetInUse = vehicles.filter((v) => v.current_status === "assigned" || v.current_status === "in_transit").length;
+    const fleetInUse = vehicles.filter(
+      (v) => v.current_status === "assigned" || v.current_status === "in_transit",
+    ).length;
     const utilization = fleetActive ? Math.round((fleetInUse / fleetActive) * 100) : 0;
 
     const now = new Date();

@@ -32,9 +32,7 @@ export function EmptyState({ title, description, icon, action, className }: Stat
         </div>
         <div className="space-y-1">
           <p className="font-medium text-foreground">{title}</p>
-          {description && (
-            <p className="text-sm text-muted-foreground max-w-md">{description}</p>
-          )}
+          {description && <p className="text-sm text-muted-foreground max-w-md">{description}</p>}
         </div>
         {action && (
           <Button size="sm" variant="outline" onClick={action.onClick}>
@@ -55,9 +53,7 @@ export function ErrorState({ title, description, action, className }: StateProps
         </div>
         <div className="space-y-1">
           <p className="font-medium text-foreground">{title}</p>
-          {description && (
-            <p className="text-sm text-muted-foreground max-w-md">{description}</p>
-          )}
+          {description && <p className="text-sm text-muted-foreground max-w-md">{description}</p>}
         </div>
         {action && (
           <Button size="sm" variant="outline" onClick={action.onClick}>
@@ -81,9 +77,11 @@ export function InlineLoader({ label = "Loading..." }: { label?: string }) {
 export function SkeletonBlockLoader({ rows = 3 }: { rows?: number }) {
   return (
     <div className="p-4 space-y-3">
-      {Array(rows).fill(null).map((_, i) => (
-        <Skeleton key={i} className="h-10 w-full rounded-md" />
-      ))}
+      {Array(rows)
+        .fill(null)
+        .map((_, i) => (
+          <Skeleton key={i} className="h-10 w-full rounded-md" />
+        ))}
     </div>
   );
 }
@@ -106,8 +104,9 @@ export function PlanLimitBanner({
   message?: string;
 }) {
   const numericLimit = typeof limit === "number" ? limit : undefined;
-  const label = message
-    ?? (numericLimit != null && used != null
+  const label =
+    message ??
+    (numericLimit != null && used != null
       ? `${feature.replace(/^max_/, "")} limit reached (${used}/${numericLimit}).`
       : `${feature.replace(/^max_/, "")} not included in your plan.`);
   return (

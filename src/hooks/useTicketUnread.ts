@@ -22,8 +22,7 @@ export function useTicketUnread(userId: string | null | undefined) {
 
   return {
     /** Unread count for a specific ticket. */
-    unreadFor: (ticketId: string) =>
-      userId ? getUnreadCount(userId, ticketId) : 0,
+    unreadFor: (ticketId: string) => (userId ? getUnreadCount(userId, ticketId) : 0),
     /** Total unread across all tickets. */
     totalUnread: userId ? getTotalUnread(userId) : 0,
     /** Call when the user opens the discussion dialog for a ticket. */

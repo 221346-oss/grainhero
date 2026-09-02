@@ -30,11 +30,14 @@ async function tenantAdminId(supabase: unknown, userId: string): Promise<string>
  */
 const createInvoiceInput = z.object({
   buyerId: z.string().uuid().nullable().optional(),
-  newBuyer: z.object({
-    name: z.string().min(1).max(200),
-    contact_phone: z.string().max(50).optional().nullable(),
-    contact_email: z.string().max(200).optional().nullable(),
-  }).nullable().optional(),
+  newBuyer: z
+    .object({
+      name: z.string().min(1).max(200),
+      contact_phone: z.string().max(50).optional().nullable(),
+      contact_email: z.string().max(200).optional().nullable(),
+    })
+    .nullable()
+    .optional(),
   grainType: z.string().min(1).max(50),
   qtyKg: z.number().positive(),
   pricePerKg: z.number().positive(),
@@ -82,32 +85,40 @@ export const createDispatchInvoice = createServerFn({ method: "POST" })
     if (!buyerId) throw new Error("Buyer required");
 
     const totalAmount = Number((data.pricePerKg * data.qtyKg).toFixed(2));
-    const items = [{
-      description: `${data.grainType} (dispatch quote)`,
-      quantity_kg: data.qtyKg,
-      unit_price: data.pricePerKg,
-      total: totalAmount,
-    }];
+    const items = [
+      {
+        description: `${data.grainType} (dispatch quote)`,
+        quantity_kg: data.qtyKg,
+        unit_price: data.pricePerKg,
+        total: totalAmount,
+      },
+    ];
 
     const invRow = await insertInvoiceWithUniqueNumber<Row>(sb, adminId, (invoiceNumber) =>
-      sb.from("buyer_invoices").insert({
-        admin_id: adminId,
-        invoice_number: invoiceNumber,
-        buyer_id: buyerId,
-        batch_id: null,
-        dispatch_id: null,
-        buyer_name: buyerRow?.name ?? null,
-        buyer_company: buyerRow?.company_name ?? null,
-        buyer_contact: buyerRow ? { phone: buyerRow.contact_phone, email: buyerRow.contact_email } : null,
-        items,
-        subtotal: totalAmount,
-        total_amount: totalAmount,
-        currency: data.currency,
-        payment_status: "unpaid",
-        due_date: data.dueDate ?? null,
-        notes: data.notes ?? null,
-        created_by: context.userId,
-      } as never).select("id, invoice_number").single(),
+      sb
+        .from("buyer_invoices")
+        .insert({
+          admin_id: adminId,
+          invoice_number: invoiceNumber,
+          buyer_id: buyerId,
+          batch_id: null,
+          dispatch_id: null,
+          buyer_name: buyerRow?.name ?? null,
+          buyer_company: buyerRow?.company_name ?? null,
+          buyer_contact: buyerRow
+            ? { phone: buyerRow.contact_phone, email: buyerRow.contact_email }
+            : null,
+          items,
+          subtotal: totalAmount,
+          total_amount: totalAmount,
+          currency: data.currency,
+          payment_status: "unpaid",
+          due_date: data.dueDate ?? null,
+          notes: data.notes ?? null,
+          created_by: context.userId,
+        } as never)
+        .select("id, invoice_number")
+        .single(),
     );
 
     await logActivity({
@@ -119,7 +130,12 @@ export const createDispatchInvoice = createServerFn({ method: "POST" })
       meta: { buyerId, grainType: data.grainType, qtyKg: data.qtyKg, totalAmount },
     });
 
-    return { id: invRow.id as string, invoiceNumber: invRow.invoice_number as string, buyerId, totalAmount };
+    return {
+      id: invRow.id as string,
+      invoiceNumber: invRow.invoice_number as string,
+      buyerId,
+      totalAmount,
+    };
   });
 
 /**
@@ -155,7 +171,10 @@ export const recordDispatchPayment = createServerFn({ method: "POST" })
     if (dErr) throw dErr;
     if (!disp) throw new Error("Dispatch not found");
     const dispatch = disp as Row;
-    if (dispatch.status === "draft") throw new Error("Dispatch is still awaiting admin approval — payment can only be recorded after it's confirmed");
+    if (dispatch.status === "draft")
+      throw new Error(
+        "Dispatch is still awaiting admin approval — payment can only be recorded after it's confirmed",
+      );
     if (dispatch.status === "cancelled") throw new Error("Dispatch was cancelled");
     if (!dispatch.buyer_id) throw new Error("Dispatch has no buyer on record");
 
@@ -188,12 +207,15 @@ export const recordDispatchPayment = createServerFn({ method: "POST" })
     if (invoice) {
       const newPaid = Number(invoice.amount_paid ?? 0) + data.amount;
       const fullyPaid = newPaid >= Number(invoice.total_amount) - 0.01;
-      const { error: uErr } = await sb.from("buyer_invoices").update({
-        amount_paid: newPaid,
-        payment_status: fullyPaid ? "paid" : "partial",
-        payment_method: data.paymentMethod,
-        paid_at: fullyPaid ? new Date().toISOString() : null,
-      } as never).eq("id", invoice.id);
+      const { error: uErr } = await sb
+        .from("buyer_invoices")
+        .update({
+          amount_paid: newPaid,
+          payment_status: fullyPaid ? "paid" : "partial",
+          payment_method: data.paymentMethod,
+          paid_at: fullyPaid ? new Date().toISOString() : null,
+        } as never)
+        .eq("id", invoice.id);
       if (uErr) throw uErr;
     }
 
@@ -212,7 +234,9 @@ export const recordDispatchPayment = createServerFn({ method: "POST" })
 /** Issues a signed upload URL for a payment receipt screenshot (tenant-scoped path), used before OCR runs client-side. */
 export const createReceiptUploadUrl = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d) => z.object({ dispatchId: z.string().uuid(), filename: z.string().min(1).max(200) }).parse(d))
+  .validator((d) =>
+    z.object({ dispatchId: z.string().uuid(), filename: z.string().min(1).max(200) }).parse(d),
+  )
   .handler(async ({ data, context }) => {
     const sb = context.supabase;
     const adminId = await tenantAdminId(sb, context.userId);
@@ -247,7 +271,9 @@ export const listPayableDispatches = createServerFn({ method: "GET" })
     const adminId = await tenantAdminId(sb, context.userId);
     const { data: dispatches, error } = await sb
       .from("grain_dispatches")
-      .select("id, dispatch_number, buyer_id, grain_type, total_qty_kg, price_per_kg, total_amount, currency, status, dispatched_at, buyers:buyer_id(id, name, company_name)")
+      .select(
+        "id, dispatch_number, buyer_id, grain_type, total_qty_kg, price_per_kg, total_amount, currency, status, dispatched_at, buyers:buyer_id(id, name, company_name)",
+      )
       .eq("admin_id", adminId)
       .in("status", ["confirmed", "in_transit", "delivered"])
       .order("dispatched_at", { ascending: false })

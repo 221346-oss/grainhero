@@ -4,6 +4,7 @@
 **Status:** ✅ COMPLETE
 
 ## Overview
+
 Added a new "Buyer Orders" card to the Admin Dashboard Overview section that displays all created buyers with their name, company, and status.
 
 ## Changes Made
@@ -11,12 +12,15 @@ Added a new "Buyer Orders" card to the Admin Dashboard Overview section that dis
 ### 1. **src/components/dashboards/DashboardBlocks.tsx**
 
 #### Import Addition
+
 - Added `listBuyers` to the imports from `src/lib/operations.functions`
+
 ```typescript
 import { listGrainBatches, listBuyers } from "@/lib/operations.functions";
 ```
 
 #### New Component: BuyerOrdersCard
+
 - **Location**: After TeamCard component
 - **Features**:
   - Displays up to 6 buyers in a compact card format
@@ -31,6 +35,7 @@ import { listGrainBatches, listBuyers } from "@/lib/operations.functions";
   - Auto-refetches every 30 seconds
 
 #### Component Structure
+
 ```typescript
 export function BuyerOrdersCard() {
   // Fetches all buyers using listBuyers server function
@@ -44,12 +49,20 @@ export function BuyerOrdersCard() {
 ### 2. **src/components/dashboards/AdminDashboard.tsx**
 
 #### Import Update
+
 - Added `BuyerOrdersCard` to the component imports
+
 ```typescript
-import { AdminSilosCard, RecentBatchesCard, OpenFieldIncidentsCard, BuyerOrdersCard } from "./DashboardBlocks";
+import {
+  AdminSilosCard,
+  RecentBatchesCard,
+  OpenFieldIncidentsCard,
+  BuyerOrdersCard,
+} from "./DashboardBlocks";
 ```
 
 #### Dashboard Grid Layout
+
 - Changed from 3-column layout to 2-column (2x2 grid)
 - **Before**: `lg:grid-cols-3` (Silos, Batches, Incidents)
 - **After**: `lg:grid-cols-2` (Silos, Batches, Buyers, Incidents)
@@ -66,6 +79,7 @@ import { AdminSilosCard, RecentBatchesCard, OpenFieldIncidentsCard, BuyerOrdersC
 ## Card Display Format
 
 Each buyer row shows:
+
 ```
 ┌─────────────────────────────────────────┐
 │ Buyer Name                      [Status]│
@@ -74,6 +88,7 @@ Each buyer row shows:
 ```
 
 ### Example:
+
 ```
 ┌────────────────────────────────────────────┐
 │ Ahmed Mills Limited              [active]  │
@@ -113,7 +128,7 @@ Clicking on any row links to /grain-operations?tab=buyers
 ✅ **Quick Access** - Direct link to buyers management tab  
 ✅ **Overflow Handling** - Shows "View X more" link when > 6 buyers  
 ✅ **Hover Effects** - Background color change on hover  
-✅ **Consistent Styling** - Matches other dashboard cards  
+✅ **Consistent Styling** - Matches other dashboard cards
 
 ## User Workflow
 

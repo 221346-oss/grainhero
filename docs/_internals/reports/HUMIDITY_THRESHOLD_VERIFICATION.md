@@ -11,6 +11,7 @@
 **VERDICT: B. FALSE POSITIVE — Audit compared different metrics**
 
 The audit incorrectly identified this as a parity regression. **GH1 does NOT create humidity threshold alerts in firebaseRealtimeService.js**. The humidity comparisons found in GH1 are used for:
+
 1. Pest score calculation (lines 113-116)
 2. Fan recommendation logic (line 213)
 3. CSV spoilage classification (lines 389-390)
@@ -24,6 +25,7 @@ The audit incorrectly identified this as a parity regression. **GH1 does NOT cre
 ### ESP32 → Firebase RTDB Payload
 
 **Typical ESP32 payload**:
+
 ```json
 {
   "temperature": 28.5,
@@ -41,30 +43,36 @@ The audit incorrectly identified this as a parity regression. **GH1 does NOT cre
 ### GH1 Data Flow
 
 #### Step 1: Parse Firebase Payload
+
 **File**: `services/firebaseRealtimeService.js` lines 94-99
 
 ```javascript
-const tempVal = payload.temperature !== undefined ? Number(payload.temperature) : null
-const humVal = payload.humidity !== undefined ? Number(payload.humidity) : null
-const vocVal = payload.tvoc_ppb !== undefined ? Number(payload.tvoc_ppb)
-  : (payload.voc !== undefined ? Number(payload.voc) : null)
+const tempVal = payload.temperature !== undefined ? Number(payload.temperature) : null;
+const humVal = payload.humidity !== undefined ? Number(payload.humidity) : null;
+const vocVal =
+  payload.tvoc_ppb !== undefined
+    ? Number(payload.tvoc_ppb)
+    : payload.voc !== undefined
+      ? Number(payload.voc)
+      : null;
 ```
 
 **Variable**: `humVal` = RH% from air sensor (e.g., 62.3%)
 
 #### Step 2: Calculate Grain Moisture (Separate from Humidity)
+
 **File**: `services/firebaseRealtimeService.js` lines 105-107
 
 ```javascript
 // Convert soil moisture → grain moisture (soil 100%=dry, 0%=wet → grain 8-25% MC)
-const grainMoisturePct = soilMoisturePct !== null
-  ? Math.round((25 - (soilMoisturePct / 100) * 17) * 10) / 10 : null
+const grainMoisturePct =
+  soilMoisturePct !== null ? Math.round((25 - (soilMoisturePct / 100) * 17) * 10) / 10 : null;
 ```
 
 **Variable**: `grainMoisturePct` = Grain moisture content % (e.g., 14.2%)
 
-
 #### Step 3: Use Humidity for Pest Score Calculation (NOT ALERTS)
+
 **File**: `services/firebaseRealtimeService.js` lines 111-132
 
 ```javascript
@@ -99,14 +107,18 @@ if (grainMoisturePct !== null) {
 **Action**: NO alerts generated here, just scoring
 
 #### Step 4: Save to Database
+
 **File**: `services/firebaseRealtimeService.js` line 247
 
 ```javascript
-await sensorReading.save()
-console.log(`[Firebase] 💾 SensorReading saved to MongoDB (id=${sensorReading._id}, temp=${tempVal}, hum=${humVal}, voc=${vocVal})`)
+await sensorReading.save();
+console.log(
+  `[Firebase] 💾 SensorReading saved to MongoDB (id=${sensorReading._id}, temp=${tempVal}, hum=${humVal}, voc=${vocVal})`,
+);
 ```
 
 **Database fields**:
+
 - `humidity.value`: 62.3 (RH%)
 - `moisture.value`: 14.2 (Grain MC%)
 - `derived_metrics.pest_presence_score`: 0.18
@@ -116,9 +128,9 @@ console.log(`[Firebase] 💾 SensorReading saved to MongoDB (id=${sensorReading.
 **CRITICAL FINDING**: `firebaseRealtimeService.js` does **NOT** create humidity threshold alerts.
 
 **Evidence**: Searched entire file for alert creation:
+
 - Line 149: Only creates `leakage_detected` alerts (LDR tampering)
 - No code path creates humidity threshold alerts
-
 
 #### Step 6: Threshold Alerts Created by Different Service
 
@@ -162,7 +174,8 @@ async checkThresholdViolations(reading) {
 
 **Key Discovery**: Thresholds are **dynamically loaded from SensorDevice.thresholds object**.
 
-**Trigger Path**: 
+**Trigger Path**:
+
 1. `firebaseRealtimeService` saves `SensorReading` to MongoDB
 2. MongoDB save **does NOT automatically trigger** `realTimeDataService`
 3. `realTimeDataService` is triggered separately (likely via API routes or separate listeners)
@@ -172,6 +185,7 @@ async checkThresholdViolations(reading) {
 ### GH2 Data Flow
 
 #### Step 1: Parse Firebase Payload
+
 **File**: `src/routes/api/public/cron/sync-firebase.ts` lines 58-76
 
 ```typescript
@@ -194,15 +208,15 @@ if (moist === null && soilMoisture !== null) {
 
 **Variable**: `hum` = RH% from air sensor (same as GH1's `humVal`)
 
-
 #### Step 2: Create Hardcoded Threshold Alerts
+
 **File**: `src/routes/api/public/cron/sync-firebase.ts` lines 241-260
 
 ```typescript
 // 2. Threshold Alerts (GH1 Parity)
 if (dev.silo_id && (temp != null || hum != null)) {
   const alertsToCreate = [];
-  
+
   if (temp != null && temp > 35) {
     alertsToCreate.push({
       alert_id: `TEMP-${Date.now()}`,
@@ -211,7 +225,7 @@ if (dev.silo_id && (temp != null || hum != null)) {
       priority: "high",
     });
   }
-  
+
   if (hum != null && hum > 14.5) {  ← COMPARES RH% TO 14.5
     alertsToCreate.push({
       alert_id: `HUM-${Date.now()}`,
@@ -226,6 +240,7 @@ if (dev.silo_id && (temp != null || hum != null)) {
 **Comment says**: `// 2. Threshold Alerts (GH1 Parity)`
 
 **Problem**: This is **NOT GH1 parity** because:
+
 1. GH1's `firebaseRealtimeService` does NOT create threshold alerts
 2. The threshold 14.5 appears to be copied from grain moisture logic
 3. The variable `hum` contains RH% (60-80 range), not grain moisture (12-15 range)
@@ -237,6 +252,7 @@ if (dev.silo_id && (temp != null || hum != null)) {
 ### Why 14.5 Was Used
 
 Looking at GH1 pest score calculation (lines 124-129):
+
 ```javascript
 if (grainMoisturePct !== null) {
   if (grainMoisturePct > 18) pestScore += 0.15
@@ -247,8 +263,9 @@ if (grainMoisturePct !== null) {
 ```
 
 And GH1 CSV classification (line 602):
+
 ```javascript
-(derived.voc_relative_30min !== undefined && derived.voc_relative_30min > 100 && moisture > 14)
+derived.voc_relative_30min !== undefined && derived.voc_relative_30min > 100 && moisture > 14;
 ```
 
 **Hypothesis**: The developer saw "14" or "14.5" associated with risk thresholds in GH1, but this was for **grain moisture content**, not **relative humidity**.
@@ -256,6 +273,7 @@ And GH1 CSV classification (line 602):
 ### Correct Threshold Values
 
 **From GH1 codebase** (`routes/sensors.js` line 1173):
+
 ```javascript
 summer: {
     temperature_threshold: { max: 35, critical_max: 40 },
@@ -265,24 +283,24 @@ summer: {
 ```
 
 **Expected humidity alert thresholds**:
+
 - Warning: RH% > 65
 - Critical: RH% > 75-80
 
 ---
 
-
 ## Comparison Table
 
-| Aspect | GH1 firebaseRealtimeService | GH2 sync-firebase |
-|--------|----------------------------|-------------------|
-| **Variable Name** | `humVal` | `hum` |
-| **Source** | `payload.humidity` | `live.humidity` |
-| **Value Range** | 40-80 (RH%) | 40-80 (RH%) |
-| **Units** | Relative Humidity % | Relative Humidity % |
-| **Usage** | Pest score calculation | Database write + Alerts |
-| **Threshold Alerts?** | ❌ NO | ✅ YES (incorrect) |
-| **Alert Threshold** | N/A (no alerts) | 14.5 (wrong value) |
-| **Correct Threshold** | N/A | Should be 65-75 |
+| Aspect                | GH1 firebaseRealtimeService | GH2 sync-firebase       |
+| --------------------- | --------------------------- | ----------------------- |
+| **Variable Name**     | `humVal`                    | `hum`                   |
+| **Source**            | `payload.humidity`          | `live.humidity`         |
+| **Value Range**       | 40-80 (RH%)                 | 40-80 (RH%)             |
+| **Units**             | Relative Humidity %         | Relative Humidity %     |
+| **Usage**             | Pest score calculation      | Database write + Alerts |
+| **Threshold Alerts?** | ❌ NO                       | ✅ YES (incorrect)      |
+| **Alert Threshold**   | N/A (no alerts)             | 14.5 (wrong value)      |
+| **Correct Threshold** | N/A                         | Should be 65-75         |
 
 ---
 
@@ -310,6 +328,7 @@ summer: {
 ### The Real Problem
 
 **GH2 introduced NEW alert logic** (not present in GH1's Firebase service) with an incorrect threshold value. This is:
+
 - ❌ NOT a parity regression (GH1 didn't have this)
 - ✅ A NEW bug introduced during GH2 development
 - ✅ Threshold value copied from wrong context (grain moisture vs humidity)
@@ -317,6 +336,7 @@ summer: {
 ### Impact Assessment
 
 **If not fixed**:
+
 - Normal humidity readings (60-70 RH%) will trigger false alerts
 - Alert storm: Every cron cycle = new alert per device
 - Example: 62.3% humidity → Alert: "High Humidity Warning: Humidity reached 62.3%"
@@ -328,6 +348,7 @@ summer: {
 ## Recommended Action
 
 ### Option 1: Remove This Alert Logic (Match GH1 Architecture)
+
 ```typescript
 // DELETE lines 253-260
 // GH1 doesn't create threshold alerts in Firebase service
@@ -335,12 +356,14 @@ summer: {
 ```
 
 ### Option 2: Fix The Threshold Value
+
 ```typescript
 // Change line 253:
 if (hum != null && hum > 70) {  // Match GH1 defaults: { max: 65, critical_max: 75 }
 ```
 
 ### Option 3: Make It Configurable (Proper Solution)
+
 ```typescript
 // Query thresholds from database like GH1's realTimeDataService does
 const { data: deviceConfig } = await supabaseAdmin
@@ -368,4 +391,3 @@ However, the 14.5 threshold IS buggy because it compares relative humidity (60-8
 **Severity**: HIGH (will cause alert spam if deployed)  
 **Root Cause**: Copy-paste error mixing grain moisture and relative humidity  
 **Blocking GH1 Retirement**: NO (GH1 doesn't have this feature either)
-

@@ -18,10 +18,7 @@ export interface ControlState {
   servo?: boolean;
 }
 
-export async function writeFirebaseControl(
-  deviceId: string,
-  state: ControlState,
-): Promise<void> {
+export async function writeFirebaseControl(deviceId: string, state: ControlState): Promise<void> {
   const dbUrl = process.env.FIREBASE_DATABASE_URL;
   if (!dbUrl) return;
 
@@ -36,22 +33,22 @@ export async function writeFirebaseControl(
 
   if (state.human_requested_fan !== undefined) {
     updates.human_requested_fan = !!state.human_requested_fan; // snake_case for new firmware
-    updates.humanRequestedFan   = !!state.human_requested_fan; // camelCase for old firmware
+    updates.humanRequestedFan = !!state.human_requested_fan; // camelCase for old firmware
     // Servo (lid) follows fan intent — matches GH1 behaviour
     updates.servo = !!state.human_requested_fan;
   }
   if (state.ml_requested_fan !== undefined) {
     updates.ml_requested_fan = !!state.ml_requested_fan;
-    updates.mlRequestedFan   = !!state.ml_requested_fan;
+    updates.mlRequestedFan = !!state.ml_requested_fan;
   }
   if (state.target_fan_speed !== undefined) {
     updates.target_fan_speed = state.target_fan_speed ?? 0;
-    updates.targetFanSpeed   = state.target_fan_speed ?? 0;
-    updates.pwm              = state.target_fan_speed ?? 0; // backward compat for old firmware
+    updates.targetFanSpeed = state.target_fan_speed ?? 0;
+    updates.pwm = state.target_fan_speed ?? 0; // backward compat for old firmware
   }
   if (state.ml_decision !== undefined) {
     updates.ml_decision = state.ml_decision ?? "idle";
-    updates.mlDecision  = state.ml_decision ?? "idle";
+    updates.mlDecision = state.ml_decision ?? "idle";
   }
   if (state.led2 !== undefined) updates.led2 = !!state.led2;
   if (state.led3 !== undefined) updates.led3 = !!state.led3;
@@ -92,7 +89,7 @@ export async function publishActuatorCommand(
 
   // Map GH2 action to GH1 flat state structure
   const updates: Record<string, any> = {
-    lastControlUpdate: { ".sv": "timestamp" }
+    lastControlUpdate: { ".sv": "timestamp" },
   };
 
   switch (cmd.action) {
@@ -140,11 +137,11 @@ export async function publishActuatorCommand(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(updates),
   });
-  
+
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`Firebase RTDB PATCH ${res.status}: ${text}`);
   }
-  
+
   return { ok: true, path };
 }

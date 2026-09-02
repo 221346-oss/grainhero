@@ -1,64 +1,64 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { motion } from 'framer-motion'
-import { ArrowRight } from 'lucide-react'
-import { Link } from '@tanstack/react-router'
-import { NewGlassNav } from '@/components/landing/NewGlassNav'
-import { NewFooter } from '@/components/landing/NewFooter'
+import { createFileRoute } from "@tanstack/react-router";
+import { motion } from "framer-motion";
+import { ArrowRight } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { NewGlassNav } from "@/components/landing/NewGlassNav";
+import { NewFooter } from "@/components/landing/NewFooter";
 
-export const Route = createFileRoute('/blog')({
+export const Route = createFileRoute("/blog")({
   head: () => ({
     meta: [
-      { title: 'Resources — Grain Storage Guides & Monitoring Explainers | GrainHero' },
+      { title: "Resources — Grain Storage Guides & Monitoring Explainers | GrainHero" },
       {
-        name: 'description',
+        name: "description",
         content:
-          'Practical guides on grain storage: safe moisture and temperature by grain type, how silo monitoring hardware works, and what grain management software should cover.',
+          "Practical guides on grain storage: safe moisture and temperature by grain type, how silo monitoring hardware works, and what grain management software should cover.",
       },
-      { property: 'og:title', content: 'Resources — Grain Storage Guides & Monitoring Explainers' },
+      { property: "og:title", content: "Resources — Grain Storage Guides & Monitoring Explainers" },
       {
-        property: 'og:description',
+        property: "og:description",
         content:
-          'Practical guides on grain storage: safe moisture and temperature by grain type, how silo monitoring hardware works, and what grain management software should cover.',
+          "Practical guides on grain storage: safe moisture and temperature by grain type, how silo monitoring hardware works, and what grain management software should cover.",
       },
-      { property: 'og:url', content: 'https://grainhero.app/blog' },
-      { property: 'og:type', content: 'website' },
-      { name: 'twitter:card', content: 'summary_large_image' },
+      { property: "og:url", content: "https://grainhero.app/blog" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [{ rel: 'canonical', href: 'https://grainhero.app/blog' }],
+    links: [{ rel: "canonical", href: "https://grainhero.app/blog" }],
   }),
   component: BlogPage,
-})
+});
 
 const resources = [
   {
-    to: '/guides/grain-storage',
-    category: 'Guide',
-    title: 'Grain storage: what actually keeps a harvest sellable',
+    to: "/guides/grain-storage",
+    category: "Guide",
+    title: "Grain storage: what actually keeps a harvest sellable",
     excerpt:
-      'Safe moisture and temperature by grain type, how hot spots and moisture migration start, when to run aeration, and a full storage-season checklist.',
+      "Safe moisture and temperature by grain type, how hot spots and moisture migration start, when to run aeration, and a full storage-season checklist.",
   },
   {
-    to: '/solutions/grain-storage-monitoring',
-    category: 'Explainer',
-    title: 'Grain storage monitoring, end to end',
+    to: "/solutions/grain-storage-monitoring",
+    category: "Explainer",
+    title: "Grain storage monitoring, end to end",
     excerpt:
-      'What continuous monitoring measures and where, why manual probing misses the early stage, and how a reading turns into an alert and an action.',
+      "What continuous monitoring measures and where, why manual probing misses the early stage, and how a reading turns into an alert and an action.",
   },
   {
-    to: '/solutions/silo-monitoring-system',
-    category: 'Hardware',
-    title: 'Inside a silo monitoring system',
+    to: "/solutions/silo-monitoring-system",
+    category: "Hardware",
+    title: "Inside a silo monitoring system",
     excerpt:
-      'Probe cables, sensor spacing by silo size, LoRa gateways, offline buffering, power options and what installation day looks like.',
+      "Probe cables, sensor spacing by silo size, LoRa gateways, offline buffering, power options and what installation day looks like.",
   },
   {
-    to: '/solutions/grain-management-software',
-    category: 'Software',
-    title: 'What grain management software should cover',
+    to: "/solutions/grain-management-software",
+    category: "Software",
+    title: "What grain management software should cover",
     excerpt:
-      'Batch traceability, silo inventory, role-based access for owners, managers and technicians, and export-ready condition reporting.',
+      "Batch traceability, silo inventory, role-based access for owners, managers and technicians, and export-ready condition reporting.",
   },
-]
+];
 
 function BlogPage() {
   return (
@@ -71,10 +71,10 @@ function BlogPage() {
           <div
             style={{
               backgroundImage:
-                'radial-gradient(circle at 2px 2px, rgba(47,172,12,0.4) 1px, transparent 0)',
-              backgroundSize: '40px 40px',
-              width: '100%',
-              height: '100%',
+                "radial-gradient(circle at 2px 2px, rgba(47,172,12,0.4) 1px, transparent 0)",
+              backgroundSize: "40px 40px",
+              width: "100%",
+              height: "100%",
             }}
           />
         </div>
@@ -104,7 +104,7 @@ function BlogPage() {
                 key={post.to}
                 initial={{ opacity: 0, y: 24 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-60px' }}
+                viewport={{ once: true, margin: "-60px" }}
                 transition={{ duration: 0.45, delay: index * 0.06 }}
               >
                 <Link
@@ -129,7 +129,7 @@ function BlogPage() {
         </div>
       </section>
 
-        <NewFooter />
+      <NewFooter />
     </main>
-  )
+  );
 }

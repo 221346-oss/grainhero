@@ -7,7 +7,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { toast } from "sonner";
@@ -27,7 +33,10 @@ function CarriersPage() {
 
   const upsert = useMutation({
     mutationFn: (payload: Record<string, unknown>) => upsertFn({ data: payload as any }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["carriers"] }); toast.success("Carrier saved"); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["carriers"] });
+      toast.success("Carrier saved");
+    },
     onError: (e: Error) => toast.error(e.message),
   });
   const rotate = useMutation({
@@ -47,19 +56,22 @@ function CarriersPage() {
     >
       <div className="grid gap-3">
         {(data?.carriers ?? []).map((c) => (
-          <Card key={c.id} className="border-slate-200/70 hover:border-emerald-400 transition-colors">
+          <Card
+            key={c.id}
+            className="border-border/40/70 hover:border-emerald-400 transition-colors"
+          >
             <CardContent className="p-4 flex flex-wrap items-center gap-3">
               <div className="flex-1 min-w-[220px]">
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-slate-900">{c.name}</span>
+                  <span className="font-semibold text-foreground">{c.name}</span>
                   <Badge variant={c.type === "in_house" ? "default" : "secondary"}>{c.type}</Badge>
                   {!c.active && <Badge variant="outline">Inactive</Badge>}
                 </div>
-                <p className="text-xs text-slate-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   code <code className="font-mono">{c.code}</code>
                   {c.contact_email && <> · {c.contact_email}</>}
                 </p>
-                <p className="text-[11px] text-slate-400 mt-1 font-mono">
+                <p className="text-[11px] text-muted-foreground mt-1 font-mono">
                   webhook: /api/public/webhooks/carrier/{c.code}
                 </p>
               </div>
@@ -73,7 +85,7 @@ function CarriersPage() {
           </Card>
         ))}
         {(data?.carriers ?? []).length === 0 && (
-          <p className="text-sm text-slate-500 text-center py-8">
+          <p className="text-sm text-muted-foreground text-center py-8">
             No carriers yet. Add one to start assigning shipments.
           </p>
         )}
@@ -105,30 +117,60 @@ function CarrierSheet({
         <Button size="sm">{initial ? "Edit" : "New carrier"}</Button>
       </SheetTrigger>
       <SheetContent className="w-full sm:max-w-md overflow-y-auto">
-        <SheetHeader><SheetTitle>{initial ? "Edit carrier" : "New carrier"}</SheetTitle></SheetHeader>
+        <SheetHeader>
+          <SheetTitle>{initial ? "Edit carrier" : "New carrier"}</SheetTitle>
+        </SheetHeader>
         <div className="space-y-3 mt-4">
-          <Field label="Code"><Input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="acme_freight" /></Field>
-          <Field label="Name"><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></Field>
+          <Field label="Code">
+            <Input
+              value={form.code}
+              onChange={(e) => setForm({ ...form, code: e.target.value })}
+              placeholder="acme_freight"
+            />
+          </Field>
+          <Field label="Name">
+            <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+          </Field>
           <Field label="Type">
-            <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v as "in_house" | "third_party" })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+            <Select
+              value={form.type}
+              onValueChange={(v) => setForm({ ...form, type: v as "in_house" | "third_party" })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="in_house">In-house</SelectItem>
                 <SelectItem value="third_party">Third party</SelectItem>
               </SelectContent>
             </Select>
           </Field>
-          <Field label="Contact email"><Input value={form.contact_email} onChange={(e) => setForm({ ...form, contact_email: e.target.value })} /></Field>
-          <Field label="Contact phone"><Input value={form.contact_phone} onChange={(e) => setForm({ ...form, contact_phone: e.target.value })} /></Field>
+          <Field label="Contact email">
+            <Input
+              value={form.contact_email}
+              onChange={(e) => setForm({ ...form, contact_email: e.target.value })}
+            />
+          </Field>
+          <Field label="Contact phone">
+            <Input
+              value={form.contact_phone}
+              onChange={(e) => setForm({ ...form, contact_phone: e.target.value })}
+            />
+          </Field>
           <Field label="Tracking URL template">
-            <Input value={form.tracking_url_template} onChange={(e) => setForm({ ...form, tracking_url_template: e.target.value })}
-              placeholder="https://track.acme.com/{tracking}" />
+            <Input
+              value={form.tracking_url_template}
+              onChange={(e) => setForm({ ...form, tracking_url_template: e.target.value })}
+              placeholder="https://track.acme.com/{tracking}"
+            />
           </Field>
           <Button
             className="w-full"
             onClick={() => {
               onSave({
-                code: form.code, name: form.name, type: form.type,
+                code: form.code,
+                name: form.name,
+                type: form.type,
                 contact_email: form.contact_email || null,
                 contact_phone: form.contact_phone || null,
                 tracking_url_template: form.tracking_url_template || null,
@@ -136,7 +178,9 @@ function CarrierSheet({
               });
               setOpen(false);
             }}
-          >Save</Button>
+          >
+            Save
+          </Button>
         </div>
       </SheetContent>
     </Sheet>
@@ -144,5 +188,10 @@ function CarrierSheet({
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return <div className="space-y-1"><Label className="text-xs">{label}</Label>{children}</div>;
+  return (
+    <div className="space-y-1">
+      <Label className="text-xs">{label}</Label>
+      {children}
+    </div>
+  );
 }

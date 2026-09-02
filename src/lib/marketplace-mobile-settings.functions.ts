@@ -19,7 +19,10 @@ export const getMarketplaceMobileSettings = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
-      .from("mobile_marketplace_settings").select("*").eq("id", true).maybeSingle();
+      .from("mobile_marketplace_settings")
+      .select("*")
+      .eq("id", true)
+      .maybeSingle();
     if (error) throw new Error(error.message);
     return data;
   });
@@ -30,10 +33,15 @@ export const updateMarketplaceMobileSettings = createServerFn({ method: "POST" }
   .handler(async ({ data, context }) => {
     const { isSuperAdmin } = await import("./rbac.server");
     if (!(await isSuperAdmin(context.supabase, context.userId))) throw new Error("Forbidden");
-    const { data: before } = await context.supabase.from("mobile_marketplace_settings")
-      .select("*").eq("id", true).maybeSingle();
-    const { error } = await context.supabase.from("mobile_marketplace_settings")
-      .update({ ...data, updated_by: context.userId } as never).eq("id", true);
+    const { data: before } = await context.supabase
+      .from("mobile_marketplace_settings")
+      .select("*")
+      .eq("id", true)
+      .maybeSingle();
+    const { error } = await context.supabase
+      .from("mobile_marketplace_settings")
+      .update({ ...data, updated_by: context.userId } as never)
+      .eq("id", true);
     if (error) throw new Error(error.message);
     await recordSettingsAudit({
       actorUserId: context.userId,
@@ -46,7 +54,14 @@ export const updateMarketplaceMobileSettings = createServerFn({ method: "POST" }
 
 export const listSettingsAudit = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((v) => z.object({ settings_key: z.string().min(1), limit: z.number().int().positive().max(200).optional() }).parse(v))
+  .inputValidator((v) =>
+    z
+      .object({
+        settings_key: z.string().min(1),
+        limit: z.number().int().positive().max(200).optional(),
+      })
+      .parse(v),
+  )
   .handler(async ({ data, context }) => {
     const { isSuperAdmin } = await import("./rbac.server");
     if (!(await isSuperAdmin(context.supabase, context.userId))) throw new Error("Forbidden");

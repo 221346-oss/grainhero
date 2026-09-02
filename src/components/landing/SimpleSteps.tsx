@@ -1,11 +1,11 @@
-import { motion } from 'framer-motion'
+import { motion } from "framer-motion";
 
 const steps = [
-  ['01', 'Sense', 'Temperature, humidity, moisture and CO₂, around the clock.'],
-  ['02', 'Predict', 'Spoilage risk flagged 24–48 hours early.'],
-  ['03', 'Alert', 'The right person. No noise.'],
-  ['04', 'Save', 'Act early, sell at a better grade.'],
-]
+  ["01", "Sense", "Temperature, humidity, moisture and CO₂, around the clock."],
+  ["02", "Predict", "Spoilage risk flagged 24–48 hours early."],
+  ["03", "Alert", "The right person. No noise."],
+  ["04", "Save", "Act early, sell at a better grade."],
+];
 
 export function SimpleSteps() {
   return (
@@ -36,7 +36,9 @@ export function SimpleSteps() {
               <span className="font-mono text-[0.625rem] tracking-[0.3em] text-[#2FA84F]">
                 {num}
               </span>
-              <h3 className="mt-3 text-base font-black text-[#FAFAF7] sm:mt-6 sm:text-xl">{title}</h3>
+              <h3 className="mt-3 text-base font-black text-[#FAFAF7] sm:mt-6 sm:text-xl">
+                {title}
+              </h3>
               <p className="mt-1.5 text-xs leading-relaxed text-[#FAFAF7]/60 sm:mt-2 sm:text-sm">
                 {body}
               </p>
@@ -46,5 +48,5 @@ export function SimpleSteps() {
         </div>
       </div>
     </section>
-  )
+  );
 }

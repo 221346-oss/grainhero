@@ -1,9 +1,11 @@
 # 🔧 Fix: "Signups Not Allowed for OTP" Error
 
 ## Problem
+
 Getting error: **"Signups not allowed for otp"** when users try to sign up.
 
 ## Root Cause
+
 Supabase Email OTP authentication is not properly configured or email confirmation is enabled without proper setup.
 
 ---
@@ -45,6 +47,7 @@ Go to **Authentication** → **URL Configuration**:
 Go to **Authentication** → **Email Templates** → **Confirm signup**
 
 Update the template to include a proper verification link:
+
 ```html
 <h2>Confirm your signup</h2>
 <p>Follow this link to confirm your account:</p>
@@ -77,6 +80,7 @@ After applying the fix:
 ## 📋 Current Code Changes Applied
 
 ✅ Updated `src/routes/auth.signup.tsx`:
+
 - Added email confirmation detection
 - Added redirect to verification page if confirmation is required
 - Auto-confirm bypassed when email confirmation is enabled
@@ -109,6 +113,7 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ## 🎯 Recommended for Production
 
 Use **Option B** (Email Confirmation Enabled) with:
+
 - Custom SMTP configured
 - Proper email templates
 - SSL certificate on your domain

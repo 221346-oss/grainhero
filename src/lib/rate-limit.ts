@@ -14,9 +14,7 @@ type Bucket = { count: number; resetAt: number };
 
 const buckets = new Map<string, Bucket>();
 
-export type RateLimitDecision =
-  | { ok: true }
-  | { ok: false; retryAfter: number };
+export type RateLimitDecision = { ok: true } | { ok: false; retryAfter: number };
 
 export function checkRateLimit(
   key: string,

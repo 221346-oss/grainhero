@@ -7,7 +7,7 @@ export interface LiveReading {
   humidity?: number;
   co2?: number;
   voc?: number;
-  tvoc_ppb?: number;         // GH1 legacy field name
+  tvoc_ppb?: number; // GH1 legacy field name
   tvoc?: number;
   riskIndex?: number;
   dewPoint?: number;
@@ -15,13 +15,13 @@ export interface LiveReading {
   moisture?: number;
   fan_state?: 0 | 1;
   lid_state?: 0 | 1;
-  pwm_speed?: number;        // GH1 legacy field name
-  servo_state?: 0 | 1;       // GH1 legacy field name
+  pwm_speed?: number; // GH1 legacy field name
+  servo_state?: 0 | 1; // GH1 legacy field name
   battery?: number;
   signal?: number;
   ts?: number;
-  timestamp?: number;        // GH1 legacy field name
-  timestamp_unix?: number;   // GH1 legacy field name
+  timestamp?: number; // GH1 legacy field name
+  timestamp_unix?: number; // GH1 legacy field name
   [k: string]: unknown;
 }
 
@@ -56,7 +56,9 @@ export function useFirebaseSensor(deviceId: string | null | undefined) {
           setConnected(true);
         }
       },
-      () => {/* GH2 path error — legacy path may still be active */},
+      () => {
+        /* GH2 path error — legacy path may still be active */
+      },
     );
 
     // GH1 legacy path: /sensor_data/{deviceId}/latest

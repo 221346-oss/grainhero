@@ -32,11 +32,11 @@ export async function runSync<T = unknown>(
   if (since) q = q.gt(opts.cursorColumn, since);
   const { data, error } = await q;
   if (error) throw error;
-  const rows = ((data ?? []) as unknown) as Array<Record<string, unknown>>;
+  const rows = (data ?? []) as unknown as Array<Record<string, unknown>>;
   const hasMore = rows.length > pageSize;
   const page = hasMore ? rows.slice(0, pageSize) : rows;
   const last = page[page.length - 1];
-  const next_cursor = last ? (last[opts.cursorColumn] as string | null) ?? null : since;
+  const next_cursor = last ? ((last[opts.cursorColumn] as string | null) ?? null) : since;
   return {
     data: page as T[],
     meta: {

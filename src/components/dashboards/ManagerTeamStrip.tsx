@@ -10,14 +10,10 @@ type Technician = {
   shift_pattern: string | null;
 };
 
-export function ManagerTeamStrip({
-  technicians,
-}: {
-  technicians: Technician[];
-}) {
+export function ManagerTeamStrip({ technicians }: { technicians: Technician[] }) {
   return (
     <div className="w-full">
-      <div className="rounded-xl border bg-card/60 flex flex-col h-[200px]">
+      <div className="rounded-2xl bg-card/60 flex flex-col h-[200px]">
         <header className="flex items-center justify-between px-3 py-2 border-b shrink-0">
           <div className="flex items-center gap-2">
             <h3 className="text-xs font-semibold">Team on shift</h3>
@@ -52,11 +48,11 @@ export function ManagerTeamStrip({
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium truncate">
-                      {t.name ?? t.email ?? 'Unknown'}
+                      {t.name ?? t.email ?? "Unknown"}
                     </div>
                     <div className="text-[11px] text-muted-foreground truncate">
-                      {t.department ? `${t.department}` : 'Technician'}
-                      {t.shift_pattern ? ` · ${t.shift_pattern}` : ''}
+                      {t.department ? `${t.department}` : "Technician"}
+                      {t.shift_pattern ? ` · ${t.shift_pattern}` : ""}
                     </div>
                   </div>
                 </li>

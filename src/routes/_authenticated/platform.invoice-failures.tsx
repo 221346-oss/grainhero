@@ -6,7 +6,13 @@ import { AdminPageShell } from "@/components/app/admin/AdminPageShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   listInvoiceEmailFailures,
   getInvoiceHistory,
@@ -25,9 +31,16 @@ export const Route = createFileRoute("/_authenticated/platform/invoice-failures"
   head: () => ({
     meta: [
       { title: "Platform · Invoice Failures — Grain Hero" },
-      { name: "description", content: "Platform · Invoice Failures workspace in the Grain Hero platform — private, sign-in required." },
+      {
+        name: "description",
+        content:
+          "Platform · Invoice Failures workspace in the Grain Hero platform — private, sign-in required.",
+      },
       { property: "og:title", content: "Platform · Invoice Failures — Grain Hero" },
-      { property: "og:description", content: "Platform · Invoice Failures workspace in the Grain Hero platform." },
+      {
+        property: "og:description",
+        content: "Platform · Invoice Failures workspace in the Grain Hero platform.",
+      },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
@@ -53,7 +66,10 @@ function InvoiceFailuresPage() {
 
   const retry = useMutation({
     mutationFn: (invoiceId: string) => resend({ data: { invoiceId } }),
-    onSuccess: () => { toast.success("Invoice email resent"); qc.invalidateQueries({ queryKey: ["invoice-failures"] }); },
+    onSuccess: () => {
+      toast.success("Invoice email resent");
+      qc.invalidateQueries({ queryKey: ["invoice-failures"] });
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -67,20 +83,27 @@ function InvoiceFailuresPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const toggle = (id: string) => setSelected((s) => {
-    const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n;
-  });
-  const toggleAll = () => setSelected((s) => {
-    const ids = (data?.invoices ?? []).map((i) => i.id as string);
-    return s.size === ids.length ? new Set() : new Set(ids);
-  });
+  const toggle = (id: string) =>
+    setSelected((s) => {
+      const n = new Set(s);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+  const toggleAll = () =>
+    setSelected((s) => {
+      const ids = (data?.invoices ?? []).map((i) => i.id as string);
+      return s.size === ids.length ? new Set() : new Set(ids);
+    });
 
   const downloadCsv = async () => {
     const r = await csv({ data: { scope, limit: 500 } });
     const blob = new Blob([r.csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url; a.download = `invoice-failures-${scope}-${Date.now()}.csv`; a.click();
+    a.href = url;
+    a.download = `invoice-failures-${scope}-${Date.now()}.csv`;
+    a.click();
     URL.revokeObjectURL(url);
   };
   const downloadPdf = async () => {
@@ -89,7 +112,9 @@ function InvoiceFailuresPage() {
     const blob = new Blob([bytes], { type: "application/pdf" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url; a.download = `invoice-failures-${scope}-${Date.now()}.pdf`; a.click();
+    a.href = url;
+    a.download = `invoice-failures-${scope}-${Date.now()}.pdf`;
+    a.click();
     URL.revokeObjectURL(url);
   };
 
@@ -105,12 +130,18 @@ function InvoiceFailuresPage() {
           <Button size="sm" variant="outline" onClick={downloadPdf}>
             <FileText className="h-3 w-3 mr-1" /> PDF
           </Button>
-          <Button size="sm" variant="default" disabled={!selected.size || bulkRetry.isPending}
-            onClick={() => bulkRetry.mutate(Array.from(selected))}>
+          <Button
+            size="sm"
+            variant="default"
+            disabled={!selected.size || bulkRetry.isPending}
+            onClick={() => bulkRetry.mutate(Array.from(selected))}
+          >
             <Mail className="h-3 w-3 mr-1" /> Retry {selected.size || ""}
           </Button>
           <Select value={scope} onValueChange={(v) => setScope(v as typeof scope)}>
-            <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-40">
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="failed">Failed only</SelectItem>
               <SelectItem value="attempted">All attempts</SelectItem>
@@ -137,14 +168,31 @@ function InvoiceFailuresPage() {
                     onCheckedChange={toggleAll}
                   />
                 </th>
-                <th className="p-3">Invoice</th><th>Buyer</th><th>Seller</th>
-                <th>Amount</th><th>Status</th><th>Attempts</th><th>Last attempt</th><th>Error</th><th></th>
+                <th className="p-3">Invoice</th>
+                <th>Buyer</th>
+                <th>Seller</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Attempts</th>
+                <th>Last attempt</th>
+                <th>Error</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
-              {isLoading && <tr><td colSpan={10} className="p-6 text-center text-muted-foreground">Loading…</td></tr>}
+              {isLoading && (
+                <tr>
+                  <td colSpan={10} className="p-6 text-center text-muted-foreground">
+                    Loading…
+                  </td>
+                </tr>
+              )}
               {!isLoading && (data?.invoices.length ?? 0) === 0 && (
-                <tr><td colSpan={10} className="p-6 text-center text-muted-foreground">No invoices in this view.</td></tr>
+                <tr>
+                  <td colSpan={10} className="p-6 text-center text-muted-foreground">
+                    No invoices in this view.
+                  </td>
+                </tr>
               )}
               {data?.invoices.map((inv) => (
                 <tr key={inv.id as string} className="border-b hover:bg-emerald-50/30">
@@ -157,28 +205,55 @@ function InvoiceFailuresPage() {
                   <td className="p-3 font-mono text-xs">{inv.invoice_number}</td>
                   <td>{inv.buyer_company ?? inv.buyer_name ?? "—"}</td>
                   <td>{inv.sellerName as string}</td>
-                  <td>{inv.currency} {Number(inv.total_amount ?? 0).toLocaleString()}</td>
                   <td>
-                    <Badge variant={inv.email_status === "sent" ? "outline" : inv.email_status === "failed" ? "destructive" : "secondary"}>
+                    {inv.currency} {Number(inv.total_amount ?? 0).toLocaleString()}
+                  </td>
+                  <td>
+                    <Badge
+                      variant={
+                        inv.email_status === "sent"
+                          ? "outline"
+                          : inv.email_status === "failed"
+                            ? "destructive"
+                            : "secondary"
+                      }
+                    >
                       {inv.email_status ?? "pending"}
                     </Badge>
                   </td>
                   <td>{inv.email_attempts ?? 0}</td>
                   <td className="text-xs text-muted-foreground">
-                    {inv.email_last_attempt_at ? new Date(inv.email_last_attempt_at as string).toLocaleString() : "—"}
+                    {inv.email_last_attempt_at
+                      ? new Date(inv.email_last_attempt_at as string).toLocaleString()
+                      : "—"}
                   </td>
-                  <td className="text-xs text-rose-600 max-w-[240px] truncate" title={inv.email_error as string ?? ""}>
+                  <td
+                    className="text-xs text-rose-600 max-w-[240px] truncate"
+                    title={(inv.email_error as string) ?? ""}
+                  >
                     {inv.email_error ?? "—"}
                   </td>
                   <td className="whitespace-nowrap">
-                    <Button size="sm" variant="outline" disabled={retry.isPending}
-                      onClick={() => retry.mutate(inv.id as string)}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={retry.isPending}
+                      onClick={() => retry.mutate(inv.id as string)}
+                    >
                       <Mail className="h-3 w-3 mr-1" /> Retry
                     </Button>
-                    <Button size="sm" variant="ghost" onClick={() => setHistoryInvoiceId(inv.id as string)}>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setHistoryInvoiceId(inv.id as string)}
+                    >
                       <History className="h-3 w-3 mr-1" /> History
                     </Button>
-                    <Button size="sm" variant="ghost" onClick={() => setOpenOrderId(inv.order_id as string)}>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setOpenOrderId(inv.order_id as string)}
+                    >
                       Order
                     </Button>
                   </td>
@@ -205,28 +280,53 @@ function HistorySheet({ orderId, onClose }: { orderId: string | null; onClose: (
   return (
     <Sheet open={!!orderId} onOpenChange={(v) => !v && onClose()}>
       <SheetContent className="sm:max-w-lg overflow-y-auto">
-        <SheetHeader><SheetTitle>Invoice & order history</SheetTitle></SheetHeader>
+        <SheetHeader>
+          <SheetTitle>Invoice & order history</SheetTitle>
+        </SheetHeader>
         {data ? (
           <div className="space-y-4 mt-4">
             {data.invoice && (
               <div className="text-sm space-y-1">
-                <div><span className="text-muted-foreground">Invoice:</span> {(data.invoice as { invoice_number: string }).invoice_number}</div>
-                <div><span className="text-muted-foreground">Status:</span> {(data.invoice as { email_status?: string }).email_status ?? "—"}</div>
-                <div><span className="text-muted-foreground">Attempts:</span> {(data.invoice as { email_attempts?: number }).email_attempts ?? 0}</div>
+                <div>
+                  <span className="text-muted-foreground">Invoice:</span>{" "}
+                  {(data.invoice as { invoice_number: string }).invoice_number}
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Status:</span>{" "}
+                  {(data.invoice as { email_status?: string }).email_status ?? "—"}
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Attempts:</span>{" "}
+                  {(data.invoice as { email_attempts?: number }).email_attempts ?? 0}
+                </div>
                 {(data.invoice as { email_error?: string }).email_error && (
-                  <div className="text-rose-600 text-xs">{(data.invoice as { email_error?: string }).email_error}</div>
+                  <div className="text-rose-600 text-xs">
+                    {(data.invoice as { email_error?: string }).email_error}
+                  </div>
                 )}
               </div>
             )}
             <div className="space-y-2">
-              <div className="text-xs font-semibold uppercase text-muted-foreground">Order timeline</div>
+              <div className="text-xs font-semibold uppercase text-muted-foreground">
+                Order timeline
+              </div>
               {(data.events as unknown[]).map((e, i: number) => {
-                const ev = e as { id?: string; from_state?: string; to_state: string; note?: string; created_at: string };
+                const ev = e as {
+                  id?: string;
+                  from_state?: string;
+                  to_state: string;
+                  note?: string;
+                  created_at: string;
+                };
                 return (
                   <div key={ev.id ?? i} className="text-xs border-l-2 border-emerald-500 pl-3 py-1">
-                    <div className="font-medium">{ev.from_state ?? "—"} → {ev.to_state}</div>
+                    <div className="font-medium">
+                      {ev.from_state ?? "—"} → {ev.to_state}
+                    </div>
                     {ev.note && <div className="text-muted-foreground">{ev.note}</div>}
-                    <div className="text-muted-foreground">{new Date(ev.created_at).toLocaleString()}</div>
+                    <div className="text-muted-foreground">
+                      {new Date(ev.created_at).toLocaleString()}
+                    </div>
                   </div>
                 );
               })}
@@ -240,7 +340,13 @@ function HistorySheet({ orderId, onClose }: { orderId: string | null; onClose: (
   );
 }
 
-function RetryHistorySheet({ invoiceId, onClose }: { invoiceId: string | null; onClose: () => void }) {
+function RetryHistorySheet({
+  invoiceId,
+  onClose,
+}: {
+  invoiceId: string | null;
+  onClose: () => void;
+}) {
   const load = useServerFn(getInvoiceRetryHistory);
   const { data } = useQuery({
     queryKey: ["invoice-retry-history", invoiceId],
@@ -250,15 +356,29 @@ function RetryHistorySheet({ invoiceId, onClose }: { invoiceId: string | null; o
   return (
     <Sheet open={!!invoiceId} onOpenChange={(v) => !v && onClose()}>
       <SheetContent className="sm:max-w-lg overflow-y-auto">
-        <SheetHeader><SheetTitle>Retry history</SheetTitle></SheetHeader>
+        <SheetHeader>
+          <SheetTitle>Retry history</SheetTitle>
+        </SheetHeader>
         {data ? (
           <div className="space-y-4 mt-4">
             {data.invoice && (
               <div className="text-sm space-y-1">
-                <div><span className="text-muted-foreground">Invoice:</span> {(data.invoice as { invoice_number: string }).invoice_number}</div>
-                <div><span className="text-muted-foreground">Recipient:</span> {(data.invoice as { buyer_email?: string }).buyer_email ?? "—"}</div>
-                <div><span className="text-muted-foreground">Attempts:</span> {(data.invoice as { email_attempts?: number }).email_attempts ?? 0}</div>
-                <div><span className="text-muted-foreground">Status:</span> {(data.invoice as { email_status?: string }).email_status ?? "—"}</div>
+                <div>
+                  <span className="text-muted-foreground">Invoice:</span>{" "}
+                  {(data.invoice as { invoice_number: string }).invoice_number}
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Recipient:</span>{" "}
+                  {(data.invoice as { buyer_email?: string }).buyer_email ?? "—"}
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Attempts:</span>{" "}
+                  {(data.invoice as { email_attempts?: number }).email_attempts ?? 0}
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Status:</span>{" "}
+                  {(data.invoice as { email_status?: string }).email_status ?? "—"}
+                </div>
               </div>
             )}
             <div className="space-y-2">
@@ -267,13 +387,27 @@ function RetryHistorySheet({ invoiceId, onClose }: { invoiceId: string | null; o
                 <div className="text-xs text-muted-foreground">No delivery log entries yet.</div>
               )}
               {(data.history as unknown[]).map((h, i) => {
-                const e = h as { id?: string; template_key?: string; status?: string; error?: string; created_at: string; recipient?: string };
+                const e = h as {
+                  id?: string;
+                  template_key?: string;
+                  status?: string;
+                  error?: string;
+                  created_at: string;
+                  recipient?: string;
+                };
                 return (
-                  <div key={e.id ?? i} className={`text-xs border-l-2 pl-3 py-1 ${e.status === "sent" ? "border-emerald-500" : "border-rose-500"}`}>
-                    <div className="font-medium">{e.template_key ?? "invoice"} · {e.status ?? "?"}</div>
+                  <div
+                    key={e.id ?? i}
+                    className={`text-xs border-l-2 pl-3 py-1 ${e.status === "sent" ? "border-emerald-500" : "border-rose-500"}`}
+                  >
+                    <div className="font-medium">
+                      {e.template_key ?? "invoice"} · {e.status ?? "?"}
+                    </div>
                     {e.recipient && <div className="text-muted-foreground">→ {e.recipient}</div>}
                     {e.error && <div className="text-rose-600">{e.error}</div>}
-                    <div className="text-muted-foreground">{new Date(e.created_at).toLocaleString()}</div>
+                    <div className="text-muted-foreground">
+                      {new Date(e.created_at).toLocaleString()}
+                    </div>
                   </div>
                 );
               })}

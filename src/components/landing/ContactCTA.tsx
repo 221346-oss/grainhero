@@ -1,6 +1,6 @@
-import { motion } from 'framer-motion'
-import { Link } from '@tanstack/react-router'
-import { ArrowRight } from 'lucide-react'
+import { motion } from "framer-motion";
+import { Link } from "@tanstack/react-router";
+import { ArrowRight } from "lucide-react";
 
 export function ContactCTA() {
   return (
@@ -31,5 +31,5 @@ export function ContactCTA() {
         </div>
       </motion.div>
     </section>
-  )
+  );
 }

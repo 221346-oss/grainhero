@@ -1,6 +1,7 @@
 "use client";
 
 import QRCodeDisplay from "@/components/QRCodeDisplay";
+import { useLocationScopeQuery } from "@/components/app/location/LocationScope";
 import { GrainBatchesSkeleton } from "@/components/app/skeletons";
 import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
@@ -8,18 +9,61 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
-  Package, Plus, Search, Edit2, Trash2, Eye, Loader2, QrCode,
-  Truck, AlertTriangle, User, Calendar, Wheat, FlaskConical, ShieldCheck, Undo2,
+  Package,
+  Plus,
+  Search,
+  Edit2,
+  Trash2,
+  Eye,
+  Loader2,
+  QrCode,
+  Truck,
+  AlertTriangle,
+  User,
+  Calendar,
+  Wheat,
+  FlaskConical,
+  ShieldCheck,
+  Undo2,
   ArrowUpRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/components/ui/sheet";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetFooter,
+} from "@/components/ui/sheet";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -293,6 +337,9 @@ const emptySpoilage: Spoilage = {
 
 export function BatchesSection({ initialStatus }: { initialStatus?: string } = {}) {
   const listFn = useServerFn(listGrainBatches);
+  // Scope every location-dependent query to the active city — in the key as
+  // well as the request, so one city's rows are never served for another.
+  const { key: loc, params: locParams } = useLocationScopeQuery();
   const listSiloFn = useServerFn(listSilos);
   const listSupFn = useServerFn(listSuppliers);
   const upsertFn = useServerFn(upsertGrainBatch);
@@ -303,12 +350,12 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
   const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({
-    queryKey: ["grain-batches"],
-    queryFn: () => listFn() as unknown as Promise<Batch[]>,
+    queryKey: ["grain-batches", loc],
+    queryFn: () => listFn({ data: locParams }) as unknown as Promise<Batch[]>,
   });
   const { data: silosData } = useQuery({
-    queryKey: ["silos"],
-    queryFn: () => listSiloFn() as Promise<Silo[]>,
+    queryKey: ["silos", loc],
+    queryFn: () => listSiloFn({ data: locParams }) as Promise<Silo[]>,
   });
   const silos = silosData ?? [];
   const suppliersQ = useQuery({
@@ -587,7 +634,7 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
 
       <div className="flex flex-col sm:flex-row gap-2">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             value={q}
             onChange={(e) => setQ(e.target.value)}
@@ -628,7 +675,9 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
           columns={batchExportColumns}
         />
         {canCreate && (
-          <Button onClick={openCreate} className="gap-2 h-9 whitespace-nowrap"><Package className="w-4 h-4" /> New batch</Button>
+          <Button onClick={openCreate} className="gap-2 h-9 whitespace-nowrap">
+            <Package className="w-4 h-4" /> New batch
+          </Button>
         )}
       </div>
 
@@ -646,15 +695,19 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
                   Create a silo first →
                 </Link>
               ) : (
-                <span className="text-sm text-muted-foreground">No available silos in your assigned warehouses.</span>
+                <span className="text-sm text-muted-foreground">
+                  No available silos in your assigned warehouses.
+                </span>
               )
             ) : canCreate ? (
-              <Button onClick={openCreate} size="sm" className="gap-2"><Plus className="w-4 h-4" /> Add incoming batch</Button>
+              <Button onClick={openCreate} size="sm" className="gap-2">
+                <Plus className="w-4 h-4" /> Add incoming batch
+              </Button>
             ) : null}
           </CardContent>
         </Card>
       ) : (
-        <div className="rounded-xl border bg-card/60 overflow-hidden">
+        <div className="rounded-2xl bg-card/60 overflow-hidden">
           {/* Fixed height container for 4 entries with vertical scroll */}
           <div className="h-[280px] overflow-y-auto">
             <Table className="text-xs">
@@ -681,16 +734,31 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
                     <TableRow
                       key={b.id}
                       className="[&_td]:py-2 hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5 transition cursor-pointer"
-                      onClick={() => { setSelected(b); setViewOpen(true); }}
+                      onClick={() => {
+                        setSelected(b);
+                        setViewOpen(true);
+                      }}
                     >
                       <TableCell className="font-medium">{b.batch_id}</TableCell>
                       <TableCell className="text-muted-foreground">{b.grain_type}</TableCell>
-                      <TableCell className="text-muted-foreground truncate max-w-[140px]">{supplier}</TableCell>
-                      <TableCell className="text-muted-foreground truncate max-w-[140px]">{b.silos?.name ?? "—"}</TableCell>
-                      <TableCell className="text-right tabular-nums">{intake.toLocaleString()}</TableCell>
-                      <TableCell className="text-right tabular-nums font-medium">{remaining.toLocaleString()}</TableCell>
-                      <TableCell className="text-muted-foreground whitespace-nowrap">{intakeDate ? new Date(intakeDate).toLocaleDateString() : "—"}</TableCell>
-                      <TableCell><StatusBadge value={b.status} qcPassedAt={(b as any).qc_passed_at} /></TableCell>
+                      <TableCell className="text-muted-foreground truncate max-w-[140px]">
+                        {supplier}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground truncate max-w-[140px]">
+                        {b.silos?.name ?? "—"}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {intake.toLocaleString()}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums font-medium">
+                        {remaining.toLocaleString()}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground whitespace-nowrap">
+                        {intakeDate ? new Date(intakeDate).toLocaleDateString() : "—"}
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge value={b.status} qcPassedAt={(b as any).qc_passed_at} />
+                      </TableCell>
                       <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                         <RowActions
                           actions={[
@@ -1049,11 +1117,11 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
                     required
                   />
                 ) : suppliersQ.isLoading ? (
-                  <div className="h-9 flex items-center gap-2 rounded-md border border-input px-3 text-xs text-muted-foreground">
+                  <div className="h-9 flex items-center gap-2 rounded-md border-input px-3 text-xs text-muted-foreground">
                     <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading suppliers…
                   </div>
                 ) : suppliersQ.isError ? (
-                  <div className="h-9 flex items-center gap-2 rounded-md border border-red-500/40 bg-red-500/5 px-3 text-xs text-red-600">
+                  <div className="h-9 flex items-center gap-2 rounded-md border-red-500/40 bg-red-500/5 px-3 text-xs text-red-600">
                     <span className="flex-1">Failed to load suppliers</span>
                     <button
                       type="button"
@@ -1068,7 +1136,7 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
                     const options = suppliers.filter((s) => s.kind === form.source_kind);
                     if (options.length === 0) {
                       return (
-                        <div className="h-9 flex items-center gap-2 rounded-md border border-dashed border-input px-3 text-xs text-muted-foreground">
+                        <div className="h-9 flex items-center gap-2 rounded-md border-dashed border-input px-3 text-xs text-muted-foreground">
                           No {form.source_kind.replace("_", " ")} suppliers.
                           <Link to="/suppliers" className="text-emerald-600 underline">
                             Add one →
@@ -1214,19 +1282,33 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
                   <Wheat className="w-5 h-5 text-emerald-600 shrink-0" />
                   <span className="truncate">{selected.batch_id}</span>
                 </SheetTitle>
-                <SheetDescription>{selected.grain_type}{selected.variety ? ` · ${selected.variety}` : ""}</SheetDescription>
+                <SheetDescription>
+                  {selected.grain_type}
+                  {selected.variety ? ` · ${selected.variety}` : ""}
+                </SheetDescription>
               </SheetHeader>
               <div className="space-y-3 text-sm py-4">
-                <Row label="Status"><StatusBadge value={selected.status} /></Row>
+                <Row label="Status">
+                  <StatusBadge value={selected.status} />
+                </Row>
                 <Row label="Quantity">{Number(selected.quantity_kg).toLocaleString()} kg</Row>
                 {selected.dispatched_quantity_kg ? (
-                  <Row label="Dispatched">{Number(selected.dispatched_quantity_kg).toLocaleString()} kg</Row>
+                  <Row label="Dispatched">
+                    {Number(selected.dispatched_quantity_kg).toLocaleString()} kg
+                  </Row>
                 ) : null}
                 <Row label="Silo">{selected.silos?.name ?? "—"}</Row>
-                {selected.intake_date && <Row label="Intake">{new Date(selected.intake_date).toLocaleDateString()}</Row>}
+                {selected.intake_date && (
+                  <Row label="Intake">{new Date(selected.intake_date).toLocaleDateString()}</Row>
+                )}
               </div>
               <SheetFooter className="gap-2 sm:justify-start">
-                <Button variant="outline" size="sm" onClick={() => setDetailOpen(true)} className="gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setDetailOpen(true)}
+                  className="gap-1"
+                >
                   View full detail <ArrowUpRight className="w-3.5 h-3.5" />
                 </Button>
               </SheetFooter>
@@ -1283,11 +1365,29 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
                 )}
               </div>
               <DialogFooter className="gap-2 flex-wrap">
-                <Button variant="outline" size="sm" onClick={() => { setDetailOpen(false); setViewOpen(false); openEdit(selected); }} className="gap-1"><Edit2 className="w-4 h-4" /> Edit</Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setDetailOpen(false);
+                    setViewOpen(false);
+                    openEdit(selected);
+                  }}
+                  className="gap-1"
+                >
+                  <Edit2 className="w-4 h-4" /> Edit
+                </Button>
                 {/* Dispatch happens from the silo's mixed stock, not a single batch — see dispatchFromSilo/createDispatchFromSilo. */}
                 {selected.silos && (
                   <Button size="sm" asChild className="gap-1">
-                    <Link to="/silos/$siloId" params={{ siloId: selected.silos.id }} onClick={() => { setDetailOpen(false); setViewOpen(false); }}>
+                    <Link
+                      to="/silos/$siloId"
+                      params={{ siloId: selected.silos.id }}
+                      onClick={() => {
+                        setDetailOpen(false);
+                        setViewOpen(false);
+                      }}
+                    >
                       <Truck className="w-4 h-4" /> Dispatch from {selected.silos.name}
                     </Link>
                   </Button>
@@ -1467,8 +1567,8 @@ export function BatchesSection({ initialStatus }: { initialStatus?: string } = {
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex justify-between gap-4 items-start">
-      <span className="text-xs uppercase tracking-wider text-slate-500 pt-0.5">{label}</span>
-      <span className="text-slate-800 text-right min-w-0">{children}</span>
+      <span className="text-xs uppercase tracking-wider text-muted-foreground pt-0.5">{label}</span>
+      <span className="text-foreground text-right min-w-0">{children}</span>
     </div>
   );
 }

@@ -8,42 +8,42 @@
 
 ## 1. Files Analyzed
 
-| File | Role |
-|------|------|
-| `GH1/services/firebaseRealtimeService.js` | All GH1 RTDB read paths |
-| `GH1/routes/iot.js` | GH1 telemetry read in REST handlers |
-| `GH2/src/lib/firebase-admin.server.ts` | Server-side RTDB access |
-| `GH2/src/lib/actuator-bridge.server.ts` | Control writes to `/control/{id}` |
-| `GH2/src/lib/firebase-sync.functions.ts` | Manual sync trigger (admin UI) |
-| `GH2/src/hooks/use-firebase-sensor.ts` | Browser-side realtime subscriptions |
-| `GH2/src/routes/api/public/cron/sync-firebase.ts` | Automated cron ingestion |
+| File                                              | Role                                |
+| ------------------------------------------------- | ----------------------------------- |
+| `GH1/services/firebaseRealtimeService.js`         | All GH1 RTDB read paths             |
+| `GH1/routes/iot.js`                               | GH1 telemetry read in REST handlers |
+| `GH2/src/lib/firebase-admin.server.ts`            | Server-side RTDB access             |
+| `GH2/src/lib/actuator-bridge.server.ts`           | Control writes to `/control/{id}`   |
+| `GH2/src/lib/firebase-sync.functions.ts`          | Manual sync trigger (admin UI)      |
+| `GH2/src/hooks/use-firebase-sensor.ts`            | Browser-side realtime subscriptions |
+| `GH2/src/routes/api/public/cron/sync-firebase.ts` | Automated cron ingestion            |
 
 ---
 
 ## 2. Files Modified
 
-| File | What Changed |
-|------|-------------|
-| `GH2/src/lib/firebase-admin.server.ts` | Added `fetchFirebaseNode`, `fetchLivePayload`, and `fetchAllDevicePayloads` — the core dual-path merge logic |
-| `GH2/src/lib/actuator-bridge.server.ts` | Added missing `writeFirebaseControl` export (it was imported by the cron but did not exist) |
-| `GH2/src/lib/firebase-sync.functions.ts` | Switched from `fetchFirebaseDevices("devices")` + `.live` unwrap → `fetchAllDevicePayloads()` flat map |
-| `GH2/src/hooks/use-firebase-sensor.ts` | Both hooks now subscribe to `/devices/{id}/live` **and** `/sensor_data/{id}/latest` simultaneously; added GH1 legacy field names to `LiveReading` interface |
-| `GH2/src/routes/api/public/cron/sync-firebase.ts` | Switched from `fetchFirebaseDevices("devices")` → `fetchAllDevicePayloads()`; updated `snap[id]` access (removed `.live` unwrap) |
+| File                                              | What Changed                                                                                                                                                |
+| ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GH2/src/lib/firebase-admin.server.ts`            | Added `fetchFirebaseNode`, `fetchLivePayload`, and `fetchAllDevicePayloads` — the core dual-path merge logic                                                |
+| `GH2/src/lib/actuator-bridge.server.ts`           | Added missing `writeFirebaseControl` export (it was imported by the cron but did not exist)                                                                 |
+| `GH2/src/lib/firebase-sync.functions.ts`          | Switched from `fetchFirebaseDevices("devices")` + `.live` unwrap → `fetchAllDevicePayloads()` flat map                                                      |
+| `GH2/src/hooks/use-firebase-sensor.ts`            | Both hooks now subscribe to `/devices/{id}/live` **and** `/sensor_data/{id}/latest` simultaneously; added GH1 legacy field names to `LiveReading` interface |
+| `GH2/src/routes/api/public/cron/sync-firebase.ts` | Switched from `fetchFirebaseDevices("devices")` → `fetchAllDevicePayloads()`; updated `snap[id]` access (removed `.live` unwrap)                            |
 
 ---
 
 ## 3. Complete Path Mapping Table
 
-| Operation | GH1 RTDB Path | GH2 RTDB Path (before fix) | GH2 RTDB Path (after fix) | Match? |
-|-----------|--------------|---------------------------|--------------------------|--------|
-| ESP32 sensor write | `/sensor_data/{id}/latest` | — (device writes, not GH2) | — (unchanged) | ✅ N/A |
-| Server reads sensor data | `/sensor_data/{id}/latest` | `/devices/{id}/live` | **Both paths merged** | ✅ Fixed |
-| Browser realtime sensor | `/sensor_data/{id}/latest` | `/devices/{id}/live` only | **Both paths subscribed** | ✅ Fixed |
-| ML auto-actuation write | `/control/{id}` | `/control/{id}` (but `writeFirebaseControl` was missing) | `/control/{id}` ✅ + function now exists | ✅ Fixed |
-| Manual actuator command | `/control/{id}` | `/control/{id}` via `publishActuatorCommand` | `/control/{id}` unchanged | ✅ Already correct |
-| Control field: fan on/off | `humanRequestedFan` + `human_requested_fan` | `humanRequestedFan` only | Both camelCase + snake_case written | ✅ Fixed |
-| Control field: fan speed | `targetFanSpeed` + `target_fan_speed` + `pwm` | `targetFanSpeed` + `target_fan_speed` + `pwm` | All three written | ✅ Already correct |
-| Control field: LED states | `led2`, `led3`, `led4` | Written via `writeFirebaseControl` (now added) | `led2`, `led3`, `led4` | ✅ Fixed |
+| Operation                 | GH1 RTDB Path                                 | GH2 RTDB Path (before fix)                               | GH2 RTDB Path (after fix)                | Match?             |
+| ------------------------- | --------------------------------------------- | -------------------------------------------------------- | ---------------------------------------- | ------------------ |
+| ESP32 sensor write        | `/sensor_data/{id}/latest`                    | — (device writes, not GH2)                               | — (unchanged)                            | ✅ N/A             |
+| Server reads sensor data  | `/sensor_data/{id}/latest`                    | `/devices/{id}/live`                                     | **Both paths merged**                    | ✅ Fixed           |
+| Browser realtime sensor   | `/sensor_data/{id}/latest`                    | `/devices/{id}/live` only                                | **Both paths subscribed**                | ✅ Fixed           |
+| ML auto-actuation write   | `/control/{id}`                               | `/control/{id}` (but `writeFirebaseControl` was missing) | `/control/{id}` ✅ + function now exists | ✅ Fixed           |
+| Manual actuator command   | `/control/{id}`                               | `/control/{id}` via `publishActuatorCommand`             | `/control/{id}` unchanged                | ✅ Already correct |
+| Control field: fan on/off | `humanRequestedFan` + `human_requested_fan`   | `humanRequestedFan` only                                 | Both camelCase + snake_case written      | ✅ Fixed           |
+| Control field: fan speed  | `targetFanSpeed` + `target_fan_speed` + `pwm` | `targetFanSpeed` + `target_fan_speed` + `pwm`            | All three written                        | ✅ Already correct |
+| Control field: LED states | `led2`, `led3`, `led4`                        | Written via `writeFirebaseControl` (now added)           | `led2`, `led3`, `led4`                   | ✅ Fixed           |
 
 ---
 
@@ -104,17 +104,21 @@ None that block retirement of `firebaseRealtimeService.js`. The following are **
 ### ⚠️ GH1 IoT route telemetry endpoint still reads legacy path
 
 `GH1/routes/iot.js` lines 459 and 522:
+
 ```javascript
 const snapshot = await firebaseDb.ref(`sensor_data/${siloId}/latest`).get();
 ```
+
 These are GH1 backend REST endpoints (`GET /iot/silos/:siloId/telemetry`). GH2 does not have an equivalent REST endpoint — it uses the browser Firebase SDK directly. This path is only relevant if the GH2 frontend_code still calls the GH1 backend. It requires no change to GH2.
 
 ### ⚠️ `fan-control.functions.ts` has a stub comment
 
 `GH2/src/lib/fan-control.functions.ts` line 65:
+
 ```typescript
 // Pseudo-code to update Firebase, assuming we have a method for it
 ```
+
 This file calls `fetchFirebaseDevices` but never actually writes a control command. Now that `writeFirebaseControl` exists, this stub can be completed in a separate task. Not a blocker.
 
 ### ⚠️ `sensor_data` tree may not be present in GH2's Firebase project
@@ -131,24 +135,24 @@ With this fix, GH2 now correctly ingests data from every deployed ESP32 device r
 
 ### ✅ Safe to delete immediately
 
-| GH1 File | Reason |
-|----------|--------|
-| `services/firebaseRealtimeService.js` | All functionality now covered: data ingestion (`fetchAllDevicePayloads`), control writes (`writeFirebaseControl`), device discovery (both trees scanned) |
-| `routes/iot.js` — Firebase sections (lines 55-180, 419-567) | Telemetry serving now handled by GH2 browser SDK; control commands now go through GH2 actuator bridge |
+| GH1 File                                                    | Reason                                                                                                                                                   |
+| ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `services/firebaseRealtimeService.js`                       | All functionality now covered: data ingestion (`fetchAllDevicePayloads`), control writes (`writeFirebaseControl`), device discovery (both trees scanned) |
+| `routes/iot.js` — Firebase sections (lines 55-180, 419-567) | Telemetry serving now handled by GH2 browser SDK; control commands now go through GH2 actuator bridge                                                    |
 
 ### 🟡 Retire conditionally
 
-| GH1 File | Condition |
-|----------|-----------|
+| GH1 File                        | Condition                                                                                                                                                                        |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `routes/iot.js` — MQTT sections | Only after confirming no production device relies on the MQTT broker for actuation. If devices exclusively use Firebase polling for control, this section is already superseded. |
 
 ### 🔴 Cannot retire yet (unchanged by this fix)
 
-| GH1 File | Reason |
-|----------|--------|
-| `services/pdfService.js` | GH2 frontend still calls GH1 for PDF reports |
+| GH1 File                             | Reason                                           |
+| ------------------------------------ | ------------------------------------------------ |
+| `services/pdfService.js`             | GH2 frontend still calls GH1 for PDF reports     |
 | `services/dataAggregationService.js` | No GH2 cron job running for 30s→5min aggregation |
-| All multi-language support | GH2 is English-only |
+| All multi-language support           | GH2 is English-only                              |
 
 ---
 

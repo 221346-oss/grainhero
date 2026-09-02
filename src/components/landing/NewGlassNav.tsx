@@ -1,72 +1,72 @@
-import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Wheat, Menu, X, Sun, Moon } from 'lucide-react'
-import { Link } from '@tanstack/react-router'
-import { getStoredThemeMode, toggleThemeMode, type ThemeMode } from '@/lib/theme'
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Wheat, Menu, X, Sun, Moon } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { getStoredThemeMode, toggleThemeMode, type ThemeMode } from "@/lib/theme";
 
 const navLinks = [
-  { to: '/', label: 'Home' },
-  { to: '/', hash: 'how-it-works', label: 'How it works' },
-  { to: '/about', label: 'About' },
-  { to: '/blog', label: 'Resources' },
-  { to: '/contact', label: 'Contact' },
-]
+  { to: "/", label: "Home" },
+  { to: "/", hash: "how-it-works", label: "How it works" },
+  { to: "/about", label: "About" },
+  { to: "/blog", label: "Resources" },
+  { to: "/contact", label: "Contact" },
+];
 
 const solutionLinks = [
-  { to: '/solutions/grain-storage-monitoring', label: 'Grain storage monitoring' },
-  { to: '/solutions/silo-monitoring-system', label: 'Silo monitoring system' },
-  { to: '/solutions/grain-management-software', label: 'Grain management software' },
-  { to: '/guides/grain-storage', label: 'Grain storage guide' },
-]
+  { to: "/solutions/grain-storage-monitoring", label: "Grain storage monitoring" },
+  { to: "/solutions/silo-monitoring-system", label: "Silo monitoring system" },
+  { to: "/solutions/grain-management-software", label: "Grain management software" },
+  { to: "/guides/grain-storage", label: "Grain storage guide" },
+];
 
 export function NewGlassNav() {
-  const [isScrolled, setIsScrolled] = useState(false)
-  const [isVisible, setIsVisible] = useState(true)
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [mode, setMode] = useState<ThemeMode>("light")
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [mode, setMode] = useState<ThemeMode>("light");
 
   useEffect(() => {
-    setMode(getStoredThemeMode())
-  }, [])
+    setMode(getStoredThemeMode());
+  }, []);
 
   const handleToggle = () => {
-    const next = toggleThemeMode()
-    setMode(next)
-  }
+    const next = toggleThemeMode();
+    setMode(next);
+  };
 
   useEffect(() => {
-    let lastScrollY = window.scrollY
+    let lastScrollY = window.scrollY;
 
     const handleScroll = () => {
-      const currentScrollY = window.scrollY
-      setIsScrolled(currentScrollY > 50)
+      const currentScrollY = window.scrollY;
+      setIsScrolled(currentScrollY > 50);
 
       // Hide header when scrolling down, show when scrolling up
       if (currentScrollY > lastScrollY && currentScrollY > 150) {
-        setIsVisible(false)
+        setIsVisible(false);
       } else {
-        setIsVisible(true)
+        setIsVisible(true);
       }
 
-      lastScrollY = currentScrollY
-    }
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
+      lastScrollY = currentScrollY;
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
-    document.body.style.overflow = isMobileMenuOpen ? 'hidden' : ''
+    document.body.style.overflow = isMobileMenuOpen ? "hidden" : "";
     return () => {
-      document.body.style.overflow = ''
-    }
-  }, [isMobileMenuOpen])
+      document.body.style.overflow = "";
+    };
+  }, [isMobileMenuOpen]);
 
   return (
     <>
       {/* Fixed Top Navbar */}
       <motion.nav
         initial="hidden"
-        animate={isVisible ? 'visible' : 'hidden'}
+        animate={isVisible ? "visible" : "hidden"}
         variants={{
           visible: {
             opacity: 1,
@@ -83,17 +83,12 @@ export function NewGlassNav() {
       >
         <div
           className={`w-full px-4 sm:px-8 lg:px-12 py-3 sm:py-4 transition-all duration-300 ease-out ${
-            isScrolled
-              ? 'bg-[#111512]/95 backdrop-blur-md shadow-lg'
-              : 'bg-transparent'
+            isScrolled ? "bg-[#111512]/95 backdrop-blur-md shadow-lg" : "bg-transparent"
           }`}
         >
           <div className="flex items-center justify-between max-w-7xl mx-auto">
             {/* Logo */}
-            <Link
-              to="/"
-              className="flex items-center gap-2 cursor-pointer"
-            >
+            <Link to="/" className="flex items-center gap-2 cursor-pointer">
               <Wheat className="w-6 h-6 sm:w-8 sm:h-8 text-[#2FA84F]" />
               <span className="text-[#FAFAF7] text-lg sm:text-xl font-bold tracking-wide">
                 GrainHero
@@ -125,7 +120,7 @@ export function NewGlassNav() {
               </div>
               {navLinks.map((link) => (
                 <Link
-                  key={`${link.to}-${link.hash || ''}`}
+                  key={`${link.to}-${link.hash || ""}`}
                   to={link.to}
                   hash={link.hash}
                   className="text-[#FAFAF7]/90 hover:text-[#FAFAF7] font-medium transition-all duration-300 hover:scale-105 text-sm tracking-wide relative group cursor-pointer"
@@ -196,7 +191,11 @@ export function NewGlassNav() {
             </div>
 
             {/* Logo */}
-            <Link to="/" onClick={() => setIsMobileMenuOpen(false)} className="absolute top-6 left-6 flex items-center gap-2">
+            <Link
+              to="/"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="absolute top-6 left-6 flex items-center gap-2"
+            >
               <Wheat className="w-7 h-7 text-[#2FA84F]" />
               <span className="text-[#FAFAF7] text-xl font-bold">GrainHero</span>
             </Link>
@@ -205,7 +204,7 @@ export function NewGlassNav() {
             <div className="flex flex-col items-center justify-center h-full space-y-6">
               {navLinks.map((link, i) => (
                 <motion.div
-                  key={`${link.to}-${link.hash || ''}`}
+                  key={`${link.to}-${link.hash || ""}`}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 + i * 0.08 }}
@@ -265,6 +264,5 @@ export function NewGlassNav() {
         )}
       </AnimatePresence>
     </>
-  )
+  );
 }
-

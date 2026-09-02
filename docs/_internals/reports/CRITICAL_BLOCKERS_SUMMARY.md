@@ -28,6 +28,7 @@ if (hum != null && hum > 65) {  // ✅ MATCHES GH1 THRESHOLDS
 ```
 
 **Impact**:
+
 - **1440 false alerts per day per sensor** (every 1-minute reading triggers)
 - Normal grain moisture is 12-15% — this threshold makes it impossible to store grain
 - Would flood notification system immediately upon GH1 retirement
@@ -42,22 +43,26 @@ if (hum != null && hum > 65) {  // ✅ MATCHES GH1 THRESHOLDS
 **Issue**: GH2 has no WebSocket/Server-Sent Events implementation
 
 **GH1 Method**:
+
 ```javascript
 // firebaseRealtimeService.js line 354
-io.emit('sensor_reading', liveData);  // Push to all connected clients
+io.emit("sensor_reading", liveData); // Push to all connected clients
 ```
 
 **GH2 Reality**:
+
 - Cron runs every 5-10 minutes
 - Dashboard must poll Supabase or use Supabase Realtime subscriptions
 - **Farmers see 5-10 minute old data** (vs <1 second in GH1)
 
 **Production Impact**:
+
 - Emergency situations (spoilage detected) have 5-10 minute notification delay
 - Dashboard appears "frozen" or "lagging" to users
 - Critical for monitoring real-time grain conditions
 
 **Fix Options**:
+
 1. Implement Supabase Realtime subscriptions (2-3 days)
 2. Add Server-Sent Events endpoint (1-2 days)
 3. Keep GH1 WebSocket server running alongside GH2 (temporary workaround)
@@ -69,6 +74,7 @@ io.emit('sensor_reading', liveData);  // Push to all connected clients
 **Issue**: GH2 has no mechanism to preserve data during network outages
 
 **GH1 Feature**:
+
 ```javascript
 // realTimeDataService.js lines 185-232
 bufferData(deviceId, data) {
@@ -78,16 +84,19 @@ bufferData(deviceId, data) {
   this.dataBuffer.get(deviceId).push({ ...data, buffered_at: new Date() });
 }
 ```
+
 - Buffers up to 1000 readings per device
 - Syncs when device comes back online
 - Keeps data for 24 hours before cleanup
 
 **GH2 Reality**:
+
 - If Firebase or Supabase is unreachable → reading is **permanently lost**
 - If cron fails → no retry, data gone
 - 15 minutes of network downtime = 15 readings lost forever
 
 **Production Impact**:
+
 - Network hiccups common in rural farm installations
 - Data loss during critical spoilage events
 - Incomplete historical data for ML model training
@@ -112,50 +121,39 @@ bufferData(deviceId, data) {
 
 ## ⚠️ Degraded but Acceptable
 
-1. **Actuator Response Time**  
+1. **Actuator Response Time**
    - GH1: 1-2 seconds (MQTT push)
    - GH2: 10-30 seconds (Firebase polling)
    - ⚠️ Acceptable for grain storage (non-emergency)
 
-2. **Data Ingestion Latency**  
+2. **Data Ingestion Latency**
    - GH1: <1 second (realtime listener)
    - GH2: 5-10 minutes (cron interval)
    - ⚠️ Tolerable if dashboard is realtime
 
-3. **Device Registration**  
+3. **Device Registration**
    - GH1: Auto-registers unknown devices
    - GH2: Requires manual provisioning
    - ⚠️ Workflow change, not a blocker
 
 ---
 
-
 ## 🎯 Path to Production
 
 ### Immediate Actions (Must Fix Before Cutover)
 
 **Priority 1 — Quick Wins (1 day)**
+
 1. ✅ Fix humidity threshold: Change `14.5` → `65` (5 minutes)
 2. ✅ Add LDR alert throttling: 1 per 30 minutes (30 minutes)
 3. ✅ Add duplicate prevention: UNIQUE constraint on sensor_readings (15 minutes)
 4. ✅ Improve error handling: Wrap Supabase writes in try-catch (1 hour)
 
-**Priority 2 — Realtime Infrastructure (2-3 days)**
-5. Implement Supabase Realtime subscriptions for dashboard
-6. Add Server-Sent Events endpoint as fallback
-7. Test with production devices in staging environment
+**Priority 2 — Realtime Infrastructure (2-3 days)** 5. Implement Supabase Realtime subscriptions for dashboard 6. Add Server-Sent Events endpoint as fallback 7. Test with production devices in staging environment
 
-**Priority 3 — Resilience (2-3 days)**
-8. Implement offline data buffering
-9. Add retry logic with exponential backoff
-10. Add cron failure recovery mechanism
+**Priority 3 — Resilience (2-3 days)** 8. Implement offline data buffering 9. Add retry logic with exponential backoff 10. Add cron failure recovery mechanism
 
-**Priority 4 — Validation (2-3 weeks)**
-11. Run GH1 and GH2 in parallel
-12. Compare data outputs daily
-13. Monitor alert generation rates
-14. Verify dashboard responsiveness
-15. Test network outage recovery
+**Priority 4 — Validation (2-3 weeks)** 11. Run GH1 and GH2 in parallel 12. Compare data outputs daily 13. Monitor alert generation rates 14. Verify dashboard responsiveness 15. Test network outage recovery
 
 ---
 
@@ -197,4 +195,3 @@ Week 8: GH1 retirement (if zero incidents for 2 weeks)
 **Report Status**: ✅ Complete  
 **Next Review**: After Priority 1 fixes implemented  
 **Escalation**: If timeline extends beyond 2 months, consider keeping GH1 indefinitely
-

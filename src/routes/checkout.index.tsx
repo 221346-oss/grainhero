@@ -3,7 +3,26 @@ import { useState, useEffect, useRef } from "react";
 import { z } from "zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Check, Shield, Clock, CreditCard, Cpu, ArrowLeft, ArrowRight, MapPin, RefreshCw, AlertCircle, User, Mail, Package, Eye, EyeOff, Sun, Moon } from "lucide-react";
+import {
+  Loader2,
+  Check,
+  Shield,
+  Clock,
+  CreditCard,
+  Cpu,
+  ArrowLeft,
+  ArrowRight,
+  MapPin,
+  RefreshCw,
+  AlertCircle,
+  User,
+  Mail,
+  Package,
+  Eye,
+  EyeOff,
+  Sun,
+  Moon,
+} from "lucide-react";
 import { getStoredThemeMode, toggleThemeMode, type ThemeMode } from "@/lib/theme";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -58,14 +77,14 @@ export const Route = createFileRoute("/checkout/")({
     meta: [
       { title: "Checkout — GrainHero" },
       { name: "description", content: "Choose your plan and start monitoring your grain." },
-      { property: 'og:title', content: "Checkout — GrainHero" },
-      { property: 'og:description', content: "Choose your plan and start monitoring your grain." },
-      { property: 'og:url', content: 'https://grainhero.app/checkout' },
-      { property: 'og:type', content: 'website' },
-      { name: 'twitter:card', content: 'summary_large_image' },
-      { name: 'robots', content: 'noindex, nofollow' },
+      { property: "og:title", content: "Checkout — GrainHero" },
+      { property: "og:description", content: "Choose your plan and start monitoring your grain." },
+      { property: "og:url", content: "https://grainhero.app/checkout" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "robots", content: "noindex, nofollow" },
     ],
-    links: [{ rel: 'canonical', href: 'https://grainhero.app/checkout' }],
+    links: [{ rel: "canonical", href: "https://grainhero.app/checkout" }],
   }),
   component: CheckoutPage,
 });
@@ -94,8 +113,12 @@ function CheckoutPage() {
 
   // Theme toggle
   const [themeMode, setThemeMode] = useState<ThemeMode>("light");
-  useEffect(() => { setThemeMode(getStoredThemeMode()); }, []);
-  const handleThemeToggle = () => { setThemeMode(toggleThemeMode()); };
+  useEffect(() => {
+    setThemeMode(getStoredThemeMode());
+  }, []);
+  const handleThemeToggle = () => {
+    setThemeMode(toggleThemeMode());
+  };
 
   // Field validation errors
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -111,12 +134,15 @@ function CheckoutPage() {
   const isPhoneValid = (value: string): boolean => {
     const n = value.trim();
     if (!n.startsWith("+")) return false;
-    const d = n.slice(1).replace(/[\s\-\(\)]/g, "");
+    const d = n.slice(1).replace(/[\s\-()]/g, "");
     return /^\d+$/.test(d) && d.length >= 7 && d.length <= 15;
   };
 
   const isNameValid = (value: string): boolean => {
-    const parts = value.trim().split(/\s+/).filter((p) => p.length > 0);
+    const parts = value
+      .trim()
+      .split(/\s+/)
+      .filter((p) => p.length > 0);
     return parts.length >= 2 && parts.every((p) => p.length >= 2);
   };
 
@@ -128,7 +154,10 @@ function CheckoutPage() {
         if (!value.trim()) {
           result = { isValid: false, message: "Full name is required" };
         } else if (!isNameValid(value)) {
-          const parts = value.trim().split(/\s+/).filter((p) => p.length > 0);
+          const parts = value
+            .trim()
+            .split(/\s+/)
+            .filter((p) => p.length > 0);
           if (parts.length < 2) {
             result = { isValid: false, message: "Please enter first and last name" };
           } else {
@@ -147,9 +176,12 @@ function CheckoutPage() {
         if (!normalized) {
           result = { isValid: false, message: "Phone number is required" };
         } else if (!normalized.startsWith("+")) {
-          result = { isValid: false, message: "Must start with + and country code e.g. +1, +44, +92" };
+          result = {
+            isValid: false,
+            message: "Must start with + and country code e.g. +1, +44, +92",
+          };
         } else {
-          const digits = normalized.slice(1).replace(/[\s\-\(\)]/g, "");
+          const digits = normalized.slice(1).replace(/[\s\-()]/g, "");
           if (!/^\d+$/.test(digits) || digits.length < 7 || digits.length > 15) {
             result = { isValid: false, message: "Enter a valid phone number e.g. +92 300 1234567" };
           } else {
@@ -159,9 +191,10 @@ function CheckoutPage() {
         break;
       }
       case "address":
-        result = !value.trim() || value.trim().length < 3
-          ? { isValid: false, message: "Address must be at least 3 characters" }
-          : { isValid: true, message: "" };
+        result =
+          !value.trim() || value.trim().length < 3
+            ? { isValid: false, message: "Address must be at least 3 characters" }
+            : { isValid: true, message: "" };
         break;
       case "city":
         result = !value.trim()
@@ -176,13 +209,13 @@ function CheckoutPage() {
       default:
         result = { isValid: true, message: "" };
     }
-    
-    setErrors(prev => ({ ...prev, [field]: result.message }));
+
+    setErrors((prev) => ({ ...prev, [field]: result.message }));
     return result.isValid;
   };
 
   const handleBlur = (field: string) => {
-    setTouched(prev => ({ ...prev, [field]: true }));
+    setTouched((prev) => ({ ...prev, [field]: true }));
   };
 
   // Restore any locally-saved draft (from an interrupted session).
@@ -192,10 +225,18 @@ function CheckoutPage() {
     const d = loadDraft();
     if (!d) return;
     const storedPlan = (() => {
-      try { return window.localStorage.getItem("selectedPlanId"); } catch { return null; }
+      try {
+        return window.localStorage.getItem("selectedPlanId");
+      } catch {
+        return null;
+      }
     })();
     if (!initial && d.selected) setSelected(d.selected);
-    else if (!initial && (storedPlan === "basic" || storedPlan === "intermediate" || storedPlan === "pro")) setSelected(storedPlan);
+    else if (
+      !initial &&
+      (storedPlan === "basic" || storedPlan === "intermediate" || storedPlan === "pro")
+    )
+      setSelected(storedPlan);
     if (typeof d.iotQuantity === "number") setIotQuantity(d.iotQuantity);
     if (d.customerName) setCustomerName(d.customerName);
     if (d.customerEmail) setCustomerEmail(d.customerEmail);
@@ -217,11 +258,40 @@ function CheckoutPage() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const draft: Draft = {
-      selected, iotQuantity, customerName, customerEmail, customerPassword, address, city, country, phone,
-      preferredDate, notes, businessName, taxId,
+      selected,
+      iotQuantity,
+      customerName,
+      customerEmail,
+      customerPassword,
+      address,
+      city,
+      country,
+      phone,
+      preferredDate,
+      notes,
+      businessName,
+      taxId,
     };
-    try { window.localStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); } catch { /* quota */ }
-  }, [selected, iotQuantity, customerName, customerEmail, customerPassword, address, city, country, phone, preferredDate, notes, businessName, taxId]);
+    try {
+      window.localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    } catch {
+      /* quota */
+    }
+  }, [
+    selected,
+    iotQuantity,
+    customerName,
+    customerEmail,
+    customerPassword,
+    address,
+    city,
+    country,
+    phone,
+    preferredDate,
+    notes,
+    businessName,
+    taxId,
+  ]);
 
   useEffect(() => {
     if (canceled) toast("Checkout canceled. You can pick a plan and try again.");
@@ -235,7 +305,10 @@ function CheckoutPage() {
     enabled: authed === true,
   });
   const pending = (statusQuery.data?.pendingOrders ?? []) as Array<{
-    id: string; plan_id?: string; plan_name?: string; hardware_quantity?: number;
+    id: string;
+    plan_id?: string;
+    plan_name?: string;
+    hardware_quantity?: number;
   }>;
 
   const startFn = useServerFn(createStripeCheckoutSession);
@@ -294,29 +367,34 @@ function CheckoutPage() {
   ];
   const stepValid = [
     !!selected && iotQuantity >= 1,
-    isNameValid(customerName) && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim()) && customerPassword.length >= 8,
+    isNameValid(customerName) &&
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim()) &&
+      customerPassword.length >= 8,
     address.trim().length > 2 && country.trim().length > 0 && isPhoneValid(phone),
     canPay,
   ];
 
   const missingReasons: string[] = [];
   if (iotQuantity < 1) missingReasons.push("Add at least 1 IoT sensor");
-  if (!isNameValid(customerName)) missingReasons.push("Enter your full name (first + last, 2+ chars each)");
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim())) missingReasons.push("Enter a valid email");
+  if (!isNameValid(customerName))
+    missingReasons.push("Enter your full name (first + last, 2+ chars each)");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim()))
+    missingReasons.push("Enter a valid email");
   if (customerPassword.length < 8) missingReasons.push("Password must be at least 8 characters");
   if (address.trim().length <= 2) missingReasons.push("Enter your install address");
   if (!country.trim()) missingReasons.push("Enter your country");
-  if (!isPhoneValid(phone)) missingReasons.push("Enter a valid phone with country code, e.g. +92 300 1234567");
+  if (!isPhoneValid(phone))
+    missingReasons.push("Enter a valid phone with country code, e.g. +92 300 1234567");
 
   const goNext = () => {
     if (!stepValid[step]) {
       // Mark all fields on current step as touched so errors show
       if (step === 1) {
-        setTouched(prev => ({ ...prev, customerName: true, customerEmail: true }));
+        setTouched((prev) => ({ ...prev, customerName: true, customerEmail: true }));
         validateField("customerName", customerName);
         validateField("customerEmail", customerEmail);
       } else if (step === 2) {
-        setTouched(prev => ({ ...prev, address: true, city: true, country: true, phone: true }));
+        setTouched((prev) => ({ ...prev, address: true, city: true, country: true, phone: true }));
         validateField("address", address);
         validateField("city", city);
         validateField("country", country);
@@ -334,7 +412,10 @@ function CheckoutPage() {
     <div className="min-h-screen py-10 px-4 checkout-bg checkout-inline-bg bg-background transition-colors">
       <div className="max-w-5xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
-          <Link to="/" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
+          <Link
+            to="/"
+            className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1"
+          >
             <ArrowLeft className="h-4 w-4" /> Back to home
           </Link>
           <div className="flex items-center gap-3">
@@ -356,11 +437,16 @@ function CheckoutPage() {
           <div className="inline-flex items-center gap-2 rounded-full bg-card/80 backdrop-blur px-3 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400 shadow-sm border border-border">
             Set up in under 3 minutes
           </div>
-          <h1 className="mt-3 text-3xl md:text-4xl font-bold text-foreground">{stepMeta[step].label}</h1>
-          <p className="text-muted-foreground mt-2">Step {step + 1} of 4 — {step === 3 ? "review and pay securely" : "we'll create your account after payment"}.</p>
+          <h1 className="mt-3 text-3xl md:text-4xl font-bold text-foreground">
+            {stepMeta[step].label}
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Step {step + 1} of 4 —{" "}
+            {step === 3 ? "review and pay securely" : "we'll create your account after payment"}.
+          </p>
         </div>
 
-        <div className="rounded-2xl border border-border bg-card/80 backdrop-blur p-3 shadow-sm">
+        <div className="rounded-2xl border-border bg-card/80 backdrop-blur p-3 shadow-sm">
           <div className="grid grid-cols-4 gap-2">
             {stepMeta.map((s, i) => {
               const Icon = s.icon;
@@ -370,10 +456,14 @@ function CheckoutPage() {
                 <button
                   key={s.label}
                   type="button"
-                  onClick={() => { if (i < step || stepValid.slice(0, i).every(Boolean)) setStep(i); }}
+                  onClick={() => {
+                    if (i < step || stepValid.slice(0, i).every(Boolean)) setStep(i);
+                  }}
                   className={`flex flex-col items-center gap-1 rounded-xl px-2 py-2 text-center transition ${active ? "bg-emerald-600 text-white shadow" : done ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300" : "text-muted-foreground hover:bg-muted"}`}
                 >
-                  <div className={`flex h-7 w-7 items-center justify-center rounded-full ${active ? "bg-white text-emerald-600" : done ? "bg-emerald-600 text-white" : "bg-muted text-muted-foreground"} text-xs font-bold`}>
+                  <div
+                    className={`flex h-7 w-7 items-center justify-center rounded-full ${active ? "bg-white text-emerald-600" : done ? "bg-emerald-600 text-white" : "bg-muted text-muted-foreground"} text-xs font-bold`}
+                  >
                     {done ? <Check className="h-3.5 w-3.5" /> : <Icon className="h-3.5 w-3.5" />}
                   </div>
                   <span className="text-[11px] font-semibold leading-tight">{s.label}</span>
@@ -382,7 +472,10 @@ function CheckoutPage() {
             })}
           </div>
           <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-            <div className="h-full bg-gradient-to-r from-emerald-500 to-sky-500 transition-all" style={{ width: `${((step + 1) / 4) * 100}%` }} />
+            <div
+              className="h-full bg-gradient-to-r from-emerald-500 to-sky-500 transition-all"
+              style={{ width: `${((step + 1) / 4) * 100}%` }}
+            />
           </div>
         </div>
 
@@ -392,7 +485,9 @@ function CheckoutPage() {
               <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
               <div className="flex-1 text-sm">
                 <p className="font-medium text-amber-900">Payment was canceled</p>
-                <p className="text-amber-800">No charges yet — your details are saved and you can try again below.</p>
+                <p className="text-amber-800">
+                  No charges yet — your details are saved and you can try again below.
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -406,7 +501,10 @@ function CheckoutPage() {
                 <p className="font-medium text-emerald-900">Resume your previous checkout</p>
                 <p className="text-emerald-800">
                   We saved your {pending[0].plan_name ?? pending[0].plan_id ?? "plan"} order
-                  {typeof pending[0].hardware_quantity === "number" ? ` with ${pending[0].hardware_quantity} sensor(s)` : ""}. Pick up right where you left off.
+                  {typeof pending[0].hardware_quantity === "number"
+                    ? ` with ${pending[0].hardware_quantity} sensor(s)`
+                    : ""}
+                  . Pick up right where you left off.
                 </p>
               </div>
               <Button
@@ -415,7 +513,11 @@ function CheckoutPage() {
                 className="border-emerald-600 text-emerald-700 hover:bg-emerald-100"
                 onClick={() => {
                   const p = pending[0];
-                  if (p.plan_id === "basic" || p.plan_id === "intermediate" || p.plan_id === "pro") {
+                  if (
+                    p.plan_id === "basic" ||
+                    p.plan_id === "intermediate" ||
+                    p.plan_id === "pro"
+                  ) {
                     setSelected(p.plan_id);
                   }
                   if (typeof p.hardware_quantity === "number") setIotQuantity(p.hardware_quantity);
@@ -448,13 +550,15 @@ function CheckoutPage() {
                           </div>
                           <CardDescription className="text-xs">{p.description}</CardDescription>
                           <div className="pt-2">
-                            <div className="text-2xl font-bold text-slate-900">{p.priceFrontend}</div>
+                            <div className="text-2xl font-bold text-foreground">
+                              {p.priceFrontend}
+                            </div>
                           </div>
                         </CardHeader>
                         <CardContent>
                           <ul className="space-y-1.5 text-xs">
                             {p.features.slice(0, 5).map((f: string) => (
-                              <li key={f} className="flex items-start gap-2 text-slate-700">
+                              <li key={f} className="flex items-start gap-2 text-foreground">
                                 <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0 mt-0.5" />
                                 {f}
                               </li>
@@ -467,19 +571,43 @@ function CheckoutPage() {
                 </div>
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-base flex items-center gap-2"><Cpu className="h-4 w-4 text-amber-600" /> IoT sensor setup</CardTitle>
-                    <CardDescription>Rs. {(planData?.iotCharge ?? 7000).toLocaleString()} per sensor · our technician installs on-site</CardDescription>
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Cpu className="h-4 w-4 text-amber-600" /> IoT sensor setup
+                    </CardTitle>
+                    <CardDescription>
+                      Rs. {(planData?.iotCharge ?? 7000).toLocaleString()} per sensor · our
+                      technician installs on-site
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="flex flex-wrap items-center gap-3">
-                      <Button type="button" variant="outline" size="sm" onClick={() => setIotQuantity(Math.max(1, iotQuantity - 1))}>−</Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIotQuantity(Math.max(1, iotQuantity - 1))}
+                      >
+                        −
+                      </Button>
                       <input
-                        type="number" min={1} max={50} value={iotQuantity}
-                        onChange={(e) => setIotQuantity(Math.max(1, Math.min(50, Number(e.target.value) || 1)))}
+                        type="number"
+                        min={1}
+                        max={50}
+                        value={iotQuantity}
+                        onChange={(e) =>
+                          setIotQuantity(Math.max(1, Math.min(50, Number(e.target.value) || 1)))
+                        }
                         className="w-20 h-9 px-2 rounded border border-input bg-background text-foreground text-sm text-center"
                       />
-                      <Button type="button" variant="outline" size="sm" onClick={() => setIotQuantity(Math.min(50, iotQuantity + 1))}>+</Button>
-                      <span className="text-xs text-slate-500">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIotQuantity(Math.min(50, iotQuantity + 1))}
+                      >
+                        +
+                      </Button>
+                      <span className="text-xs text-muted-foreground">
                         = Rs. {(checkoutTotals?.iotTotal ?? iotQuantity * 7000).toLocaleString()}
                       </span>
                     </div>
@@ -491,21 +619,27 @@ function CheckoutPage() {
                   <CardContent className="p-6">
                     <div className="space-y-3">
                       <div className="flex justify-between text-sm">
-                        <span className="text-slate-600">Monthly subscription</span>
-                        <span className="font-medium">Rs. {planData?.price.toLocaleString()}/mo</span>
+                        <span className="text-muted-foreground">Monthly subscription</span>
+                        <span className="font-medium">
+                          Rs. {planData?.price.toLocaleString()}/mo
+                        </span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-slate-600">IoT setup (one-time)</span>
-                        <span className="font-medium">Rs. {(iotQuantity * 7000).toLocaleString()}</span>
+                        <span className="text-muted-foreground">IoT setup (one-time)</span>
+                        <span className="font-medium">
+                          Rs. {(iotQuantity * 7000).toLocaleString()}
+                        </span>
                       </div>
                       <Separator className="bg-slate-300" />
                       <div className="flex justify-between items-baseline">
-                        <span className="text-base font-semibold text-slate-900">Total due today</span>
+                        <span className="text-base font-semibold text-foreground">
+                          Total due today
+                        </span>
                         <div className="text-right">
                           <div className="text-2xl font-bold text-emerald-700">
                             Rs. {((planData?.price ?? 0) + iotQuantity * 7000).toLocaleString()}
                           </div>
-                          <div className="text-xs text-slate-500 mt-0.5">
+                          <div className="text-xs text-muted-foreground mt-0.5">
                             Then Rs. {planData?.price.toLocaleString()}/month
                           </div>
                         </div>
@@ -519,16 +653,20 @@ function CheckoutPage() {
             {step === 1 && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2"><User className="h-4 w-4 text-emerald-600" /> Buyer details</CardTitle>
-                  <CardDescription>Your account will be created with this email after payment.</CardDescription>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <User className="h-4 w-4 text-emerald-600" /> Buyer details
+                  </CardTitle>
+                  <CardDescription>
+                    Your account will be created with this email after payment.
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="grid gap-4 md:grid-cols-2">
                     <div>
                       <Label htmlFor="customer-name">Full name *</Label>
-                      <Input 
-                        id="customer-name" 
-                        value={customerName} 
+                      <Input
+                        id="customer-name"
+                        value={customerName}
                         onChange={(e) => {
                           setCustomerName(e.target.value);
                           if (touched.customerName) validateField("customerName", e.target.value);
@@ -537,9 +675,13 @@ function CheckoutPage() {
                           handleBlur("customerName");
                           validateField("customerName", customerName);
                         }}
-                        placeholder="e.g., Ahmed Khan" 
+                        placeholder="e.g., Ahmed Khan"
                         maxLength={160}
-                        className={touched.customerName && errors.customerName ? "border-red-500 focus-visible:ring-red-500" : ""}
+                        className={
+                          touched.customerName && errors.customerName
+                            ? "border-red-500 focus-visible:ring-red-500"
+                            : ""
+                        }
                       />
                       {touched.customerName && errors.customerName && (
                         <p className="text-xs text-red-600 mt-1">{errors.customerName}</p>
@@ -548,22 +690,23 @@ function CheckoutPage() {
                     <div>
                       <Label htmlFor="customer-email">Email *</Label>
                       <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                        <Input 
-                          id="customer-email" 
-                          type="email" 
-                          value={customerEmail} 
+                        <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          id="customer-email"
+                          type="email"
+                          value={customerEmail}
                           onChange={(e) => {
                             setCustomerEmail(e.target.value);
-                            if (touched.customerEmail) validateField("customerEmail", e.target.value);
+                            if (touched.customerEmail)
+                              validateField("customerEmail", e.target.value);
                           }}
                           onBlur={() => {
                             handleBlur("customerEmail");
                             validateField("customerEmail", customerEmail);
                           }}
-                          placeholder="ahmed@grainstorage.pk" 
+                          placeholder="ahmed@grainstorage.pk"
                           className={`pl-9 ${touched.customerEmail && errors.customerEmail ? "border-red-500 focus-visible:ring-red-500" : ""}`}
-                          maxLength={180} 
+                          maxLength={180}
                         />
                       </div>
                       {touched.customerEmail && errors.customerEmail && (
@@ -571,7 +714,12 @@ function CheckoutPage() {
                       )}
                     </div>
                     <div className="md:col-span-2">
-                      <Label htmlFor="customer-password">Password * <span className="text-slate-400 font-normal text-xs">(min. 8 characters)</span></Label>
+                      <Label htmlFor="customer-password">
+                        Password *{" "}
+                        <span className="text-muted-foreground font-normal text-xs">
+                          (min. 8 characters)
+                        </span>
+                      </Label>
                       <div className="relative">
                         <Input
                           id="customer-password"
@@ -587,11 +735,17 @@ function CheckoutPage() {
                           onClick={() => setShowPassword((s) => !s)}
                           className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                         >
-                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
                         </button>
                       </div>
                       {customerPassword.length > 0 && customerPassword.length < 8 && (
-                        <p className="text-xs text-red-500 mt-1">Password must be at least 8 characters</p>
+                        <p className="text-xs text-red-500 mt-1">
+                          Password must be at least 8 characters
+                        </p>
                       )}
                     </div>
                   </div>
@@ -602,14 +756,21 @@ function CheckoutPage() {
             {step === 2 && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2"><MapPin className="h-4 w-4 text-emerald-600" /> Install details</CardTitle>
-                  <CardDescription>Where our technician should install and how to reach you.</CardDescription>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-emerald-600" /> Install details
+                  </CardTitle>
+                  <CardDescription>
+                    Where our technician should install and how to reach you.
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="md:col-span-2">
                       <Label htmlFor="addr">Install location *</Label>
-                      <p className="text-xs text-muted-foreground mb-2">Search for an address, drop a pin on the map, or use your current location. Our technician will be routed here.</p>
+                      <p className="text-xs text-muted-foreground mb-2">
+                        Search for an address, drop a pin on the map, or use your current location.
+                        Our technician will be routed here.
+                      </p>
                       <AddressMapPicker
                         value={{ address, lat, lng }}
                         onChange={(loc) => {
@@ -624,9 +785,9 @@ function CheckoutPage() {
                     </div>
                     <div>
                       <Label htmlFor="country">Country *</Label>
-                      <Input 
-                        id="country" 
-                        value={country} 
+                      <Input
+                        id="country"
+                        value={country}
                         onChange={(e) => {
                           setCountry(e.target.value);
                           if (touched.country) validateField("country", e.target.value);
@@ -636,7 +797,11 @@ function CheckoutPage() {
                           validateField("country", country);
                         }}
                         maxLength={120}
-                        className={touched.country && errors.country ? "border-red-500 focus-visible:ring-red-500" : ""}
+                        className={
+                          touched.country && errors.country
+                            ? "border-red-500 focus-visible:ring-red-500"
+                            : ""
+                        }
                       />
                       {touched.country && errors.country && (
                         <p className="text-xs text-red-600 mt-1">{errors.country}</p>
@@ -644,9 +809,9 @@ function CheckoutPage() {
                     </div>
                     <div>
                       <Label htmlFor="phone">Contact phone *</Label>
-                      <Input 
-                        id="phone" 
-                        value={phone} 
+                      <Input
+                        id="phone"
+                        value={phone}
                         onChange={(e) => {
                           setPhone(e.target.value);
                           if (touched.phone) validateField("phone", e.target.value);
@@ -655,9 +820,13 @@ function CheckoutPage() {
                           handleBlur("phone");
                           validateField("phone", phone);
                         }}
-                        placeholder="+92 300 1234567 / +1 555 0000" 
+                        placeholder="+92 300 1234567 / +1 555 0000"
                         maxLength={40}
-                        className={touched.phone && errors.phone ? "border-red-500 focus-visible:ring-red-500" : ""}
+                        className={
+                          touched.phone && errors.phone
+                            ? "border-red-500 focus-visible:ring-red-500"
+                            : ""
+                        }
                       />
                       {touched.phone && errors.phone && (
                         <p className="text-xs text-red-600 mt-1">{errors.phone}</p>
@@ -665,15 +834,33 @@ function CheckoutPage() {
                     </div>
                     <div>
                       <Label htmlFor="date">Preferred install date</Label>
-                      <Input id="date" type="date" value={preferredDate} onChange={(e) => setPreferredDate(e.target.value)} />
+                      <Input
+                        id="date"
+                        type="date"
+                        value={preferredDate}
+                        onChange={(e) => setPreferredDate(e.target.value)}
+                      />
                     </div>
                     <div>
                       <Label htmlFor="biz">Business name (invoicing)</Label>
-                      <Input id="biz" value={businessName} onChange={(e) => setBusinessName(e.target.value)} placeholder="e.g., Khan Grain Storage Pvt. Ltd." maxLength={200} />
+                      <Input
+                        id="biz"
+                        value={businessName}
+                        onChange={(e) => setBusinessName(e.target.value)}
+                        placeholder="e.g., Khan Grain Storage Pvt. Ltd."
+                        maxLength={200}
+                      />
                     </div>
                     <div className="md:col-span-2">
                       <Label htmlFor="notes">Notes for the technician</Label>
-                      <Textarea id="notes" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={1000} placeholder="e.g., 3 warehouses, 12 silos total, access via back gate, need 2-day advance notice" />
+                      <Textarea
+                        id="notes"
+                        rows={3}
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        maxLength={1000}
+                        placeholder="e.g., 3 warehouses, 12 silos total, access via back gate, need 2-day advance notice"
+                      />
                     </div>
                   </div>
                 </CardContent>
@@ -683,59 +870,96 @@ function CheckoutPage() {
             {step === 3 && (
               <Card className="border-emerald-200">
                 <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2"><Check className="h-4 w-4 text-emerald-600" /> Review your order</CardTitle>
-                  <CardDescription>Confirm everything looks right before we hand you to Stripe.</CardDescription>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Check className="h-4 w-4 text-emerald-600" /> Review your order
+                  </CardTitle>
+                  <CardDescription>
+                    Confirm everything looks right before we hand you to Stripe.
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm">
                   {/* Plan */}
                   <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/20 p-3">
-                    <p className="text-xs uppercase tracking-wide text-emerald-700 dark:text-emerald-400 font-semibold mb-1">Plan</p>
-                    <p className="font-medium text-foreground">{planData?.name} — {planData?.priceFrontend}</p>
+                    <p className="text-xs uppercase tracking-wide text-emerald-700 dark:text-emerald-400 font-semibold mb-1">
+                      Plan
+                    </p>
+                    <p className="font-medium text-foreground">
+                      {planData?.name} — {planData?.priceFrontend}
+                    </p>
                   </div>
 
                   {/* Buyer */}
                   <div className="rounded-lg bg-muted/50 p-3">
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold mb-1">Buyer</p>
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold mb-1">
+                      Buyer
+                    </p>
                     <p className="text-foreground">{customerName}</p>
                     <p className="text-muted-foreground text-xs">{customerEmail}</p>
-                    {businessName && <p className="text-muted-foreground text-xs mt-0.5">Business: {businessName}</p>}
-                    {taxId && <p className="text-muted-foreground text-xs">GST / Tax ID: {taxId}</p>}
+                    {businessName && (
+                      <p className="text-muted-foreground text-xs mt-0.5">
+                        Business: {businessName}
+                      </p>
+                    )}
+                    {taxId && (
+                      <p className="text-muted-foreground text-xs">GST / Tax ID: {taxId}</p>
+                    )}
                   </div>
 
                   {/* Install site */}
                   <div className="rounded-lg bg-muted/50 p-3">
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Install site</p>
-                    <p className="text-foreground">{address}, {country}</p>
-                    <p className="text-muted-foreground text-xs">Phone: {phone}{preferredDate ? ` · Preferred: ${preferredDate}` : ""}</p>
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">
+                      Install site
+                    </p>
+                    <p className="text-foreground">
+                      {address}, {country}
+                    </p>
+                    <p className="text-muted-foreground text-xs">
+                      Phone: {phone}
+                      {preferredDate ? ` · Preferred: ${preferredDate}` : ""}
+                    </p>
                   </div>
 
                   {/* IoT setup */}
                   <div className="rounded-lg bg-amber-50 dark:bg-amber-900/20 p-3">
-                    <p className="text-xs uppercase tracking-wide text-amber-700 dark:text-amber-400 font-semibold">IoT setup</p>
+                    <p className="text-xs uppercase tracking-wide text-amber-700 dark:text-amber-400 font-semibold">
+                      IoT setup
+                    </p>
                     <p className="text-foreground">
-                      {iotQuantity} sensor(s) × Rs. {(checkoutTotals?.iotUnit ?? 7000).toLocaleString()} = Rs. {(checkoutTotals?.iotTotal ?? iotQuantity * 7000).toLocaleString()}
+                      {iotQuantity} sensor(s) × Rs.{" "}
+                      {(checkoutTotals?.iotUnit ?? 7000).toLocaleString()} = Rs.{" "}
+                      {(checkoutTotals?.iotTotal ?? iotQuantity * 7000).toLocaleString()}
                     </p>
                   </div>
                   {notes.trim() && (
                     <div className="rounded-lg bg-muted/50 p-3">
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Notes for technician</p>
-                      <p className="text-foreground text-sm mt-1 whitespace-pre-wrap">{notes.trim()}</p>
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">
+                        Notes for technician
+                      </p>
+                      <p className="text-foreground text-sm mt-1 whitespace-pre-wrap">
+                        {notes.trim()}
+                      </p>
                     </div>
                   )}
                   {checkoutTotals && (
-                    <div className="rounded-lg border border-emerald-300 dark:border-emerald-800 bg-card p-3">
+                    <div className="rounded-2xl border-emerald-300 dark:border-emerald-800 bg-card p-3">
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Plan (first month)</span>
-                        <span className="font-medium">Rs. {checkoutTotals.monthlyPrice.toLocaleString()}</span>
+                        <span className="font-medium">
+                          Rs. {checkoutTotals.monthlyPrice.toLocaleString()}
+                        </span>
                       </div>
                       <div className="flex justify-between text-sm mt-1">
                         <span className="text-muted-foreground">Sensor setup</span>
-                        <span className="font-medium">Rs. {checkoutTotals.iotTotal.toLocaleString()}</span>
+                        <span className="font-medium">
+                          Rs. {checkoutTotals.iotTotal.toLocaleString()}
+                        </span>
                       </div>
                       <Separator className="my-2" />
                       <div className="flex justify-between font-semibold text-foreground">
                         <span>Total due today</span>
-                        <span className="text-emerald-600 dark:text-emerald-400">Rs. {checkoutTotals.dueToday.toLocaleString()}</span>
+                        <span className="text-emerald-600 dark:text-emerald-400">
+                          Rs. {checkoutTotals.dueToday.toLocaleString()}
+                        </span>
                       </div>
                     </div>
                   )}
@@ -744,14 +968,26 @@ function CheckoutPage() {
                     disabled={start.isPending || !canPay}
                     onClick={() => start.mutate()}
                   >
-                    {start.isPending ? (<><Loader2 className="h-4 w-4 animate-spin mr-2" /> Redirecting to Stripe…</>) : (<><Shield className="h-4 w-4 mr-2" /> Pay securely with Stripe</>)}
+                    {start.isPending ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" /> Redirecting to Stripe…
+                      </>
+                    ) : (
+                      <>
+                        <Shield className="h-4 w-4 mr-2" /> Pay securely with Stripe
+                      </>
+                    )}
                   </Button>
-                  <p className="text-[11px] text-muted-foreground text-center">You'll be redirected to Stripe's secure checkout. No charges until you confirm.</p>
+                  <p className="text-[11px] text-muted-foreground text-center">
+                    You'll be redirected to Stripe's secure checkout. No charges until you confirm.
+                  </p>
                   {!canPay && missingReasons.length > 0 && (
-                    <div className="rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 p-3 text-xs text-amber-900 dark:text-amber-300">
+                    <div className="rounded-lg border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 p-3 text-xs text-amber-900 dark:text-amber-300">
                       <p className="font-semibold mb-1">Complete these to enable payment:</p>
                       <ul className="list-disc pl-4 space-y-0.5">
-                        {missingReasons.map((r) => (<li key={r}>{r}</li>))}
+                        {missingReasons.map((r) => (
+                          <li key={r}>{r}</li>
+                        ))}
                       </ul>
                     </div>
                   )}
@@ -765,7 +1001,11 @@ function CheckoutPage() {
                 <ArrowLeft className="h-4 w-4 mr-1" /> Back
               </Button>
               {step < 3 ? (
-                <Button type="button" onClick={goNext} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                <Button
+                  type="button"
+                  onClick={goNext}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                >
                   Continue <ArrowRight className="h-4 w-4 ml-1" />
                 </Button>
               ) : null}
@@ -782,17 +1022,27 @@ function CheckoutPage() {
                 {checkoutTotals && (
                   <>
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">{checkoutTotals.plan.name} (1st month)</span>
-                      <span className="font-medium">Rs. {checkoutTotals.monthlyPrice.toLocaleString()}</span>
+                      <span className="text-muted-foreground">
+                        {checkoutTotals.plan.name} (1st month)
+                      </span>
+                      <span className="font-medium">
+                        Rs. {checkoutTotals.monthlyPrice.toLocaleString()}
+                      </span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">IoT sensors × {checkoutTotals.iotQuantity}</span>
-                      <span className="font-medium">Rs. {checkoutTotals.iotTotal.toLocaleString()}</span>
+                      <span className="text-muted-foreground">
+                        IoT sensors × {checkoutTotals.iotQuantity}
+                      </span>
+                      <span className="font-medium">
+                        Rs. {checkoutTotals.iotTotal.toLocaleString()}
+                      </span>
                     </div>
                     <Separator />
                     <div className="flex justify-between text-sm font-semibold">
                       <span>Total due today</span>
-                      <span className="text-emerald-600 dark:text-emerald-400">Rs. {checkoutTotals.dueToday.toLocaleString()}</span>
+                      <span className="text-emerald-600 dark:text-emerald-400">
+                        Rs. {checkoutTotals.dueToday.toLocaleString()}
+                      </span>
                     </div>
                     <div className="flex justify-between text-xs text-muted-foreground">
                       <span>Then monthly</span>
@@ -800,9 +1050,16 @@ function CheckoutPage() {
                     </div>
                     <Separator />
                     <ul className="space-y-1.5 text-xs text-muted-foreground">
-                      <li className="flex items-center gap-2"><Shield className="h-3.5 w-3.5 text-emerald-600" /> Secure Stripe checkout</li>
-                      <li className="flex items-center gap-2"><Clock className="h-3.5 w-3.5 text-emerald-600" /> Technician visit after payment</li>
-                      <li className="flex items-center gap-2"><CreditCard className="h-3.5 w-3.5 text-emerald-600" /> Cancel anytime</li>
+                      <li className="flex items-center gap-2">
+                        <Shield className="h-3.5 w-3.5 text-emerald-600" /> Secure Stripe checkout
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Clock className="h-3.5 w-3.5 text-emerald-600" /> Technician visit after
+                        payment
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CreditCard className="h-3.5 w-3.5 text-emerald-600" /> Cancel anytime
+                      </li>
                     </ul>
                   </>
                 )}

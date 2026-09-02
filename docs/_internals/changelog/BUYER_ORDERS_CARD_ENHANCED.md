@@ -6,6 +6,7 @@
 ## Summary
 
 The Buyer Orders card in the Admin Dashboard Overview has been enhanced to:
+
 - ✅ Display **ALL buyers** (unlimited, with scrolling)
 - ✅ Show **creation time** (real-time, relative format)
 - ✅ Include buyer **name, company, and status**
@@ -27,7 +28,7 @@ function formatRelativeTime(iso: string) {
   const now = new Date();
   const then = new Date(iso);
   const seconds = Math.floor((now.getTime() - then.getTime()) / 1000);
-  
+
   if (seconds < 60) return "just now";
   const minutes = Math.floor(seconds / 60);
   if (minutes < 60) return `${minutes}m ago`;
@@ -40,6 +41,7 @@ function formatRelativeTime(iso: string) {
 ```
 
 **Examples:**
+
 - `2 seconds ago` → "just now"
 - `5 minutes ago` → "5m ago"
 - `2 hours ago` → "2h ago"
@@ -53,7 +55,7 @@ function formatRelativeTime(iso: string) {
 ```typescript
 export function BuyerOrdersCard() {
   // ... query setup ...
-  
+
   const rows = (buyers ?? []) as Array<{
     id: string;
     name: string;
@@ -65,11 +67,11 @@ export function BuyerOrdersCard() {
 
   return (
     <Card className="border-border/60 shadow-sm">
-      <CardHeaderLink to="/grain-operations" search={{ tab: "buyers" }} 
+      <CardHeaderLink to="/grain-operations" search={{ tab: "buyers" }}
                       title="Buyers" count={rows.length} />
       <CardContent className="p-3 pt-0">
         {rows.length === 0 && <p className="text-xs text-muted-foreground py-2">No buyers created</p>}
-        
+
         {/* NEW: Scrollable container with max-height */}
         <div className="space-y-2 max-h-[400px] overflow-y-auto">
           {/* CHANGED: Display ALL rows (was: rows.slice(0, 6)) */}
@@ -87,14 +89,14 @@ export function BuyerOrdersCard() {
                   {buyer.status ?? "—"}
                 </Badge>
               </div>
-              
+
               {/* Row 2: Company or Contact Name */}
               <div className="flex items-center justify-between gap-2">
                 <span className="text-[11px] text-muted-foreground truncate flex-1">
                   {buyer.company_name ? buyer.company_name : buyer.contact_name ? buyer.contact_name : "No details"}
                 </span>
               </div>
-              
+
               {/* Row 3: NEW - Creation Time */}
               {buyer.created_at && (
                 <div className="flex items-center justify-between gap-2">
@@ -118,6 +120,7 @@ export function BuyerOrdersCard() {
 ## Card Display Layout
 
 ### Single Buyer Item:
+
 ```
 ┌─────────────────────────────────────────────┐
 │ Ahmed Mills Limited              [active]   │
@@ -127,6 +130,7 @@ export function BuyerOrdersCard() {
 ```
 
 ### Multiple Buyers (Scrollable):
+
 ```
 ┌─ Buyers [8] →
 ├─ Ahmed Mills Limited              [active]
@@ -156,36 +160,39 @@ export function BuyerOrdersCard() {
 
 ## Features
 
-| Feature | Status | Details |
-|---------|--------|---------|
-| Show All Buyers | ✅ | No limit, scrollable container |
-| Buyer Name | ✅ | Bold, primary text |
-| Company/Contact | ✅ | Muted, secondary text |
-| Status Badge | ✅ | Color-coded (active/paused/inactive) |
-| Creation Time | ✅ | Relative format (2h ago, Aug 3, etc.) |
-| Auto-Refresh | ✅ | Every 30 seconds |
-| Scrolling | ✅ | Max height 400px, auto-scroll when full |
-| Hover Effects | ✅ | Light green background on hover |
-| Link to Full List | ✅ | Click any buyer → full managers tab |
-| Real-time Updates | ✅ | React Query + 30s refetch |
+| Feature           | Status | Details                                 |
+| ----------------- | ------ | --------------------------------------- |
+| Show All Buyers   | ✅     | No limit, scrollable container          |
+| Buyer Name        | ✅     | Bold, primary text                      |
+| Company/Contact   | ✅     | Muted, secondary text                   |
+| Status Badge      | ✅     | Color-coded (active/paused/inactive)    |
+| Creation Time     | ✅     | Relative format (2h ago, Aug 3, etc.)   |
+| Auto-Refresh      | ✅     | Every 30 seconds                        |
+| Scrolling         | ✅     | Max height 400px, auto-scroll when full |
+| Hover Effects     | ✅     | Light green background on hover         |
+| Link to Full List | ✅     | Click any buyer → full managers tab     |
+| Real-time Updates | ✅     | React Query + 30s refetch               |
 
 ---
 
 ## Data Display Format
 
 ### Name
+
 - **Size:** xs (12px)
 - **Weight:** semibold
 - **Color:** foreground
 - **Behavior:** Truncated if too long
 
 ### Company/Contact
+
 - **Size:** 11px
 - **Color:** muted-foreground
 - **Fallback:** "No details" if missing
 - **Behavior:** Truncated if too long
 
 ### Status Badge
+
 - **Size:** 10px
 - **Colors:**
   - Active: 🟢 Emerald (emerald-100 bg, emerald-700 text)
@@ -193,6 +200,7 @@ export function BuyerOrdersCard() {
   - Inactive: ⚫ Slate (slate-100 bg, slate-700 text)
 
 ### Creation Time
+
 - **Size:** 10px
 - **Format:** Relative time
   - `just now` (< 1 minute)
@@ -207,6 +215,7 @@ export function BuyerOrdersCard() {
 ## User Workflows
 
 ### Manager View
+
 1. Login as Manager
 2. Navigate to Dashboard Overview
 3. See "Buyers" card in bottom-left
@@ -216,6 +225,7 @@ export function BuyerOrdersCard() {
 7. Click any buyer to manage in Grain Operations
 
 ### Admin View
+
 1. Login as Admin
 2. Navigate to Dashboard Overview
 3. See "Buyers" card with all tenant buyers
@@ -227,17 +237,20 @@ export function BuyerOrdersCard() {
 ## Technical Details
 
 ### Query Settings
+
 - **Query Key:** `["buyers-overview"]`
 - **Data Source:** `listBuyers()` server function
 - **Refetch Interval:** 30,000ms (30 seconds)
 - **Caching:** React Query automatic cache management
 
 ### Scroll Behavior
+
 - **Container:** `max-h-[400px] overflow-y-auto`
 - **Scroll:** Enabled when buyer count > ~6 items
 - **Spacing:** `space-y-2` between items
 
 ### Time Formatting
+
 - **Function:** `formatRelativeTime()`
 - **Input:** ISO 8601 timestamp (string)
 - **Output:** Human-readable relative time
@@ -248,16 +261,19 @@ export function BuyerOrdersCard() {
 ## Responsive Design
 
 ### Mobile (< 640px)
+
 - Card stacks in single column
 - Scrollable list fits mobile height
 - Status badge stays inline with name
 
 ### Tablet (640px - 1024px)
+
 - Part of 2-column grid
 - Scrollable list works well
 - Text truncation prevents overflow
 
 ### Desktop (> 1024px)
+
 - Part of 2x2 grid with other cards
 - Full horizontal width
 - Scrollable list optimized for reading

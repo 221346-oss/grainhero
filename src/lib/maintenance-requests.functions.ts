@@ -32,7 +32,8 @@ export const createMaintenanceRequest = createServerFn({ method: "POST" })
       .select("admin_id")
       .eq("id", context.userId)
       .maybeSingle();
-    const tenantAdminId = (profile as { admin_id?: string | null } | null)?.admin_id ?? context.userId;
+    const tenantAdminId =
+      (profile as { admin_id?: string | null } | null)?.admin_id ?? context.userId;
 
     const { data: row, error } = await context.supabase
       .from("maintenance_requests" as never)
@@ -63,7 +64,9 @@ export const listMaintenanceRequests = createServerFn({ method: "GET" })
     // all — no extra .eq needed.
     const { data, error } = await context.supabase
       .from("maintenance_requests" as never)
-      .select("*, devices:device_id(id, device_name, device_id), silos:silo_id(id, name, silo_id), technician:assigned_technician_id(id, name, email)")
+      .select(
+        "*, devices:device_id(id, device_name, device_id), silos:silo_id(id, name, silo_id), technician:assigned_technician_id(id, name, email)",
+      )
       .order("created_at", { ascending: false })
       .limit(500);
     if (error) throw error;
@@ -75,7 +78,10 @@ export const listMaintenanceRequests = createServerFn({ method: "GET" })
     const adminIds = Array.from(new Set(rows.map((r) => r.admin_id as string).filter(Boolean)));
     let profiles: Row[] = [];
     if (adminIds.length > 0) {
-      const { data: profs } = await context.supabase.from("profiles").select("id, name, email").in("id", adminIds);
+      const { data: profs } = await context.supabase
+        .from("profiles")
+        .select("id, name, email")
+        .in("id", adminIds);
       profiles = profs ?? [];
     }
     const nameOf = new Map(profiles.map((p) => [p.id, p.name ?? p.email ?? p.id]));
@@ -103,14 +109,17 @@ export const updateMaintenanceRequest = createServerFn({ method: "POST" })
       patch.status = data.status;
       if (data.status === "completed") patch.resolved_at = new Date().toISOString();
     }
-    if (data.assignedTechnicianId !== undefined) patch.assigned_technician_id = data.assignedTechnicianId;
+    if (data.assignedTechnicianId !== undefined)
+      patch.assigned_technician_id = data.assignedTechnicianId;
     if (data.resolutionNotes !== undefined) patch.resolution_notes = data.resolutionNotes;
 
     const { data: row, error } = await context.supabase
       .from("maintenance_requests" as never)
       .update(patch as never)
       .eq("id", data.id)
-      .select("*, devices:device_id(id, device_name, device_id), silos:silo_id(id, name, silo_id), technician:assigned_technician_id(id, name, email)")
+      .select(
+        "*, devices:device_id(id, device_name, device_id), silos:silo_id(id, name, silo_id), technician:assigned_technician_id(id, name, email)",
+      )
       .single();
     if (error) throw error;
     return row as Row;

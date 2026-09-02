@@ -30,10 +30,18 @@ type PlanRow = {
 export async function ensurePlanStripeIds(
   supabaseAdmin: any,
   planId: string,
-): Promise<{ productId: string; monthlyPriceId: string; yearlyPriceId: string; currency: string; monthlyCents: number }> {
+): Promise<{
+  productId: string;
+  monthlyPriceId: string;
+  yearlyPriceId: string;
+  currency: string;
+  monthlyCents: number;
+}> {
   const { data, error } = await supabaseAdmin
     .from("plan_thresholds")
-    .select("plan_id, name, price_cents, currency, stripe_product_id, stripe_price_monthly_id, stripe_price_yearly_id")
+    .select(
+      "plan_id, name, price_cents, currency, stripe_product_id, stripe_price_monthly_id, stripe_price_yearly_id",
+    )
     .eq("plan_id", planId)
     .maybeSingle();
   if (error) throw error;
@@ -47,34 +55,43 @@ export async function ensurePlanStripeIds(
   let yearlyPriceId = row.stripe_price_yearly_id;
 
   if (!productId) {
-    const product = await stripeFetch("/products", stripeForm({
-      name: row.name ?? planId,
-      "metadata[plan_id]": planId,
-    }));
+    const product = await stripeFetch(
+      "/products",
+      stripeForm({
+        name: row.name ?? planId,
+        "metadata[plan_id]": planId,
+      }),
+    );
     productId = (product as { id: string }).id;
   }
 
   if (!monthlyPriceId) {
-    const price = await stripeFetch("/prices", stripeForm({
-      product: productId,
-      currency,
-      unit_amount: monthlyCents,
-      "recurring[interval]": "month",
-      "metadata[plan_id]": planId,
-      "metadata[cycle]": "monthly",
-    }));
+    const price = await stripeFetch(
+      "/prices",
+      stripeForm({
+        product: productId,
+        currency,
+        unit_amount: monthlyCents,
+        "recurring[interval]": "month",
+        "metadata[plan_id]": planId,
+        "metadata[cycle]": "monthly",
+      }),
+    );
     monthlyPriceId = (price as { id: string }).id;
   }
 
   if (!yearlyPriceId) {
-    const price = await stripeFetch("/prices", stripeForm({
-      product: productId,
-      currency,
-      unit_amount: yearlyFromMonthlyCents(monthlyCents),
-      "recurring[interval]": "year",
-      "metadata[plan_id]": planId,
-      "metadata[cycle]": "yearly",
-    }));
+    const price = await stripeFetch(
+      "/prices",
+      stripeForm({
+        product: productId,
+        currency,
+        unit_amount: yearlyFromMonthlyCents(monthlyCents),
+        "recurring[interval]": "year",
+        "metadata[plan_id]": planId,
+        "metadata[cycle]": "yearly",
+      }),
+    );
     yearlyPriceId = (price as { id: string }).id;
   }
 
@@ -104,24 +121,31 @@ export function priceIdForCycle(
 }
 
 /** Get or create a Stripe customer for a signed-in user and cache it on profiles. */
-export async function ensureStripeCustomer(
-  supabaseAdmin: any,
-  userId: string,
-): Promise<string> {
+export async function ensureStripeCustomer(supabaseAdmin: any, userId: string): Promise<string> {
   const { data: prof } = await supabaseAdmin
     .from("profiles")
     .select("stripe_customer_id, email, name")
     .eq("id", userId)
     .maybeSingle();
-  const p = prof as { stripe_customer_id?: string | null; email?: string | null; name?: string | null } | null;
+  const p = prof as {
+    stripe_customer_id?: string | null;
+    email?: string | null;
+    name?: string | null;
+  } | null;
   if (p?.stripe_customer_id) return p.stripe_customer_id;
-  const customer = await stripeFetch("/customers", stripeForm({
-    email: p?.email ?? undefined,
-    name: p?.name ?? undefined,
-    "metadata[user_id]": userId,
-  }));
+  const customer = await stripeFetch(
+    "/customers",
+    stripeForm({
+      email: p?.email ?? undefined,
+      name: p?.name ?? undefined,
+      "metadata[user_id]": userId,
+    }),
+  );
   const id = (customer as { id: string }).id;
-  await supabaseAdmin.from("profiles").update({ stripe_customer_id: id } as never).eq("id", userId);
+  await supabaseAdmin
+    .from("profiles")
+    .update({ stripe_customer_id: id } as never)
+    .eq("id", userId);
   return id;
 }
 

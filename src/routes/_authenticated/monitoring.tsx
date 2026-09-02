@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useLocationScopeQuery } from "@/components/app/location/LocationScope";
 import { VariableFontText } from "@/components/app/VariableFontText";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -33,7 +34,10 @@ export const Route = createFileRoute("/_authenticated/monitoring")({
   head: () => ({
     meta: [
       { title: "Monitoring — Grain Hero" },
-      { name: "description", content: "Monitoring workspace in the Grain Hero platform — private, sign-in required." },
+      {
+        name: "description",
+        content: "Monitoring workspace in the Grain Hero platform — private, sign-in required.",
+      },
       { property: "og:title", content: "Monitoring — Grain Hero" },
       { property: "og:description", content: "Monitoring workspace in the Grain Hero platform." },
       { name: "robots", content: "noindex, nofollow" },
@@ -43,7 +47,13 @@ export const Route = createFileRoute("/_authenticated/monitoring")({
 });
 
 type Tab =
-  "sensors" | "actuators" | "alerts" | "environmental" | "health" | "maintenance" | "incidents";
+  | "sensors"
+  | "actuators"
+  | "alerts"
+  | "environmental"
+  | "health"
+  | "maintenance"
+  | "incidents";
 
 // Only Incidents is shown for now. Other tabs hidden until IoT sensors are
 // fully defined and integrated. Code retained for future use.
@@ -63,6 +73,12 @@ function MonitoringWorkspace() {
   const [activeTab, setActiveTab] = useState<Tab>("incidents");
 
   const getIncidentsFn = useServerFn(getIncidents);
+
+  // Scope every location-dependent query to the active city — in the key as
+
+  // well as the request, so one city's rows are never served for another.
+
+  const { key: loc, params: locParams } = useLocationScopeQuery();
   const getMaintenanceFn = useServerFn(getMaintenanceOverview);
   const getHealthFn = useServerFn(getDeviceHealth);
   const roleFn = useServerFn(getMyRole);
@@ -71,32 +87,33 @@ function MonitoringWorkspace() {
   const listAlertsFn = useServerFn(listGrainAlerts);
 
   const { data: sensors } = useQuery({
-    queryKey: ["sensor-devices"],
-    queryFn: () => listSensorsFn(),
+    queryKey: ["sensor-devices", loc],
+    queryFn: () => listSensorsFn({ data: locParams }),
   });
   const { data: actuators } = useQuery({
-    queryKey: ["actuators"],
-    queryFn: () => listActuatorsFn(),
+    queryKey: ["actuators", loc],
+    queryFn: () => listActuatorsFn({ data: locParams }),
   });
-  const { data: alerts } = useQuery({ queryKey: ["grain-alerts"], queryFn: () => listAlertsFn() });
+  const { data: alerts } = useQuery({
+    queryKey: ["grain-alerts", loc],
+    queryFn: () => listAlertsFn({ data: locParams }),
+  });
   const { data: incidents } = useQuery({
-    queryKey: ["incidents"],
-    queryFn: () => getIncidentsFn(),
+    queryKey: ["incidents", loc],
+    queryFn: () => getIncidentsFn({ data: locParams }),
   });
   const { data: maintenance } = useQuery({
-    queryKey: ["maintenance-overview"],
-    queryFn: () => getMaintenanceFn(),
+    queryKey: ["maintenance-overview", loc],
+    queryFn: () => getMaintenanceFn({ data: locParams }),
   });
   const { data: health } = useQuery({
-    queryKey: ["device-health"],
-    queryFn: () => getHealthFn(),
+    queryKey: ["device-health", loc],
+    queryFn: () => getHealthFn({ data: locParams }),
     refetchInterval: 15_000,
   });
   const { data: roleData } = useQuery({ queryKey: ["my-role"], queryFn: () => roleFn() });
 
   const userRole = roleData?.role ?? "pending";
-
-  if (!roleData) return <KpiChartHubSkeleton />;
 
   // Filter tabs based on role - manager only sees Incidents tab
   const visibleTabs = userRole === "manager" ? TABS.filter((t) => t.key === "incidents") : TABS;
@@ -107,6 +124,8 @@ function MonitoringWorkspace() {
       setActiveTab("incidents");
     }
   }, [userRole, activeTab]);
+
+  if (!roleData) return <KpiChartHubSkeleton />;
 
   const counts = {
     sensors: Array.isArray(sensors) ? sensors.length : 0,
@@ -124,7 +143,13 @@ function MonitoringWorkspace() {
   const maxCount = Math.max(...Object.values(counts), 1);
 
   const stats = [
-    { label: "Open Incidents", value: Array.isArray(incidents) ? incidents.filter((i: any) => i.status !== "resolved").length : 0, up: false },
+    {
+      label: "Open Incidents",
+      value: Array.isArray(incidents)
+        ? incidents.filter((i: any) => i.status !== "resolved").length
+        : 0,
+      up: false,
+    },
     { label: "Total Incidents", value: Array.isArray(incidents) ? incidents.length : 0, up: true },
     // Hidden until sensors are defined:
     // { label: "Online Devices", value: health?.totals?.online ?? 0, up: true },
@@ -155,7 +180,7 @@ function MonitoringWorkspace() {
         {/* Top layout: chart + stats */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Bar Chart Panel */}
-          <div className="lg:col-span-2 bg-card border border-border rounded-2xl p-6">
+          <div className="lg:col-span-2 bg-card border-border rounded-2xl p-6">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-5">
               Monitoring Overview
             </p>
@@ -192,7 +217,7 @@ function MonitoringWorkspace() {
           </div>
 
           {/* Stats Panel */}
-          <div className="bg-card border border-border rounded-[2rem] p-6 lg:p-8 flex flex-col justify-between relative h-full">
+          <div className="bg-card border-border rounded-[2rem] p-6 lg:p-8 flex flex-col justify-between relative h-full">
             <div className="flex justify-between items-start mb-6">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
                 Key Metrics
@@ -213,7 +238,10 @@ function MonitoringWorkspace() {
                     </div>
                     <div className="flex-1 flex items-center justify-center px-2">
                       <div className="w-full h-1 bg-muted rounded-full relative overflow-hidden">
-                        <div className={`absolute left-0 top-0 bottom-0 rounded-full ${s.up ? 'bg-emerald-500' : 'bg-rose-500'}`} style={{ width: '0%' }} />
+                        <div
+                          className={`absolute left-0 top-0 bottom-0 rounded-full ${s.up ? "bg-emerald-500" : "bg-rose-500"}`}
+                          style={{ width: "0%" }}
+                        />
                       </div>
                     </div>
                     <div className="text-right w-12 shrink-0">
@@ -228,9 +256,9 @@ function MonitoringWorkspace() {
         </div>
 
         {/* Tabbed Sections */}
-        <div className="bg-card border border-border rounded-2xl overflow-hidden">
+        <div className="bg-card border-border rounded-2xl overflow-hidden">
           {/* Tab Bar — variable-font hover nav */}
-          <div className="border-b border-border px-4 md:px-6 overflow-x-auto no-scrollbar">
+          <div className="border-b border-border/40 px-4 md:px-6 overflow-x-auto no-scrollbar">
             <div className="flex items-center gap-8">
               {visibleTabs.map((tab) => {
                 const isActive = activeTab === tab.key;

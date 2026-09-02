@@ -166,7 +166,10 @@ function AutoPending() {
   let Skel = PAGE_SKELETONS[pathname];
   if (!Skel) {
     for (const [prefix, Comp] of PREFIX_SKELETONS) {
-      if (pathname.startsWith(prefix)) { Skel = Comp; break; }
+      if (pathname.startsWith(prefix)) {
+        Skel = Comp;
+        break;
+      }
     }
   }
   if (Skel) return <Skel />;

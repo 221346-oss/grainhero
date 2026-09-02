@@ -45,12 +45,12 @@ bun run dev          # http://localhost:8080
 
 ### Scripts
 
-| Command | Purpose |
-| --- | --- |
-| `bun run dev` | Start the dev server |
-| `bun run build` | Production build |
-| `bun run lint` | ESLint |
-| `bun run format` | Prettier |
+| Command                    | Purpose                  |
+| -------------------------- | ------------------------ |
+| `bun run dev`              | Start the dev server     |
+| `bun run build`            | Production build         |
+| `bun run lint`             | ESLint                   |
+| `bun run format`           | Prettier                 |
 | `bun run test:integration` | Vitest integration suite |
 
 ## Repository layout

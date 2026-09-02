@@ -30,9 +30,7 @@ export function ResponsiveTable({
 }) {
   return (
     <div className={`rounded-lg border border-border bg-background overflow-hidden ${className}`}>
-      <div className="overflow-x-auto">
-        {children}
-      </div>
+      <div className="overflow-x-auto">{children}</div>
     </div>
   );
 }
@@ -69,9 +67,5 @@ export function ScrollableTableWrapper({
   children: ReactNode;
   className?: string;
 }) {
-  return (
-    <div className={`hidden md:block overflow-x-auto ${className}`}>
-      {children}
-    </div>
-  );
+  return <div className={`hidden md:block overflow-x-auto ${className}`}>{children}</div>;
 }

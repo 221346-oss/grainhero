@@ -5,8 +5,20 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState, useEffect } from "react";
 import { toast } from "sonner";
 import {
-  Plus, Search, Edit2, Trash2, Mail, Loader2, Users, ArrowUpRight,
-  ChevronDown, ChevronUp, ArrowUp, ArrowDown, ShieldOff, ShieldCheck,
+  Plus,
+  Search,
+  Edit2,
+  Trash2,
+  Mail,
+  Loader2,
+  Users,
+  ArrowUpRight,
+  ChevronDown,
+  ChevronUp,
+  ArrowUp,
+  ArrowDown,
+  ShieldOff,
+  ShieldCheck,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -72,8 +84,10 @@ const PAGE_SIZES = [10, 25, 50] as const;
 // of stacking Role + Blocked + Unverified badges side by side.
 function memberStatus(m: Member): { label: string; cls: string } {
   if (m.blocked) return { label: "Blocked", cls: "bg-red-100 text-red-700 border-red-200" };
-  if (m.role === "pending") return { label: "Pending", cls: "bg-amber-100 text-amber-700 border-amber-200" };
-  if (!m.email_verified) return { label: "Unverified", cls: "bg-orange-100 text-orange-700 border-orange-200" };
+  if (m.role === "pending")
+    return { label: "Pending", cls: "bg-amber-100 text-amber-700 border-amber-200" };
+  if (!m.email_verified)
+    return { label: "Unverified", cls: "bg-orange-100 text-orange-700 border-orange-200" };
   return { label: "Active", cls: "bg-emerald-100 text-emerald-700 border-emerald-200" };
 }
 
@@ -83,7 +97,10 @@ const teamExportColumns: ExportColumn<Member>[] = [
   { header: "Role", value: (m) => m.role },
   { header: "Status", value: (m) => memberStatus(m).label },
   { header: "Phone", value: (m) => m.phone ?? "" },
-  { header: "Joined", value: (m) => m.created_at ? new Date(m.created_at).toLocaleDateString() : "" },
+  {
+    header: "Joined",
+    value: (m) => (m.created_at ? new Date(m.created_at).toLocaleDateString() : ""),
+  },
 ];
 
 export function TeamSection() {
@@ -150,7 +167,9 @@ export function TeamSection() {
     const dir = sortDir === "asc" ? 1 : -1;
     return [...filtered].sort((a, b) => {
       if (sortKey === "joined") {
-        return dir * (new Date(a.created_at ?? 0).getTime() - new Date(b.created_at ?? 0).getTime());
+        return (
+          dir * (new Date(a.created_at ?? 0).getTime() - new Date(b.created_at ?? 0).getTime())
+        );
       }
       return dir * (a.name ?? a.email ?? "").localeCompare(b.name ?? b.email ?? "");
     });
@@ -163,11 +182,16 @@ export function TeamSection() {
   );
 
   // Search/filter/page-size changes invalidate the current page.
-  useEffect(() => { setPage(1); }, [q, roleFilter, pageSize]);
+  useEffect(() => {
+    setPage(1);
+  }, [q, roleFilter, pageSize]);
 
   function toggleSort(key: "name" | "joined") {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    else { setSortKey(key); setSortDir("asc"); }
+    else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
   }
 
   const pageIds = useMemo(() => paged.map((m) => m.id), [paged]);
@@ -188,7 +212,10 @@ export function TeamSection() {
       return next;
     });
   }
-  const selectedMembers = useMemo(() => members.filter((m) => selected.has(m.id)), [members, selected]);
+  const selectedMembers = useMemo(
+    () => members.filter((m) => selected.has(m.id)),
+    [members, selected],
+  );
 
   const invite = useMutation({
     mutationFn: (v: {
@@ -203,10 +230,17 @@ export function TeamSection() {
     onError: (e: Error) => toast.error(e.message),
   });
   const update = useMutation({
-    mutationFn: (v: { data: { id: string; name?: string; phone?: string; role?: Role; blocked?: boolean } }) =>
-      updateFn(v),
+    mutationFn: (v: {
+      data: { id: string; name?: string; phone?: string; role?: Role; blocked?: boolean };
+    }) => updateFn(v),
     onSuccess: (_r, v) => {
-      toast.success(v.data.blocked !== undefined ? (v.data.blocked ? "Member blocked" : "Member unblocked") : "Member updated");
+      toast.success(
+        v.data.blocked !== undefined
+          ? v.data.blocked
+            ? "Member blocked"
+            : "Member unblocked"
+          : "Member updated",
+      );
       setEditing(null);
       qc.invalidateQueries({ queryKey: ["team-members"] });
     },
@@ -245,8 +279,8 @@ export function TeamSection() {
       <Card>
         <CardContent className="p-10 text-center space-y-3">
           <Users className="h-10 w-10 text-emerald-600 mx-auto" />
-          <div className="text-lg font-semibold text-slate-900">Platform user management</div>
-          <p className="text-sm text-slate-500 max-w-md mx-auto">
+          <div className="text-lg font-semibold text-foreground">Platform user management</div>
+          <p className="text-sm text-muted-foreground max-w-md mx-auto">
             As a super admin, teams are managed from the platform users page across all tenants.
           </p>
           <Button asChild className="bg-emerald-600 hover:bg-emerald-700">
@@ -289,7 +323,7 @@ export function TeamSection() {
         <CardContent className="p-3 flex flex-col md:flex-row gap-3 items-stretch md:items-end">
           <div className="relative flex-1">
             <Label className="text-xs font-medium text-slate-500 mb-1 block">Search</Label>
-            <Search className="absolute left-3 top-[calc(50%+8px)] -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Search className="absolute left-3 top-[calc(50%+8px)] -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               value={q}
               onChange={(e) => setQ(e.target.value)}
@@ -316,11 +350,18 @@ export function TeamSection() {
       </Card>
 
       {selected.size > 0 && (
-        <div className="flex items-center justify-between gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2">
+        <div className="flex items-center justify-between gap-3 rounded-lg border-emerald-200 bg-emerald-50 px-4 py-2">
           <span className="text-sm text-emerald-800 font-medium">{selected.size} selected</span>
           <div className="flex items-center gap-2">
-            <ExportMenu filename="team-members" title="Team Members (selected)" rows={selectedMembers} columns={teamExportColumns} />
-            <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>Clear</Button>
+            <ExportMenu
+              filename="team-members"
+              title="Team Members (selected)"
+              rows={selectedMembers}
+              columns={teamExportColumns}
+            />
+            <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>
+              Clear
+            </Button>
           </div>
         </div>
       )}
@@ -334,21 +375,43 @@ export function TeamSection() {
             <ListSkeleton rows={5} />
           </div>
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-14 text-slate-400">
+          <div className="flex flex-col items-center justify-center py-14 text-muted-foreground">
             <p className="text-sm">No team members found</p>
           </div>
         ) : (
           <div>
             {/* Sticky column header — sticks to AdminDataCard's own scroll container. */}
-            <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-slate-100 bg-card px-4 py-2 text-[11px] font-medium uppercase tracking-wider text-slate-400">
-              <Checkbox checked={allOnPageSelected} onCheckedChange={toggleSelectAllOnPage} aria-label="Select all on page" />
-              <button className="flex-1 min-w-0 flex items-center gap-1 text-left hover:text-slate-600" onClick={() => toggleSort("name")}>
-                Member {sortKey === "name" && (sortDir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)}
+            <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-border/40 bg-card px-4 py-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+              <Checkbox
+                checked={allOnPageSelected}
+                onCheckedChange={toggleSelectAllOnPage}
+                aria-label="Select all on page"
+              />
+              <button
+                className="flex-1 min-w-0 flex items-center gap-1 text-left hover:text-slate-600"
+                onClick={() => toggleSort("name")}
+              >
+                Member{" "}
+                {sortKey === "name" &&
+                  (sortDir === "asc" ? (
+                    <ArrowUp className="h-3 w-3" />
+                  ) : (
+                    <ArrowDown className="h-3 w-3" />
+                  ))}
               </button>
               <span className="w-20 hidden sm:block">Role</span>
               <span className="w-20">Status</span>
-              <button className="w-24 hidden md:flex items-center gap-1 hover:text-slate-600" onClick={() => toggleSort("joined")}>
-                Joined {sortKey === "joined" && (sortDir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)}
+              <button
+                className="w-24 hidden md:flex items-center gap-1 hover:text-slate-600"
+                onClick={() => toggleSort("joined")}
+              >
+                Joined{" "}
+                {sortKey === "joined" &&
+                  (sortDir === "asc" ? (
+                    <ArrowUp className="h-3 w-3" />
+                  ) : (
+                    <ArrowDown className="h-3 w-3" />
+                  ))}
               </button>
               {canManage && <span className="w-8" />}
             </div>
@@ -357,24 +420,37 @@ export function TeamSection() {
               {paged.map((m) => {
                 const status = memberStatus(m);
                 const expanded = expandedId === m.id;
-                const rowActions: RowAction[] = canManage ? [
-                  {
-                    label: "Edit", icon: Edit2, onClick: () => {
-                      setEditing(m);
-                      setEditForm({ name: m.name ?? "", phone: m.phone ?? "", role: m.role as Role });
-                    },
-                  },
-                  {
-                    label: m.blocked ? "Unblock" : "Block",
-                    icon: m.blocked ? ShieldCheck : ShieldOff,
-                    onClick: () => update.mutate({ data: { id: m.id, blocked: !m.blocked } }),
-                  },
-                  { label: "Remove", icon: Trash2, destructive: true, onClick: () => setDeleting(m) },
-                ] : [];
+                const rowActions: RowAction[] = canManage
+                  ? [
+                      {
+                        label: "Edit",
+                        icon: Edit2,
+                        onClick: () => {
+                          setEditing(m);
+                          setEditForm({
+                            name: m.name ?? "",
+                            phone: m.phone ?? "",
+                            role: m.role as Role,
+                          });
+                        },
+                      },
+                      {
+                        label: m.blocked ? "Unblock" : "Block",
+                        icon: m.blocked ? ShieldCheck : ShieldOff,
+                        onClick: () => update.mutate({ data: { id: m.id, blocked: !m.blocked } }),
+                      },
+                      {
+                        label: "Remove",
+                        icon: Trash2,
+                        destructive: true,
+                        onClick: () => setDeleting(m),
+                      },
+                    ]
+                  : [];
                 return (
                   <div key={m.id}>
                     <div
-                      className="flex flex-wrap items-center gap-3 px-4 py-3 hover:bg-slate-50 cursor-pointer"
+                      className="flex flex-wrap items-center gap-3 px-4 py-3 hover:bg-muted/20 cursor-pointer"
                       onClick={() => setExpandedId(expanded ? null : m.id)}
                     >
                       <Checkbox
@@ -383,32 +459,52 @@ export function TeamSection() {
                         onClick={(e) => e.stopPropagation()}
                         aria-label={`Select ${m.name ?? m.email}`}
                       />
-                      <div className="w-9 h-9 rounded-full bg-slate-200 flex items-center justify-center text-sm font-semibold text-slate-600 shrink-0">
+                      <div className="w-9 h-9 rounded-full bg-slate-200 flex items-center justify-center text-sm font-semibold text-muted-foreground shrink-0">
                         {(m.name ?? m.email ?? "?").slice(0, 1).toUpperCase()}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium text-slate-900 truncate">{m.name ?? "—"}</div>
-                        <div className="text-xs text-slate-500 truncate">{m.email}</div>
+                        <div className="font-medium text-foreground truncate">{m.name ?? "—"}</div>
+                        <div className="text-xs text-muted-foreground truncate">{m.email}</div>
                       </div>
-                      <span className="w-20 hidden sm:block text-sm text-slate-600 capitalize truncate">{m.role}</span>
-                      <span className="w-20">
-                        <Badge className={status.cls} variant="outline">{status.label}</Badge>
+                      <span className="w-20 hidden sm:block text-sm text-muted-foreground capitalize truncate">
+                        {m.role}
                       </span>
-                      <span className="w-24 hidden md:block text-xs text-slate-500">
+                      <span className="w-20">
+                        <Badge className={status.cls} variant="outline">
+                          {status.label}
+                        </Badge>
+                      </span>
+                      <span className="w-24 hidden md:block text-xs text-muted-foreground">
                         {m.created_at ? new Date(m.created_at).toLocaleDateString() : "—"}
                       </span>
                       <div className="w-8 flex justify-end" onClick={(e) => e.stopPropagation()}>
-                        {canManage ? <RowActions actions={rowActions} visible={0} /> : (
-                          expanded ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />
+                        {canManage ? (
+                          <RowActions actions={rowActions} visible={0} />
+                        ) : expanded ? (
+                          <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
                         )}
                       </div>
                     </div>
                     {expanded && (
-                      <div className="px-4 pb-3 pl-16 -mt-1 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs text-slate-600 bg-slate-50/60">
-                        <div><span className="text-slate-400 block">Phone</span>{m.phone ?? "—"}</div>
-                        <div><span className="text-slate-400 block">Department</span>{m.department ?? "—"}</div>
-                        <div><span className="text-slate-400 block">Email verified</span>{m.email_verified ? "Yes" : "No"}</div>
-                        <div><span className="text-slate-400 block">Joined</span>{m.created_at ? new Date(m.created_at).toLocaleDateString() : "—"}</div>
+                      <div className="px-4 pb-3 pl-16 -mt-1 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs text-muted-foreground bg-muted/20">
+                        <div>
+                          <span className="text-muted-foreground block">Phone</span>
+                          {m.phone ?? "—"}
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground block">Department</span>
+                          {m.department ?? "—"}
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground block">Email verified</span>
+                          {m.email_verified ? "Yes" : "No"}
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground block">Joined</span>
+                          {m.created_at ? new Date(m.created_at).toLocaleDateString() : "—"}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -421,19 +517,41 @@ export function TeamSection() {
 
       {filtered.length > 0 && (
         <div className="flex items-center justify-between gap-3 flex-wrap px-1">
-          <div className="flex items-center gap-2 text-sm text-slate-500">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span>Rows per page</span>
             <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
-              <SelectTrigger className="h-8 w-16"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-8 w-16">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
-                {PAGE_SIZES.map((n) => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
+                {PAGE_SIZES.map((n) => (
+                  <SelectItem key={n} value={String(n)}>
+                    {n}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>Prev</Button>
-            <span className="text-sm text-slate-500">Page {page} of {totalPages}</span>
-            <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>Next</Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page === 1}
+              onClick={() => setPage((p) => p - 1)}
+            >
+              Prev
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              Page {page} of {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page === totalPages}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Next
+            </Button>
           </div>
         </div>
       )}

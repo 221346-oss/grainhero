@@ -9,9 +9,7 @@ import { MessageSquare, Send } from "lucide-react";
 import { toast } from "sonner";
 import { listMessages, sendMessage, markMessagesRead } from "@/lib/messaging.functions";
 
-export function OrderMessageThread({
-  orderId, as,
-}: { orderId: string; as: "seller" | "buyer" }) {
+export function OrderMessageThread({ orderId, as }: { orderId: string; as: "seller" | "buyer" }) {
   const load = useServerFn(listMessages);
   const send = useServerFn(sendMessage);
   const markRead = useServerFn(markMessagesRead);
@@ -57,11 +55,20 @@ export function OrderMessageThread({
           {data?.messages?.map((msg) => {
             const mine = msg.sender_role === as;
             return (
-              <div key={msg.id as string} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-[80%] rounded-lg px-3 py-2 ${mine ? "bg-emerald-600 text-white" : "bg-slate-100"}`}>
+              <div
+                key={msg.id as string}
+                className={`flex ${mine ? "justify-end" : "justify-start"}`}
+              >
+                <div
+                  className={`max-w-[80%] rounded-lg px-3 py-2 ${mine ? "bg-emerald-600 text-white" : "bg-slate-100"}`}
+                >
                   <div className="flex items-center gap-2 text-[10px] opacity-80 mb-1">
                     <span className="uppercase">{String(msg.sender_role)}</span>
-                    {msg.moderation_reason && <Badge variant="destructive" className="h-4 text-[10px]">flagged</Badge>}
+                    {msg.moderation_reason && (
+                      <Badge variant="destructive" className="h-4 text-[10px]">
+                        flagged
+                      </Badge>
+                    )}
                     <span>{new Date(msg.created_at as string).toLocaleString()}</span>
                   </div>
                   <div className="whitespace-pre-wrap">{msg.body as string}</div>

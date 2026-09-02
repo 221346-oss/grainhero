@@ -35,19 +35,11 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { TicketDiscussion } from "./TicketDiscussion";
-import {
-  CheckCircle2,
-  User,
-  CalendarClock,
-  MessageSquare,
-  X,
-  Info,
-  Trash2,
-} from "lucide-react";
+import { CheckCircle2, User, CalendarClock, MessageSquare, X, Info, Trash2 } from "lucide-react";
 import { useEffect, useRef } from "react";
 
 const PRIORITY_BADGE: Record<string, string> = {
-  low: "bg-slate-100 text-slate-700 border-slate-200",
+  low: "bg-muted text-foreground",
   medium: "bg-amber-100 text-amber-700 border-amber-200",
   high: "bg-red-100 text-red-700 border-red-200",
 };
@@ -55,7 +47,7 @@ const PRIORITY_BADGE: Record<string, string> = {
 const STATUS_BADGE: Record<string, string> = {
   open: "border-slate-300 text-slate-600",
   resolved: "border-emerald-300 text-emerald-700 bg-emerald-50",
-  closed: "bg-slate-100 text-slate-500 border-slate-200",
+  closed: "bg-muted text-muted-foreground",
 };
 
 interface Props {
@@ -102,8 +94,7 @@ export function TicketDetailSheet({ ticket, open, onClose }: Props) {
   });
 
   const resolveMut = useMutation({
-    mutationFn: ({ id, note }: { id: string; note?: string }) =>
-      resolveFn({ data: { id, note } }),
+    mutationFn: ({ id, note }: { id: string; note?: string }) => resolveFn({ data: { id, note } }),
     onSuccess: () => {
       toast.success("Ticket marked as resolved — admin will be notified");
       setResolveNote("");
@@ -138,12 +129,12 @@ export function TicketDetailSheet({ ticket, open, onClose }: Props) {
       <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
         <SheetContent className="w-full sm:max-w-lg flex flex-col p-0 overflow-hidden data-[state=open]:slide-in-from-right data-[state=closed]:slide-out-to-right">
           {/* Header — title + id on left, Discussion button below the X (not next to it) */}
-          <SheetHeader className="px-5 pt-5 pb-4 border-b border-slate-200 shrink-0">
-            <SheetTitle className="text-base font-bold text-slate-900 leading-snug pr-8">
+          <SheetHeader className="px-5 pt-5 pb-4 border-b border-border/40 shrink-0">
+            <SheetTitle className="text-base font-bold text-foreground leading-snug pr-8">
               {ticket.title}
             </SheetTitle>
             <div className="flex items-center justify-between mt-1">
-              <SheetDescription className="text-xs text-slate-400">
+              <SheetDescription className="text-xs text-muted-foreground">
                 #{ticket.id.slice(0, 8)}
               </SheetDescription>
               {/* Discussion button — clear of the sheet X, with unread badge */}
@@ -181,10 +172,7 @@ export function TicketDetailSheet({ ticket, open, onClose }: Props) {
               </Badge>
               <Badge
                 variant="outline"
-                className={cn(
-                  "text-[10px] font-semibold uppercase",
-                  STATUS_BADGE[ticket.status],
-                )}
+                className={cn("text-[10px] font-semibold uppercase", STATUS_BADGE[ticket.status])}
               >
                 {ticket.status}
               </Badge>
@@ -192,7 +180,7 @@ export function TicketDetailSheet({ ticket, open, onClose }: Props) {
 
             {/* Resolved note — shown to admin when ticket is resolved */}
             {isResolved && ticket.resolved_note && (
-              <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 flex gap-2">
+              <div className="rounded-lg border-emerald-200 bg-emerald-50 p-3 flex gap-2">
                 <Info className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
                 <div>
                   <p className="text-xs font-semibold text-emerald-800 mb-0.5">
@@ -203,7 +191,7 @@ export function TicketDetailSheet({ ticket, open, onClose }: Props) {
               </div>
             )}
             {isResolved && !ticket.resolved_note && (
-              <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+              <div className="rounded-lg border-emerald-200 bg-emerald-50 p-3">
                 <p className="text-xs text-emerald-700">
                   Super admin has resolved this ticket. You can now close it.
                 </p>
@@ -211,46 +199,46 @@ export function TicketDetailSheet({ ticket, open, onClose }: Props) {
             )}
 
             {/* Reporter */}
-            <div className="rounded-lg bg-slate-50 p-3 space-y-1">
-              <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium uppercase tracking-wide">
+            <div className="rounded-lg bg-muted/20 p-3 space-y-1">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium uppercase tracking-wide">
                 <User className="h-3.5 w-3.5" />
                 Reporter
               </div>
-              <p className="font-semibold text-slate-900">{ticket.reporter_name}</p>
-              <p className="text-xs text-slate-500 capitalize">{ticket.reporter_role}</p>
+              <p className="font-semibold text-foreground">{ticket.reporter_name}</p>
+              <p className="text-xs text-muted-foreground capitalize">{ticket.reporter_role}</p>
             </div>
 
             {/* Admin info — super admin view only */}
             {(ticket.admin_name || ticket.admin_email) && (
-              <div className="rounded-lg bg-slate-50 p-3 space-y-1">
-                <div className="text-xs text-slate-500 font-medium uppercase tracking-wide">
+              <div className="rounded-lg bg-muted/20 p-3 space-y-1">
+                <div className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
                   Submitted by admin
                 </div>
-                <p className="font-semibold text-slate-900">
+                <p className="font-semibold text-foreground">
                   {ticket.admin_name ?? ticket.admin_email}
                 </p>
                 {ticket.admin_name && ticket.admin_email && (
-                  <p className="text-xs text-slate-400">{ticket.admin_email}</p>
+                  <p className="text-xs text-muted-foreground">{ticket.admin_email}</p>
                 )}
               </div>
             )}
 
             {/* Description */}
             <div className="space-y-1.5">
-              <div className="text-xs text-slate-500 font-medium uppercase tracking-wide">
+              <div className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
                 Description
               </div>
-              <div className="whitespace-pre-wrap text-slate-700 leading-relaxed rounded-md border border-slate-200 bg-white p-3 text-xs">
+              <div className="whitespace-pre-wrap text-foreground leading-relaxed rounded-md border-border/40 bg-card p-3 text-xs">
                 {ticket.description}
               </div>
             </div>
 
             {/* Timestamps */}
-            <div className="rounded-lg border border-slate-200 bg-white p-3 space-y-2 text-xs">
-              <div className="flex items-center gap-1.5 text-slate-500">
+            <div className="rounded-lg border-border/40 bg-card p-3 space-y-2 text-xs">
+              <div className="flex items-center gap-1.5 text-muted-foreground">
                 <CalendarClock className="h-3.5 w-3.5 shrink-0" />
                 <span className="font-medium">Created</span>
-                <span className="ml-auto text-slate-700">
+                <span className="ml-auto text-foreground">
                   {new Date(ticket.created_at).toLocaleString()}
                 </span>
               </div>
@@ -258,30 +246,27 @@ export function TicketDetailSheet({ ticket, open, onClose }: Props) {
                 <div className="flex items-center gap-1.5 text-emerald-600">
                   <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
                   <span className="font-medium">Resolved</span>
-                  <span className="ml-auto">
-                    {new Date(ticket.resolved_at).toLocaleString()}
-                  </span>
+                  <span className="ml-auto">{new Date(ticket.resolved_at).toLocaleString()}</span>
                 </div>
               )}
               {ticket.closed_at && (
-                <div className="flex items-center gap-1.5 text-slate-400">
+                <div className="flex items-center gap-1.5 text-muted-foreground">
                   <X className="h-3.5 w-3.5 shrink-0" />
                   <span className="font-medium">Closed</span>
-                  <span className="ml-auto">
-                    {new Date(ticket.closed_at).toLocaleString()}
-                  </span>
+                  <span className="ml-auto">{new Date(ticket.closed_at).toLocaleString()}</span>
                 </div>
               )}
             </div>
-
           </div>
 
           {/* Footer actions — always visible at bottom, generous padding */}
-          <div className="shrink-0 border-t border-slate-200 px-5 py-4 space-y-3">
+          <div className="shrink-0 border-t border-border/40 px-5 py-4 space-y-3">
             {/* Super admin resolve note input — lives in footer, not body */}
             {isSuperAdmin && isActionable && showNoteInput && (
               <div className="space-y-1.5">
-                <p className="text-xs text-slate-500 font-medium">Resolution note (optional)</p>
+                <p className="text-xs text-muted-foreground font-medium">
+                  Resolution note (optional)
+                </p>
                 <Textarea
                   value={resolveNote}
                   onChange={(e) => setResolveNote(e.target.value)}
@@ -346,7 +331,10 @@ export function TicketDetailSheet({ ticket, open, onClose }: Props) {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => { setShowNoteInput(false); setResolveNote(""); }}
+                        onClick={() => {
+                          setShowNoteInput(false);
+                          setResolveNote("");
+                        }}
                         disabled={isPending}
                       >
                         Cancel

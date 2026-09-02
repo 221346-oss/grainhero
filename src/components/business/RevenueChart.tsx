@@ -1,6 +1,20 @@
 import { useMemo, useState } from "react";
-import { Line, LineChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Line,
+  LineChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { TrendingUp } from "lucide-react";
 
 type TimeRange = "week" | "month" | "year";
@@ -74,7 +88,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   const dataPoint = payload[0]?.payload;
 
   return (
-    <div className="bg-card/95 backdrop-blur-md border border-border p-3.5 rounded-xl shadow-xl min-w-[210px] space-y-2">
+    <div className="bg-card/95 backdrop-blur-md border-border p-3.5 rounded-xl shadow-xl min-w-[210px] space-y-2">
       <div className="border-b border-border/70 pb-1.5 flex items-center justify-between">
         <p className="text-xs font-bold text-foreground">{label}</p>
         <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
@@ -106,8 +120,8 @@ const CustomTooltip = ({ active, payload, label }: any) => {
                       isGrowth === true
                         ? "text-emerald-500"
                         : isGrowth === false
-                        ? "text-rose-500"
-                        : "text-muted-foreground"
+                          ? "text-rose-500"
+                          : "text-muted-foreground"
                     }`}
                   >
                     {isGrowth === true ? "+" : ""}
@@ -214,7 +228,10 @@ export function RevenueChart({ invoices = [], payments = [] }: RevenueChartProps
           const invDate = new Date(inv.created_at);
           return invDate >= startDate && invDate < endDate;
         });
-        const prevRevenue = prevInvoices.reduce((sum, inv) => sum + Number(inv.total_amount || 0), 0);
+        const prevRevenue = prevInvoices.reduce(
+          (sum, inv) => sum + Number(inv.total_amount || 0),
+          0,
+        );
         previousTotalRevenue += prevRevenue;
       }
     } else if (timeRange === "month") {
@@ -285,7 +302,10 @@ export function RevenueChart({ invoices = [], payments = [] }: RevenueChartProps
           const invDate = new Date(inv.created_at);
           return invDate.getFullYear() === year && invDate.getMonth() === month;
         });
-        const prevRevenue = prevMonthInvoices.reduce((sum, inv) => sum + Number(inv.total_amount || 0), 0);
+        const prevRevenue = prevMonthInvoices.reduce(
+          (sum, inv) => sum + Number(inv.total_amount || 0),
+          0,
+        );
         previousTotalRevenue += prevRevenue;
       }
     } else {
@@ -348,7 +368,10 @@ export function RevenueChart({ invoices = [], payments = [] }: RevenueChartProps
           const invDate = new Date(inv.created_at);
           return invDate.getFullYear() === targetYear;
         });
-        const prevRevenue = prevYearInvoices.reduce((sum, inv) => sum + Number(inv.total_amount || 0), 0);
+        const prevRevenue = prevYearInvoices.reduce(
+          (sum, inv) => sum + Number(inv.total_amount || 0),
+          0,
+        );
         previousTotalRevenue += prevRevenue;
       }
     }
@@ -381,7 +404,10 @@ export function RevenueChart({ invoices = [], payments = [] }: RevenueChartProps
         : (totalChange / previousTotalRevenue) * 100;
 
     // Check if there is any data > 0
-    const maxVal = Math.max(...data.map((d) => Math.max(d.wheat, d.rice, d.maize, d.barley, d.sorghum, d.total)), 0);
+    const maxVal = Math.max(
+      ...data.map((d) => Math.max(d.wheat, d.rice, d.maize, d.barley, d.sorghum, d.total)),
+      0,
+    );
 
     return {
       data,
@@ -415,16 +441,22 @@ export function RevenueChart({ invoices = [], payments = [] }: RevenueChartProps
             <SelectValue placeholder="Select range" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="week" className="text-xs">Weekly</SelectItem>
-            <SelectItem value="month" className="text-xs">Monthly</SelectItem>
-            <SelectItem value="year" className="text-xs">Yearly</SelectItem>
+            <SelectItem value="week" className="text-xs">
+              Weekly
+            </SelectItem>
+            <SelectItem value="month" className="text-xs">
+              Monthly
+            </SelectItem>
+            <SelectItem value="year" className="text-xs">
+              Yearly
+            </SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       {/* Summary Stats */}
       <div className="grid grid-cols-2 gap-4">
-        <div className="bg-primary/5 rounded-lg p-3 border border-primary/10">
+        <div className="bg-primary/5 rounded-lg p-3 border-primary/10">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
             Total Revenue
           </p>
@@ -444,7 +476,7 @@ export function RevenueChart({ invoices = [], payments = [] }: RevenueChartProps
             )}
           </div>
         </div>
-        <div className="bg-amber-500/10 rounded-lg p-3 border border-amber-500/20">
+        <div className="bg-amber-500/10 rounded-lg p-3 border-amber-500/20">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
             Collected
           </p>
@@ -457,10 +489,7 @@ export function RevenueChart({ invoices = [], payments = [] }: RevenueChartProps
       {/* Multi-Line Grain Revenue Chart */}
       <div className="h-64 mt-2 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart
-            data={processedData.data}
-            margin={{ top: 10, right: 15, left: -5, bottom: 0 }}
-          >
+          <LineChart data={processedData.data} margin={{ top: 10, right: 15, left: -5, bottom: 0 }}>
             {/* Subtle horizontal gridlines */}
             <CartesianGrid
               strokeDasharray="3 3"
@@ -525,7 +554,7 @@ export function RevenueChart({ invoices = [], payments = [] }: RevenueChartProps
       </div>
 
       {/* Clean Compact Legend for all 5 grains */}
-      <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 pt-3 border-t border-border">
+      <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 pt-3 border-t border-border/40">
         {GRAINS.map((grain) => (
           <div key={grain.key} className="flex items-center gap-1.5 text-xs">
             <div

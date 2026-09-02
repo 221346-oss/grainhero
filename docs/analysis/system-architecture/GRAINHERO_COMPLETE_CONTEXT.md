@@ -1,4 +1,5 @@
 # GrainHero — Complete Project Context & Technical Blueprint
+
 This document serves as a comprehensive, single-file technical context reference for the GrainHero system. It includes the architecture, codebase file maps, data flow sequences, database schemas, API interfaces, firmware logic, AI/ML pipeline design, and outstanding technical challenges.
 
 ---
@@ -8,6 +9,7 @@ This document serves as a comprehensive, single-file technical context reference
 GrainHero is an IoT-enabled smart grain storage monitoring and spoilage prediction system designed specifically for the agricultural and warehousing landscape in Pakistan. It helps farmers and warehouse managers preserve grains (Rice, Wheat, Maize, Sorghum, Barley) by predicting spoilage before it occurs, using machine learning models integrated with IoT sensors.
 
 ### Key System Capabilities:
+
 1. **Multi-Sensor Ingestion:** Collects Temperature, Relative Humidity, CO2, Volatile Organic Compounds (VOCs), and Grain Moisture from physical silos.
 2. **Machine Learning Spoilage Prediction:** A Soft Voting Ensemble (XGBoost + Random Forest + LightGBM) predicts risk levels (Safe, Risky, Spoiled), estimating a weighted time-to-spoilage (in hours).
 3. **Automated Actuation (Closed-Loop):** Under the `ML_AUTO` control mode, prediction results are translated into MQTT control signals to dynamically adjust exhaust fans (Off / 80% / 100% speed) and status LEDs (Green/Yellow/Red) on the physical ESP32 device.
@@ -107,39 +109,40 @@ GrainHero operates as a distributed system with sensor hardware, an MQTT broker,
 ## 4. Key Database Schemas (Mongoose)
 
 ### 4.1 SensorReading.js
+
 Stores physical measurements gathered from IoT sensors or weather collection services.
 
 ```javascript
 const sensorReadingSchema = new mongoose.Schema({
   device_id: { type: mongoose.Schema.Types.Mixed, required: true },
-  admin_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  silo_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Silo' },
-  batch_id: { type: mongoose.Schema.Types.ObjectId, ref: 'GrainBatch' },
+  admin_id: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  silo_id: { type: mongoose.Schema.Types.ObjectId, ref: "Silo" },
+  batch_id: { type: mongoose.Schema.Types.ObjectId, ref: "GrainBatch" },
   timestamp: { type: Date, required: true, default: Date.now },
 
   temperature: {
     value: Number,
-    unit: { type: String, default: 'celsius', enum: ['celsius', 'fahrenheit', 'kelvin'] }
+    unit: { type: String, default: "celsius", enum: ["celsius", "fahrenheit", "kelvin"] },
   },
   humidity: {
     value: { type: Number, min: 0, max: 100 },
-    unit: { type: String, default: 'percent' }
+    unit: { type: String, default: "percent" },
   },
   co2: {
     value: { type: Number, min: 0 },
-    unit: { type: String, default: 'ppm' }
+    unit: { type: String, default: "ppm" },
   },
   voc: {
     value: { type: Number, min: 0 },
-    unit: { type: String, default: 'ppb' },
+    unit: { type: String, default: "ppb" },
     baseline_24h: Number,
     relative_5min: Number,
     relative_30min: Number,
-    rate_5min: Number
+    rate_5min: Number,
   },
   grain_moisture: {
     value: Number,
-    unit: { type: String, default: 'percent' }
+    unit: { type: String, default: "percent" },
   },
   environmental_context: {
     weather: {
@@ -149,47 +152,48 @@ const sensorReadingSchema = new mongoose.Schema({
       wind_speed: Number,
       cloudiness: Number,
       precipitation: Number,
-      weather_condition: String
+      weather_condition: String,
     },
     air_quality_index: Number,
-    pmd_data: { pm25: Number, pm10: Number, ozone: Number }
+    pmd_data: { pm25: Number, pm10: Number, ozone: Number },
   },
   quality_indicators: {
     is_valid: { type: Boolean, default: true },
     confidence_score: { type: Number, min: 0, max: 1 },
-    anomaly_detected: { type: Boolean, default: false }
+    anomaly_detected: { type: Boolean, default: false },
   },
-  spoilage_label: { type: String, enum: ['safe', 'at_risk', 'spoiled'] }
+  spoilage_label: { type: String, enum: ["safe", "at_risk", "spoiled"] },
 });
 ```
 
 ### 4.2 SpoilagePrediction.js
+
 Records predictions made by the ML pipeline and keeps track of validation audits.
 
 ```javascript
 const spoilagePredictionSchema = new mongoose.Schema({
   prediction_id: { type: String, required: true, unique: true, default: () => uuidv4() },
-  admin_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  silo_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Silo', required: true },
-  batch_id: { type: mongoose.Schema.Types.ObjectId, ref: 'GrainBatch' },
-  
+  admin_id: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  silo_id: { type: mongoose.Schema.Types.ObjectId, ref: "Silo", required: true },
+  batch_id: { type: mongoose.Schema.Types.ObjectId, ref: "GrainBatch" },
+
   prediction_type: {
     type: String,
-    enum: ['mold', 'aflatoxin', 'insect', 'general_spoilage', 'quality_degradation'],
-    required: true
+    enum: ["mold", "aflatoxin", "insect", "general_spoilage", "quality_degradation"],
+    required: true,
   },
   risk_score: { type: Number, min: 0, max: 100, required: true },
-  risk_level: { type: String, enum: ['low', 'medium', 'high', 'critical'], required: true },
+  risk_level: { type: String, enum: ["low", "medium", "high", "critical"], required: true },
   confidence_score: { type: Number, min: 0, max: 1, required: true },
   prediction_horizon: { type: Number, required: true, min: 1, max: 30 }, // in days
   predicted_date: { type: Date, required: true },
-  
+
   environmental_factors: {
     temperature: { current: Number, trend: String, impact_score: Number },
     humidity: { current: Number, trend: String, impact_score: Number },
     co2: { current: Number, trend: String, impact_score: Number },
     moisture: { current: Number, trend: String, impact_score: Number },
-    air_quality: { current: Number, trend: String, impact_score: Number }
+    air_quality: { current: Number, trend: String, impact_score: Number },
   },
   grain_factors: {
     grain_type: String,
@@ -197,58 +201,72 @@ const spoilagePredictionSchema = new mongoose.Schema({
     initial_quality_score: Number,
     moisture_content: Number,
     temperature_history: [Number],
-    humidity_history: [Number]
+    humidity_history: [Number],
   },
   model_info: {
     model_version: String,
     model_type: String,
     training_data_size: Number,
     last_trained: Date,
-    accuracy_score: Number
+    accuracy_score: Number,
   },
   validation_status: {
     type: String,
-    enum: ['pending', 'validated', 'false_positive', 'false_negative', 'expired'],
-    default: 'pending'
+    enum: ["pending", "validated", "false_positive", "false_negative", "expired"],
+    default: "pending",
   },
   actual_outcome: {
     spoilage_occurred: Boolean,
     spoilage_type: String,
     spoilage_date: Date,
     severity_level: String,
-    validation_notes: String
-  }
+    validation_notes: String,
+  },
 });
 ```
 
 ### 4.3 GrainBatch.js
+
 Maintains grain information stored within individual silos, capturing ground-truth spoilage events.
 
 ```javascript
 const grainBatchSchema = new mongoose.Schema({
   batch_id: { type: String, required: true, unique: true },
-  admin_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  silo_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Silo', required: true },
-  grain_type: { type: String, enum: ['Wheat', 'Rice', 'Maize', 'Corn', 'Barley', 'Sorghum'], required: true },
+  admin_id: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  silo_id: { type: mongoose.Schema.Types.ObjectId, ref: "Silo", required: true },
+  grain_type: {
+    type: String,
+    enum: ["Wheat", "Rice", "Maize", "Corn", "Barley", "Sorghum"],
+    required: true,
+  },
   variety: String,
-  grade: { type: String, enum: ['A', 'B', 'C', 'Premium', 'Standard'], default: 'Standard' },
+  grade: { type: String, enum: ["A", "B", "C", "Premium", "Standard"], default: "Standard" },
   quantity_kg: { type: Number, required: true },
   moisture_content: Number,
-  status: { type: String, enum: ['stored', 'dispatched', 'sold', 'damaged', 'expired', 'on_hold', 'processing'], default: 'stored' },
-  spoilage_label: { type: String, enum: ['Safe', 'Spoiled', 'Risky'], default: 'Safe' },
+  status: {
+    type: String,
+    enum: ["stored", "dispatched", "sold", "damaged", "expired", "on_hold", "processing"],
+    default: "stored",
+  },
+  spoilage_label: { type: String, enum: ["Safe", "Spoiled", "Risky"], default: "Safe" },
   risk_score: { type: Number, default: 0 },
   ai_prediction_confidence: Number,
   last_risk_assessment: Date,
-  spoilage_events: [{
-    event_id: String,
-    event_type: { type: String, enum: ['mold', 'pests', 'moisture', 'heat', 'smell', 'contamination', 'other'] },
-    severity: { type: String, enum: ['low', 'medium', 'high', 'critical'] },
-    description: String,
-    estimated_loss_kg: Number,
-    estimated_value_loss: Number,
-    detected_date: { type: Date, default: Date.now },
-    photos: [{ filename: String, original_name: String, path: String }]
-  }]
+  spoilage_events: [
+    {
+      event_id: String,
+      event_type: {
+        type: String,
+        enum: ["mold", "pests", "moisture", "heat", "smell", "contamination", "other"],
+      },
+      severity: { type: String, enum: ["low", "medium", "high", "critical"] },
+      description: String,
+      estimated_loss_kg: Number,
+      estimated_value_loss: Number,
+      detected_date: { type: Date, default: Date.now },
+      photos: [{ filename: String, original_name: String, path: String }],
+    },
+  ],
 });
 ```
 
@@ -259,8 +277,10 @@ const grainBatchSchema = new mongoose.Schema({
 MQTT acts as the real-time bridge between physical devices and the Node.js server. The Mosquitto broker coordinates this telemetry.
 
 ### 5.1 Telemetry Ingestion (Device → Backend)
-* **Topic:** `grainhero/sensors/{deviceId}/data`
-* **JSON Payload Format:**
+
+- **Topic:** `grainhero/sensors/{deviceId}/data`
+- **JSON Payload Format:**
+
 ```json
 {
   "device_id": "GH-ESP32-01",
@@ -277,16 +297,19 @@ MQTT acts as the real-time bridge between physical devices and the Node.js serve
 ```
 
 ### 5.2 Actuator Control Loop (Backend → Device)
+
 Commands are published under `ML_AUTO` mode to steer ESP32 outputs.
-* **Topic:** `grainhero/actuators/{deviceId}/control`
-* **JSON Payload Format:**
+
+- **Topic:** `grainhero/actuators/{deviceId}/control`
+- **JSON Payload Format:**
+
 ```json
 {
-  "led2": true,        // Green LED  (Safe)
-  "led3": false,       // Yellow LED (Risky)
-  "led4": false,       // Red LED    (Spoiled)
-  "ai_fan": true,      // Set ventilation state
-  "ai_fan_speed": 80   // Fan power pct (0 / 80 / 100)
+  "led2": true, // Green LED  (Safe)
+  "led3": false, // Yellow LED (Risky)
+  "led4": false, // Red LED    (Spoiled)
+  "ai_fan": true, // Set ventilation state
+  "ai_fan_speed": 80 // Fan power pct (0 / 80 / 100)
 }
 ```
 
@@ -297,6 +320,7 @@ Commands are published under `ML_AUTO` mode to steer ESP32 outputs.
 GrainHero uses a hybrid ML stack. High-accuracy predictions are handled via vertical ensemble algorithms, backed by deterministic rule-based algorithms.
 
 ### 6.1 Feature Vectors (9-Feature Ensemble Model)
+
 The ensemble models (saved as `{grain}_ensemble_model.pkl`) expect a 9-feature array in this exact sequence:
 
 1. `Temperature` (°C)
@@ -310,23 +334,26 @@ The ensemble models (saved as `{grain}_ensemble_model.pkl`) expect a 9-feature a
 9. `Rainfall` (mm)
 
 ### 6.2 Ensemble Architecture
+
 The system builds a **Soft Voting Classifier** combining three independent models tuned via Optuna:
 
-* **XGBoost Classifier:** Fast, robust to outliers, optimizes gradient boosting trees.
-* **Random Forest Classifier:** High generalization capacity, reduces variance.
-* **LightGBM Classifier:** Extremely fast training speed, handles leaf-wise growth.
-* **Soft Voting Mechanism:** The final class is computed as:
+- **XGBoost Classifier:** Fast, robust to outliers, optimizes gradient boosting trees.
+- **Random Forest Classifier:** High generalization capacity, reduces variance.
+- **LightGBM Classifier:** Extremely fast training speed, handles leaf-wise growth.
+- **Soft Voting Mechanism:** The final class is computed as:
   $$P(\text{Class}) = \frac{P_{\text{XGB}}(\text{Class}) + P_{\text{RF}}(\text{Class}) + P_{\text{LGBM}}(\text{Class})}{3}$$
   The prediction score is then mapped to a 0–100 risk score:
   $$\text{Risk Score} = P(\text{Risky}) \times 50 + P(\text{Spoiled}) \times 100$$
 
 ### 6.3 Rule-Based Failsafe Fallback
+
 In [aiSpoilage.js](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBackend-main/routes/aiSpoilage.js), if the Python process fails or a model binary is missing, `calculateSpoilageFromEnvironment(inputData)` operates as a fallback:
-* **Temperature contribution:** Temp $> 35 \implies +25$ pts, $>30 \implies +18$ pts, $>28 \implies +12$ pts, $>25 \implies +6$ pts.
-* **Humidity contribution:** Humidity $> 85 \implies +25$ pts, $>80 \implies +20$ pts, $>70 \implies +14$ pts, $>65 \implies +8$ pts.
-* **Grain Moisture contribution:** Moisture $> 20 \implies +25$ pts, $>18 \implies +20$ pts, $>16 \implies +14$ pts, $>14 \implies +8$ pts.
-* **Other weights:** Pest presence ($+10$), low airflow ($+8$), long storage ($+7$).
-* **Threshold mapping:** Score $\ge 70 \implies$ Spoiled, $\ge 40 \implies$ Risky, else Safe.
+
+- **Temperature contribution:** Temp $> 35 \implies +25$ pts, $>30 \implies +18$ pts, $>28 \implies +12$ pts, $>25 \implies +6$ pts.
+- **Humidity contribution:** Humidity $> 85 \implies +25$ pts, $>80 \implies +20$ pts, $>70 \implies +14$ pts, $>65 \implies +8$ pts.
+- **Grain Moisture contribution:** Moisture $> 20 \implies +25$ pts, $>18 \implies +20$ pts, $>16 \implies +14$ pts, $>14 \implies +8$ pts.
+- **Other weights:** Pest presence ($+10$), low airflow ($+8$), long storage ($+7$).
+- **Threshold mapping:** Score $\ge 70 \implies$ Spoiled, $\ge 40 \implies$ Risky, else Safe.
 
 ---
 
@@ -335,14 +362,16 @@ In [aiSpoilage.js](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBacke
 The firmware ([grainhero_main_final.ino](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero_main_final/grainhero_main_final.ino)) runs a state machine to prevent motor stress and respond to human manual overrides.
 
 ### States:
-* `STATE_IDLE_CLOSED`: Lid closed, ventilation fan turned off.
-* `STATE_OPENING_LID`: Servo transitions from closed ($100^\circ$) to open ($170^\circ$).
-* `STATE_LID_OPEN`: Lid fully open, waiting before fan activation.
-* `STATE_FAN_RUNNING`: Ventilation fan activated (PWM speed based on risk level).
-* `STATE_STOPPING_FAN`: Fan ramps down, waiting before lid closure.
-* `STATE_CLOSING_LID`: Servo swings back to $100^\circ$.
+
+- `STATE_IDLE_CLOSED`: Lid closed, ventilation fan turned off.
+- `STATE_OPENING_LID`: Servo transitions from closed ($100^\circ$) to open ($170^\circ$).
+- `STATE_LID_OPEN`: Lid fully open, waiting before fan activation.
+- `STATE_FAN_RUNNING`: Ventilation fan activated (PWM speed based on risk level).
+- `STATE_STOPPING_FAN`: Fan ramps down, waiting before lid closure.
+- `STATE_CLOSING_LID`: Servo swings back to $100^\circ$.
 
 ### Override Logic:
+
 If a physical button is pressed or a manual WebSocket command is received, the system enters `MANUAL` override mode. A `HUMAN_OVERRIDE_TIMEOUT` constant (defaulting to 10 minutes) automatically returns the system to `AUTO` mode, protecting the silo from human forgetfulness.
 
 ---

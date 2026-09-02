@@ -23,9 +23,16 @@ export const Route = createFileRoute("/_authenticated/settings/notifications")({
   head: () => ({
     meta: [
       { title: "Settings · Notifications — Grain Hero" },
-      { name: "description", content: "Settings · Notifications workspace in the Grain Hero platform — private, sign-in required." },
+      {
+        name: "description",
+        content:
+          "Settings · Notifications workspace in the Grain Hero platform — private, sign-in required.",
+      },
       { property: "og:title", content: "Settings · Notifications — Grain Hero" },
-      { property: "og:description", content: "Settings · Notifications workspace in the Grain Hero platform." },
+      {
+        property: "og:description",
+        content: "Settings · Notifications workspace in the Grain Hero platform.",
+      },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
@@ -65,7 +72,10 @@ function NotificationSettingsPage() {
   const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({ queryKey: ["notif-prefs"], queryFn: () => getFn() });
-  const { data: deliveries = [] } = useQuery({ queryKey: ["notif-deliveries"], queryFn: () => deliveriesFn() });
+  const { data: deliveries = [] } = useQuery({
+    queryKey: ["notif-deliveries"],
+    queryFn: () => deliveriesFn(),
+  });
 
   const [emailOn, setEmailOn] = useState(true);
   const [smsOn, setSmsOn] = useState(false);
@@ -127,7 +137,9 @@ function NotificationSettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Channels</CardTitle>
-          <CardDescription>Master toggle per channel. Security &amp; billing always email regardless of toggles.</CardDescription>
+          <CardDescription>
+            Master toggle per channel. Security &amp; billing always email regardless of toggles.
+          </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-3">
           {(["email", "sms", "push"] as Channel[]).map((ch) => {
@@ -135,7 +147,7 @@ function NotificationSettingsPage() {
             const on = ch === "email" ? emailOn : ch === "sms" ? smsOn : pushOn;
             const setOn = ch === "email" ? setEmailOn : ch === "sms" ? setSmsOn : setPushOn;
             return (
-              <div key={ch} className="border rounded-md p-4 space-y-3">
+              <div key={ch} className="rounded-md p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 font-medium">
                     <Icon className="h-4 w-4 text-emerald-600" /> {CHANNEL_META[ch].label}
@@ -152,10 +164,14 @@ function NotificationSettingsPage() {
                   <Send className="h-3.5 w-3.5 mr-2" /> Send test
                 </Button>
                 {ch === "push" && (
-                  <p className="text-xs text-slate-500">Web push is coming soon — toggle is stored for later use.</p>
+                  <p className="text-xs text-muted-foreground">
+                    Web push is coming soon — toggle is stored for later use.
+                  </p>
                 )}
                 {ch === "sms" && (
-                  <p className="text-xs text-slate-500">Requires phone number below and a Twilio connection.</p>
+                  <p className="text-xs text-muted-foreground">
+                    Requires phone number below and a Twilio connection.
+                  </p>
                 )}
               </div>
             );
@@ -181,21 +197,28 @@ function NotificationSettingsPage() {
         </CardContent>
       </Card>
 
-      <AdminDataCard title="Category overrides" description="Fine-tune per topic. Leave a toggle off to mute that combination.">
+      <AdminDataCard
+        title="Category overrides"
+        description="Fine-tune per topic. Leave a toggle off to mute that combination."
+      >
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 dark:bg-slate-900/40 text-xs uppercase text-slate-500">
+            <thead className="bg-muted/20 dark:bg-slate-900/40 text-xs uppercase text-muted-foreground">
               <tr>
                 <th className="text-left px-4 py-2 font-medium">Category</th>
                 {(["email", "sms", "push"] as Channel[]).map((ch) => (
-                  <th key={ch} className="text-center px-4 py-2 font-medium">{CHANNEL_META[ch].label}</th>
+                  <th key={ch} className="text-center px-4 py-2 font-medium">
+                    {CHANNEL_META[ch].label}
+                  </th>
                 ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {(data?.categories ?? []).map((cat) => (
                 <tr key={cat}>
-                  <td className="px-4 py-2 font-medium text-slate-800 dark:text-slate-200">{CATEGORY_LABEL[cat] ?? cat}</td>
+                  <td className="px-4 py-2 font-medium text-foreground dark:text-slate-200">
+                    {CATEGORY_LABEL[cat] ?? cat}
+                  </td>
                   {(["email", "sms", "push"] as Channel[]).map((ch) => {
                     const master = ch === "email" ? emailOn : ch === "sms" ? smsOn : pushOn;
                     const override = cats[cat]?.[ch];
@@ -219,16 +242,22 @@ function NotificationSettingsPage() {
 
       <AdminDataCard title="Recent deliveries" description="Latest 50 attempts across channels">
         {deliveries.length === 0 ? (
-          <div className="p-8 text-center text-sm text-slate-500">No deliveries yet.</div>
+          <div className="p-8 text-center text-sm text-muted-foreground">No deliveries yet.</div>
         ) : (
           <ul className="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
             {deliveries.map((d) => (
               <li key={d.id} className="px-4 py-2 flex items-center gap-3">
-                <span className="w-16 text-xs uppercase text-slate-500">{d.channel}</span>
-                <span className="text-slate-500 text-xs w-32">{d.provider ?? "—"}</span>
-                <Badge variant="outline" className={statusTone(d.status)}>{d.status}</Badge>
-                <span className="flex-1 truncate text-slate-500 text-xs">{d.error ?? "—"}</span>
-                <span className="text-xs text-slate-400">{new Date(d.created_at).toLocaleTimeString()}</span>
+                <span className="w-16 text-xs uppercase text-muted-foreground">{d.channel}</span>
+                <span className="text-muted-foreground text-xs w-32">{d.provider ?? "—"}</span>
+                <Badge variant="outline" className={statusTone(d.status)}>
+                  {d.status}
+                </Badge>
+                <span className="flex-1 truncate text-muted-foreground text-xs">
+                  {d.error ?? "—"}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {new Date(d.created_at).toLocaleTimeString()}
+                </span>
               </li>
             ))}
           </ul>

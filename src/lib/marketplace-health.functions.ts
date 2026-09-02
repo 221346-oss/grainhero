@@ -13,25 +13,40 @@ type Row = Record<string, any>;
 
 export const getMarketplaceHealth = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .validator((d: unknown) => z.object({ days: z.number().int().min(1).max(365).default(30) }).parse(d ?? {}))
+  .validator((d: unknown) =>
+    z.object({ days: z.number().int().min(1).max(365).default(30) }).parse(d ?? {}),
+  )
   .handler(async ({ data, context }) => {
-    const { data: isAdmin } = await context.supabase.rpc("is_super_admin", { _user_id: context.userId });
+    const { data: isAdmin } = await context.supabase.rpc("is_super_admin", {
+      _user_id: context.userId,
+    });
     if (!isAdmin) throw new Error("Forbidden");
     const settings = await loadMarketplaceSettings(context.supabase);
     const since = new Date(Date.now() - data.days * 86400000).toISOString();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
 
-    const [listingsRes, ordersRes, disputesRes, refundsRes, reputationRes, reviewsRes] = await Promise.all([
-      sb.from("grain_listings").select("id, status, created_at").gte("created_at", since),
-      sb.from("buyer_orders")
-        .select("id, status, subtotal, currency, created_at, cancellation_reason, admin_id")
-        .gte("created_at", since),
-      sb.from("buyer_disputes").select("id, category, status, created_at").gte("created_at", since),
-      sb.from("buyer_refunds").select("id, amount, currency, reason_code, status, created_at").gte("created_at", since),
-      sb.from("seller_reputation").select("*"),
-      sb.from("buyer_reviews").select("id, order_id, status, created_at").gte("created_at", since),
-    ]);
+    const [listingsRes, ordersRes, disputesRes, refundsRes, reputationRes, reviewsRes] =
+      await Promise.all([
+        sb.from("grain_listings").select("id, status, created_at").gte("created_at", since),
+        sb
+          .from("buyer_orders")
+          .select("id, status, subtotal, currency, created_at, cancellation_reason, admin_id")
+          .gte("created_at", since),
+        sb
+          .from("buyer_disputes")
+          .select("id, category, status, created_at")
+          .gte("created_at", since),
+        sb
+          .from("buyer_refunds")
+          .select("id, amount, currency, reason_code, status, created_at")
+          .gte("created_at", since),
+        sb.from("seller_reputation").select("*"),
+        sb
+          .from("buyer_reviews")
+          .select("id, order_id, status, created_at")
+          .gte("created_at", since),
+      ]);
 
     const listings = (listingsRes.data ?? []) as Row[];
     const orders = (ordersRes.data ?? []) as Row[];
@@ -50,21 +65,32 @@ export const getMarketplaceHealth = createServerFn({ method: "GET" })
     const funnel = {
       listingsCreated: listings.length,
       ordersPlaced: orders.length,
-      ordersPaid: orders.filter((o) => ["paid", "dispatched", "completed"].includes(o.status)).length,
+      ordersPaid: orders.filter((o) => ["paid", "dispatched", "completed"].includes(o.status))
+        .length,
       ordersDelivered: orders.filter((o) => o.status === "completed").length,
       ordersReviewed: new Set(reviews.map((r) => r.order_id)).size,
     };
 
-    const cancelReasons = countBy(orders.filter((o) => o.status === "cancelled"), (o) => o.cancellation_reason || "unspecified");
+    const cancelReasons = countBy(
+      orders.filter((o) => o.status === "cancelled"),
+      (o) => o.cancellation_reason || "unspecified",
+    );
     const disputeCategories = countBy(disputes, (d) => d.category || "other");
     const refundReasons = countBy(refunds, (r) => r.reason_code || "unspecified");
 
     const sellersRanked = reputation.map((r) => {
       const score = computeScore(r, settings.reputation.weights);
-      return { adminId: r.admin_id, score, disputeRate: Number(r.dispute_rate) || 0, avgRating: Number(r.avg_rating) || 0 };
+      return {
+        adminId: r.admin_id,
+        score,
+        disputeRate: Number(r.dispute_rate) || 0,
+        avgRating: Number(r.avg_rating) || 0,
+      };
     });
     const topSellers = [...sellersRanked].sort((a, b) => b.score - a.score).slice(0, 10);
-    const worstByDisputes = [...sellersRanked].sort((a, b) => b.disputeRate - a.disputeRate).slice(0, 10);
+    const worstByDisputes = [...sellersRanked]
+      .sort((a, b) => b.disputeRate - a.disputeRate)
+      .slice(0, 10);
 
     return {
       windowDays: data.days,

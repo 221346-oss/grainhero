@@ -1,6 +1,14 @@
 import { Link } from "@tanstack/react-router";
 import { InfoDot } from "@/components/ui/InfoDot";
-import { ShieldCheck, AlertTriangle, Truck, Cpu, PauseCircle, AlertOctagon, type LucideIcon } from "lucide-react";
+import {
+  ShieldCheck,
+  AlertTriangle,
+  Truck,
+  Cpu,
+  PauseCircle,
+  AlertOctagon,
+  type LucideIcon,
+} from "lucide-react";
 
 type Tile = {
   key: string;
@@ -43,12 +51,26 @@ export function InsightsStrip({
   alertsOpen,
   pipeline,
 }: {
-  insights?: { pendingQC: number; rejectedQC: number; atRisk: number; readyToShip: number; actuatorsOn: number; actuatorsTotal: number };
+  insights?: {
+    pendingQC: number;
+    rejectedQC: number;
+    atRisk: number;
+    readyToShip: number;
+    actuatorsOn: number;
+    actuatorsTotal: number;
+  };
   ordersOpen?: number;
   alertsOpen?: number;
   pipeline?: PipelineInsight;
 }) {
-  const i = insights ?? { pendingQC: 0, rejectedQC: 0, atRisk: 0, readyToShip: 0, actuatorsOn: 0, actuatorsTotal: 0 };
+  const i = insights ?? {
+    pendingQC: 0,
+    rejectedQC: 0,
+    atRisk: 0,
+    readyToShip: 0,
+    actuatorsOn: 0,
+    actuatorsTotal: 0,
+  };
   const qcTotal = Math.max(1, i.pendingQC + i.rejectedQC + i.readyToShip);
   const qcHealth = Math.round((i.readyToShip / qcTotal) * 100);
   const actRatio = i.actuatorsTotal ? i.actuatorsOn / i.actuatorsTotal : 0;
@@ -101,7 +123,7 @@ export function InsightsStrip({
   ];
 
   return (
-    <section className="rounded-xl border bg-card/60 p-3 backdrop-blur-sm">
+    <section className="rounded-2xl bg-card/60 p-3 backdrop-blur-sm">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5">
           <h2 className="text-sm font-semibold text-foreground">Insights & Performance</h2>
@@ -116,7 +138,7 @@ export function InsightsStrip({
               key={t.key}
               to={t.to}
               search={t.search as never}
-              className="rounded-lg border bg-card px-3 py-2.5 transition hover:ring-1 hover:ring-emerald-500/40 hover:border-emerald-500/40"
+              className="rounded-2xl bg-card px-3 py-2.5 transition hover:ring-1 hover:ring-emerald-500/40 hover:border-emerald-500/40"
             >
               <div className="flex items-center justify-between">
                 <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
@@ -126,8 +148,12 @@ export function InsightsStrip({
                 <InfoDot text={t.info} />
               </div>
               <div className="mt-1 flex items-baseline justify-between gap-2">
-                <span className={`text-xl font-bold tabular-nums leading-none ${toneVal[t.tone]}`}>{t.value}</span>
-                {t.hint && <span className="text-[10px] text-muted-foreground truncate">{t.hint}</span>}
+                <span className={`text-xl font-bold tabular-nums leading-none ${toneVal[t.tone]}`}>
+                  {t.value}
+                </span>
+                {t.hint && (
+                  <span className="text-[10px] text-muted-foreground truncate">{t.hint}</span>
+                )}
               </div>
               <div className="mt-2 h-1 rounded bg-muted overflow-hidden">
                 <div
@@ -140,55 +166,67 @@ export function InsightsStrip({
         })}
       </div>
 
-      {pipeline && (pipeline.onHold.count > 0 || pipeline.atRisk.count > 0 || pipeline.damaged.count > 0) && (
-        <div className="mt-2 pt-2 border-t border-border/60">
-          <div className="flex items-center gap-1.5 mb-1.5">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Why it's stuck</span>
-            <InfoDot text="Grain batches currently flagged, at risk, or unusable — with the reason and weight involved, not just a count." />
+      {pipeline &&
+        (pipeline.onHold.count > 0 || pipeline.atRisk.count > 0 || pipeline.damaged.count > 0) && (
+          <div className="mt-2 pt-2 border-t">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Why it's stuck
+              </span>
+              <InfoDot text="Grain batches currently flagged, at risk, or unusable — with the reason and weight involved, not just a count." />
+            </div>
+            <div className="space-y-1">
+              {pipeline.onHold.count > 0 && (
+                <Link
+                  to="/grain-operations"
+                  search={{ tab: "batches", status: "on_hold" }}
+                  className="flex items-center gap-2 text-[11px] rounded-md px-2 py-1 hover:bg-amber-500/10 transition"
+                >
+                  <PauseCircle className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                  <span className="flex-1 text-foreground">
+                    <span className="font-semibold tabular-nums">{fmtKg(pipeline.onHold.kg)}</span>{" "}
+                    on hold, flagged for review
+                  </span>
+                  <span className="text-muted-foreground tabular-nums">
+                    {pipeline.onHold.count}
+                  </span>
+                </Link>
+              )}
+              {pipeline.atRisk.count > 0 && (
+                <Link
+                  to="/grain-operations"
+                  search={{ tab: "batches" }}
+                  className="flex items-center gap-2 text-[11px] rounded-md px-2 py-1 hover:bg-amber-500/10 transition"
+                >
+                  <AlertTriangle className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                  <span className="flex-1 text-foreground">
+                    <span className="font-semibold tabular-nums">{fmtKg(pipeline.atRisk.kg)}</span>{" "}
+                    at risk (score ≥ 70)
+                  </span>
+                  <span className="text-muted-foreground tabular-nums">
+                    {pipeline.atRisk.count}
+                  </span>
+                </Link>
+              )}
+              {pipeline.damaged.count > 0 && (
+                <Link
+                  to="/grain-operations"
+                  search={{ tab: "batches", status: "damaged" }}
+                  className="flex items-center gap-2 text-[11px] rounded-md px-2 py-1 hover:bg-red-500/10 transition"
+                >
+                  <AlertOctagon className="h-3.5 w-3.5 text-red-600 shrink-0" />
+                  <span className="flex-1 text-foreground">
+                    <span className="font-semibold tabular-nums">{fmtKg(pipeline.damaged.kg)}</span>{" "}
+                    damaged or expired
+                  </span>
+                  <span className="text-muted-foreground tabular-nums">
+                    {pipeline.damaged.count}
+                  </span>
+                </Link>
+              )}
+            </div>
           </div>
-          <div className="space-y-1">
-            {pipeline.onHold.count > 0 && (
-              <Link
-                to="/grain-operations"
-                search={{ tab: "batches", status: "on_hold" }}
-                className="flex items-center gap-2 text-[11px] rounded-md px-2 py-1 hover:bg-amber-500/10 transition"
-              >
-                <PauseCircle className="h-3.5 w-3.5 text-amber-600 shrink-0" />
-                <span className="flex-1 text-foreground">
-                  <span className="font-semibold tabular-nums">{fmtKg(pipeline.onHold.kg)}</span> on hold, flagged for review
-                </span>
-                <span className="text-muted-foreground tabular-nums">{pipeline.onHold.count}</span>
-              </Link>
-            )}
-            {pipeline.atRisk.count > 0 && (
-              <Link
-                to="/grain-operations"
-                search={{ tab: "batches" }}
-                className="flex items-center gap-2 text-[11px] rounded-md px-2 py-1 hover:bg-amber-500/10 transition"
-              >
-                <AlertTriangle className="h-3.5 w-3.5 text-amber-600 shrink-0" />
-                <span className="flex-1 text-foreground">
-                  <span className="font-semibold tabular-nums">{fmtKg(pipeline.atRisk.kg)}</span> at risk (score ≥ 70)
-                </span>
-                <span className="text-muted-foreground tabular-nums">{pipeline.atRisk.count}</span>
-              </Link>
-            )}
-            {pipeline.damaged.count > 0 && (
-              <Link
-                to="/grain-operations"
-                search={{ tab: "batches", status: "damaged" }}
-                className="flex items-center gap-2 text-[11px] rounded-md px-2 py-1 hover:bg-red-500/10 transition"
-              >
-                <AlertOctagon className="h-3.5 w-3.5 text-red-600 shrink-0" />
-                <span className="flex-1 text-foreground">
-                  <span className="font-semibold tabular-nums">{fmtKg(pipeline.damaged.kg)}</span> damaged or expired
-                </span>
-                <span className="text-muted-foreground tabular-nums">{pipeline.damaged.count}</span>
-              </Link>
-            )}
-          </div>
-        </div>
-      )}
+        )}
     </section>
   );
 }

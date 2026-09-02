@@ -9,6 +9,7 @@
     "build:dev": "vite build --mode development",
     "preview": "npm run build && node preview.js",
     "lint": "eslint .",
+    "test": "vitest run",
     "format": "prettier --write .",
     "test:integration": "vitest run tests/integration --reporter=verbose"
   },
@@ -92,6 +93,7 @@
     "@types/node": "^22.16.5",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
+    "@typescript/native-preview": "^7.0.0-dev.20260707.2",
     "@vitejs/plugin-react": "^5.2.0",
     "eslint": "^9.32.0",
     "eslint-config-prettier": "^10.1.1",

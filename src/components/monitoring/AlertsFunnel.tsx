@@ -1,6 +1,7 @@
-'use client';
+"use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useLocationScopeQuery } from "@/components/app/location/LocationScope";
 import { useServerFn } from "@tanstack/react-start";
 import { listGrainAlerts } from "@/lib/operations.functions";
 import { Clock, CheckCircle2, AlertTriangle } from "lucide-react";
@@ -19,14 +20,20 @@ function fmtMinutes(min: number) {
  */
 export function AlertsFunnel() {
   const listFn = useServerFn(listGrainAlerts);
-  const { data } = useQuery({ queryKey: ["grain-alerts"], queryFn: () => listFn() });
+  // Scope every location-dependent query to the active city — in the key as
+  // well as the request, so one city's rows are never served for another.
+  const { key: loc, params: locParams } = useLocationScopeQuery();
+  const { data } = useQuery({
+    queryKey: ["grain-alerts", loc],
+    queryFn: () => listFn({ data: locParams }),
+  });
   const list = (data ?? []) as any[];
 
   const reachedAck = list.filter(
     (a) =>
       a.acknowledged_at ||
       a.resolved_at ||
-      ["acknowledged", "escalated", "resolved"].includes(a.status)
+      ["acknowledged", "escalated", "resolved"].includes(a.status),
   );
   const resolved = list.filter((a) => a.resolved_at || a.status === "resolved");
 
@@ -39,35 +46,48 @@ export function AlertsFunnel() {
 
   const avgMin = (arr: any[], a: string, b: string) =>
     arr.length
-      ? arr.reduce(
-          (s, x) => s + (new Date(x[a]).getTime() - new Date(x[b]).getTime()) / 60000,
-          0
-        ) / arr.length
+      ? arr.reduce((s, x) => s + (new Date(x[a]).getTime() - new Date(x[b]).getTime()) / 60000, 0) /
+        arr.length
       : 0;
   const mtta = avgMin(
     list.filter((a) => a.acknowledged_at && a.triggered_at),
     "acknowledged_at",
-    "triggered_at"
+    "triggered_at",
   );
   const mttr = avgMin(
     resolved.filter((a) => a.resolved_at && a.triggered_at),
     "resolved_at",
-    "triggered_at"
+    "triggered_at",
   );
   const criticalOpen = list.filter(
-    (a) => a.priority === "critical" && a.status === "pending"
+    (a) => a.priority === "critical" && a.status === "pending",
   ).length;
 
   if (list.length === 0) return null;
 
   const metrics = [
-    { label: "Mean Time to Acknowledge", value: fmtMinutes(mtta), icon: Clock, tint: "text-amber-400" },
-    { label: "Mean Time to Resolve", value: fmtMinutes(mttr), icon: CheckCircle2, tint: "text-emerald-400" },
-    { label: "Critical Open", value: `${criticalOpen}`, icon: AlertTriangle, tint: "text-rose-400" },
+    {
+      label: "Mean Time to Acknowledge",
+      value: fmtMinutes(mtta),
+      icon: Clock,
+      tint: "text-amber-400",
+    },
+    {
+      label: "Mean Time to Resolve",
+      value: fmtMinutes(mttr),
+      icon: CheckCircle2,
+      tint: "text-emerald-400",
+    },
+    {
+      label: "Critical Open",
+      value: `${criticalOpen}`,
+      icon: AlertTriangle,
+      tint: "text-rose-400",
+    },
   ];
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-6 space-y-5">
+    <div className="bg-card border-border rounded-2xl p-6 space-y-5">
       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
         Alert Pipeline
       </p>

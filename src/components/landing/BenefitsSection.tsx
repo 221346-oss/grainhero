@@ -1,50 +1,56 @@
-import { motion } from 'framer-motion'
-import { TrendingDown, Clock, DollarSign, Shield, ArrowUpRight, Zap } from 'lucide-react'
+import { motion } from "framer-motion";
+import { TrendingDown, Clock, DollarSign, Shield, ArrowUpRight, Zap } from "lucide-react";
 
 const benefits = [
   {
     icon: TrendingDown,
-    title: 'Reduce Grain Losses',
-    description: 'Prevent up to 30% of spoilage with AI-powered predictive analytics that detect issues before they become critical.',
-    stat: '30%',
-    statLabel: 'Loss Reduction',
+    title: "Reduce Grain Losses",
+    description:
+      "Prevent up to 30% of spoilage with AI-powered predictive analytics that detect issues before they become critical.",
+    stat: "30%",
+    statLabel: "Loss Reduction",
   },
   {
     icon: Clock,
-    title: 'Save Time Daily',
-    description: 'Automated 24/7 monitoring eliminates manual checks. Spend less time worrying and more time growing your business.',
-    stat: '24/7',
-    statLabel: 'Auto Monitoring',
+    title: "Save Time Daily",
+    description:
+      "Automated 24/7 monitoring eliminates manual checks. Spend less time worrying and more time growing your business.",
+    stat: "24/7",
+    statLabel: "Auto Monitoring",
   },
   {
     icon: DollarSign,
-    title: 'Increase Profits',
-    description: 'Optimize storage conditions to maintain grain quality longer, commanding premium prices at market.',
-    stat: '+25%',
-    statLabel: 'Profit Increase',
+    title: "Increase Profits",
+    description:
+      "Optimize storage conditions to maintain grain quality longer, commanding premium prices at market.",
+    stat: "+25%",
+    statLabel: "Profit Increase",
   },
   {
     icon: Shield,
-    title: 'Peace of Mind',
-    description: 'Real-time alerts notify you instantly of any issues. Sleep soundly knowing your harvest is protected.',
-    stat: '99.9%',
-    statLabel: 'Uptime',
+    title: "Peace of Mind",
+    description:
+      "Real-time alerts notify you instantly of any issues. Sleep soundly knowing your harvest is protected.",
+    stat: "99.9%",
+    statLabel: "Uptime",
   },
   {
     icon: Zap,
-    title: 'Quick ROI',
-    description: 'Most customers see return on investment within the first harvest season from reduced losses alone.',
-    stat: '6mo',
-    statLabel: 'Avg. ROI',
+    title: "Quick ROI",
+    description:
+      "Most customers see return on investment within the first harvest season from reduced losses alone.",
+    stat: "6mo",
+    statLabel: "Avg. ROI",
   },
   {
     icon: ArrowUpRight,
-    title: 'Scale Easily',
-    description: 'Start with one silo and expand to manage multiple locations from a single dashboard as you grow.',
-    stat: '∞',
-    statLabel: 'Scalability',
+    title: "Scale Easily",
+    description:
+      "Start with one silo and expand to manage multiple locations from a single dashboard as you grow.",
+    stat: "∞",
+    statLabel: "Scalability",
   },
-]
+];
 
 export function BenefitsSection() {
   return (
@@ -62,7 +68,8 @@ export function BenefitsSection() {
             Why Farmers Trust <span className="text-[#2FA84F]">GrainHero</span>
           </h2>
           <p className="text-lg sm:text-xl text-[#4A554C] max-w-3xl mx-auto">
-            Join thousands of grain operators who have transformed their storage operations with intelligent monitoring
+            Join thousands of grain operators who have transformed their storage operations with
+            intelligent monitoring
           </p>
         </motion.div>
 
@@ -101,7 +108,7 @@ export function BenefitsSection() {
         >
           <button
             onClick={() => {
-              window.location.href = '/checkout'
+              window.location.href = "/checkout";
             }}
             className="bg-[#2FA84F] text-white font-bold px-10 py-4 rounded-full hover:bg-[#2FA84F]/90 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
           >
@@ -110,5 +117,5 @@ export function BenefitsSection() {
         </motion.div>
       </div>
     </section>
-  )
+  );
 }

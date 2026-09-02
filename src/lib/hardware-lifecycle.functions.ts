@@ -63,7 +63,14 @@ function assertTransition(from: LifecycleStatus, to: LifecycleStatus): void {
 
 async function recordStatusChange(
   sb: unknown,
-  args: { orderId: string; from: LifecycleStatus; to: LifecycleStatus; actorId: string; actorRole: string; note?: string | null },
+  args: {
+    orderId: string;
+    from: LifecycleStatus;
+    to: LifecycleStatus;
+    actorId: string;
+    actorRole: string;
+    note?: string | null;
+  },
 ) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (sb as any).from("hardware_order_status_history").insert({
@@ -81,12 +88,14 @@ async function recordStatusChange(
 export const assignTechnician = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d) =>
-    z.object({
-      orderId: z.string().uuid(),
-      technicianId: z.string().uuid(),
-      scheduledFor: z.string().datetime().optional().nullable(),
-      siloId: z.string().uuid().optional().nullable(),
-    }).parse(d),
+    z
+      .object({
+        orderId: z.string().uuid(),
+        technicianId: z.string().uuid(),
+        scheduledFor: z.string().datetime().optional().nullable(),
+        siloId: z.string().uuid().optional().nullable(),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     await requireRole(context.supabase, context.userId, ["super_admin"]);
@@ -174,12 +183,14 @@ export const assignTechnician = createServerFn({ method: "POST" })
 export const markShipped = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d) =>
-    z.object({
-      orderId: z.string().uuid(),
-      carrier: z.string().trim().min(1).max(80),
-      trackingNumber: z.string().trim().min(1).max(120),
-      expectedArrivalAt: z.string().datetime().optional().nullable(),
-    }).parse(d),
+    z
+      .object({
+        orderId: z.string().uuid(),
+        carrier: z.string().trim().min(1).max(80),
+        trackingNumber: z.string().trim().min(1).max(120),
+        expectedArrivalAt: z.string().datetime().optional().nullable(),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     await requireRole(context.supabase, context.userId, ["super_admin"]);
@@ -208,8 +219,11 @@ export const markShipped = createServerFn({ method: "POST" })
 
     if (from !== to) {
       await recordStatusChange(supabaseAdmin, {
-        orderId: data.orderId, from, to,
-        actorId: context.userId, actorRole: "super_admin",
+        orderId: data.orderId,
+        from,
+        to,
+        actorId: context.userId,
+        actorRole: "super_admin",
         note: `Shipped via ${data.carrier} #${data.trackingNumber}`,
       });
     }
@@ -223,7 +237,9 @@ export const markShipped = createServerFn({ method: "POST" })
         severity: "info",
         title: "Your hardware has shipped",
         body: `${data.carrier} · Tracking ${data.trackingNumber}${
-          data.expectedArrivalAt ? ` · ETA ${new Date(data.expectedArrivalAt).toLocaleDateString()}` : ""
+          data.expectedArrivalAt
+            ? ` · ETA ${new Date(data.expectedArrivalAt).toLocaleDateString()}`
+            : ""
         }`,
         link: `/orders`,
         entityType: "hardware_order",
@@ -235,7 +251,9 @@ export const markShipped = createServerFn({ method: "POST" })
 
 export const cancelOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d) => z.object({ orderId: z.string().uuid(), reason: z.string().trim().min(3).max(500) }).parse(d))
+  .validator((d) =>
+    z.object({ orderId: z.string().uuid(), reason: z.string().trim().min(3).max(500) }).parse(d),
+  )
   .handler(async ({ data, context }) => {
     await requireRole(context.supabase, context.userId, ["super_admin"]);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -257,18 +275,25 @@ export const cancelOrder = createServerFn({ method: "POST" })
       } as never)
       .eq("id", data.orderId);
     await recordStatusChange(supabaseAdmin, {
-      orderId: data.orderId, from, to: "cancelled",
-      actorId: context.userId, actorRole: "super_admin", note: data.reason,
+      orderId: data.orderId,
+      from,
+      to: "cancelled",
+      actorId: context.userId,
+      actorRole: "super_admin",
+      note: data.reason,
     });
     const { emitNotification } = await import("@/lib/notify");
     if (o.admin_id) {
       await emitNotification(supabaseAdmin, {
         recipientId: o.admin_id as string,
         tenantAdminId: o.admin_id as string,
-        category: "install", severity: "warning",
+        category: "install",
+        severity: "warning",
         title: "Your install order was cancelled",
-        body: data.reason, link: `/orders`,
-        entityType: "hardware_order", entityId: data.orderId,
+        body: data.reason,
+        link: `/orders`,
+        entityType: "hardware_order",
+        entityId: data.orderId,
       });
     }
     return { ok: true };
@@ -289,15 +314,36 @@ export const getOrderDetail = createServerFn({ method: "GET" })
     const o = order as Row;
 
     const [installsRes, historyRes, devicesRes, buyerRes] = await Promise.all([
-      context.supabase.from("hardware_order_installations" as never).select("*").eq("order_id", data.orderId).order("created_at", { ascending: false }),
-      context.supabase.from("hardware_order_status_history" as never).select("*").eq("order_id", data.orderId).order("created_at", { ascending: false }),
-      context.supabase.from("hardware_order_devices" as never).select("*").eq("order_id", data.orderId),
-      o.admin_id ? context.supabase.from("profiles").select("id,name,email,phone").eq("id", o.admin_id).maybeSingle() : Promise.resolve({ data: null }),
+      context.supabase
+        .from("hardware_order_installations" as never)
+        .select("*")
+        .eq("order_id", data.orderId)
+        .order("created_at", { ascending: false }),
+      context.supabase
+        .from("hardware_order_status_history" as never)
+        .select("*")
+        .eq("order_id", data.orderId)
+        .order("created_at", { ascending: false }),
+      context.supabase
+        .from("hardware_order_devices" as never)
+        .select("*")
+        .eq("order_id", data.orderId),
+      o.admin_id
+        ? context.supabase
+            .from("profiles")
+            .select("id,name,email,phone")
+            .eq("id", o.admin_id)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
     ]);
 
     let technician: Row | null = null;
     if (o.assigned_technician_id) {
-      const { data: t } = await context.supabase.from("profiles").select("id,name,email,phone").eq("id", o.assigned_technician_id).maybeSingle();
+      const { data: t } = await context.supabase
+        .from("profiles")
+        .select("id,name,email,phone")
+        .eq("id", o.assigned_technician_id)
+        .maybeSingle();
       technician = (t as Row) ?? null;
     }
 
@@ -320,7 +366,9 @@ export const listMyInstalls = createServerFn({ method: "GET" })
     if (!["technician", "super_admin"].includes(role)) throw new Error("Forbidden");
     const { data, error } = await context.supabase
       .from("hardware_order_installations" as never)
-      .select("*, hardware_orders(id, admin_id, status, shipping_city, shipping_address, customer_name, customer_email, expected_arrival_at, tracking_carrier, tracking_number)")
+      .select(
+        "*, hardware_orders(id, admin_id, status, shipping_city, shipping_address, customer_name, customer_email, expected_arrival_at, tracking_carrier, tracking_number)",
+      )
       .eq("technician_id", context.userId)
       .order("scheduled_for", { ascending: true });
     if (error) throw error;
@@ -340,13 +388,27 @@ export const getInstallDetail = createServerFn({ method: "GET" })
     const inst = install as Row;
 
     const [devicesRes, eventsRes, silosRes, buyerRes] = await Promise.all([
-      context.supabase.from("hardware_order_devices" as never).select("*").eq("order_id", inst.order_id),
-      context.supabase.from("hardware_order_visit_events" as never).select("*").eq("installation_id", inst.id).order("created_at", { ascending: false }),
+      context.supabase
+        .from("hardware_order_devices" as never)
+        .select("*")
+        .eq("order_id", inst.order_id),
+      context.supabase
+        .from("hardware_order_visit_events" as never)
+        .select("*")
+        .eq("installation_id", inst.id)
+        .order("created_at", { ascending: false }),
       inst.hardware_orders?.admin_id
-        ? context.supabase.from("silos").select("id,name,warehouse_id").eq("admin_id", inst.hardware_orders.admin_id)
+        ? context.supabase
+            .from("silos")
+            .select("id,name,warehouse_id")
+            .eq("admin_id", inst.hardware_orders.admin_id)
         : Promise.resolve({ data: [] }),
       inst.hardware_orders?.admin_id
-        ? context.supabase.from("profiles").select("id,name,email,phone").eq("id", inst.hardware_orders.admin_id).maybeSingle()
+        ? context.supabase
+            .from("profiles")
+            .select("id,name,email,phone")
+            .eq("id", inst.hardware_orders.admin_id)
+            .maybeSingle()
         : Promise.resolve({ data: null }),
     ]);
 
@@ -362,11 +424,13 @@ export const getInstallDetail = createServerFn({ method: "GET" })
 export const updateInstallStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d) =>
-    z.object({
-      installId: z.string().uuid(),
-      status: z.enum(["scheduled", "en_route", "onsite", "completed", "blocked"]),
-      blockerNote: z.string().trim().max(500).optional().nullable(),
-    }).parse(d),
+    z
+      .object({
+        installId: z.string().uuid(),
+        status: z.enum(["scheduled", "en_route", "onsite", "completed", "blocked"]),
+        blockerNote: z.string().trim().max(500).optional().nullable(),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     const role = await getEffectiveRole(context.supabase, context.userId);
@@ -378,36 +442,53 @@ export const updateInstallStatus = createServerFn({ method: "POST" })
       .single();
     if (!install) throw new Error("Install not found");
     const inst = install as Row;
-    if (role === "technician" && inst.technician_id !== context.userId) throw new Error("Forbidden");
+    if (role === "technician" && inst.technician_id !== context.userId)
+      throw new Error("Forbidden");
 
     const patch: Row = { status: data.status };
     if (data.status === "blocked") patch.blocker_note = data.blockerNote ?? null;
     if (data.status === "completed") patch.completed_at = new Date().toISOString();
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await supabaseAdmin.from("hardware_order_installations" as never).update(patch as never).eq("id", data.installId);
+    await supabaseAdmin
+      .from("hardware_order_installations" as never)
+      .update(patch as never)
+      .eq("id", data.installId);
 
     if (data.status === "onsite" || data.status === "en_route") {
-      await supabaseAdmin.from("hardware_orders" as never).update({ status: "installing" } as never).eq("id", inst.order_id);
+      await supabaseAdmin
+        .from("hardware_orders" as never)
+        .update({ status: "installing" } as never)
+        .eq("id", inst.order_id);
     }
     if (data.status === "completed") {
-      await supabaseAdmin.from("hardware_orders" as never).update({ status: "completed", installed_at: new Date().toISOString() } as never).eq("id", inst.order_id);
+      await supabaseAdmin
+        .from("hardware_orders" as never)
+        .update({ status: "completed", installed_at: new Date().toISOString() } as never)
+        .eq("id", inst.order_id);
     }
 
     const { emitNotification } = await import("@/lib/notify");
-    const { data: order } = await supabaseAdmin.from("hardware_orders" as never).select("admin_id").eq("id", inst.order_id).single();
+    const { data: order } = await supabaseAdmin
+      .from("hardware_orders" as never)
+      .select("admin_id")
+      .eq("id", inst.order_id)
+      .single();
     const adminId = (order as Row | null)?.admin_id as string | undefined;
     if (adminId) {
       await emitNotification(supabaseAdmin, {
-        recipientId: adminId, tenantAdminId: adminId,
+        recipientId: adminId,
+        tenantAdminId: adminId,
         category: "install",
         severity: data.status === "blocked" ? "warning" : "info",
         title: `Install ${data.status.replace("_", " ")}`,
-        body: data.status === "blocked"
-          ? `Blocked: ${data.blockerNote ?? "reason unspecified"}`
-          : `Your installation is now ${data.status.replace("_", " ")}.`,
+        body:
+          data.status === "blocked"
+            ? `Blocked: ${data.blockerNote ?? "reason unspecified"}`
+            : `Your installation is now ${data.status.replace("_", " ")}.`,
         link: `/orders`,
-        entityType: "hardware_order", entityId: inst.order_id,
+        entityType: "hardware_order",
+        entityId: inst.order_id,
       });
     }
     return { ok: true };
@@ -416,13 +497,15 @@ export const updateInstallStatus = createServerFn({ method: "POST" })
 export const logVisitEvent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d) =>
-    z.object({
-      installId: z.string().uuid(),
-      eventType: z.enum(["arrived", "inspection", "install", "test", "handover", "issue"]),
-      note: z.string().trim().max(1000).optional().nullable(),
-      photoUrls: z.array(z.string().url()).max(10).optional(),
-      location: z.object({ lat: z.number(), lng: z.number() }).optional().nullable(),
-    }).parse(d),
+    z
+      .object({
+        installId: z.string().uuid(),
+        eventType: z.enum(["arrived", "inspection", "install", "test", "handover", "issue"]),
+        note: z.string().trim().max(1000).optional().nullable(),
+        photoUrls: z.array(z.string().url()).max(10).optional(),
+        location: z.object({ lat: z.number(), lng: z.number() }).optional().nullable(),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     const role = await getEffectiveRole(context.supabase, context.userId);
@@ -434,7 +517,8 @@ export const logVisitEvent = createServerFn({ method: "POST" })
       .single();
     if (!install) throw new Error("Install not found");
     const inst = install as Row;
-    if (role === "technician" && inst.technician_id !== context.userId) throw new Error("Forbidden");
+    if (role === "technician" && inst.technician_id !== context.userId)
+      throw new Error("Forbidden");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await supabaseAdmin.from("hardware_order_visit_events" as never).insert({
@@ -452,13 +536,15 @@ export const logVisitEvent = createServerFn({ method: "POST" })
 export const commissionDevice = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d) =>
-    z.object({
-      installId: z.string().uuid(),
-      orderDeviceId: z.string().uuid(),
-      serialNumber: z.string().trim().min(3).max(80),
-      siloId: z.string().uuid(),
-      deviceType: z.string().trim().min(1).max(60).default("sensor"),
-    }).parse(d),
+    z
+      .object({
+        installId: z.string().uuid(),
+        orderDeviceId: z.string().uuid(),
+        serialNumber: z.string().trim().min(3).max(80),
+        siloId: z.string().uuid(),
+        deviceType: z.string().trim().min(1).max(60).default("sensor"),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     const role = await getEffectiveRole(context.supabase, context.userId);
@@ -472,7 +558,8 @@ export const commissionDevice = createServerFn({ method: "POST" })
       .single();
     if (!install) throw new Error("Install not found");
     const inst = install as Row;
-    if (role === "technician" && inst.technician_id !== context.userId) throw new Error("Forbidden");
+    if (role === "technician" && inst.technician_id !== context.userId)
+      throw new Error("Forbidden");
 
     const { data: order } = await supabaseAdmin
       .from("hardware_orders" as never)
@@ -511,8 +598,14 @@ export const commissionDevice = createServerFn({ method: "POST" })
       .eq("order_id", inst.order_id)
       .is("commissioned_at", null);
     if (!pending || pending.length === 0) {
-      await supabaseAdmin.from("hardware_order_installations" as never).update({ status: "completed", completed_at: new Date().toISOString() } as never).eq("id", data.installId);
-      await supabaseAdmin.from("hardware_orders" as never).update({ status: "completed", installed_at: new Date().toISOString() } as never).eq("id", inst.order_id);
+      await supabaseAdmin
+        .from("hardware_order_installations" as never)
+        .update({ status: "completed", completed_at: new Date().toISOString() } as never)
+        .eq("id", data.installId);
+      await supabaseAdmin
+        .from("hardware_orders" as never)
+        .update({ status: "completed", installed_at: new Date().toISOString() } as never)
+        .eq("id", inst.order_id);
     }
 
     const { logActivity } = await import("@/lib/activity");
@@ -543,9 +636,20 @@ export const getMyOrderTracker = createServerFn({ method: "GET" })
     const o = order as Row;
 
     const [historyRes, installsRes, eventsRes] = await Promise.all([
-      context.supabase.from("hardware_order_status_history" as never).select("from_status,to_status,note,created_at").eq("order_id", data.orderId).order("created_at", { ascending: true }),
-      context.supabase.from("hardware_order_installations" as never).select("id,status,scheduled_for,completed_at,blocker_note").eq("order_id", data.orderId),
-      context.supabase.from("hardware_order_visit_events" as never).select("event_type,note,created_at").eq("order_id", data.orderId).order("created_at", { ascending: true }),
+      context.supabase
+        .from("hardware_order_status_history" as never)
+        .select("from_status,to_status,note,created_at")
+        .eq("order_id", data.orderId)
+        .order("created_at", { ascending: true }),
+      context.supabase
+        .from("hardware_order_installations" as never)
+        .select("id,status,scheduled_for,completed_at,blocker_note")
+        .eq("order_id", data.orderId),
+      context.supabase
+        .from("hardware_order_visit_events" as never)
+        .select("event_type,note,created_at")
+        .eq("order_id", data.orderId)
+        .order("created_at", { ascending: true }),
     ]);
 
     return {
@@ -564,38 +668,47 @@ export const listTechniciansForAssignment = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     await requireRole(context.supabase, context.userId, ["super_admin"]);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    
+
     // If warehouseId provided, get technicians assigned to that warehouse
     if (data.warehouseId) {
       const { data: techs, error } = await supabaseAdmin
         .from("technician_warehouse_assignments" as never)
-        .select("technician_id, profiles!inner(id, name, email, phone, technician_status, current_job_count, max_concurrent_jobs)")
+        .select(
+          "technician_id, profiles!inner(id, name, email, phone, technician_status, current_job_count, max_concurrent_jobs)",
+        )
         .eq("warehouse_id", data.warehouseId);
-      
+
       if (error) throw error;
-      
+
       const technicians = (techs ?? []).map((t: any) => ({
         ...t.profiles,
-        is_available: t.profiles.technician_status === 'available' || t.profiles.current_job_count < t.profiles.max_concurrent_jobs,
+        is_available:
+          t.profiles.technician_status === "available" ||
+          t.profiles.current_job_count < t.profiles.max_concurrent_jobs,
       }));
-      
+
       return { technicians, filtered_by_warehouse: true };
     }
-    
+
     // Otherwise, get all technicians (fallback for orders without warehouse)
-    const { data: techIds } = await supabaseAdmin.from("user_roles").select("user_id").eq("role", "technician");
+    const { data: techIds } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "technician");
     const ids = (techIds ?? []).map((r) => (r as Row).user_id as string);
     if (ids.length === 0) return { technicians: [] as Row[], filtered_by_warehouse: false };
-    
+
     const { data: profiles } = await supabaseAdmin
       .from("profiles")
       .select("id, name, email, phone, technician_status, current_job_count, max_concurrent_jobs")
       .in("id", ids);
-    
+
     const technicians = (profiles ?? []).map((p: any) => ({
       ...p,
-      is_available: p.technician_status === 'available' || (p.current_job_count ?? 0) < (p.max_concurrent_jobs ?? 3),
+      is_available:
+        p.technician_status === "available" ||
+        (p.current_job_count ?? 0) < (p.max_concurrent_jobs ?? 3),
     }));
-    
+
     return { technicians, filtered_by_warehouse: false };
   });

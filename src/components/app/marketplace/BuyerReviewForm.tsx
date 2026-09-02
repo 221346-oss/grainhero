@@ -17,18 +17,29 @@ export function BuyerReviewForm({ orderId }: { orderId: string }) {
   const [done, setDone] = useState(false);
   const mut = useMutation({
     mutationFn: () => fn({ data: { orderId, direction: "buyer_to_seller", rating, title, body } }),
-    onSuccess: (r) => { toast.success(r.status === "pending" ? "Review submitted for review" : "Review published"); setDone(true); },
+    onSuccess: (r) => {
+      toast.success(r.status === "pending" ? "Review submitted for review" : "Review published");
+      setDone(true);
+    },
     onError: (e) => toast.error((e as Error).message),
   });
   if (done) return null;
   return (
     <Card>
-      <CardHeader className="pb-2"><CardTitle className="text-sm">Rate this order</CardTitle></CardHeader>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm">Rate this order</CardTitle>
+      </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex gap-1">
-          {[1,2,3,4,5].map((n) => (
-            <button key={n} type="button" onClick={() => setRating(n)}
-              className={`text-2xl ${n <= rating ? "text-amber-500" : "text-slate-300"}`}>★</button>
+          {[1, 2, 3, 4, 5].map((n) => (
+            <button
+              key={n}
+              type="button"
+              onClick={() => setRating(n)}
+              className={`text-2xl ${n <= rating ? "text-amber-500" : "text-slate-300"}`}
+            >
+              ★
+            </button>
           ))}
         </div>
         <div>

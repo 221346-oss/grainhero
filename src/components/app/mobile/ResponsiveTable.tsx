@@ -16,9 +16,7 @@ export function ResponsiveTable({ children, className }: ResponsiveTableProps) {
     <div className={cn("border border-border rounded-md overflow-hidden", className)}>
       {/* Mobile: Horizontal scroll, Desktop: Normal flow */}
       <div className="overflow-x-auto">
-        <table className="w-full text-sm md:text-base">
-          {children}
-        </table>
+        <table className="w-full text-sm md:text-base">{children}</table>
       </div>
     </div>
   );
@@ -30,11 +28,7 @@ interface ResponsiveTableHeadProps {
 }
 
 export function ResponsiveTableHead({ children, className }: ResponsiveTableHeadProps) {
-  return (
-    <thead className={cn("border-b border-border bg-muted/30", className)}>
-      {children}
-    </thead>
-  );
+  return <thead className={cn("border-b border-border bg-muted/30", className)}>{children}</thead>;
 }
 
 interface ResponsiveTableBodyProps {
@@ -43,9 +37,19 @@ interface ResponsiveTableBodyProps {
   maxHeight?: string;
 }
 
-export function ResponsiveTableBody({ children, className, maxHeight = "max-h-[500px]" }: ResponsiveTableBodyProps) {
+export function ResponsiveTableBody({
+  children,
+  className,
+  maxHeight = "max-h-[500px]",
+}: ResponsiveTableBodyProps) {
   return (
-    <tbody className={cn("divide-y divide-border", maxHeight && `${maxHeight} overflow-y-auto`, className)}>
+    <tbody
+      className={cn(
+        "divide-y divide-border",
+        maxHeight && `${maxHeight} overflow-y-auto`,
+        className,
+      )}
+    >
       {children}
     </tbody>
   );
@@ -58,7 +62,12 @@ interface ResponsiveTableRowProps {
 
 export function ResponsiveTableRow({ children, className }: ResponsiveTableRowProps) {
   return (
-    <tr className={cn("border-b border-border last:border-0 hover:bg-muted/30 transition-colors", className)}>
+    <tr
+      className={cn(
+        "border-b border-border last:border-0 hover:bg-muted/30 transition-colors",
+        className,
+      )}
+    >
       {children}
     </tr>
   );
@@ -71,7 +80,12 @@ interface ResponsiveTableCellProps {
   nowrap?: boolean;
 }
 
-export function ResponsiveTableCell({ children, className, align = "left", nowrap = false }: ResponsiveTableCellProps) {
+export function ResponsiveTableCell({
+  children,
+  className,
+  align = "left",
+  nowrap = false,
+}: ResponsiveTableCellProps) {
   const alignClass = {
     left: "text-left",
     center: "text-center",
@@ -79,7 +93,14 @@ export function ResponsiveTableCell({ children, className, align = "left", nowra
   }[align];
 
   return (
-    <td className={cn("px-3 py-2 md:px-4 md:py-3", alignClass, nowrap && "whitespace-nowrap", className)}>
+    <td
+      className={cn(
+        "px-3 py-2 md:px-4 md:py-3",
+        alignClass,
+        nowrap && "whitespace-nowrap",
+        className,
+      )}
+    >
       {children}
     </td>
   );
@@ -91,7 +112,11 @@ interface ResponsiveTableHeaderCellProps {
   align?: "left" | "center" | "right";
 }
 
-export function ResponsiveTableHeaderCell({ children, className, align = "left" }: ResponsiveTableHeaderCellProps) {
+export function ResponsiveTableHeaderCell({
+  children,
+  className,
+  align = "left",
+}: ResponsiveTableHeaderCellProps) {
   const alignClass = {
     left: "text-left",
     center: "text-center",
@@ -99,7 +124,13 @@ export function ResponsiveTableHeaderCell({ children, className, align = "left" 
   }[align];
 
   return (
-    <th className={cn("font-medium text-muted-foreground uppercase tracking-wide text-[11px] px-3 py-2 md:px-4 md:py-3", alignClass, className)}>
+    <th
+      className={cn(
+        "font-medium text-muted-foreground uppercase tracking-wide text-[11px] px-3 py-2 md:px-4 md:py-3",
+        alignClass,
+        className,
+      )}
+    >
       {children}
     </th>
   );
@@ -115,16 +146,20 @@ interface MobileCardTableProps {
   emptyMessage?: string;
 }
 
-export function MobileCardTable({ data, renderCard, emptyMessage = "No data available" }: MobileCardTableProps) {
+export function MobileCardTable({
+  data,
+  renderCard,
+  emptyMessage = "No data available",
+}: MobileCardTableProps) {
   return (
     <div className="space-y-2 md:hidden">
       {data.length === 0 ? (
-        <div className="p-8 text-center text-sm text-muted-foreground border border-border rounded-md">
+        <div className="p-8 text-center text-sm text-muted-foreground border-border rounded-md">
           {emptyMessage}
         </div>
       ) : (
         data.map((item, idx) => (
-          <div key={idx} className="border border-border rounded-md p-3 bg-background">
+          <div key={idx} className="border-border rounded-2xl p-3 bg-background">
             {renderCard(item, idx)}
           </div>
         ))
@@ -145,9 +180,7 @@ interface MobileTableWrapperProps {
 export function MobileTableWrapper({ children, className }: MobileTableWrapperProps) {
   return (
     <div className={cn("border border-border rounded-md overflow-hidden", className)}>
-      <div className="overflow-x-auto">
-        {children}
-      </div>
+      <div className="overflow-x-auto">{children}</div>
     </div>
   );
 }

@@ -19,7 +19,7 @@ export function AdminDetailPanel({
       </CardHeader>
       <CardContent>
         {isEmpty ? (
-          <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
             <p className="text-sm">{emptyText}</p>
           </div>
         ) : (
@@ -33,10 +33,10 @@ export function AdminDetailPanel({
 export function DetailField({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div>
-      <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
+      <h4 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
         {label}
       </h4>
-      <div className="text-sm text-slate-700">{children}</div>
+      <div className="text-sm text-foreground">{children}</div>
     </div>
   );
 }

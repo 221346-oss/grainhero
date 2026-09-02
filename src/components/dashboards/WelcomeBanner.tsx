@@ -30,7 +30,9 @@ export function WelcomeBanner({ name }: { name?: string }) {
   const markActive = useCallback(() => {
     try {
       sessionStorage.setItem(LAST_ACTIVE_KEY, String(Date.now()));
-    } catch {}
+    } catch {
+      // best-effort only; a failed read must not block the banner
+    }
   }, []);
 
   const trigger = useCallback(
@@ -38,9 +40,7 @@ export function WelcomeBanner({ name }: { name?: string }) {
       if (playingRef.current) return;
       playingRef.current = true;
       setGreeting(
-        mode === "welcome"
-          ? `Welcome back${name ? `, ${name}` : ""}`
-          : pickReturnMessage(name),
+        mode === "welcome" ? `Welcome back${name ? `, ${name}` : ""}` : pickReturnMessage(name),
       );
       setTyped("");
       setVisible(true);
@@ -125,7 +125,6 @@ export function WelcomeBanner({ name }: { name?: string }) {
       }
     }, 45);
     return () => clearInterval(iv);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, greeting, reduced]);
 
   function finish() {
@@ -148,7 +147,7 @@ export function WelcomeBanner({ name }: { name?: string }) {
           className="overflow-hidden"
         >
           <div className="py-3">
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground dark:text-slate-100">
               {typed}
               <span className="inline-block w-[2px] h-6 sm:h-7 align-middle bg-emerald-500 ml-1 animate-pulse" />
             </h1>

@@ -6,13 +6,17 @@ export const getOpenOrders = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     // Resolve tenant admin id
     const { data: profile } = await context.supabase
-      .from("profiles").select("id, admin_id").eq("id", context.userId).maybeSingle();
+      .from("profiles")
+      .select("id, admin_id")
+      .eq("id", context.userId)
+      .maybeSingle();
     const adminId = (profile?.admin_id as string) ?? profile?.id ?? context.userId;
 
     // Get open buyer orders with buyer details
     const { data: openOrders } = await context.supabase
       .from("buyer_orders")
-      .select(`
+      .select(
+        `
         id,
         order_number,
         status,
@@ -32,13 +36,14 @@ export const getOpenOrders = createServerFn({ method: "GET" })
           company_name,
           phone
         )
-      `)
+      `,
+      )
       .eq("admin_id", adminId)
       .in("status", ["pending", "confirmed", "in_progress"] as never)
       .order("created_at", { ascending: false });
 
     return {
-      orders: openOrders || []
+      orders: openOrders || [],
     };
   });
 

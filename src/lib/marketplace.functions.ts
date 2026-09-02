@@ -63,7 +63,10 @@ export const getPublicListing = createServerFn({ method: "GET" })
     const sb = publicClient();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: row, error } = await (sb as any)
-      .from("public_listings_v").select("*").eq("slug", data.slug).maybeSingle();
+      .from("public_listings_v")
+      .select("*")
+      .eq("slug", data.slug)
+      .maybeSingle();
     if (error) throw error;
     if (!row) throw new Error("Listing not found");
     return { listing: row as Row };

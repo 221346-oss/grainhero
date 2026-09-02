@@ -16,15 +16,16 @@ All buyers created by managers in the Grain Operations > Buyers section are **au
 **File:** `src/lib/operations.functions.ts` (lines 1455+)
 
 The `upsertBuyer` server function has **NO role restrictions**:
+
 ```typescript
 export const upsertBuyer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) => parseOrThrow(buyerInput, d))
   .handler(async ({ data, context }) => {
     // No requireRole check — managers CAN create buyers
-    
+
     // ... validation and payload creation ...
-    
+
     // On insert, automatically sets tenant admin_id
     const { data: prof } = await context.supabase
       .from("profiles")
@@ -32,7 +33,7 @@ export const upsertBuyer = createServerFn({ method: "POST" })
       .eq("id", context.userId)
       .maybeSingle();
     const tenantAdminId = prof?.admin_id ?? prof?.id ?? context.userId;
-    
+
     const { data: row, error } = await context.supabase
       .from("buyers")
       .insert({ ...payload, admin_id: tenantAdminId })
@@ -41,6 +42,7 @@ export const upsertBuyer = createServerFn({ method: "POST" })
 ```
 
 **Result:** Managers CAN create buyers. When they do:
+
 - The buyer record is created in the database
 - `admin_id` is automatically set to the tenant's admin ID
 - The buyer belongs to the tenant, not the individual manager
@@ -50,6 +52,7 @@ export const upsertBuyer = createServerFn({ method: "POST" })
 **File:** `src/lib/operations.functions.ts` (lines 1416+)
 
 The `listBuyers` server function queries ALL buyers for the tenant:
+
 ```typescript
 export const listBuyers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -77,6 +80,7 @@ CREATE POLICY "Tenant access buyers" ON public.buyers
 ```
 
 **What this means:**
+
 - Every query to the `buyers` table is automatically filtered
 - A user can ONLY see buyers where:
   - `admin_id` = their tenant's admin_id, OR
@@ -108,7 +112,7 @@ export function BuyerOrdersCard() {
 
   return (
     <Card className="border-border/60 shadow-sm">
-      <CardHeaderLink to="/grain-operations" search={{ tab: "buyers" }} 
+      <CardHeaderLink to="/grain-operations" search={{ tab: "buyers" }}
                       title="Buyers" count={rows.length} />
       <CardContent className="p-3 pt-0 space-y-2">
         {rows.length === 0 && <p>No buyers created</p>}
@@ -157,16 +161,19 @@ BuyerOrdersCard displays them (shows first 6, "View X more" link)
 **Tenant:** "Ahmed's Grain Storage" with admin_id = `abc123`
 
 **Users in tenant:**
+
 - Admin User (role: admin, admin_id: abc123)
 - Manager User (role: manager, admin_id: abc123)
 - Technician User (role: technician, admin_id: abc123)
 
 **Manager Creates 3 Buyers:**
+
 1. "Local Mill A"
 2. "Export Co B"
 3. "Retail Store C"
 
 **What happens:**
+
 - All 3 buyers inserted with admin_id = abc123
 - Admin views Dashboard → sees all 3 in BuyerOrdersCard ✅
 - Manager views Dashboard → sees all 3 in BuyerOrdersCard ✅
@@ -192,6 +199,7 @@ BuyerOrdersCard displays them (shows first 6, "View X more" link)
 ## How to Test
 
 ### Test Case 1: Manager Creates Buyer
+
 1. Login as Manager
 2. Go to Grain Operations > Buyers
 3. Click "Create buyer"
@@ -201,16 +209,19 @@ BuyerOrdersCard displays them (shows first 6, "View X more" link)
 7. ✅ New buyer appears in BuyerOrdersCard
 
 ### Test Case 2: Admin Can See Manager-Created Buyers
+
 1. Login as Admin
 2. Go to Dashboard Overview
 3. ✅ BuyerOrdersCard shows the buyer created by Manager in Test Case 1
 
 ### Test Case 3: Multiple Users See Same Buyers
+
 1. Manager creates buyer #4 ("New Mill")
 2. Admin creates buyer #5 ("Big Retailer")
 3. Both managers and admins see all 5 buyers in BuyerOrdersCard ✅
 
 ### Test Case 4: Tenant Isolation Works
+
 1. Create second tenant with different admin_id
 2. Create buyer in tenant 2
 3. Login as user in tenant 1

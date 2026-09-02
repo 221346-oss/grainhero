@@ -35,12 +35,12 @@ File: `services/firebaseRealtimeService.js` lines 469-476
 
 ```javascript
 function subscribeDevice(deviceId, io) {
-  if (subscribed.has(deviceId)) return
-  const ref = database.ref(`sensor_data/${deviceId}/latest`)
-  const cb = snapshot => handleLatest(deviceId, snapshot, io)
-  ref.on('value', cb)            // ← Fires on EVERY write to RTDB
-  listeners.push({ ref, cb })
-  subscribed.add(deviceId)
+  if (subscribed.has(deviceId)) return;
+  const ref = database.ref(`sensor_data/${deviceId}/latest`);
+  const cb = (snapshot) => handleLatest(deviceId, snapshot, io);
+  ref.on("value", cb); // ← Fires on EVERY write to RTDB
+  listeners.push({ ref, cb });
+  subscribed.add(deviceId);
 }
 ```
 
@@ -54,19 +54,18 @@ if (io) {
     temperature: tempVal,
     humidity: humVal,
     tvoc: vocVal,
-    fanState: pwmSpeedVal > 0 ? 'on' : 'off',
-    lidState: servoVal ? 'open' : 'closed',
-    alarmState: alarmVal ? 'on' : 'off',
-    mlDecision: payload.mlDecision || ((humVal > 75 || (vocVal || 0) > 600) ? 'fan_on' : 'idle'),
+    fanState: pwmSpeedVal > 0 ? "on" : "off",
+    lidState: servoVal ? "open" : "closed",
+    alarmState: alarmVal ? "on" : "off",
+    mlDecision: payload.mlDecision || (humVal > 75 || (vocVal || 0) > 600 ? "fan_on" : "idle"),
     humanOverride: !!payload.humanOverride || !!payload.human_override,
     timestamp: ts,
-  }
-  io.emit('sensor_reading', { type: 'sensor_reading', data: liveData, timestamp: new Date() })
+  };
+  io.emit("sensor_reading", { type: "sensor_reading", data: liveData, timestamp: new Date() });
 }
 ```
 
 **GH1 latency**: ESP32 writes → RTDB triggers listener → `io.emit()` → browser receives: **< 1 second**
-
 
 ---
 
@@ -81,25 +80,20 @@ GH2 has **three distinct mechanisms**. The claim must be evaluated against each 
 File: `src/hooks/use-realtime-invalidate.ts` lines 1-32
 
 ```typescript
-export function useRealtimeInvalidate(
-  table: string,
-  queryKeys: readonly (readonly unknown[])[],
-) {
+export function useRealtimeInvalidate(table: string, queryKeys: readonly (readonly unknown[])[]) {
   const qc = useQueryClient();
   useEffect(() => {
     const channel = supabase
       .channel(`rt-${table}-${Math.random().toString(36).slice(2, 8)}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table },
-        () => {
-          for (const key of queryKeys) {
-            qc.invalidateQueries({ queryKey: key as unknown[] });
-          }
-        },
-      )
+      .on("postgres_changes", { event: "*", schema: "public", table }, () => {
+        for (const key of queryKeys) {
+          qc.invalidateQueries({ queryKey: key as unknown[] });
+        }
+      })
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [table]);
 }
 ```
@@ -118,16 +112,19 @@ useEffect(() => {
       qc.invalidateQueries({ queryKey: ["sensor-readings-latest"] });
     })
     .subscribe();
-  return () => { supabase.removeChannel(ch); };
+  return () => {
+    supabase.removeChannel(ch);
+  };
 }, [qc]);
 ```
 
 **Also has a polling fallback** (`refetchInterval: 30_000`):
+
 ```typescript
 const { data: readings } = useQuery({
   queryKey: ["sensor-readings-latest"],
   queryFn: () => latestFn() as Promise<Reading[]>,
-  refetchInterval: 30_000,   // 30-second polling fallback
+  refetchInterval: 30_000, // 30-second polling fallback
 });
 ```
 
@@ -160,7 +157,9 @@ export function useFirebaseSensor(deviceId: string | null | undefined) {
       },
       () => setConnected(false),
     );
-    return () => { off(nodeRef, "value", handler); };
+    return () => {
+      off(nodeRef, "value", handler);
+    };
   }, [deviceId]);
 
   return { reading, connected, configured: isFirebaseConfigured };
@@ -168,6 +167,7 @@ export function useFirebaseSensor(deviceId: string | null | undefined) {
 ```
 
 **AND for all-sensors at once:**
+
 ```typescript
 export function useFirebaseAllSensors() {
   // subscribes to /devices (all devices)
@@ -194,18 +194,17 @@ socket.on('sensor_reading', (msg) => {
 
 **GH2 frontend_code/ latency**: Still connects to GH1 backend's Socket.IO server. Not self-contained.
 
-
 ---
 
 ### Comparison Table — Realtime Updates
 
-| Aspect | GH1 | GH2 (`src/`) | GH2 (`use-firebase-sensor`) |
-|--------|-----|--------------|----------------------------|
-| Mechanism | Socket.IO push via `io.emit()` | Supabase Postgres CDC | Firebase RTDB `onValue` listener |
-| Trigger | Firebase `ref.on('value')` | Supabase `postgres_changes` INSERT | Firebase `onValue` |
-| Latency | < 1 second | 1-3 seconds (after cron writes) | < 1 second |
-| Transport | WebSocket (backend → browser) | WebSocket (Supabase → browser) | WebSocket (Firebase → browser) |
-| Depends on cron? | No | **Yes** — must wait for cron write | **No** — reads RTDB directly |
+| Aspect           | GH1                            | GH2 (`src/`)                       | GH2 (`use-firebase-sensor`)      |
+| ---------------- | ------------------------------ | ---------------------------------- | -------------------------------- |
+| Mechanism        | Socket.IO push via `io.emit()` | Supabase Postgres CDC              | Firebase RTDB `onValue` listener |
+| Trigger          | Firebase `ref.on('value')`     | Supabase `postgres_changes` INSERT | Firebase `onValue`               |
+| Latency          | < 1 second                     | 1-3 seconds (after cron writes)    | < 1 second                       |
+| Transport        | WebSocket (backend → browser)  | WebSocket (Supabase → browser)     | WebSocket (Firebase → browser)   |
+| Depends on cron? | No                             | **Yes** — must wait for cron write | **No** — reads RTDB directly     |
 
 ---
 
@@ -221,6 +220,7 @@ GH2 has **two independent realtime paths**:
 The audit claim that "GH2 lacks realtime updates" is **factually incorrect**. GH2 added a direct Firebase client SDK integration (`use-firebase-sensor.ts`) that subscribes to RTDB changes in the browser, which is functionally equivalent to GH1's server-side Socket.IO broadcast.
 
 **The difference is in transport architecture, not behavior**:
+
 - GH1: RTDB → server listener → Socket.IO → browser
 - GH2: RTDB → browser listener directly (no server intermediary)
 
@@ -231,7 +231,6 @@ GH2's path is actually **more direct** for live readings than GH1's.
 **The only real latency gap** is that the Supabase `sensor_readings` table (used for history/analytics) is populated by cron. But the live dashboard uses the Firebase direct path, not Supabase.
 
 ---
-
 
 ---
 
@@ -290,7 +289,7 @@ class OfflineDataService extends EventEmitter {
         this.syncInterval = 5 * 60 * 1000;  // 5 minutes
         this.retryAttempts = 3;
         this.retryDelay = 30 * 1000;  // 30 seconds
-        
+
         this.initializeBufferDirectory();
         this.startSyncProcess();
     }
@@ -311,7 +310,6 @@ File: `services/firebaseRealtimeService.js` lines 463-466
 
 On error, GH1 logs the error and **silently drops the reading**. There is no `bufferData()` call in the catch block.
 
-
 ---
 
 ### GH2 — Exact Implementation
@@ -321,7 +319,8 @@ On error, GH1 logs the error and **silently drops the reading**. There is no `bu
 ```typescript
 // 2. Offline Detection (no ping for 15 mins)
 const offlineThreshold = new Date(now.getTime() - 15 * 60 * 1000).toISOString();
-await supabaseAdmin.from("sensor_devices")
+await supabaseAdmin
+  .from("sensor_devices")
   .update({ status: "offline" })
   .lt("last_ping_at", offlineThreshold)
   .eq("status", "online");
@@ -358,15 +357,14 @@ If Firebase fetch fails → returns 502 immediately → **no buffering, no retry
 
 ### Comparison Table — Offline Handling
 
-| Aspect | GH1 | GH2 |
-|--------|-----|-----|
-| `bufferData()` defined | ✅ Yes (`realTimeDataService`) | ❌ No |
-| `offlineDataService` exists | ✅ Yes (file-system buffer) | ❌ No |
-| Either called in production | ❌ **Never called** | ❌ Not applicable |
-| On Firebase fetch error | Logs + drops reading | Returns 502 |
-| Offline device detection | None | ✅ 15-min threshold + alerts |
-| Data recovery mechanism | None (code exists, unused) | None |
-
+| Aspect                      | GH1                            | GH2                          |
+| --------------------------- | ------------------------------ | ---------------------------- |
+| `bufferData()` defined      | ✅ Yes (`realTimeDataService`) | ❌ No                        |
+| `offlineDataService` exists | ✅ Yes (file-system buffer)    | ❌ No                        |
+| Either called in production | ❌ **Never called**            | ❌ Not applicable            |
+| On Firebase fetch error     | Logs + drops reading           | Returns 502                  |
+| Offline device detection    | None                           | ✅ 15-min threshold + alerts |
+| Data recovery mechanism     | None (code exists, unused)     | None                         |
 
 ---
 
@@ -382,7 +380,8 @@ The audit claims GH2 lacks buffering that GH1 has. This is incorrect because **G
 
 **Both GH1 and GH2 drop readings on error.** Neither system provides data recovery in production.
 
-The only genuine difference is in *offline detection*:
+The only genuine difference is in _offline detection_:
+
 - GH1: no explicit offline detection in the Firebase service path
 - GH2: explicitly marks devices offline after 15 minutes + creates grain alerts
 
@@ -394,11 +393,11 @@ The only genuine difference is in *offline detection*:
 
 ## Final Summary of All Three Blockers
 
-| # | Claim | Verdict | Blocks Retirement? | Reasoning |
-|---|-------|---------|-------------------|-----------|
-| 1 | Humidity threshold 14.5 vs 65 | **B — False Positive** | No | GH1's Firebase service never creates humidity alerts; 14.5 is a new GH2 bug, not a regression |
-| 2 | Missing realtime dashboard updates | **C — Intentional Architecture** | No | GH2 uses `use-firebase-sensor.ts` (`onValue`) for < 1s live reads + Supabase CDC for DB-backed views |
-| 3 | No offline data buffering | **B — False Positive** | No | GH1's buffer code (`bufferData`, `offlineDataService`) exists but is **never called** in production |
+| #   | Claim                              | Verdict                          | Blocks Retirement? | Reasoning                                                                                            |
+| --- | ---------------------------------- | -------------------------------- | ------------------ | ---------------------------------------------------------------------------------------------------- |
+| 1   | Humidity threshold 14.5 vs 65      | **B — False Positive**           | No                 | GH1's Firebase service never creates humidity alerts; 14.5 is a new GH2 bug, not a regression        |
+| 2   | Missing realtime dashboard updates | **C — Intentional Architecture** | No                 | GH2 uses `use-firebase-sensor.ts` (`onValue`) for < 1s live reads + Supabase CDC for DB-backed views |
+| 3   | No offline data buffering          | **B — False Positive**           | No                 | GH1's buffer code (`bufferData`, `offlineDataService`) exists but is **never called** in production  |
 
 ---
 
@@ -415,4 +414,3 @@ The remaining risks to assess before retirement are:
 3. **Error handling in cron loop** — A single Supabase write failure in GH2 terminates the device loop. GH1 isolates each step in try-catch. This is a code quality regression worth fixing but not a blocker.
 
 None of these three items are of the severity originally reported.
-

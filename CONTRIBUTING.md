@@ -17,7 +17,7 @@ We're excited to have you join our mission to reduce post-harvest loss through t
     ```bash
     cp .env.example .env.local
     ```
-    *Note: You can run the UI without real keys by using the provided mock data.*
+    _Note: You can run the UI without real keys by using the provided mock data._
 4.  **Run Dev Server**:
     ```bash
     bun run dev

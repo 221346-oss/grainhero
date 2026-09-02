@@ -6,13 +6,17 @@ export const getDispatchReadyBatches = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     // Resolve tenant admin id
     const { data: profile } = await context.supabase
-      .from("profiles").select("id, admin_id").eq("id", context.userId).maybeSingle();
+      .from("profiles")
+      .select("id, admin_id")
+      .eq("id", context.userId)
+      .maybeSingle();
     const adminId = (profile?.admin_id as string) ?? profile?.id ?? context.userId;
 
     // Get dispatch ready batches with buyer order details
     const { data: dispatchReadyBatches } = await context.supabase
       .from("grain_batches")
-      .select(`
+      .select(
+        `
         id,
         batch_id,
         grain_type,
@@ -37,13 +41,14 @@ export const getDispatchReadyBatches = createServerFn({ method: "GET" })
           name,
           email
         )
-      `)
+      `,
+      )
       .eq("admin_id", adminId)
       .in("status", ["ready", "stored", "qc_passed"] as never)
       .order("created_at", { ascending: false });
 
     return {
-      batches: dispatchReadyBatches || []
+      batches: dispatchReadyBatches || [],
     };
   });
 

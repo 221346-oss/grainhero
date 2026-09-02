@@ -6,7 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getDispatchAnalytics, exportDispatchCsv } from "@/lib/dispatch-analytics.functions";
 import { useState } from "react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { toast } from "sonner";
@@ -15,9 +21,16 @@ export const Route = createFileRoute("/_authenticated/platform/dispatch-analytic
   head: () => ({
     meta: [
       { title: "Platform · Dispatch Analytics — Grain Hero" },
-      { name: "description", content: "Platform · Dispatch Analytics workspace in the Grain Hero platform — private, sign-in required." },
+      {
+        name: "description",
+        content:
+          "Platform · Dispatch Analytics workspace in the Grain Hero platform — private, sign-in required.",
+      },
       { property: "og:title", content: "Platform · Dispatch Analytics — Grain Hero" },
-      { property: "og:description", content: "Platform · Dispatch Analytics workspace in the Grain Hero platform." },
+      {
+        property: "og:description",
+        content: "Platform · Dispatch Analytics workspace in the Grain Hero platform.",
+      },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
@@ -39,11 +52,15 @@ function DispatchAnalyticsPage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `dispatch-analytics-${days}d-${new Date().toISOString().slice(0,10)}.csv`;
-      document.body.appendChild(a); a.click(); a.remove();
+      a.download = `dispatch-analytics-${days}d-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
       URL.revokeObjectURL(url);
       toast.success(`Exported ${res.rows} rows`);
-    } catch (e) { toast.error((e as Error).message); }
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
   };
   const totals = data?.totals;
   return (
@@ -53,7 +70,9 @@ function DispatchAnalyticsPage() {
       actions={
         <div className="flex gap-2">
           <Select value={String(days)} onValueChange={(v) => setDays(Number(v))}>
-            <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="7">Last 7 days</SelectItem>
               <SelectItem value="30">Last 30 days</SelectItem>
@@ -83,11 +102,19 @@ function DispatchAnalyticsPage() {
             <Tile label="Avg transit" value={`${data.avgTransitHours.toFixed(1)} h`} />
           </div>
           <Card>
-            <CardHeader className="pb-2"><CardTitle className="text-sm">Courier performance</CardTitle></CardHeader>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Courier performance</CardTitle>
+            </CardHeader>
             <CardContent>
               <table className="w-full text-sm">
                 <thead className="text-xs text-muted-foreground text-left">
-                  <tr><th className="py-1">Courier</th><th>Shipments</th><th>Delivered</th><th>Overdue</th><th>Avg transit (h)</th></tr>
+                  <tr>
+                    <th className="py-1">Courier</th>
+                    <th>Shipments</th>
+                    <th>Delivered</th>
+                    <th>Overdue</th>
+                    <th>Avg transit (h)</th>
+                  </tr>
                 </thead>
                 <tbody>
                   {data.byCourier.map((c) => (
@@ -95,19 +122,31 @@ function DispatchAnalyticsPage() {
                       <td className="py-2">{c.label}</td>
                       <td>{c.total}</td>
                       <td>{c.delivered}</td>
-                      <td>{c.overdue > 0 ? <Badge variant="destructive">{c.overdue}</Badge> : c.overdue}</td>
+                      <td>
+                        {c.overdue > 0 ? (
+                          <Badge variant="destructive">{c.overdue}</Badge>
+                        ) : (
+                          c.overdue
+                        )}
+                      </td>
                       <td>{c.avgHours.toFixed(1)}</td>
                     </tr>
                   ))}
                   {data.byCourier.length === 0 && (
-                    <tr><td colSpan={5} className="py-6 text-center text-muted-foreground">No shipments in this window.</td></tr>
+                    <tr>
+                      <td colSpan={5} className="py-6 text-center text-muted-foreground">
+                        No shipments in this window.
+                      </td>
+                    </tr>
                   )}
                 </tbody>
               </table>
             </CardContent>
           </Card>
           <div className="text-xs text-muted-foreground">
-            SLA: in-transit {data.slaHours.inTransit}h · out-for-delivery {data.slaHours.outForDelivery}h · delivered {data.slaHours.delivered}h (from marketplace settings)
+            SLA: in-transit {data.slaHours.inTransit}h · out-for-delivery{" "}
+            {data.slaHours.outForDelivery}h · delivered {data.slaHours.delivered}h (from marketplace
+            settings)
           </div>
         </div>
       )}
@@ -115,8 +154,23 @@ function DispatchAnalyticsPage() {
   );
 }
 
-function Tile({ label, value, tone }: { label: string; value: number | string; tone?: "emerald" | "rose" | "amber" }) {
-  const color = tone === "emerald" ? "text-emerald-600" : tone === "rose" ? "text-rose-600" : tone === "amber" ? "text-amber-600" : "";
+function Tile({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: number | string;
+  tone?: "emerald" | "rose" | "amber";
+}) {
+  const color =
+    tone === "emerald"
+      ? "text-emerald-600"
+      : tone === "rose"
+        ? "text-rose-600"
+        : tone === "amber"
+          ? "text-amber-600"
+          : "";
   return (
     <Card>
       <CardContent className="p-4">

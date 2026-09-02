@@ -5,9 +5,15 @@ export const Route = createFileRoute("/marketplace")({
   head: () => ({
     meta: [
       { title: "GrainHero Marketplace — Buy verified grain" },
-      { name: "description", content: "Browse verified grain listings direct from GrainHero-monitored warehouses." },
+      {
+        name: "description",
+        content: "Browse verified grain listings direct from GrainHero-monitored warehouses.",
+      },
       { property: "og:title", content: "GrainHero Marketplace" },
-      { property: "og:description", content: "Buy verified grain direct from monitored warehouses." },
+      {
+        property: "og:description",
+        content: "Buy verified grain direct from monitored warehouses.",
+      },
       { property: "og:type", content: "website" },
     ],
   }),
@@ -26,8 +32,12 @@ function MarketplaceShell() {
             GrainHero Marketplace
           </Link>
           <nav className="flex items-center gap-4 text-sm">
-            <Link to="/" className="text-muted-foreground hover:text-foreground">Home</Link>
-            <Link to="/buyer/orders" className="text-muted-foreground hover:text-foreground">My Orders</Link>
+            <Link to="/" className="text-muted-foreground hover:text-foreground">
+              Home
+            </Link>
+            <Link to="/buyer/orders" className="text-muted-foreground hover:text-foreground">
+              My Orders
+            </Link>
           </nav>
         </div>
       </header>

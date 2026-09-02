@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const ENDPOINTS = ["field-tasks", "field-incidents", "marketplace", "buyer-summary"] as const;
-export type SyncEndpoint = typeof ENDPOINTS[number];
+export type SyncEndpoint = (typeof ENDPOINTS)[number];
 
 export const getSyncMonitorOverview = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -18,11 +18,21 @@ export const getSyncMonitorOverview = createServerFn({ method: "GET" })
       .order("started_at", { ascending: false })
       .limit(1000);
     if (error) throw new Error(error.message);
-    const rows = (data ?? []) as Array<{ endpoint: string; status: string; duration_ms: number | null; row_count: number | null; error_message: string | null; started_at: string; finished_at: string | null }>;
+    const rows = (data ?? []) as Array<{
+      endpoint: string;
+      status: string;
+      duration_ms: number | null;
+      row_count: number | null;
+      error_message: string | null;
+      started_at: string;
+      finished_at: string | null;
+    }>;
     const byEndpoint = ENDPOINTS.map((endpoint) => {
       const items = rows.filter((r) => r.endpoint === endpoint);
       const durations = items.map((r) => r.duration_ms ?? 0).sort((a, b) => a - b);
-      const p95 = durations.length ? durations[Math.min(durations.length - 1, Math.floor(durations.length * 0.95))] : 0;
+      const p95 = durations.length
+        ? durations[Math.min(durations.length - 1, Math.floor(durations.length * 0.95))]
+        : 0;
       const errors = items.filter((r) => r.status === "error");
       const lastError = errors[0];
       const last = items[0];
@@ -51,12 +61,22 @@ export const getSyncMonitorOverview = createServerFn({ method: "GET" })
 
 export const listSyncRuns = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((v) => z.object({ endpoint: z.enum(ENDPOINTS).optional(), limit: z.number().int().positive().max(200).optional() }).parse(v))
+  .inputValidator((v) =>
+    z
+      .object({
+        endpoint: z.enum(ENDPOINTS).optional(),
+        limit: z.number().int().positive().max(200).optional(),
+      })
+      .parse(v),
+  )
   .handler(async ({ data, context }) => {
     const { isSuperAdmin } = await import("./rbac.server");
     if (!(await isSuperAdmin(context.supabase, context.userId))) throw new Error("Forbidden");
-    let q = context.supabase.from("mobile_sync_runs").select("*")
-      .order("started_at", { ascending: false }).limit(data.limit ?? 50);
+    let q = context.supabase
+      .from("mobile_sync_runs")
+      .select("*")
+      .order("started_at", { ascending: false })
+      .limit(data.limit ?? 50);
     if (data.endpoint) q = q.eq("endpoint", data.endpoint);
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
@@ -65,10 +85,14 @@ export const listSyncRuns = createServerFn({ method: "GET" })
 
 export const runSyncManually = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((v) => z.object({
-    endpoint: z.enum(ENDPOINTS),
-    idempotency_key: z.string().min(8).max(64).optional(),
-  }).parse(v))
+  .inputValidator((v) =>
+    z
+      .object({
+        endpoint: z.enum(ENDPOINTS),
+        idempotency_key: z.string().min(8).max(64).optional(),
+      })
+      .parse(v),
+  )
   .handler(async ({ data, context }) => {
     const { isSuperAdmin } = await import("./rbac.server");
     if (!(await isSuperAdmin(context.supabase, context.userId))) throw new Error("Forbidden");
@@ -77,16 +101,25 @@ export const runSyncManually = createServerFn({ method: "POST" })
 
     // 1. Idempotency short-circuit — same key returns prior result.
     if (data.idempotency_key) {
-      const { data: existing } = await supabaseAdmin.from("mobile_sync_runs")
+      const { data: existing } = await supabaseAdmin
+        .from("mobile_sync_runs")
         .select("status,row_count,error_message,started_at")
         .eq("endpoint", data.endpoint)
         .eq("idempotency_key", data.idempotency_key)
         .maybeSingle();
       if (existing) {
-        const row = existing as { status: string; row_count: number | null; error_message: string | null; started_at: string };
+        const row = existing as {
+          status: string;
+          row_count: number | null;
+          error_message: string | null;
+          started_at: string;
+        };
         return {
-          ok: row.status === "ok", row_count: row.row_count ?? 0,
-          error: row.error_message, deduped: true, started_at: row.started_at,
+          ok: row.status === "ok",
+          row_count: row.row_count ?? 0,
+          error: row.error_message,
+          deduped: true,
+          started_at: row.started_at,
         };
       }
     }
@@ -95,22 +128,42 @@ export const runSyncManually = createServerFn({ method: "POST" })
     const STALE_MS = 60_000;
     const nowIso = new Date().toISOString();
     const { error: lockErr } = await supabaseAdmin.from("mobile_sync_locks").insert({
-      endpoint: data.endpoint, locked_at: nowIso,
-      locked_by: context.userId, idempotency_key: data.idempotency_key ?? null,
+      endpoint: data.endpoint,
+      locked_at: nowIso,
+      locked_by: context.userId,
+      idempotency_key: data.idempotency_key ?? null,
     } as never);
     if (lockErr) {
       // Conflict — inspect existing lock
-      const { data: existingLock } = await supabaseAdmin.from("mobile_sync_locks")
-        .select("locked_at,locked_by,idempotency_key").eq("endpoint", data.endpoint).maybeSingle();
-      const lockRow = existingLock as { locked_at: string; locked_by: string | null; idempotency_key: string | null } | null;
+      const { data: existingLock } = await supabaseAdmin
+        .from("mobile_sync_locks")
+        .select("locked_at,locked_by,idempotency_key")
+        .eq("endpoint", data.endpoint)
+        .maybeSingle();
+      const lockRow = existingLock as {
+        locked_at: string;
+        locked_by: string | null;
+        idempotency_key: string | null;
+      } | null;
       const ageMs = lockRow ? Date.now() - new Date(lockRow.locked_at).getTime() : Infinity;
       if (lockRow && ageMs < STALE_MS) {
-        return { ok: false, row_count: 0, error: "busy", locked_by: lockRow.locked_by, locked_at: lockRow.locked_at };
+        return {
+          ok: false,
+          row_count: 0,
+          error: "busy",
+          locked_by: lockRow.locked_by,
+          locked_at: lockRow.locked_at,
+        };
       }
       // Stale — steal it
-      await supabaseAdmin.from("mobile_sync_locks").update({
-        locked_at: nowIso, locked_by: context.userId, idempotency_key: data.idempotency_key ?? null,
-      } as never).eq("endpoint", data.endpoint);
+      await supabaseAdmin
+        .from("mobile_sync_locks")
+        .update({
+          locked_at: nowIso,
+          locked_by: context.userId,
+          idempotency_key: data.idempotency_key ?? null,
+        } as never)
+        .eq("endpoint", data.endpoint);
     }
 
     const started = Date.now();

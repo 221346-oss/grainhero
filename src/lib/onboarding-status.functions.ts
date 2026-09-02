@@ -15,9 +15,7 @@ export const getMyOnboardingStatus = createServerFn({ method: "GET" })
     // Supabase encodes confirmation as either email_confirmed_at OR the
     // presence of "email" in the identities/aud claims. The safest read is the
     // profiles table's own copy plus the JWT's email_verified flag.
-    const emailVerified = Boolean(
-      (claims as { email_verified?: boolean } | null)?.email_verified,
-    );
+    const emailVerified = Boolean((claims as { email_verified?: boolean } | null)?.email_verified);
 
     const { data: profile } = await supabase
       .from("profiles")
@@ -35,7 +33,9 @@ export const getMyOnboardingStatus = createServerFn({ method: "GET" })
 
     const { data: latestOrderRaw } = await supabase
       .from("hardware_orders" as never)
-      .select("id, status, plan_name, hardware_quantity, hardware_total, currency, created_at, technician_name, preferred_install_date")
+      .select(
+        "id, status, plan_name, hardware_quantity, hardware_total, currency, created_at, technician_name, preferred_install_date",
+      )
       .eq("admin_id", userId)
       .order("created_at", { ascending: false })
       .limit(1)

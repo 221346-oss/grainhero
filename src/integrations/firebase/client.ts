@@ -6,7 +6,8 @@ import { getDatabase, type Database } from "firebase/database";
 const config = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY ?? "REPLACE_ME",
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN ?? "REPLACE_ME.firebaseapp.com",
-  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL ?? "https://REPLACE_ME-default-rtdb.firebaseio.com",
+  databaseURL:
+    import.meta.env.VITE_FIREBASE_DATABASE_URL ?? "https://REPLACE_ME-default-rtdb.firebaseio.com",
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID ?? "REPLACE_ME",
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET ?? "REPLACE_ME.appspot.com",
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID ?? "",

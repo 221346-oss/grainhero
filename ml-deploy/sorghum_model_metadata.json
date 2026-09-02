@@ -13,11 +13,7 @@
     "Grain_Moisture",
     "Rainfall"
   ],
-  "label_classes": [
-    "Risky",
-    "Safe",
-    "Spoiled"
-  ],
+  "label_classes": ["Risky", "Safe", "Spoiled"],
   "best_params": {
     "XGBoost": {
       "max_depth": 10,
@@ -82,42 +78,15 @@
     }
   },
   "feature_importance": [
-    [
-      "Storage_Days",
-      1025.0830138530275
-    ],
-    [
-      "Grain_Moisture",
-      858.8240587543334
-    ],
-    [
-      "Humidity",
-      848.7452234257835
-    ],
-    [
-      "Temperature",
-      770.393886816129
-    ],
-    [
-      "Airflow",
-      629.0198849323151
-    ],
-    [
-      "Dew_Point",
-      601.1704598097914
-    ],
-    [
-      "Ambient_Light",
-      478.3427825408205
-    ],
-    [
-      "Rainfall",
-      465.67641346579006
-    ],
-    [
-      "Pest_Presence",
-      233.07760973503252
-    ]
+    ["Storage_Days", 1025.0830138530275],
+    ["Grain_Moisture", 858.8240587543334],
+    ["Humidity", 848.7452234257835],
+    ["Temperature", 770.393886816129],
+    ["Airflow", 629.0198849323151],
+    ["Dew_Point", 601.1704598097914],
+    ["Ambient_Light", 478.3427825408205],
+    ["Rainfall", 465.67641346579006],
+    ["Pest_Presence", 233.07760973503252]
   ],
   "training_date": "2026-07-15T15:18:55.751492",
   "dataset": "F:\\grainhero\\Grainhero-sharjeel_working\\farmHomeBackend-main\\ml\\sorghum_spoilage_10k.csv",

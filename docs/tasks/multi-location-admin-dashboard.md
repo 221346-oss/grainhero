@@ -1,0 +1,693 @@
+# Multi-Location Admin Dashboard — Requirement Report
+
+**Status:** Built (17/17). Isolation proven by integration test; **not** verified
+end-to-end through the UI — see §13 for why §11's evidence does not stand.
+**Owner:** Abdullah
+**Target branch:** `abdullah_dev` (standing PR #55 → `main`)
+**Date:** 2026-08-25 (rev. 2)
+
+> **Revision 7.** §11's by-hand verification does not stand: it was carried out
+> through "View as", and impersonation never reaches the server, so the figures
+> checked were platform-wide rather than one tenant's (§13). Isolation is now
+> proven instead by an integration test against a real database
+> (`tests/integration/location-isolation.test.ts`), which is what S15 asked for.
+> The header status is corrected accordingly. UI-level verification for a real
+> admin remains outstanding.
+>
+> **Revision 6.** Verified end to end against the live app. The picker,
+> warehouse drill-down, switcher, empty state and role exclusions all behave as
+> specified, and two warehouses in the same city were confirmed to show
+> genuinely separate data. Three defects were found and fixed in the process —
+> see §11.
+>
+> **Revision 5.** R2 is closed: an expired plan does not block or sign anyone
+> out — it routes them to renewal from inside the dashboard. The
+> pending-approval case needed no work; that state no longer exists. All
+> seventeen requirements are now implemented. What remains is verification, not
+> construction.
+>
+> **Revision 4.** Reviewed again: the **warehouse**, not the city, is the
+> primary unit. Navigation is now city → warehouse → dashboard, model
+> performance is reported per warehouse, and R13 is enforced (a manager holds
+> one warehouse only). Q2 is closed on that basis. **R2** is the last open
+> requirement, and the question about it needs rephrasing — it was not
+> understood as asked.
+>
+> **Revision 3.** The feature is built. R1 and R3–R17 are implemented across
+> the dashboard and every location-dependent page; see §10 for the delivery
+> record. Two requirements remain open — **R2** (payment precondition) and
+> **R13** (enforcing the manager rule in existing code) — both because they
+> need a decision rather than because the work is hard. **Q3** was taken along
+> the metrics-first path (S16), which holds under either reading; separately
+> trained per-site models remain unscoped.
+
+---
+
+## 1. Background
+
+This requirement was agreed in a regional web/app planning meeting and is
+recorded here as a written specification so it can be reviewed, checked, and
+signed off before implementation begins.
+
+An **Admin** in GrainHero is a warehouse owner. Their subscription plan covers a
+number of users and a number of warehouses, and those warehouses may be spread
+across multiple cities. The working example used throughout this document is an
+Admin operating in **three cities: Karachi, Hyderabad, and Rawalpindi (Pindi)**.
+
+Today such an Admin logs in and lands on a single dashboard covering their entire
+account, with every site's data merged into one view. This document specifies
+splitting that into a per-location experience.
+
+---
+
+## 2. Requirement
+
+### 2.1 Location selection at login
+
+After the Admin logs in — and once payment and onboarding are complete — they do
+**not** land directly on the dashboard. They first see a **card grid, one card
+per location**. An Admin with warehouses in three cities sees three cards, each
+carrying that location's name and summary information.
+
+The payment precondition is explicit: this screen sits after billing is settled,
+not before.
+
+### 2.2 Entering a location
+
+Clicking a card opens **the main dashboard**, scoped to that location. This is
+specifically the dashboard currently being redesigned — the same design language
+as the superadmin work already in progress, not the existing dashboard.
+
+### 2.3 Scoped content
+
+The dashboard shows only the selected location's data: its silos and its
+warehouses. A single city may contain **more than one warehouse** — if Pindi
+holds two, both appear together under the Pindi card. The card therefore
+represents a **city**, and scopes to the set of warehouses within it.
+
+### 2.4 Switching location
+
+The Admin can return from a location dashboard and select a different card.
+Switching must be **immediate**, and loaded data must **remain available rather
+than being discarded** — an Admin who enters one city and then wants to check
+another should not pay a full reload, nor lose what was already fetched.
+
+### 2.5 Data segregation
+
+**Data from one location must never appear in another location's view.** Silos
+belonging to different warehouses must not be rendered in the same set, and
+moving from the Pindi card to the Karachi card must produce cleanly separated
+data with no bleed between them.
+
+This is the central constraint of the feature and the primary source of
+implementation difficulty.
+
+### 2.6 Per-location AI models
+
+The AI/ML models **and their reported performance metrics** should be
+per-location. The rationale is that each site has its own dataset, so predictions
+and accuracy will legitimately differ between locations.
+
+### 2.7 Team structure
+
+Confirmed as a platform-wide rule, applying to existing work as well as this
+feature:
+
+- One **Admin** per account — the buyer who owns the warehouses.
+- An Admin may hold **many warehouses**.
+- Each warehouse has **exactly one Manager**. Two warehouses means two managers.
+  Multiple managers on the same warehouse is not a valid state.
+- Each warehouse may have **multiple Technicians** assigned.
+
+### 2.8 Rationale
+
+The goal is operational manageability. An owner running sites in three cities
+should not have to mentally separate them out of a single merged view.
+
+---
+
+## 3. Role scoping
+
+| Role | Location selector | Behaviour |
+|---|---|---|
+| **Admin** | **Yes** | The entire feature. Owns multiple warehouses across cities. |
+| **Super Admin** | **No** | Explicitly out of scope — the platform-level dashboard is a separate concern. |
+| **Manager** | **No** | Logs in under their Admin, bound to exactly one warehouse → goes straight to their designated dashboard. One manager per warehouse; never more. |
+| **Technician** | **No — deferred** | Multiple technicians may be assigned per warehouse. The wider designation-role work is **deferred** by the lead as a separate, larger piece; treat as Manager for now. |
+
+---
+
+## 4. Requirement summary
+
+| # | Requirement |
+|---|---|
+| R1 | An Admin (warehouse owner) may hold warehouses in multiple cities |
+| R2 | After login and once payment is complete, the Admin sees a card grid, one card per location |
+| R3 | Each card carries that location's name and information |
+| R4 | Clicking a card opens the main dashboard — the redesigned one |
+| R5 | That dashboard shows only the selected location's silos and warehouses |
+| R6 | One city may hold multiple warehouses; all appear together under that city |
+| R7 | Data from different locations must never be mixed in one view |
+| R8 | The Admin can go back and switch to a different location |
+| R9 | AI models and their performance metrics are per-location |
+| R10 | Feature applies to Admin only — not Super Admin, not Manager |
+| R11 | Manager and Technician go straight to their designated single-location dashboard |
+| R12 | Technician follows Manager behaviour for now; designation-role work deferred |
+| R13 | Each warehouse has **exactly one Manager**; multiple managers per warehouse is invalid |
+| R14 | Each warehouse may have **multiple Technicians** |
+| R15 | A single-location Admin **still sees the selector**, showing their one card |
+| R16 | Switching between locations must be fast and must **not lose loaded state** |
+| R17 | Card presentation must reflect the account's **plan** |
+
+---
+
+## 5. Question status
+
+The questions raised against the first revision have been reviewed. Their
+current status is below.
+
+### 5.1 Resolved
+
+**Q1 — What if an Admin has only one location? → RESOLVED.**
+The selector is **still shown**, displaying that Admin's single card. It is not
+skipped. *(→ R15. This overrules suggestion S3, now withdrawn.)*
+
+**Q4 — Should the location choice persist? → RESOLVED.**
+The Admin must be able to move between locations freely and immediately — enter
+one card, then switch straight to another city if they want to check it. Loaded
+data **must remain available rather than being discarded** on switch. The
+priority is switching speed and state retention, not a remembered preference
+across logins. *(→ R16.)*
+
+**Q6 — Managers assigned to more than one warehouse? → RESOLVED.**
+Each warehouse has **exactly one manager**; there are never multiple managers on
+the same warehouse. Technicians may be multiple per warehouse. An Admin with two
+warehouses therefore has two managers. This was given as a **platform-wide rule
+to apply to existing code as well as new work**, not a decision local to this
+feature. *(→ R13, R14, §2.7.)*
+
+### 5.2 Delegated
+
+**Q2 — Is a card a city, or a warehouse? → OUR CALL.**
+Explicitly delegated: either a separate card per warehouse grouped within a city,
+or one card per city with its warehouses inside, whichever works better. The
+decision sits with the implementer, so it should be made deliberately and
+recorded here once settled rather than left to emerge from the code.
+
+### 5.3 Deferred
+
+**Q5 — Technician role. → DEFERRED.**
+The broader designation-role work is a substantial piece in its own right and has
+been set aside for a separate discussion. Technicians follow Manager behaviour
+for the purposes of this feature.
+
+### 5.4 Partially answered
+
+**Q7 — Is anything excluded from segregation? → PARTIAL.**
+Direction given: card presentation should reflect the account's plan (→ R17), and
+a gap was noted around the plan/meter view not being available at billing time.
+What this does **not** yet settle is whether billing, subscription, and
+plan-limit views remain account-wide rather than per-location. **Still needs an
+explicit answer** before the query audit (S9) can classify those endpoints.
+
+**Q8 — Plan user count. → PARTIAL.**
+To be established from the actual plan definitions rather than assumed. Owner:
+this side.
+
+### 5.5 Still open
+
+**Q3 — Per-location models: separate models, or a shared model with separate
+metrics? → OPEN.**
+Not yet addressed, and it remains the largest unknown in the specification. The
+two readings differ by roughly an order of magnitude in effort — per-location
+metrics on a shared model is a reporting change; separately trained per-site
+models is a pipeline project. **This should be resolved before Phase 3 is
+scoped.** The recommended path in the interim is S16: ship per-location metrics
+first and scope per-site training separately, on evidence.
+
+---
+
+## 6. Suggestions
+
+The following are **proposals, not agreed requirements.** They came out of a
+review of the existing codebase against the specification above, and are offered
+to improve the result. Each is marked with a recommendation.
+
+### 6.1 Product suggestions
+
+**S1 — Add an "All locations" roll-up alongside the per-location cards.**
+*Recommend adopting.* The specification segregates data, but an owner running
+three sites still needs to compare them — which site is filling fastest, where
+spoilage risk is highest, which is underperforming. Strict segregation with no
+bird's-eye view removes something the current merged dashboard already provides.
+Suggest a persistent "All locations" card or tab that presents a comparison
+roll-up, clearly labelled as cross-site so it can never be mistaken for one
+location's data. This satisfies R7 (no accidental mixing) while preserving
+oversight. **Worth raising explicitly — it may have been assumed, or may have
+been deliberately excluded.**
+
+**S2 — Make the cards informative, not just navigational.**
+*Recommend adopting.* R3 asks only for name and information. A card showing live
+signal — silo count, total capacity and current occupancy, open alerts, a
+"needs attention" badge — turns the selector from a speed bump into a daily
+triage screen. Without this, an Admin who logs in three times a day pays a click
+each time for no information gain.
+
+**S3 — ~~Auto-skip the selector for single-location Admins.~~ WITHDRAWN.**
+*Overruled — see Q1.* This proposed skipping the chooser when an Admin has only
+one location. The decision is that the selector is **always shown**, displaying
+the single card (R15). Recorded rather than deleted so the question is not raised
+a second time. The related work is now S2 — if a single-location Admin sees that
+card on every login, the card must carry enough live signal to be worth the
+click.
+
+**S4 — Put a location switcher in the app header.**
+*Recommend adopting — now supported by the Q4 clarification.* R8 requires the Admin to go back to change location.
+Forcing a return to a full-screen chooser on every switch is slow. A compact
+switcher in the header — showing the active location at all times — both speeds
+this up and keeps the current scope permanently visible, which materially
+reduces the risk of misreading one site's numbers as another's.
+
+**S5 — Show the active location prominently on the dashboard itself.**
+*Recommend adopting.* The main defence against a user misattributing data is not
+technical, it is visual. A persistent, unmissable location label on the scoped
+dashboard is cheap and directly serves the intent behind R7.
+
+**S6 — Encode the selected location in the URL.**
+*Recommend adopting.* This makes a scoped dashboard linkable and shareable
+("look at Karachi's numbers"), survives refresh, and gives the switcher clean
+back/forward behaviour. It also answers part of Q4 without needing a stored
+preference.
+
+**S7 — Handle the empty and partial states.**
+*Recommend adopting.* Not covered by the specification: an Admin whose plan
+allows warehouses but who has provisioned none yet, a location with warehouses
+but no silos, and an Admin whose plan warehouse limit is already reached. Each
+needs a defined screen.
+
+### 6.2 Technical suggestions
+
+**S8 — Consolidate scope resolution into one helper before adding warehouse
+scoping.**
+*Strongly recommend.* Ten files under `src/lib/` currently resolve tenant scope
+independently, via a locally redefined `resolveTenantAdminId()` or a direct
+`get_tenant_admin_id()` RPC. There is no shared chokepoint, so adding a warehouse
+filter means ten separate edits with ten chances to miss one — and a missed one
+is a silent data leak, the exact failure R7 forbids.
+
+`src/lib/page-scope.server.ts` already defines the right abstraction
+(`PageScope`, with platform/tenant modes and impersonation handling) and
+currently has **zero call sites**. Suggest reviving it, extending it with a
+warehouse dimension, and routing all scope resolution through it. This converts
+the audit from "find every query" into "find every scope resolution."
+
+**S9 — Treat the query audit as the main body of work.**
+*Recommend adopting.* 33 files reference `warehouse_id` today. Some dashboard
+queries — the silo and actuator queries in `dashboard-extras.functions.ts`
+among them — carry no application-level tenant filter at all and rely entirely on
+row-level security. Every such query needs to either take the warehouse filter or
+be explicitly annotated as intentionally account-wide. The card screen is a small
+piece of work; this is not.
+
+**S10 — Do not rely on RLS to enforce location boundaries.**
+*Important.* Row-level security currently scopes by tenant — an Admin
+legitimately owns every warehouse in their account, so **RLS will not stop one
+location's rows reaching another location's view.** Location segregation is an
+application-layer guarantee unless new policies are added. This should be a
+conscious, recorded decision rather than an assumption, because the natural
+expectation is that the database is protecting us here, and it is not.
+
+**S11 — Consider database-level enforcement as a follow-up.**
+*Recommend deferring, not dropping.* If segregation must be guaranteed rather
+than trusted, a session-variable-driven policy predicate would enforce it below
+the application. Suggest shipping the application-layer version first and
+treating this as a hardening pass, with S10 recorded as an accepted risk in the
+interim.
+
+**S12 — Include the location scope in all client cache keys.**
+*Strongly recommend — now load-bearing.* R16 requires that switching locations
+does not discard loaded data, which means per-location results must coexist in
+the cache rather than overwrite each other. Scoped keys are what make that
+possible; they are simultaneously what prevents one location's cached rows being
+served for another. Getting this wrong breaks R16 and R7 at once. If React Query keys do not include the active location,
+switching sites will serve the previous site's cached data — producing exactly
+the cross-contamination R7 forbids, with no server-side bug to find. This is an
+easy defect to introduce and an unpleasant one to diagnose.
+
+**S13 — Normalise city values before grouping.**
+*Recommend adopting.* Warehouse location data is stored as JSONB with `city`,
+`address`, and `description` keys all in circulation. Grouping cards on a raw
+value will split one city into several cards where the data is inconsistent.
+Existing migrations already normalise this for warehouse deduplication —
+the card grouping should use the same normalisation rather than a second,
+divergent one.
+
+**S14 — Reuse the existing region-grouping component.**
+*Recommend adopting.* `MultiRegionWarehousesView.tsx` already groups an Admin's
+warehouses by region and renders per-warehouse detail. The card selector should
+lift and restyle this rather than reimplement the grouping logic, which avoids a
+second source of truth for how locations are derived.
+
+**S15 — Add regression tests specifically for cross-location bleed.**
+*Strongly recommend.* Given R7 is the defining constraint, it should be enforced
+by tests, not review. Suggest fixtures with two warehouses in two cities under
+one Admin, asserting that every scoped endpoint returns only the selected
+location's rows. This is the only mechanism that will keep the guarantee true as
+other work lands.
+
+### 6.3 AI/ML suggestions
+
+**S16 — Start with per-location metrics on the shared model.**
+*Recommend adopting — Q3 remains open, making this the safe default.* Predictions are already written with a
+warehouse reference, so aggregating performance by location is a reporting change
+rather than a modelling one. This delivers the visible half of R9 quickly and
+lets the far larger question of per-site training be scoped separately on
+evidence.
+
+**S17 — Show cross-location model comparison.**
+*Recommend adopting.* The stated rationale for R9 is that different datasets
+produce different results. That is most useful when the differences are visible
+side by side — a comparison view answers "why is Karachi's accuracy lower?",
+which per-location metrics in isolation cannot.
+
+**S18 — Guard against thin-data locations.**
+*Recommend adopting.* A newly provisioned site will have little history, so its
+metrics will be volatile or meaningless. Per-location figures should carry a
+sample-size indicator and suppress or caveat results below a threshold, rather
+than presenting an unreliable number with the same confidence as an established
+site's.
+
+### 6.4 Delivery suggestions
+
+**S19 — Sequence this against the in-flight dashboard PR.**
+*Act on this before starting.* PR #52 modifies `AdminDashboard.tsx`,
+`DashboardBlocks.tsx`, `RangeChip.tsx`, `DispatchSaleWizard.tsx`,
+`RevenueSection.tsx`, and `BatchLifecycleActions.tsx` — all of which are in scope
+for this work, and all of which have already been rewritten on `abdullah_dev`.
+Both branches are currently green and awaiting review. Whichever merges second
+will conflict substantially. **Agree a merge order before this work starts** —
+this is the largest schedule risk and it is entirely avoidable.
+
+**S20 — Ship behind a feature flag.**
+*Recommend adopting.* The change alters the post-login landing for every Admin.
+A flag allows the selector to be enabled for one account first and rolled back
+instantly without a redeploy if segregation problems surface in production.
+
+**S21 — Stage the delivery.**
+*Recommend adopting.* Suggested order: (1) scope consolidation and query audit,
+(2) selector and switcher, (3) per-location ML metrics, (4) database-level
+hardening. Putting the audit first means the UI is built on a scoping model that
+is already trustworthy, rather than retrofitting correctness underneath a
+shipped screen.
+
+---
+
+## 7. Actions
+
+Carried forward from revision 1, with resolved items closed.
+
+| # | Action | Owner | Status |
+|---|---|---|---|
+| 1 | Study the requirement and determine whether it is implementable | Abdullah | Done — see §6 |
+| 2 | Give an explicit go / no-go on taking the task | Abdullah | **Open** |
+| 3 | Confirm Technician role behaviour | — | Closed — deferred (Q5) |
+| 4 | Resolve Q1, Q4, Q6 | — | Closed |
+| 5 | Confirm nothing further was decided in the planning meeting | Abdullah → lead | **Open** |
+| 6 | Agree a merge order against PR #52 (S19) | Abdullah → lead | **Open** — see note below |
+| 7 | Decide on the "All locations" roll-up (S1) | Abdullah → lead | **Open** |
+| 8 | Confirm segregation is application-layer, not database-enforced (S10) | Abdullah → lead | **Open** |
+| 9 | **Resolve Q3 — per-location models vs. per-location metrics** | Abdullah → lead | **Open — blocks Phase 3 scoping** |
+| 10 | Settle Q7 — do billing/subscription views stay account-wide? | Abdullah → lead | **Open — blocks the query audit** |
+| 11 | Establish the plan user count from the plan definitions (Q8) | Abdullah | **Open** |
+| 12 | Decide and record the Q2 card model (city vs. warehouse) | Abdullah | **Open — delegated** |
+| 13 | Apply the one-manager-per-warehouse rule (R13) to existing code, not just this feature | Abdullah | **Open** |
+| 14 | Review outstanding intern work and agree how it continues | Abdullah → lead | **Open** |
+
+**On action 6.** The merge-order risk against PR #52 was raised and came back as
+not a particular concern. That response should be treated with care: both
+branches remain green, unreviewed, and touching the same six dashboard files, so
+the conflict itself has not gone away — only the concern about it. Recommend
+confirming explicitly rather than assuming the risk was assessed and dismissed.
+
+**On action 13.** R13 was given as a platform-wide rule covering existing work,
+which makes it wider than this feature. Worth scoping separately before it is
+absorbed silently into this task.
+
+Suggestions S2, S4–S9, S11–S18, and S20–S21 are implementation-level and do not
+need sign-off; they are recorded so the decisions behind them are visible. S3 has
+been withdrawn.
+
+---
+
+## 10. Delivery record
+
+Implemented on `abdullah_dev` (PR #55).
+
+| Requirement | Status | Where |
+|---|---|---|
+| R1, R3–R6 | Done | `LocationPicker`, `listAdminLocations`, `location-scope.ts` |
+| R7 | Done | 62 queries scoped across every location-dependent page |
+| R8, R16 | Done | `LocationSwitcher`, `?loc=` param, scope-keyed caches |
+| R9 | Done (metrics-first, **per warehouse**) | `getMLModels` scoped to one warehouse; per-site training not attempted |
+| R10–R12, R14 | Done | Role gating in `LocationScopeGate`; `platform.*` excluded |
+| R15 | Done | Picker shown for single-location admins |
+| R17 | Done | Plan allowance on the picker via `max_warehouses` |
+| R2 | Done | `PlanExpiryBanner` persists past expiry and is non-dismissable there; `PlanExpiredPrompt` routes to `/plan-management`. No block, no sign-out. Pending-approval no longer exists as a state (`20260715185932`). |
+| R13 | Done | One manager per warehouse, enforced in `updateWarehouseTeam`. Shared managers rejected with a clear message; becomes an explicit feature only if a customer needs it. |
+
+### Design decisions taken
+
+- **Q2 (closed):** two levels — city cards, then the warehouses inside. The
+  **warehouse is the primary scope**: it is what every location-dependent table
+  keys on and what model performance is measured against. A city with one
+  warehouse skips the second level.
+- **Failing closed:** an unknown or stale `?loc=` resolves to an **empty**
+  scope, never the tenant-wide one. RLS gives no backstop here because the
+  admin genuinely owns every warehouse, so a widening bug would look like
+  authorised access.
+- **Scope resolved server-side** from the caller's own warehouses rather than
+  from ids supplied by the client.
+- **Deliberately account-wide:** `subscriptions`, `profiles`, `buyers`, and all
+  `platform.*` views. Each is annotated in code with the reason.
+
+### Known limitations
+
+- ~~Test coverage is unit-level only.~~ Closed. S15 is satisfied by
+  `tests/integration/location-isolation.test.ts`, which resolves real scopes
+  against the database and asserts that two warehouses of one tenant return
+  disjoint silos, batches, alerts, dispatches and actuators; that a foreign
+  tenant's warehouse id is refused; and that an unknown id fails closed rather
+  than widening. It runs under a **service-role** client with RLS bypassed, so
+  it proves the segregation is application-layer (S10) rather than borrowed from
+  the database. It discovers its fixtures and skips — visibly — when the data
+  is absent, and names the warehouses it used so a green run cannot be mistaken
+  for one that tested nothing.
+- No UI-level verification. The integration test covers the query layer; it says
+  nothing about whether a route or section component passes the scope through,
+  which is where two of the three defects in §12 actually lived.
+- Location data quality is poor in places. The picker now refuses obvious junk,
+  but values a person genuinely typed (`abcd`, a bare street address) still
+  appear as city names because nothing can distinguish them from a real place.
+  Worth a data cleanup separately.
+
+---
+
+## 11. Verification — SUPERSEDED, see §13
+
+> **This section's evidence does not stand.** It was gathered through "View as",
+> and impersonation never reaches the server, so every figure below is the
+> platform-wide view rather than one tenant's — including the "six locations",
+> which is the platform's city count. Retained unedited as the record of what
+> was checked and believed at the time. Isolation is proven instead by
+> `tests/integration/location-isolation.test.ts`.
+
+Checked against the running app, signed in as super admin and using the
+platform's own "View as" to reach a tenant with warehouses in six locations.
+
+| Check | Result |
+|---|---|
+| Location picker | Six cities, real silo/capacity/utilisation figures |
+| City with multiple warehouses | Drill-down lists them separately |
+| Scoped dashboard | Opens on `?loc=…&wh=…` |
+| Header switcher | Current city's warehouses first, then all cities |
+| Empty state | Renders for a tenant with no warehouses |
+| Super admin | No picker, no switcher (R10) |
+| Pending role | Platform user filter reads "Pending (0)" |
+
+**Isolation, the constraint the whole feature exists for.** Two warehouses in
+the *same* city:
+
+| | Lahore — F744F0 | Lahore-125 farm road |
+|---|---|---|
+| Active silos | 2 | 1 |
+| Total grain | 6,000 kg | 0 |
+| Health score | 50 | 35 |
+
+Separate data, switching instantly, no bleed.
+
+### Defects found and fixed
+
+1. **Impersonated tenants saw no locations.** `useIsSuperAdmin` reports the real
+   role, so the scope gate treated an impersonating super admin as a super
+   admin while the dashboard treated them as an admin. The two disagreed and
+   the picker was always empty.
+2. **Junk cities on the picker.** `deriveCity` accepted any string, so a
+   warehouse named `"Warehouse — A"` produced a city called "Warehouse", and a
+   latitude in the city field produced one called "33.607377".
+3. **Silo rows collided.** A duplicated progress bar and stacked blocks inside
+   a horizontal flex overlapped the Sell and View buttons at panel width.
+
+None of the three were caught by types, lint, tests or the build.
+
+---
+
+## 12. Second scoping sweep — the analytical pages
+
+The first pass covered the operational pages. The five analytical ones still
+read the whole tenant while the header switcher claimed a single warehouse, so
+the figures on them contradicted the pages beside them.
+
+| Page | Server function | Scoped by |
+|---|---|---|
+| Analytics | `getAnalyticsOverview` | `warehouse_id` on batches, alerts, silos and readings |
+| Intelligence — predictions | `getSiloPredictions` | `warehouse_id` on silos |
+| Intelligence — ML models | `getMLModels` | `warehouse_id` on readings |
+| Attention | `getAttentionQueue` | silos and alerts by warehouse; devices and actuators by silo |
+| Revenue / Business | `getRevenueOverview` | dispatches by warehouse, invoices and payments by dispatch |
+
+Three details worth recording:
+
+- **Invoices and payments carry no warehouse.** They point at a dispatch, which
+  does. The scope narrows dispatches first and the resulting ids narrow the
+  other two. A location with no dispatches must yield **no** invoices — the
+  empty case is filtered explicitly rather than left to fall through to
+  "unfiltered", which would have shown every invoice in the account.
+- **Heartbeats and actuator commands carry no warehouse either.** They hang off
+  `sensor_devices` and `actuators`, which key on `silo_id`. The two counters on
+  the attention page (`offlineDeviceCount`, `failedCommandCount`) are resolved
+  through those ids; left unscoped they described the whole tenant while the
+  rows beneath them described one warehouse.
+- **Every call site, not just the route.** `getMLModels`,
+  `getAnalyticsOverview`, `getSiloPredictions` and `getRevenueOverview` are each
+  called from a section component as well as its route. Scoping the route alone
+  leaves the component serving the account-wide figure, and the shared query key
+  then hands one location's cache to another. `MLModelsSection` was also sending
+  only `loc`, so choosing a single warehouse silently fell back to its whole
+  city.
+
+Verified by `tsc`, `eslint` and the unit tests; the same in-browser isolation
+check as §11 still needs running against these five pages.
+
+---
+
+## 13. Impersonation does not reach the server — and what that costs §11
+
+Found while re-checking §11 in the browser on 2026-08-27.
+
+Signed in as super admin and using "View as" to reach a tenant with 4
+warehouses in 2 cities, the location picker showed **6 cities and all 9
+warehouses in the database**, including four belonging to other tenants.
+Drilling into `islamabad` — another tenant's city — rendered their warehouses by
+name and id.
+
+**The cause is not a leak past a check. There is no check to pass.**
+`startImpersonation` verifies the target and returns; its own comment says the
+state is stored client-side, and it lives in `localStorage` under
+`gh_impersonation_session`. Across the whole repo and every migration, the
+string `active_session` appears exactly once — in `page-scope.server.ts`, where
+it is **read**. Nothing writes it.
+
+So `resolvePageScope`'s impersonation branch is dead code. While "viewing as" a
+tenant, every server function still runs as the super admin and resolves to
+`{ scope: "platform", adminId: null }`. The picker showed nine warehouses
+because a super admin is entitled to nine.
+
+### What this means for §11
+
+§11 records isolation as "confirmed by hand … using the platform's own 'View
+as' to reach a tenant with warehouses in six locations". Six is the
+platform-wide city count, not a tenant's. That check was reading super-admin
+platform data throughout, so it does not establish tenant isolation. The
+previous sweep's defect 1 was fixed on the client — the picker renders under
+impersonation — but the server side was never wired up.
+
+**No location-scoped page can be verified through "View as".** Verification
+needs a real admin login.
+
+### Not fixed here
+
+Making impersonation server-authoritative — writing a session row on start,
+clearing it on stop, deciding expiry and staleness — changes how support access
+works and belongs with the lead, not inside a scoping task.
+
+What *was* done: `resolveLocationScope` and `listAdminLocations` now filter on
+the resolved tenant explicitly instead of relying on RLS, and `userId` is a
+required argument so the compiler forces every call site to resolve a tenant.
+For a real admin this is redundant with RLS. It becomes load-bearing the moment
+impersonation reaches the server. **It does not fix the behaviour above** — on
+that path `adminId` is null and the filter is skipped. Confirmed in the browser:
+the picker still shows all six cities.
+
+---
+
+## 14. Legacy alerts with no warehouse
+
+All 10 `grain_alerts` rows carry a null `warehouse_id` **and** a null `silo_id`,
+so every one of them is excluded from every location-scoped page. Correct
+behaviour on unattributed data, but it means the attention queue and the alert
+counts read zero under any location.
+
+The three current writers (`ml-pipeline.functions.ts`,
+`sensor-offline-detector.ts`, `sync-firebase.ts`) all stamp both columns, so
+this is legacy data from before `20260720120000_multi_warehouse_support.sql`,
+not a live bug.
+
+**Only 2 of the 10 can be recovered.** `20260827120000_backfill_grain_alert_warehouse.sql`
+attributes an alert when its tenant owns exactly one warehouse — one possible
+answer, so no guessing. Dry-run against production: 2 updated, 8 left null.
+
+The remaining 8 belong to a tenant that owns **no warehouses at all**, and
+nothing on the rows points at a silo, a batch or a warehouse. They cannot be
+attributed by any rule. They are `source = 'field_incident'`,
+`alert_type = 'in-app'` — closer to an in-app notice than a silo alert, which
+suggests the real question is whether field incidents belong in `grain_alerts`
+at all rather than how to force them into a location. Worth settling separately.
+
+`silo_id` is deliberately left null even on the two that are backfilled: the
+warehouse is determined, the silo is not, and a wrong silo would put a real
+alert against the wrong row on the cockpit.
+
+---
+
+## 15. The impersonation banner outlived its session
+
+Found while trying to run the §13 follow-up as a real admin.
+
+A super admin had used "View as" earlier in the browser. After signing out and
+signing in as an ordinary admin, the banner still read **"Viewing as Nigar
+Fatima"** — and clicking Exit returned `Forbidden: super_admin only`, because
+`stopImpersonation` is gated on super admin and the current user was not one.
+The banner was stuck on screen with no way to dismiss it, over an account that
+had nothing to do with it.
+
+Two causes, both fixed:
+
+- **The session was not bound to anyone.** It lives in `localStorage`, which is
+  keyed to the browser rather than the account, so it survived the sign-out.
+  `startImpersonation` now returns `startedBy` (the super admin's user id), it
+  is stored with the session, and the banner discards any session whose
+  `startedBy` is missing or does not match the current user. A session with no
+  `startedBy` predates the field and cannot be attributed, so it is treated as
+  not ours and dropped — a super admin mid-impersonation when this ships has to
+  re-enter it, which is cheaper than the banner sticking to a stranger.
+- **Exit depended on a call it did not need.** The state is client-side, so
+  clearing `localStorage` *is* the work and the server call is advisory. It now
+  clears on `onSettled` rather than `onSuccess`, so a failing or forbidden call
+  can no longer strand the banner.
+
+Verified: reloading the affected session clears the banner on its own, and the
+page renders the signed-in admin's own state.
+
+This is the same root cause as §13 — impersonation state living only in the
+browser — and fixing it does not fix that. A support user's "View as" still
+gives them platform scope on the server.

@@ -22,7 +22,11 @@ export const DEFAULT_MOBILE_SETTINGS: MobileSettingsShape = {
   max_sync_page_size: 1000,
   heartbeat_interval_seconds: 300,
   uploads: {
-    install_photo: { bucket: "insurance-attachments", max_mb: 10, allowed_mime: ["image/jpeg", "image/png"] },
+    install_photo: {
+      bucket: "insurance-attachments",
+      max_mb: 10,
+      allowed_mime: ["image/jpeg", "image/png"],
+    },
   },
   feature_flags: {},
   deep_link: { scheme: "grainhero", universal_host: "app.grainhero.com" },
@@ -32,8 +36,13 @@ export const getMobileSettings = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { data } = await context.supabase
-      .from("platform_settings").select("config").eq("id", "singleton").maybeSingle();
-    const cfg = ((data?.config ?? {}) as Record<string, unknown>).mobile as Partial<MobileSettingsShape> | undefined;
+      .from("platform_settings")
+      .select("config")
+      .eq("id", "singleton")
+      .maybeSingle();
+    const cfg = ((data?.config ?? {}) as Record<string, unknown>).mobile as
+      | Partial<MobileSettingsShape>
+      | undefined;
     return { settings: { ...DEFAULT_MOBILE_SETTINGS, ...(cfg ?? {}) } as MobileSettingsShape };
   });
 
@@ -44,10 +53,14 @@ const schema: z.ZodType<MobileSettingsShape> = z.object({
   sync_page_size: z.number().int().positive(),
   max_sync_page_size: z.number().int().positive(),
   heartbeat_interval_seconds: z.number().int().positive(),
-  uploads: z.record(z.string(), z.object({
-    bucket: z.string(), max_mb: z.number().positive(),
-    allowed_mime: z.array(z.string()),
-  })),
+  uploads: z.record(
+    z.string(),
+    z.object({
+      bucket: z.string(),
+      max_mb: z.number().positive(),
+      allowed_mime: z.array(z.string()),
+    }),
+  ),
   feature_flags: z.record(z.string(), z.boolean()),
   deep_link: z.object({ scheme: z.string(), universal_host: z.string() }),
 }) as z.ZodType<MobileSettingsShape>;
@@ -59,7 +72,10 @@ export const updateMobileSettings = createServerFn({ method: "POST" })
     const { isSuperAdmin } = await import("./rbac.server");
     if (!(await isSuperAdmin(context.supabase, context.userId))) throw new Error("Forbidden");
     const { data: existing } = await context.supabase
-      .from("platform_settings").select("config").eq("id", "singleton").maybeSingle();
+      .from("platform_settings")
+      .select("config")
+      .eq("id", "singleton")
+      .maybeSingle();
     const cfg = (existing?.config ?? {}) as Record<string, unknown>;
     cfg.mobile = data;
     const { error } = await context.supabase

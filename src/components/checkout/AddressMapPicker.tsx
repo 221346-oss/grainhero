@@ -18,7 +18,9 @@ function loadMaps(): Promise<typeof google> {
   if (window.google?.maps) return Promise.resolve(window.google);
   if (window.__ghMapsLoading) return window.__ghMapsLoading;
   const key = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY as string | undefined;
-  const channel = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_ID as string | undefined;
+  const channel = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_ID as
+    | string
+    | undefined;
   if (!key) return Promise.reject(new Error("Google Maps browser key missing"));
   window.__ghMapsLoading = new Promise<typeof google>((resolve, reject) => {
     window.__ghInitMap = () => {
@@ -67,39 +69,52 @@ export function AddressMapPicker({ value, onChange, defaultCenter }: Props) {
   const markerRef = useRef<google.maps.Marker | null>(null);
   const sessionTokenRef = useRef<google.maps.places.AutocompleteSessionToken | null>(null);
   const [query, setQuery] = useState(value.address ?? "");
-  const [suggestions, setSuggestions] = useState<Array<{ placeId: string; primary: string; secondary: string }>>([]);
+  const [suggestions, setSuggestions] = useState<
+    Array<{ placeId: string; primary: string; secondary: string }>
+  >([]);
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState<"idle" | "loading" | "error">("loading");
   const [error, setError] = useState<string | null>(null);
   const pickingRef = useRef(false);
 
-  const emit = useCallback((address: string, lat: number | null, lng: number | null, comps?: google.maps.GeocoderAddressComponent[]) => {
-    let city: string | undefined;
-    let country: string | undefined;
-    for (const c of comps ?? []) {
-      if (c.types.includes("locality")) city = c.long_name;
-      else if (!city && c.types.includes("administrative_area_level_2")) city = c.long_name;
-      if (c.types.includes("country")) country = c.long_name;
-    }
-    onChange({ address, lat, lng, city, country });
-  }, [onChange]);
+  const emit = useCallback(
+    (
+      address: string,
+      lat: number | null,
+      lng: number | null,
+      comps?: google.maps.GeocoderAddressComponent[],
+    ) => {
+      let city: string | undefined;
+      let country: string | undefined;
+      for (const c of comps ?? []) {
+        if (c.types.includes("locality")) city = c.long_name;
+        else if (!city && c.types.includes("administrative_area_level_2")) city = c.long_name;
+        if (c.types.includes("country")) country = c.long_name;
+      }
+      onChange({ address, lat, lng, city, country });
+    },
+    [onChange],
+  );
 
-  const reverseGeocode = useCallback(async (lat: number, lng: number) => {
-    if (!window.google) return;
-    const geocoder = new window.google.maps.Geocoder();
-    try {
-      const res = await geocoder.geocode({ location: { lat, lng } });
-      const first = res.results?.[0];
-      if (first) {
-        setQuery(first.formatted_address);
-        emit(first.formatted_address, lat, lng, first.address_components);
-      } else {
+  const reverseGeocode = useCallback(
+    async (lat: number, lng: number) => {
+      if (!window.google) return;
+      const geocoder = new window.google.maps.Geocoder();
+      try {
+        const res = await geocoder.geocode({ location: { lat, lng } });
+        const first = res.results?.[0];
+        if (first) {
+          setQuery(first.formatted_address);
+          emit(first.formatted_address, lat, lng, first.address_components);
+        } else {
+          emit(`${lat.toFixed(6)}, ${lng.toFixed(6)}`, lat, lng);
+        }
+      } catch {
         emit(`${lat.toFixed(6)}, ${lng.toFixed(6)}`, lat, lng);
       }
-    } catch {
-      emit(`${lat.toFixed(6)}, ${lng.toFixed(6)}`, lat, lng);
-    }
-  }, [emit]);
+    },
+    [emit],
+  );
 
   // Initialize map
   useEffect(() => {
@@ -107,9 +122,10 @@ export function AddressMapPicker({ value, onChange, defaultCenter }: Props) {
     loadMaps()
       .then((g) => {
         if (cancelled || !mapEl.current) return;
-        const initialCenter = value.lat != null && value.lng != null
-          ? { lat: value.lat, lng: value.lng }
-          : defaultCenter ?? DEFAULT_CENTER;
+        const initialCenter =
+          value.lat != null && value.lng != null
+            ? { lat: value.lat, lng: value.lng }
+            : (defaultCenter ?? DEFAULT_CENTER);
         const map = new g.maps.Map(mapEl.current, {
           center: initialCenter,
           zoom: value.lat != null ? 15 : 6,
@@ -142,7 +158,9 @@ export function AddressMapPicker({ value, onChange, defaultCenter }: Props) {
         setStatus("error");
         setError(e.message);
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -160,7 +178,16 @@ export function AddressMapPicker({ value, onChange, defaultCenter }: Props) {
             fetchAutocompleteSuggestions: (req: {
               input: string;
               sessionToken: google.maps.places.AutocompleteSessionToken;
-            }) => Promise<{ suggestions: Array<{ placePrediction?: { placeId: string; text?: { text: string }; mainText?: { text: string }; secondaryText?: { text: string } } }> }>;
+            }) => Promise<{
+              suggestions: Array<{
+                placePrediction?: {
+                  placeId: string;
+                  text?: { text: string };
+                  mainText?: { text: string };
+                  secondaryText?: { text: string };
+                };
+              }>;
+            }>;
           };
         };
         if (!places.AutocompleteSuggestion || !sessionTokenRef.current) return;
@@ -194,14 +221,16 @@ export function AddressMapPicker({ value, onChange, defaultCenter }: Props) {
     setQuery(label);
     // Fetch place details via legacy Places lib for coordinates (works with browser key)
     // Use new Place API
-    const Place = (window.google.maps.places as unknown as {
-      Place?: new (o: { id: string }) => {
-        fetchFields: (o: { fields: string[] }) => Promise<void>;
-        location?: { lat: () => number; lng: () => number };
-        formattedAddress?: string;
-        addressComponents?: google.maps.GeocoderAddressComponent[];
-      };
-    }).Place;
+    const Place = (
+      window.google.maps.places as unknown as {
+        Place?: new (o: { id: string }) => {
+          fetchFields: (o: { fields: string[] }) => Promise<void>;
+          location?: { lat: () => number; lng: () => number };
+          formattedAddress?: string;
+          addressComponents?: google.maps.GeocoderAddressComponent[];
+        };
+      }
+    ).Place;
     if (!Place) return;
     const place = new Place({ id: placeId });
     await place.fetchFields({ fields: ["location", "formattedAddress", "addressComponents"] });
@@ -216,7 +245,8 @@ export function AddressMapPicker({ value, onChange, defaultCenter }: Props) {
     setQuery(addr);
     emit(addr, lat, lng, place.addressComponents);
     // Refresh session token after selection (billing best-practice)
-    if (window.google) sessionTokenRef.current = new window.google.maps.places.AutocompleteSessionToken();
+    if (window.google)
+      sessionTokenRef.current = new window.google.maps.places.AutocompleteSessionToken();
   };
 
   // Manual fallback: commits whatever the user typed as the address, with no
@@ -240,7 +270,9 @@ export function AddressMapPicker({ value, onChange, defaultCenter }: Props) {
         markerRef.current?.setPosition({ lat: latitude, lng: longitude });
         reverseGeocode(latitude, longitude);
       },
-      () => { /* denied */ },
+      () => {
+        /* denied */
+      },
       { enableHighAccuracy: true, timeout: 8000 },
     );
   };
@@ -255,10 +287,12 @@ export function AddressMapPicker({ value, onChange, defaultCenter }: Props) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => suggestions.length && setOpen(true)}
-            onBlur={() => setTimeout(() => {
-              setOpen(false);
-              if (!pickingRef.current) commitManualAddress();
-            }, 150)}
+            onBlur={() =>
+              setTimeout(() => {
+                setOpen(false);
+                if (!pickingRef.current) commitManualAddress();
+              }, 150)
+            }
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
@@ -280,7 +314,7 @@ export function AddressMapPicker({ value, onChange, defaultCenter }: Props) {
           </button>
         </div>
         {open && suggestions.length > 0 && (
-          <div className="absolute z-20 mt-1 w-full rounded-md border bg-popover text-popover-foreground shadow-lg max-h-72 overflow-auto">
+          <div className="absolute z-20 mt-1 w-full rounded-md bg-popover text-popover-foreground shadow-lg max-h-72 overflow-auto">
             {suggestions.map((s) => (
               <button
                 key={s.placeId}
@@ -288,14 +322,18 @@ export function AddressMapPicker({ value, onChange, defaultCenter }: Props) {
                 onMouseDown={(e) => {
                   e.preventDefault();
                   pickingRef.current = true;
-                  pickSuggestion(s.placeId, s.primary, s.secondary).finally(() => { pickingRef.current = false; });
+                  pickSuggestion(s.placeId, s.primary, s.secondary).finally(() => {
+                    pickingRef.current = false;
+                  });
                 }}
                 className="w-full text-left px-3 py-2 hover:bg-accent flex items-start gap-2 border-b last:border-b-0"
               >
                 <MapPin className="h-4 w-4 mt-0.5 text-emerald-600 shrink-0" />
                 <div className="min-w-0">
                   <p className="text-sm font-medium truncate">{s.primary}</p>
-                  {s.secondary && <p className="text-xs text-muted-foreground truncate">{s.secondary}</p>}
+                  {s.secondary && (
+                    <p className="text-xs text-muted-foreground truncate">{s.secondary}</p>
+                  )}
                 </div>
               </button>
             ))}
@@ -303,7 +341,7 @@ export function AddressMapPicker({ value, onChange, defaultCenter }: Props) {
         )}
       </div>
 
-      <div className="relative rounded-lg overflow-hidden border" style={{ height: 300 }}>
+      <div className="relative rounded-lg overflow-hidden" style={{ height: 300 }}>
         <div ref={mapEl} className="absolute inset-0 bg-muted" />
         {status === "loading" && (
           <div className="absolute inset-0 flex items-center justify-center bg-muted/60 text-sm text-muted-foreground">
@@ -313,8 +351,13 @@ export function AddressMapPicker({ value, onChange, defaultCenter }: Props) {
         {status === "error" && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-muted/60 p-4 text-center">
             <p className="text-sm text-red-600">Couldn't load map: {error}</p>
-            <p className="text-xs text-muted-foreground max-w-xs">No problem — just type your address in the box above and continue. You won't need the map to finish checkout.</p>
-            <Button size="sm" variant="outline" onClick={() => window.location.reload()}>Retry map</Button>
+            <p className="text-xs text-muted-foreground max-w-xs">
+              No problem — just type your address in the box above and continue. You won't need the
+              map to finish checkout.
+            </p>
+            <Button size="sm" variant="outline" onClick={() => window.location.reload()}>
+              Retry map
+            </Button>
           </div>
         )}
       </div>
@@ -322,7 +365,8 @@ export function AddressMapPicker({ value, onChange, defaultCenter }: Props) {
       {value.lat != null && value.lng != null && (
         <p className="text-xs text-muted-foreground flex items-center gap-1.5">
           <MapPin className="h-3 w-3 text-emerald-600" />
-          Pinned at {value.lat.toFixed(5)}, {value.lng.toFixed(5)} — drag the marker or tap the map to fine-tune.
+          Pinned at {value.lat.toFixed(5)}, {value.lng.toFixed(5)} — drag the marker or tap the map
+          to fine-tune.
         </p>
       )}
     </div>

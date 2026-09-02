@@ -30,12 +30,7 @@ export type PlanNumericFeature =
   | "max_buyers"
   | "max_active_alert_rules";
 
-export type PlanBooleanFeature =
-  | "exports"
-  | "alerts_sms"
-  | "api"
-  | "insurance"
-  | "sso";
+export type PlanBooleanFeature = "exports" | "alerts_sms" | "api" | "insurance" | "sso";
 
 export type PlanFeature = PlanNumericFeature | PlanBooleanFeature;
 
@@ -68,7 +63,10 @@ function isNumeric(f: PlanFeature): f is PlanNumericFeature {
 type Sb = SupabaseClient<Database>;
 
 /** Server-only: resolve tenant admin id + plan id for a caller. */
-async function resolvePlan(sb: Sb, userId: string): Promise<{
+async function resolvePlan(
+  sb: Sb,
+  userId: string,
+): Promise<{
   tenantAdminId: string;
   planId: string;
   isSuper: boolean;
@@ -80,10 +78,7 @@ async function resolvePlan(sb: Sb, userId: string): Promise<{
     .maybeSingle();
   const tenantAdminId = profile?.admin_id ?? userId;
 
-  const { data: roles } = await sb
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId);
+  const { data: roles } = await sb.from("user_roles").select("role").eq("user_id", userId);
   const isSuper = (roles ?? []).some((r) => r.role === "super_admin");
 
   let planId = profile?.subscription_plan ?? null;
@@ -110,13 +105,19 @@ export async function getTenantUsage(
   feature: PlanNumericFeature,
 ): Promise<number> {
   const table =
-    feature === "max_warehouses" ? "warehouses" :
-    feature === "max_silos" ? "silos" :
-    feature === "max_batches" ? "grain_batches" :
-    feature === "max_sensors" ? "sensor_devices" :
-    feature === "max_actuators" ? "actuators" :
-    feature === "max_buyers" ? "buyers" :
-    "profiles"; // max_users
+    feature === "max_warehouses"
+      ? "warehouses"
+      : feature === "max_silos"
+        ? "silos"
+        : feature === "max_batches"
+          ? "grain_batches"
+          : feature === "max_sensors"
+            ? "sensor_devices"
+            : feature === "max_actuators"
+              ? "actuators"
+              : feature === "max_buyers"
+                ? "buyers"
+                : "profiles"; // max_users
   if (feature === "max_users") {
     const { count } = await sb
       .from("profiles")
@@ -142,7 +143,14 @@ export async function computePlanGate(
   userId: string,
   feature: PlanFeature,
   currentUsage?: number,
-): Promise<{ allowed: boolean; limit: number | boolean; used?: number; planId: string; isSuper: boolean; tenantAdminId: string }> {
+): Promise<{
+  allowed: boolean;
+  limit: number | boolean;
+  used?: number;
+  planId: string;
+  isSuper: boolean;
+  tenantAdminId: string;
+}> {
   const { tenantAdminId, planId, isSuper } = await resolvePlan(sb, userId);
   if (isSuper) {
     return { allowed: true, limit: -1, used: currentUsage, planId, isSuper, tenantAdminId };
@@ -185,7 +193,12 @@ export const getPlanGate = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const gate = await computePlanGate(context.supabase, context.userId, data.feature, data.currentUsage);
+    const gate = await computePlanGate(
+      context.supabase,
+      context.userId,
+      data.feature,
+      data.currentUsage,
+    );
     return { allowed: gate.allowed, limit: gate.limit, used: gate.used, planId: gate.planId };
   });
 
@@ -239,7 +252,7 @@ export function usePlanGate(feature: PlanFeature, currentUsage?: number) {
   return useQuery({
     queryKey: ["plan-gate", feature, currentUsage],
     queryFn: () => getPlanGate({ data: { feature, currentUsage } }),
-    staleTime: 10_000,   // reduced from 60s — gate data must be fresh after requests
+    staleTime: 10_000, // reduced from 60s — gate data must be fresh after requests
     refetchOnWindowFocus: true,
   });
 }

@@ -1,4 +1,5 @@
 # GrainHero — Migration Roadmap
+
 ## Sprint-by-Sprint Plan · Code to Write · Files to Touch · Done Definition
 
 > **Status**: Discovery only — no code modified  
@@ -44,15 +45,17 @@ graph LR
 ## 2. Sprint 0 — Critical Bug Fix (Day 1)
 
 ### Objective
+
 Fix the one-line schema bug so the analytics dashboard doesn't crash.
 
 ### Files to Modify
 
-| File | Change | Line |
-|---|---|---|
-| [analytics.functions.ts](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero-main%20(Supabase)/grainhero-main/src/lib/analytics.functions.ts) | `current_stock_kg` → `current_occupancy_kg` | **L209** |
+| File                                                                                                                                                  | Change                                      | Line     |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- | -------- |
+| [analytics.functions.ts](<file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero-main%20(Supabase)/grainhero-main/src/lib/analytics.functions.ts>) | `current_stock_kg` → `current_occupancy_kg` | **L209** |
 
 ### Done Definition
+
 - Analytics page loads without a query error
 - KPI cards show correct silo occupancy data
 
@@ -61,22 +64,23 @@ Fix the one-line schema bug so the analytics dashboard doesn't crash.
 ## 3. Sprint 1 — IoT Ingest Path (Days 2–5)
 
 ### Objective
+
 Arduino telemetry flows continuously into `sensor_readings`. Dashboard shows live data.
 
 ### Files to Create
 
-| File | Purpose |
-|---|---|
-| `supabase/functions/ingest/index.ts` | Edge Function: validate → compute → INSERT → call ML → return actuator command |
-| `mqtt_bridge.js` | Node.js: MQTT subscribe → HTTP POST to Edge Fn → publish actuator response |
-| `supabase/migrations/XXXX_voc_baseline_fn.sql` | PostgreSQL function `compute_voc_baseline(silo_id, hours)` |
+| File                                           | Purpose                                                                        |
+| ---------------------------------------------- | ------------------------------------------------------------------------------ |
+| `supabase/functions/ingest/index.ts`           | Edge Function: validate → compute → INSERT → call ML → return actuator command |
+| `mqtt_bridge.js`                               | Node.js: MQTT subscribe → HTTP POST to Edge Fn → publish actuator response     |
+| `supabase/migrations/XXXX_voc_baseline_fn.sql` | PostgreSQL function `compute_voc_baseline(silo_id, hours)`                     |
 
 ### Files to Modify
 
-| File | Change |
-|---|---|
-| [grainhero_main_final.ino](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero_main_final.ino) | Add `httpPostToEdgeFn()` alongside existing Firebase write |
-| [supabase/functions/](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero-main%20(Supabase)/grainhero-main/supabase/functions/) | Add `ingest/` subdirectory with `index.ts` |
+| File                                                                                                                                    | Change                                                     |
+| --------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| [grainhero_main_final.ino](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero_main_final.ino)                                    | Add `httpPostToEdgeFn()` alongside existing Firebase write |
+| [supabase/functions/](<file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero-main%20(Supabase)/grainhero-main/supabase/functions/>) | Add `ingest/` subdirectory with `index.ts`                 |
 
 ### Edge Function Logic Flow
 
@@ -100,6 +104,7 @@ flowchart TD
 ```
 
 ### Done Definition
+
 - `SELECT COUNT(*) FROM sensor_readings` returns > 0 after Arduino runs for 30 seconds
 - Dashboard monitoring page shows live sensor values
 - Supabase Realtime pushes to TanStack frontend on each new row
@@ -109,28 +114,29 @@ flowchart TD
 ## 4. Sprint 2 — Python ML Microservice (Days 6–9)
 
 ### Objective
+
 Real ML predictions appear in `sensor_readings.ml_risk_class`. Risk scores update in `grain_batches`.
 
 ### Files to Create
 
-| File | Purpose |
-|---|---|
-| `ml_service/main.py` | FastAPI app loading all 5 grain `.pkl` models |
+| File                          | Purpose                                                             |
+| ----------------------------- | ------------------------------------------------------------------- |
+| `ml_service/main.py`          | FastAPI app loading all 5 grain `.pkl` models                       |
 | `ml_service/requirements.txt` | `fastapi uvicorn joblib xgboost lightgbm scikit-learn numpy pandas` |
-| `ml_service/Dockerfile` | For Fly.io deployment |
-| `ml_service/test_predict.py` | Unit tests for all 5 grain types + edge cases |
+| `ml_service/Dockerfile`       | For Fly.io deployment                                               |
+| `ml_service/test_predict.py`  | Unit tests for all 5 grain types + edge cases                       |
 
 ### Existing ML Files (Reference)
 
-| File | Use |
-|---|---|
+| File                                                                                                                  | Use                                |
+| --------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
 | [ml/smartbin_predict.py](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBackend-main/ml/smartbin_predict.py) | Port prediction logic into FastAPI |
-| [ml/rice_ensemble.pkl](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBackend-main/ml/) | Load in `ml_service/main.py` |
-| [ml/wheat_ensemble.pkl](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBackend-main/ml/) | Load in `ml_service/main.py` |
-| [ml/maize_ensemble.pkl](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBackend-main/ml/) | Load in `ml_service/main.py` |
-| [ml/sorghum_ensemble.pkl](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBackend-main/ml/) | Load in `ml_service/main.py` |
-| [ml/barley_ensemble.pkl](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBackend-main/ml/) | Load in `ml_service/main.py` |
-| [ml/rice_model_metadata.json](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBackend-main/ml/) | Feature names, thresholds |
+| [ml/rice_ensemble.pkl](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBackend-main/ml/)                      | Load in `ml_service/main.py`       |
+| [ml/wheat_ensemble.pkl](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBackend-main/ml/)                     | Load in `ml_service/main.py`       |
+| [ml/maize_ensemble.pkl](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBackend-main/ml/)                     | Load in `ml_service/main.py`       |
+| [ml/sorghum_ensemble.pkl](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBackend-main/ml/)                   | Load in `ml_service/main.py`       |
+| [ml/barley_ensemble.pkl](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBackend-main/ml/)                    | Load in `ml_service/main.py`       |
+| [ml/rice_model_metadata.json](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBackend-main/ml/)               | Feature names, thresholds          |
 
 ### Deploy Command
 
@@ -147,6 +153,7 @@ curl -X POST https://grainhero-ml.fly.dev/predict \
 ```
 
 ### Done Definition
+
 - `SELECT ml_risk_class FROM sensor_readings ORDER BY timestamp DESC LIMIT 1` returns `Safe`, `Risky`, or `Spoiled` (not NULL)
 - All 5 grain types tested end-to-end
 - P95 ML service latency < 2 seconds from Edge Function
@@ -156,24 +163,25 @@ curl -X POST https://grainhero-ml.fly.dev/predict \
 ## 5. Sprint 3 — Alert Engine + Fan Control + FCM (Days 10–13)
 
 ### Objective
+
 Alerts auto-fire on threshold breach. Fan physically responds to ML prediction. Phone gets FCM push.
 
 ### Files to Create
 
-| File | Purpose |
-|---|---|
-| `supabase/migrations/XXXX_alert_trigger.sql` | `check_sensor_thresholds()` AFTER INSERT trigger |
-| `supabase/migrations/XXXX_pg_cron_watchdog.sql` | Device heartbeat cron job |
-| `supabase/functions/notify/index.ts` | FCM push Edge Function |
+| File                                            | Purpose                                          |
+| ----------------------------------------------- | ------------------------------------------------ |
+| `supabase/migrations/XXXX_alert_trigger.sql`    | `check_sensor_thresholds()` AFTER INSERT trigger |
+| `supabase/migrations/XXXX_pg_cron_watchdog.sql` | Device heartbeat cron job                        |
+| `supabase/functions/notify/index.ts`            | FCM push Edge Function                           |
 
 ### Files to Modify
 
-| File | Change |
-|---|---|
-| `supabase/functions/ingest/index.ts` | Add `actuator_command` computation + return in response |
-| `mqtt_bridge.js` | Read `actuator_command` from response → publish to actuator topic |
-| [monitoring.functions.ts](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero-main%20(Supabase)/grainhero-main/src/lib/monitoring.functions.ts) | Connect alert acknowledgment to actual DB records |
-| [firebase-admin.server.ts](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero-main%20(Supabase)/grainhero-main/src/lib/firebase-admin.server.ts) | Complete FCM token-based notification sending |
+| File                                                                                                                                                      | Change                                                            |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| `supabase/functions/ingest/index.ts`                                                                                                                      | Add `actuator_command` computation + return in response           |
+| `mqtt_bridge.js`                                                                                                                                          | Read `actuator_command` from response → publish to actuator topic |
+| [monitoring.functions.ts](<file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero-main%20(Supabase)/grainhero-main/src/lib/monitoring.functions.ts>)   | Connect alert acknowledgment to actual DB records                 |
+| [firebase-admin.server.ts](<file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero-main%20(Supabase)/grainhero-main/src/lib/firebase-admin.server.ts>) | Complete FCM token-based notification sending                     |
 
 ### Alert Trigger Logic
 
@@ -202,6 +210,7 @@ flowchart TD
 ```
 
 ### Done Definition
+
 - Manually insert a sensor reading with `temperature = 45.0` → `grain_alerts` gets a new row within 1 second
 - FCM push notification received on test phone within 5 seconds of alert creation
 - ESP32 fan spins up to 100% within 10 seconds of `ml_risk_class = 'Spoiled'` insert
@@ -211,26 +220,27 @@ flowchart TD
 ## 6. Sprint 4 — Business Features (Days 14–18)
 
 ### Objective
+
 Complete remaining business logic: missing tables, PDF, weather API, QR, activity logs.
 
 ### Files to Create
 
-| File | Purpose | Reference |
-|---|---|---|
-| `supabase/migrations/XXXX_missing_tables.sql` | `activity_logs`, `notification_log`, `ml_predictions_history`, `weather_readings`, `training_samples` | [models/ActivityLog.js](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBackend-main/models/ActivityLog.js) et al. |
-| `supabase/functions/generate-pdf/index.ts` | PDF generation using `pdf-lib` (Deno-compatible) | [services/pdfService.js](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBackend-main/services/) |
-| `supabase/functions/fetch-weather/index.ts` | Open-Meteo API → INSERT into `weather_readings` | [services/weatherService.js](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBackend-main/services/) |
-| `supabase/functions/generate-qr/index.ts` | QR code generation for grain batches | [routes/grainBatches.js](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBackend-main/routes/grainBatches.js) |
-| `supabase/migrations/XXXX_weather_cron.sql` | `pg_cron` job: weather every 30 min | — |
-| `supabase/migrations/XXXX_moisture_constraint.sql` | Wet grain intake gate per grain type | — |
+| File                                               | Purpose                                                                                               | Reference                                                                                                                  |
+| -------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `supabase/migrations/XXXX_missing_tables.sql`      | `activity_logs`, `notification_log`, `ml_predictions_history`, `weather_readings`, `training_samples` | [models/ActivityLog.js](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBackend-main/models/ActivityLog.js) et al. |
+| `supabase/functions/generate-pdf/index.ts`         | PDF generation using `pdf-lib` (Deno-compatible)                                                      | [services/pdfService.js](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBackend-main/services/)                   |
+| `supabase/functions/fetch-weather/index.ts`        | Open-Meteo API → INSERT into `weather_readings`                                                       | [services/weatherService.js](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBackend-main/services/)               |
+| `supabase/functions/generate-qr/index.ts`          | QR code generation for grain batches                                                                  | [routes/grainBatches.js](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBackend-main/routes/grainBatches.js)      |
+| `supabase/migrations/XXXX_weather_cron.sql`        | `pg_cron` job: weather every 30 min                                                                   | —                                                                                                                          |
+| `supabase/migrations/XXXX_moisture_constraint.sql` | Wet grain intake gate per grain type                                                                  | —                                                                                                                          |
 
 ### Files to Modify
 
-| File | Change |
-|---|---|
-| `supabase/functions/ingest/index.ts` | Wire aeration decision from `weather_readings` table |
-| [operations.functions.ts](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero-main%20(Supabase)/grainhero-main/src/lib/operations.functions.ts) | Add activity log INSERT after every significant action |
-| [ai-insights.functions.ts](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero-main%20(Supabase)/grainhero-main/src/lib/ai-insights.functions.ts) | Feed real ML data into Gemini prompt context |
+| File                                                                                                                                                      | Change                                                 |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| `supabase/functions/ingest/index.ts`                                                                                                                      | Wire aeration decision from `weather_readings` table   |
+| [operations.functions.ts](<file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero-main%20(Supabase)/grainhero-main/src/lib/operations.functions.ts>)   | Add activity log INSERT after every significant action |
+| [ai-insights.functions.ts](<file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero-main%20(Supabase)/grainhero-main/src/lib/ai-insights.functions.ts>) | Feed real ML data into Gemini prompt context           |
 
 ### Weather Cron Setup
 
@@ -253,6 +263,7 @@ SELECT cron.schedule(
 ## 7. Sprint 5 — Testing & Production Deployment (Days 19–21)
 
 ### Objective
+
 Full end-to-end validation + production environment running.
 
 ### Test Checklist
@@ -293,30 +304,30 @@ Full end-to-end validation + production environment running.
 
 ## 8. What NOT to Change During Migration
 
-| Component | Keep As-Is | Reason |
-|---|---|---|
-| [grainhero_main_final.ino](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero_main_final.ino) — sensor readings | Keep existing pins + reading logic | Hardware working correctly |
-| [grainhero_main_final.ino](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero_main_final.ino) — state machine | Keep LidFanState machine | Logic is correct |
-| [ml/*.pkl](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBackend-main/ml/) | Keep existing trained models | Don't retrain until real data collected |
-| [supabase/migrations/](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero-main%20(Supabase)/grainhero-main/supabase/migrations/) | Keep existing schema | 16-table schema is correct |
-| [operations.functions.ts](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero-main%20(Supabase)/grainhero-main/src/lib/operations.functions.ts) — CRUD | Keep existing CRUD logic | Working correctly |
-| Stripe integration | Keep as-is | Working subscription billing |
-| Gemini LLM advisory | Keep as-is | Good value-add even without real ML |
-| Firebase RTDB read hook | Keep for now | Provides current live sensor display |
+| Component                                                                                                                                                      | Keep As-Is                         | Reason                                  |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- | --------------------------------------- |
+| [grainhero_main_final.ino](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero_main_final.ino) — sensor readings                                         | Keep existing pins + reading logic | Hardware working correctly              |
+| [grainhero_main_final.ino](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero_main_final.ino) — state machine                                           | Keep LidFanState machine           | Logic is correct                        |
+| [ml/\*.pkl](file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/farmHomeBackend-main/ml/)                                                                          | Keep existing trained models       | Don't retrain until real data collected |
+| [supabase/migrations/](<file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero-main%20(Supabase)/grainhero-main/supabase/migrations/>)                      | Keep existing schema               | 16-table schema is correct              |
+| [operations.functions.ts](<file:///c:/Users/Nexgen/Downloads/FYP/Grainhero/grainhero-main%20(Supabase)/grainhero-main/src/lib/operations.functions.ts>) — CRUD | Keep existing CRUD logic           | Working correctly                       |
+| Stripe integration                                                                                                                                             | Keep as-is                         | Working subscription billing            |
+| Gemini LLM advisory                                                                                                                                            | Keep as-is                         | Good value-add even without real ML     |
+| Firebase RTDB read hook                                                                                                                                        | Keep for now                       | Provides current live sensor display    |
 
 ---
 
 ## 9. Decommission Plan (Phase C — 2 Weeks After Sprint 5)
 
-| Action | When | Condition |
-|---|---|---|
-| Stop Node.js backend server | Week 3 | Zero errors in Supabase for 2 weeks |
-| Disable MongoDB Atlas cluster | Week 4 | All data confirmed in Supabase |
-| Archive `farmHomeBackend-main/` | Month 2 | Document ML code location before archiving |
-| Remove Next.js frontend from hosting | Week 3 | All users migrated to TanStack |
-| Mark `SmartBin-RiceSpoilage-main/` deprecated | Now | Add `README.md` deprecation notice |
-| Remove Firebase RTDB writes from firmware | Month 3 | After Supabase ingest path proven stable |
+| Action                                        | When    | Condition                                  |
+| --------------------------------------------- | ------- | ------------------------------------------ |
+| Stop Node.js backend server                   | Week 3  | Zero errors in Supabase for 2 weeks        |
+| Disable MongoDB Atlas cluster                 | Week 4  | All data confirmed in Supabase             |
+| Archive `farmHomeBackend-main/`               | Month 2 | Document ML code location before archiving |
+| Remove Next.js frontend from hosting          | Week 3  | All users migrated to TanStack             |
+| Mark `SmartBin-RiceSpoilage-main/` deprecated | Now     | Add `README.md` deprecation notice         |
+| Remove Firebase RTDB writes from firmware     | Month 3 | After Supabase ingest path proven stable   |
 
 ---
 
-*Document generated 2026-07-10. All file links are clickable in VS Code.*
+_Document generated 2026-07-10. All file links are clickable in VS Code._

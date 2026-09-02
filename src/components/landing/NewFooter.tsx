@@ -1,5 +1,5 @@
-import { Wheat, Mail, Phone, MapPin, Facebook, Twitter, Linkedin, Instagram } from 'lucide-react'
-import { Link } from '@tanstack/react-router'
+import { Wheat, Mail, Phone, MapPin, Facebook, Twitter, Linkedin, Instagram } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 
 export function NewFooter() {
   return (
@@ -14,8 +14,8 @@ export function NewFooter() {
               <span className="text-xl font-bold text-[#FAFAF7]">GrainHero</span>
             </div>
             <p className="text-[#FAFAF7]/70 text-sm leading-relaxed">
-              AI-powered grain storage management platform helping farmers protect their harvest
-              and maximize profits with intelligent monitoring and predictive analytics.
+              AI-powered grain storage management platform helping farmers protect their harvest and
+              maximize profits with intelligent monitoring and predictive analytics.
             </p>
             {/* Social Media */}
             <div className="flex gap-3 pt-2">
@@ -63,27 +63,44 @@ export function NewFooter() {
             <h3 className="text-[#FAFAF7] font-bold text-lg mb-4">Solutions</h3>
             <ul className="space-y-3">
               <li>
-                <Link to="/solutions/grain-storage-monitoring" className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm">
+                <Link
+                  to="/solutions/grain-storage-monitoring"
+                  className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm"
+                >
                   Grain storage monitoring
                 </Link>
               </li>
               <li>
-                <Link to="/solutions/silo-monitoring-system" className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm">
+                <Link
+                  to="/solutions/silo-monitoring-system"
+                  className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm"
+                >
                   Silo monitoring system
                 </Link>
               </li>
               <li>
-                <Link to="/solutions/grain-management-software" className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm">
+                <Link
+                  to="/solutions/grain-management-software"
+                  className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm"
+                >
                   Grain management software
                 </Link>
               </li>
               <li>
-                <Link to="/" hash="features" className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm">
+                <Link
+                  to="/"
+                  hash="features"
+                  className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm"
+                >
                   Features
                 </Link>
               </li>
               <li>
-                <Link to="/" hash="how-it-works" className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm">
+                <Link
+                  to="/"
+                  hash="how-it-works"
+                  className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm"
+                >
                   How It Works
                 </Link>
               </li>
@@ -95,27 +112,42 @@ export function NewFooter() {
             <h3 className="text-[#FAFAF7] font-bold text-lg mb-4">Company</h3>
             <ul className="space-y-3">
               <li>
-                <Link to="/about" className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm">
+                <Link
+                  to="/about"
+                  className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm"
+                >
                   About Us
                 </Link>
               </li>
               <li>
-                <Link to="/team" className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm">
+                <Link
+                  to="/team"
+                  className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm"
+                >
                   Team
                 </Link>
               </li>
               <li>
-                <Link to="/blog" className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm">
+                <Link
+                  to="/blog"
+                  className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm"
+                >
                   Resources
                 </Link>
               </li>
               <li>
-                <Link to="/guides/grain-storage" className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm">
+                <Link
+                  to="/guides/grain-storage"
+                  className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm"
+                >
                   Grain storage guide
                 </Link>
               </li>
-               <li>
-                <Link to="/contact" className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm">
+              <li>
+                <Link
+                  to="/contact"
+                  className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm"
+                >
                   Contact
                 </Link>
               </li>
@@ -127,22 +159,34 @@ export function NewFooter() {
             <h3 className="text-[#FAFAF7] font-bold text-lg mb-4">Support</h3>
             <ul className="space-y-3 mb-6">
               <li>
-                <Link to="/help" className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm">
+                <Link
+                  to="/help"
+                  className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm"
+                >
                   Help Center
                 </Link>
               </li>
               <li>
-                <Link to="/docs" className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm">
+                <Link
+                  to="/docs"
+                  className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm"
+                >
                   Documentation
                 </Link>
               </li>
               <li>
-                <Link to="/privacy" className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm">
+                <Link
+                  to="/privacy"
+                  className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm"
+                >
                   Privacy Policy
                 </Link>
               </li>
               <li>
-                <Link to="/terms" className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm">
+                <Link
+                  to="/terms"
+                  className="text-[#FAFAF7]/70 hover:text-[#2FA84F] transition-colors text-sm"
+                >
                   Terms of Service
                 </Link>
               </li>
@@ -152,7 +196,10 @@ export function NewFooter() {
             <div className="space-y-2 text-sm">
               <div className="flex items-center gap-2 text-[#FAFAF7]/70">
                 <Mail className="w-4 h-4 text-[#2FA84F]" />
-                <a href="mailto:grainhero@gmail.com" className="hover:text-[#2FA84F] transition-colors">
+                <a
+                  href="mailto:grainhero@gmail.com"
+                  className="hover:text-[#2FA84F] transition-colors"
+                >
                   grainhero@gmail.com
                 </a>
               </div>
@@ -173,13 +220,22 @@ export function NewFooter() {
               © {new Date().getFullYear()} GrainHero. All rights reserved.
             </p>
             <div className="flex gap-6 text-sm">
-              <Link to="/privacy" className="text-[#FAFAF7]/50 hover:text-[#2FA84F] transition-colors">
+              <Link
+                to="/privacy"
+                className="text-[#FAFAF7]/50 hover:text-[#2FA84F] transition-colors"
+              >
                 Privacy
               </Link>
-              <Link to="/terms" className="text-[#FAFAF7]/50 hover:text-[#2FA84F] transition-colors">
+              <Link
+                to="/terms"
+                className="text-[#FAFAF7]/50 hover:text-[#2FA84F] transition-colors"
+              >
                 Terms
               </Link>
-              <Link to="/cookies" className="text-[#FAFAF7]/50 hover:text-[#2FA84F] transition-colors">
+              <Link
+                to="/cookies"
+                className="text-[#FAFAF7]/50 hover:text-[#2FA84F] transition-colors"
+              >
                 Cookies
               </Link>
             </div>
@@ -187,5 +243,5 @@ export function NewFooter() {
         </div>
       </div>
     </footer>
-  )
+  );
 }

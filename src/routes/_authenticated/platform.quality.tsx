@@ -13,9 +13,16 @@ export const Route = createFileRoute("/_authenticated/platform/quality")({
   head: () => ({
     meta: [
       { title: "Platform · Quality — Grain Hero" },
-      { name: "description", content: "Platform · Quality workspace in the Grain Hero platform — private, sign-in required." },
+      {
+        name: "description",
+        content:
+          "Platform · Quality workspace in the Grain Hero platform — private, sign-in required.",
+      },
       { property: "og:title", content: "Platform · Quality — Grain Hero" },
-      { property: "og:description", content: "Platform · Quality workspace in the Grain Hero platform." },
+      {
+        property: "og:description",
+        content: "Platform · Quality workspace in the Grain Hero platform.",
+      },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
@@ -33,11 +40,17 @@ function QualityQueue() {
   const m = useMutation({
     mutationFn: (args: { id: string; approved: boolean }) =>
       verify({ data: { certificateId: args.id, approved: args.approved } }),
-    onSuccess: () => { toast.success("Recorded"); qc.invalidateQueries({ queryKey: ["platform-quality-queue"] }); },
+    onSuccess: () => {
+      toast.success("Recorded");
+      qc.invalidateQueries({ queryKey: ["platform-quality-queue"] });
+    },
     onError: (e: Error) => toast.error(e.message),
   });
   return (
-    <AdminPageShell title="Quality certificates" subtitle="Verify submitted batch quality certificates.">
+    <AdminPageShell
+      title="Quality certificates"
+      subtitle="Verify submitted batch quality certificates."
+    >
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm flex items-center gap-2">
@@ -48,26 +61,60 @@ function QualityQueue() {
         <CardContent className="p-0 overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="text-xs text-muted-foreground text-left border-b">
-              <tr><th className="p-3">Batch</th><th>Lab</th><th>Auto</th><th>Issued</th><th></th></tr>
+              <tr>
+                <th className="p-3">Batch</th>
+                <th>Lab</th>
+                <th>Auto</th>
+                <th>Issued</th>
+                <th></th>
+              </tr>
             </thead>
             <tbody>
-              {isLoading && <tr><td colSpan={5} className="p-6 text-center text-muted-foreground">Loading…</td></tr>}
+              {isLoading && (
+                <tr>
+                  <td colSpan={5} className="p-6 text-center text-muted-foreground">
+                    Loading…
+                  </td>
+                </tr>
+              )}
               {!isLoading && (data?.certificates?.length ?? 0) === 0 && (
-                <tr><td colSpan={5} className="p-6 text-center text-muted-foreground">Nothing pending.</td></tr>
+                <tr>
+                  <td colSpan={5} className="p-6 text-center text-muted-foreground">
+                    Nothing pending.
+                  </td>
+                </tr>
               )}
               {data?.certificates?.map((c) => (
                 <tr key={c.id as string} className="border-b hover:bg-emerald-50/30">
                   <td className="p-3 font-mono text-xs">
-                    {(c.grain_batches as { batch_id?: string } | null)?.batch_id ?? String(c.batch_id).slice(0, 8)}
+                    {(c.grain_batches as { batch_id?: string } | null)?.batch_id ??
+                      String(c.batch_id).slice(0, 8)}
                   </td>
                   <td>{(c.lab_name as string) ?? "—"}</td>
-                  <td><Badge variant="outline" className="capitalize">{c.status as string}</Badge></td>
+                  <td>
+                    <Badge variant="outline" className="capitalize">
+                      {c.status as string}
+                    </Badge>
+                  </td>
                   <td className="text-xs text-muted-foreground">
                     {c.issued_at ? new Date(c.issued_at as string).toLocaleDateString() : "—"}
                   </td>
                   <td className="space-x-2">
-                    <Button size="sm" onClick={() => m.mutate({ id: c.id as string, approved: true })} disabled={m.isPending}>Verify</Button>
-                    <Button size="sm" variant="destructive" onClick={() => m.mutate({ id: c.id as string, approved: false })} disabled={m.isPending}>Reject</Button>
+                    <Button
+                      size="sm"
+                      onClick={() => m.mutate({ id: c.id as string, approved: true })}
+                      disabled={m.isPending}
+                    >
+                      Verify
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => m.mutate({ id: c.id as string, approved: false })}
+                      disabled={m.isPending}
+                    >
+                      Reject
+                    </Button>
                   </td>
                 </tr>
               ))}

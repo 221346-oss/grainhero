@@ -7,19 +7,19 @@ switches to the real model automatically.
 
 ## What's in this folder
 
-| File | Purpose |
-|---|---|
-| `app.py` | FastAPI server exposing `POST /predict` and `GET /health`, with hot-swap + River online learning |
-| `predict.py` | Feature engineering + response contract (SHAP, storage life, trend) |
-| `model_registry.py` / `hot_swap.py` | ONNX Runtime session cache + background polling for new models from Supabase |
-| `supabase_client.py` | Async fire-and-forget sensor logging (never blocks `/predict`) |
-| `retrain_watcher.py` / `fast_retrain.py` / `nightly_retrain.py` | Background retraining processes (run separately) |
-| `convert_to_onnx.py` | Converts a freshly trained `.pkl` ensemble to `.onnx` for hot-swap |
-| `requirements.txt` | Python deps (onnxruntime, fastapi, sklearn, xgboost, lightgbm, river…) |
-| `Dockerfile` | Container recipe (Python 3.11 slim + libgomp for LGBM) |
-| `render.yaml` | One-click Render.com free web-service config |
-| `*.onnx` | Trained models per grain (~11–20 MB each, **committed to git**) |
-| `*_label_encoder.pkl` / `*_model_metadata.json` | Small helpers — committed |
+| File                                                            | Purpose                                                                                          |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `app.py`                                                        | FastAPI server exposing `POST /predict` and `GET /health`, with hot-swap + River online learning |
+| `predict.py`                                                    | Feature engineering + response contract (SHAP, storage life, trend)                              |
+| `model_registry.py` / `hot_swap.py`                             | ONNX Runtime session cache + background polling for new models from Supabase                     |
+| `supabase_client.py`                                            | Async fire-and-forget sensor logging (never blocks `/predict`)                                   |
+| `retrain_watcher.py` / `fast_retrain.py` / `nightly_retrain.py` | Background retraining processes (run separately)                                                 |
+| `convert_to_onnx.py`                                            | Converts a freshly trained `.pkl` ensemble to `.onnx` for hot-swap                               |
+| `requirements.txt`                                              | Python deps (onnxruntime, fastapi, sklearn, xgboost, lightgbm, river…)                           |
+| `Dockerfile`                                                    | Container recipe (Python 3.11 slim + libgomp for LGBM)                                           |
+| `render.yaml`                                                   | One-click Render.com free web-service config                                                     |
+| `*.onnx`                                                        | Trained models per grain (~11–20 MB each, **committed to git**)                                  |
+| `*_label_encoder.pkl` / `*_model_metadata.json`                 | Small helpers — committed                                                                        |
 
 > No large file downloads at build time — every model needed for inference is committed and shipped with the container.
 
@@ -122,12 +122,12 @@ No code change required.
 
 ## Troubleshooting
 
-| Symptom | Fix |
-|---|---|
-| `libgomp.so.1: cannot open` on boot | Already handled in the Dockerfile (`apt-get install libgomp1`). |
-| First request times out | Cold start — retry. App fallback covers it in the meantime. |
+| Symptom                             | Fix                                                                               |
+| ----------------------------------- | --------------------------------------------------------------------------------- |
+| `libgomp.so.1: cannot open` on boot | Already handled in the Dockerfile (`apt-get install libgomp1`).                   |
+| First request times out             | Cold start — retry. App fallback covers it in the meantime.                       |
 | `Killed` in Render logs during boot | Out of RAM — remove one of the two ensemble files, or upgrade to Starter ($7/mo). |
-| `predict` returns `sensor_fault` | The guardrail rejected out-of-range values — expected. |
+| `predict` returns `sensor_fault`    | The guardrail rejected out-of-range values — expected.                            |
 
 ---
 

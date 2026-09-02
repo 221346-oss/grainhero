@@ -1,32 +1,66 @@
-'use client';
+"use client";
 
 import { useState } from "react";
+import { useLocationScopeQuery } from "@/components/app/location/LocationScope";
 import { Loader2, Wrench } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { getMaintenanceOverview } from "@/lib/operations2.functions";
 import { listSensorDevices } from "@/lib/operations.functions";
-import { createMaintenanceRequest, listMaintenanceRequests } from "@/lib/maintenance-requests.functions";
+import {
+  createMaintenanceRequest,
+  listMaintenanceRequests,
+} from "@/lib/maintenance-requests.functions";
 import { getMyRole } from "@/lib/roles.functions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const emptyForm = { title: "", description: "", deviceId: "", priority: "normal" as const };
 
-function RequestMaintenanceDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
+function RequestMaintenanceDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+}) {
   const qc = useQueryClient();
   const listDevicesFn = useServerFn(listSensorDevices);
+  // Scope every location-dependent query to the active city — in the key as
+  // well as the request, so one city's rows are never served for another.
+  const { key: loc, params: locParams } = useLocationScopeQuery();
   const createFn = useServerFn(createMaintenanceRequest);
   const [form, setForm] = useState(emptyForm);
 
-  const devicesQ = useQuery({ queryKey: ["sensor-devices"], queryFn: () => listDevicesFn(), enabled: open });
-  const devices = (devicesQ.data ?? []) as Array<{ id: string; device_name: string | null; device_id: string }>;
+  const devicesQ = useQuery({
+    queryKey: ["sensor-devices", loc],
+    queryFn: () => listDevicesFn({ data: locParams }),
+    enabled: open,
+  });
+  const devices = (devicesQ.data ?? []) as Array<{
+    id: string;
+    device_name: string | null;
+    device_id: string;
+  }>;
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -48,32 +82,63 @@ function RequestMaintenanceDialog({ open, onOpenChange }: { open: boolean; onOpe
   });
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { onOpenChange(o); if (!o) setForm(emptyForm); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        onOpenChange(o);
+        if (!o) setForm(emptyForm);
+      }}
+    >
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Request maintenance</DialogTitle>
-          <DialogDescription>Flag a device or silo sensor for Super Admin to schedule maintenance on.</DialogDescription>
+          <DialogDescription>
+            Flag a device or silo sensor for Super Admin to schedule maintenance on.
+          </DialogDescription>
         </DialogHeader>
-        <form className="grid gap-3 py-1" onSubmit={(e) => { e.preventDefault(); mutation.mutate(); }}>
+        <form
+          className="grid gap-3 py-1"
+          onSubmit={(e) => {
+            e.preventDefault();
+            mutation.mutate();
+          }}
+        >
           <div className="grid gap-1.5">
             <Label>Title</Label>
-            <Input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} required minLength={3} />
+            <Input
+              value={form.title}
+              onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+              required
+              minLength={3}
+            />
           </div>
           <div className="grid gap-1.5">
             <Label>Device (optional)</Label>
-            <Select value={form.deviceId} onValueChange={(v) => setForm((f) => ({ ...f, deviceId: v }))}>
-              <SelectTrigger><SelectValue placeholder="Pick a device" /></SelectTrigger>
+            <Select
+              value={form.deviceId}
+              onValueChange={(v) => setForm((f) => ({ ...f, deviceId: v }))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Pick a device" />
+              </SelectTrigger>
               <SelectContent>
                 {devices.map((d) => (
-                  <SelectItem key={d.id} value={d.id}>{d.device_name ?? d.device_id}</SelectItem>
+                  <SelectItem key={d.id} value={d.id}>
+                    {d.device_name ?? d.device_id}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <div className="grid gap-1.5">
             <Label>Priority</Label>
-            <Select value={form.priority} onValueChange={(v) => setForm((f) => ({ ...f, priority: v as typeof form.priority }))}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+            <Select
+              value={form.priority}
+              onValueChange={(v) => setForm((f) => ({ ...f, priority: v as typeof form.priority }))}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="low">Low</SelectItem>
                 <SelectItem value="normal">Normal</SelectItem>
@@ -84,12 +149,26 @@ function RequestMaintenanceDialog({ open, onOpenChange }: { open: boolean; onOpe
           </div>
           <div className="grid gap-1.5">
             <Label>Description (optional)</Label>
-            <Textarea rows={3} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
+            <Textarea
+              rows={3}
+              value={form.description}
+              onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+            />
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button type="submit" disabled={mutation.isPending || form.title.trim().length < 3} className="gap-2">
-              {mutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wrench className="h-4 w-4" />}
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={mutation.isPending || form.title.trim().length < 3}
+              className="gap-2"
+            >
+              {mutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Wrench className="h-4 w-4" />
+              )}
               {mutation.isPending ? "Submitting…" : "Submit request"}
             </Button>
           </DialogFooter>
@@ -108,11 +187,17 @@ function statusTone(status: string) {
 
 export function MaintenanceSection() {
   const getFn = useServerFn(getMaintenanceOverview);
+  // Scope every location-dependent query to the active city — in the key as
+  // well as the request, so one city's rows are never served for another.
+  const { key: loc, params: locParams } = useLocationScopeQuery();
   const listRequestsFn = useServerFn(listMaintenanceRequests);
   const fetchRole = useServerFn(getMyRole);
   const [dlgOpen, setDlgOpen] = useState(false);
 
-  const { data, isLoading } = useQuery({ queryKey: ["maintenance-overview"], queryFn: () => getFn() });
+  const { data, isLoading } = useQuery({
+    queryKey: ["maintenance-overview", loc],
+    queryFn: () => getFn({ data: locParams }),
+  });
   const { data: me } = useQuery({ queryKey: ["my-role"], queryFn: () => fetchRole() });
   const canRequest = me?.role === "admin";
 
@@ -143,7 +228,9 @@ export function MaintenanceSection() {
     <div className="space-y-6">
       {canRequest && (
         <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">Flag a device for Super Admin to schedule maintenance.</p>
+          <p className="text-xs text-muted-foreground">
+            Flag a device for Super Admin to schedule maintenance.
+          </p>
           <Button size="sm" className="gap-1.5" onClick={() => setDlgOpen(true)}>
             <Wrench className="w-3.5 h-3.5" /> Request maintenance
           </Button>
@@ -152,27 +239,43 @@ export function MaintenanceSection() {
 
       {canRequest && (
         <div className="space-y-2">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Your maintenance requests</h3>
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Your maintenance requests
+          </h3>
           {myRequests.length === 0 ? (
             <p className="text-sm text-muted-foreground py-4">No maintenance requests yet.</p>
           ) : (
-            <div className="bg-muted/30 border border-border rounded-lg overflow-hidden">
+            <div className="bg-muted/30 border-border rounded-lg overflow-hidden">
               <table className="w-full text-sm">
-                <thead className="bg-muted/40 border-b border-border">
+                <thead className="bg-muted/40 border-b border-border/40">
                   <tr>
-                    <th className="px-4 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Title</th>
-                    <th className="px-4 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Priority</th>
-                    <th className="px-4 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Status</th>
-                    <th className="px-4 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Requested</th>
+                    <th className="px-4 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+                      Title
+                    </th>
+                    <th className="px-4 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+                      Priority
+                    </th>
+                    <th className="px-4 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-4 py-2 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+                      Requested
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
                   {myRequests.map((r: any) => (
                     <tr key={r.id}>
                       <td className="px-4 py-2 text-foreground font-medium">{r.title}</td>
-                      <td className="px-4 py-2 text-muted-foreground text-xs capitalize">{r.priority}</td>
-                      <td className="px-4 py-2"><Badge className={statusTone(r.status)}>{r.status.replace("_", " ")}</Badge></td>
-                      <td className="px-4 py-2 text-muted-foreground text-xs">{new Date(r.created_at).toLocaleDateString()}</td>
+                      <td className="px-4 py-2 text-muted-foreground text-xs capitalize">
+                        {r.priority}
+                      </td>
+                      <td className="px-4 py-2">
+                        <Badge className={statusTone(r.status)}>{r.status.replace("_", " ")}</Badge>
+                      </td>
+                      <td className="px-4 py-2 text-muted-foreground text-xs">
+                        {new Date(r.created_at).toLocaleDateString()}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -183,7 +286,9 @@ export function MaintenanceSection() {
       )}
 
       <div className="space-y-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Due soon (from calibration schedule)</h3>
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Due soon (from calibration schedule)
+        </h3>
         {isLoading ? (
           <div className="flex items-center justify-center py-12 text-muted-foreground">
             <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading maintenance tasks…
@@ -193,24 +298,48 @@ export function MaintenanceSection() {
             <p className="text-sm">No maintenance tasks.</p>
           </div>
         ) : (
-          <div className="bg-muted/30 border border-border rounded-lg overflow-hidden">
+          <div className="bg-muted/30 border-border rounded-lg overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-muted/40 border-b border-border">
+                <thead className="bg-muted/40 border-b border-border/40">
                   <tr>
-                    <th className="px-4 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Task</th>
-                    <th className="px-4 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Type</th>
-                    <th className="px-4 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Status</th>
-                    <th className="px-4 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">Due</th>
+                    <th className="px-4 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+                      Task
+                    </th>
+                    <th className="px-4 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+                      Type
+                    </th>
+                    <th className="px-4 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-4 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+                      Due
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
                   {(dueSoon as any[]).map((m) => (
                     <tr key={m.id} className="hover:bg-muted/40 transition-colors">
-                      <td className="px-4 py-3 text-foreground font-medium">{m.task_description}</td>
-                      <td className="px-4 py-3 text-muted-foreground text-xs">{m.maintenance_type ?? "—"}</td>
-                      <td className="px-4 py-3"><Badge className={m.status === "pending" ? "bg-amber-500/20 text-amber-400" : "bg-emerald-500/20 text-emerald-400"}>{m.status}</Badge></td>
-                      <td className="px-4 py-3 text-muted-foreground text-xs">{m.due_date ? new Date(m.due_date).toLocaleDateString() : "—"}</td>
+                      <td className="px-4 py-3 text-foreground font-medium">
+                        {m.task_description}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground text-xs">
+                        {m.maintenance_type ?? "—"}
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge
+                          className={
+                            m.status === "pending"
+                              ? "bg-amber-500/20 text-amber-400"
+                              : "bg-emerald-500/20 text-emerald-400"
+                          }
+                        >
+                          {m.status}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground text-xs">
+                        {m.due_date ? new Date(m.due_date).toLocaleDateString() : "—"}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

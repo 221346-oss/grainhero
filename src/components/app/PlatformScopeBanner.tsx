@@ -7,7 +7,7 @@ import { ShieldAlert } from "lucide-react";
  */
 export function PlatformScopeBanner({ label }: { label?: string }) {
   return (
-    <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 flex items-start gap-3">
+    <div className="rounded-lg border-amber-200 bg-amber-50 px-4 py-3 flex items-start gap-3">
       <ShieldAlert className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
       <div className="text-sm">
         <div className="font-semibold text-amber-900">Platform view — all tenants</div>

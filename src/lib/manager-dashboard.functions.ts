@@ -145,15 +145,17 @@ export const getManagerDashboard = createServerFn({ method: "GET" })
       status: string | null;
       warehouse_id: string;
     };
-    const silos = (silosRes.data ?? []).map((s: SiloRow): SiloRow => ({
-      id: s.id,
-      silo_id: s.silo_id,
-      name: s.name,
-      capacity_kg: Number(s.capacity_kg ?? 0),
-      current_occupancy_kg: s.current_occupancy_kg,
-      status: s.status ?? null,
-      warehouse_id: s.warehouse_id,
-    }));
+    const silos = (silosRes.data ?? []).map(
+      (s: SiloRow): SiloRow => ({
+        id: s.id,
+        silo_id: s.silo_id,
+        name: s.name,
+        capacity_kg: Number(s.capacity_kg ?? 0),
+        current_occupancy_kg: s.current_occupancy_kg,
+        status: s.status ?? null,
+        warehouse_id: s.warehouse_id,
+      }),
+    );
     const totalCap = silos.reduce((s, x) => s + Number(x.capacity_kg ?? 0), 0);
     const totalOcc = silos.reduce((s, x) => s + Number(x.current_occupancy_kg ?? 0), 0);
     const fillPct = totalCap ? Math.round((totalOcc / totalCap) * 100) : 0;

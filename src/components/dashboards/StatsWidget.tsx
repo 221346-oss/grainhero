@@ -74,20 +74,38 @@ export function StatsWidget({
   const stroke = positive ? "#22C55E" : "#F97316";
 
   return (
-    <div className={cn("w-full max-w-md bg-card text-card-foreground rounded-3xl shadow-lg p-6 border", className)}>
+    <div
+      className={cn(
+        "w-full max-w-md bg-card text-card-foreground rounded-3xl shadow-lg p-6 border",
+        className,
+      )}
+    >
       <div className="flex justify-between items-center">
         <div className="flex flex-col w-1/2">
           <div className="flex items-center text-muted-foreground text-md">
             <span>{label}</span>
-            <span className={cn("ml-2 flex items-center font-semibold", positive ? "text-[#22C55E]" : "text-[#F97316]")}>
+            <span
+              className={cn(
+                "ml-2 flex items-center font-semibold",
+                positive ? "text-[#22C55E]" : "text-[#F97316]",
+              )}
+            >
               {Math.abs(change)}%
-              {positive ? <ArrowUp size={16} className="ml-1" /> : <ArrowDown size={16} className="ml-1" />}
+              {positive ? (
+                <ArrowUp size={16} className="ml-1" />
+              ) : (
+                <ArrowDown size={16} className="ml-1" />
+              )}
             </span>
           </div>
           <p className="text-4xl font-bold text-foreground mt-2">{value}</p>
         </div>
         <div className="w-1/2 h-16">
-          <svg viewBox={`0 0 ${CHART_W} ${CHART_H}`} className="w-full h-full" preserveAspectRatio="none">
+          <svg
+            viewBox={`0 0 ${CHART_W} ${CHART_H}`}
+            className="w-full h-full"
+            preserveAspectRatio="none"
+          >
             <defs>
               <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={stroke} stopOpacity={0.4} />

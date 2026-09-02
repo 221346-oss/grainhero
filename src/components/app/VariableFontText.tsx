@@ -16,7 +16,13 @@ type Props = {
  * weight to bold, staggered outward from the center of the word.
  * Boldening also triggers when a parent <a>/<button> is hovered.
  */
-export function VariableFontText({ text, className, base = 500, hover = 900, staggerMs = 25 }: Props) {
+export function VariableFontText({
+  text,
+  className,
+  base = 500,
+  hover = 900,
+  staggerMs = 25,
+}: Props) {
   const letters = Array.from(text);
   const mid = (letters.length - 1) / 2;
   return (

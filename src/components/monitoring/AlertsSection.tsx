@@ -1,5 +1,5 @@
 import type { ComponentType } from "react";
-'use client';
+import { useLocationScopeQuery } from "@/components/app/location/LocationScope";
 
 import { Loader2, AlertTriangle, AlertCircle, Bell, Activity } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -17,7 +17,13 @@ const PRIO_ICON: Record<string, ComponentType<{ className?: string }>> = {
 
 export function AlertsSection() {
   const listFn = useServerFn(listGrainAlerts);
-  const { data, isLoading } = useQuery({ queryKey: ["grain-alerts"], queryFn: () => listFn() });
+  // Scope every location-dependent query to the active city — in the key as
+  // well as the request, so one city's rows are never served for another.
+  const { key: loc, params: locParams } = useLocationScopeQuery();
+  const { data, isLoading } = useQuery({
+    queryKey: ["grain-alerts", loc],
+    queryFn: () => listFn({ data: locParams }),
+  });
 
   const alerts = (data ?? []).filter((a: any) => a.status === "pending");
 
@@ -36,15 +42,21 @@ export function AlertsSection() {
         <div className="space-y-2">
           {alerts.map((a: any) => {
             const Icon = PRIO_ICON[a.priority] || Activity;
-            const prioColor = ({
-              critical: "bg-rose-500/20 text-rose-400",
-              high: "bg-orange-500/20 text-orange-400",
-              medium: "bg-amber-500/20 text-amber-400",
-              low: "bg-blue-500/20 text-blue-400",
-            } as Record<string, string>)[a.priority] || "bg-gray-500/20 text-gray-400";
+            const prioColor =
+              (
+                {
+                  critical: "bg-rose-500/20 text-rose-400",
+                  high: "bg-orange-500/20 text-orange-400",
+                  medium: "bg-amber-500/20 text-amber-400",
+                  low: "bg-blue-500/20 text-blue-400",
+                } as Record<string, string>
+              )[a.priority] || "bg-gray-500/20 text-gray-400";
 
             return (
-              <div key={a.id} className="bg-muted/30 border border-border rounded-lg p-4 hover:bg-muted/50 transition-colors">
+              <div
+                key={a.id}
+                className="bg-muted/30 border-border rounded-lg p-4 hover:bg-muted/50 transition-colors"
+              >
                 <div className="flex items-start gap-3">
                   <Icon className={`w-5 h-5 mt-0.5 shrink-0 ${prioColor}`} />
                   <div className="flex-1 min-w-0">

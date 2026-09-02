@@ -8,25 +8,33 @@ export const getPlatformMetrics = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     // Check if user is super_admin
-    const { data: isSuperAdmin } = await context.supabase.rpc("has_role", { 
-      _user_id: context.userId, 
-      _role: "super_admin" 
+    const { data: isSuperAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "super_admin",
     });
     if (!isSuperAdmin) throw new Error("Forbidden: super_admin only");
 
     const { computeMrr } = await import("@/lib/plan-pricing.server");
     // Use regular authenticated client - will respect RLS
     const [profiles, roles, batches, silos, alerts, subs, logs] = await Promise.all([
-      context.supabase.from("profiles").select("id, admin_id, subscription_plan, created_at, business_type, blocked", { count: "exact" }),
+      context.supabase
+        .from("profiles")
+        .select("id, admin_id, subscription_plan, created_at, business_type, blocked", {
+          count: "exact",
+        }),
       context.supabase.from("user_roles").select("role, user_id"),
       context.supabase.from("grain_batches").select("id", { count: "exact", head: true }),
       context.supabase.from("silos").select("id", { count: "exact", head: true }),
       context.supabase.from("grain_alerts").select("id, priority", { count: "exact" }),
-      context.supabase.from("subscriptions").select("id, admin_id, status, plan_id, plan_name, price_per_month, created_at"),
+      context.supabase
+        .from("subscriptions")
+        .select("id, admin_id, status, plan_id, plan_name, price_per_month, created_at"),
       context.supabase.from("activity_logs").select("id, severity", { count: "exact" }),
     ]);
 
-    const tenants = new Set((profiles.data ?? []).filter((p: any) => !p.admin_id).map((p: any) => p.id));
+    const tenants = new Set(
+      (profiles.data ?? []).filter((p: any) => !p.admin_id).map((p: any) => p.id),
+    );
     const criticalAlerts = (alerts.data ?? []).filter((a: any) => a.priority === "critical").length;
     const mrrResult = await computeMrr({
       supabase: context.supabase,
@@ -57,20 +65,22 @@ export const listAllUsers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     // Check if user is super_admin
-    const { data: isSuperAdmin } = await context.supabase.rpc("has_role", { 
-      _user_id: context.userId, 
-      _role: "super_admin" 
+    const { data: isSuperAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "super_admin",
     });
     if (!isSuperAdmin) throw new Error("Forbidden: super_admin only");
 
     const { data: profiles } = await context.supabase
       .from("profiles")
-      .select("id, name, email, admin_id, business_type, blocked, email_verified, created_at, last_login")
+      .select(
+        "id, name, email, admin_id, business_type, blocked, email_verified, created_at, last_login",
+      )
       .order("created_at", { ascending: false })
       .limit(500);
-    
+
     const { data: roles } = await context.supabase.from("user_roles").select("user_id, role");
-    
+
     const order = ["super_admin", "admin", "manager", "technician", "pending"];
     const rmap = new Map<string, string>();
     for (const r of roles ?? []) {
@@ -84,9 +94,9 @@ export const listAllTenants = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     // Check if user is super_admin
-    const { data: isSuperAdmin } = await context.supabase.rpc("has_role", { 
-      _user_id: context.userId, 
-      _role: "super_admin" 
+    const { data: isSuperAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "super_admin",
     });
     if (!isSuperAdmin) throw new Error("Forbidden: super_admin only");
 
@@ -103,12 +113,16 @@ export const listAllTenants = createServerFn({ method: "GET" })
       context.supabase.from("profiles").select("admin_id").in("admin_id", ids),
       context.supabase.from("grain_batches").select("admin_id").in("admin_id", ids),
     ]);
-    
+
     const teamMap = new Map<string, number>();
-    for (const r of teamCounts ?? []) { if (r.admin_id) teamMap.set(r.admin_id, (teamMap.get(r.admin_id) ?? 0) + 1); }
+    for (const r of teamCounts ?? []) {
+      if (r.admin_id) teamMap.set(r.admin_id, (teamMap.get(r.admin_id) ?? 0) + 1);
+    }
     const batchMap = new Map<string, number>();
-    for (const r of batchCounts ?? []) { if (r.admin_id) batchMap.set(r.admin_id, (batchMap.get(r.admin_id) ?? 0) + 1); }
-    
+    for (const r of batchCounts ?? []) {
+      if (r.admin_id) batchMap.set(r.admin_id, (batchMap.get(r.admin_id) ?? 0) + 1);
+    }
+
     return (admins ?? []).map((a: any) => ({
       ...a,
       team_size: (teamMap.get(a.id) ?? 0) + 1,
@@ -121,14 +135,17 @@ export const toggleUserBlocked = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string; blocked: boolean }) => d)
   .handler(async ({ data, context }) => {
     // Check if user is super_admin
-    const { data: isSuperAdmin } = await context.supabase.rpc("has_role", { 
-      _user_id: context.userId, 
-      _role: "super_admin" 
+    const { data: isSuperAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "super_admin",
     });
     if (!isSuperAdmin) throw new Error("Forbidden: super_admin only");
     if (data.id === context.userId) throw new Error("Cannot block yourself");
-    
-    const { error } = await context.supabase.from("profiles").update({ blocked: data.blocked }).eq("id", data.id);
+
+    const { error } = await context.supabase
+      .from("profiles")
+      .update({ blocked: data.blocked })
+      .eq("id", data.id);
     if (error) throw error;
     return { ok: true };
   });
@@ -138,14 +155,17 @@ export const getPlatformLogs = createServerFn({ method: "GET" })
   .inputValidator((d: { limit?: number; severity?: string } = {}) => d)
   .handler(async ({ data, context }) => {
     // Check if user is super_admin
-    const { data: isSuperAdmin } = await context.supabase.rpc("has_role", { 
-      _user_id: context.userId, 
-      _role: "super_admin" 
+    const { data: isSuperAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "super_admin",
     });
     if (!isSuperAdmin) throw new Error("Forbidden: super_admin only");
 
-    let q = context.supabase.from("activity_logs")
-      .select("id, admin_id, user_id, user_name, user_role, action, category, entity_type, entity_ref, description, severity, created_at")
+    let q = context.supabase
+      .from("activity_logs")
+      .select(
+        "id, admin_id, user_id, user_name, user_role, action, category, entity_type, entity_ref, description, severity, created_at",
+      )
       .order("created_at", { ascending: false })
       .limit(data.limit ?? 200);
     if (data.severity && data.severity !== "all") q = q.eq("severity", data.severity);
@@ -159,7 +179,9 @@ export const getPlatformLogs = createServerFn({ method: "GET" })
     const [ordersRes, signupsRes] = await Promise.all([
       context.supabase
         .from("hardware_orders")
-        .select("id, admin_id, plan_name, hardware_quantity, hardware_total, currency, status, created_at, customer_name, customer_email")
+        .select(
+          "id, admin_id, plan_name, hardware_quantity, hardware_total, currency, status, created_at, customer_name, customer_email",
+        )
         .order("created_at", { ascending: false })
         .limit(30),
       context.supabase
@@ -221,9 +243,9 @@ export const getPlatformOverviewWidgets = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     // Check if user is super_admin
-    const { data: isSuperAdmin } = await context.supabase.rpc("has_role", { 
-      _user_id: context.userId, 
-      _role: "super_admin" 
+    const { data: isSuperAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "super_admin",
     });
     if (!isSuperAdmin) throw new Error("Forbidden: super_admin only");
 
@@ -242,7 +264,18 @@ export const getPlatformOverviewWidgets = createServerFn({ method: "GET" })
       }
     }
 
-    const [signupsRes, alertsRes, seriesRes, subsRes, pipelineRes, ordersRes, hwOrdersRes, hwIssuesRes, errorLogsRes, supportQueriesRes] = await Promise.all([
+    const [
+      signupsRes,
+      alertsRes,
+      seriesRes,
+      subsRes,
+      pipelineRes,
+      ordersRes,
+      hwOrdersRes,
+      hwIssuesRes,
+      errorLogsRes,
+      supportQueriesRes,
+    ] = await Promise.all([
       context.supabase
         .from("profiles")
         .select("id, name, email, business_type, subscription_plan, created_at")
@@ -254,13 +287,12 @@ export const getPlatformOverviewWidgets = createServerFn({ method: "GET" })
         .in("priority", ["critical", "high"])
         .order("created_at", { ascending: false })
         .limit(10),
-      context.supabase
-        .from("profiles")
-        .select("created_at")
-        .gte("created_at", thirtyDaysAgo),
+      context.supabase.from("profiles").select("created_at").gte("created_at", thirtyDaysAgo),
       context.supabase
         .from("subscriptions")
-        .select("id, admin_id, status, plan_id, plan_name, price_per_month, created_at, cancellation_date"),
+        .select(
+          "id, admin_id, status, plan_id, plan_name, price_per_month, created_at, cancellation_date",
+        ),
       context.supabase
         .from("hubspot_sync_log")
         .select("id, action, status, hubspot_object_type, created_at")
@@ -308,7 +340,8 @@ export const getPlatformOverviewWidgets = createServerFn({ method: "GET" })
     const signupsTotal = signupsSeries.reduce((s, p) => s + p.count, 0);
     const last7 = signupsSeries.slice(-7).reduce((s, p) => s + p.count, 0);
     const prev7 = signupsSeries.slice(-14, -7).reduce((s, p) => s + p.count, 0);
-    const wowDelta = prev7 === 0 ? (last7 > 0 ? 100 : 0) : Math.round(((last7 - prev7) / prev7) * 100);
+    const wowDelta =
+      prev7 === 0 ? (last7 > 0 ? 100 : 0) : Math.round(((last7 - prev7) / prev7) * 100);
 
     // Revenue snapshot — PKR from plan_thresholds (single source of truth).
     const subs = subsRes.data ?? [];
@@ -324,7 +357,9 @@ export const getPlatformOverviewWidgets = createServerFn({ method: "GET" })
     });
     const mrr = mrrResult.mrr;
     const activeSubs = mrrResult.entries;
-    const churnedSubs = subs.filter((s: any) => s.status === "cancelled" || s.status === "canceled" || s.cancellation_date);
+    const churnedSubs = subs.filter(
+      (s: any) => s.status === "cancelled" || s.status === "canceled" || s.cancellation_date,
+    );
 
     // Pipeline snapshot — aggregate HubSpot sync activity by status.
     const pipeline: Record<string, number> = {};
@@ -336,9 +371,11 @@ export const getPlatformOverviewWidgets = createServerFn({ method: "GET" })
     const openHwOrders = ((hwOrdersRes.data ?? []) as Array<{ status?: string | null }>).filter(
       (o) => o.status !== "cancelled",
     );
-    const hardwareIssues = openHwOrders.length + ((hwIssuesRes.data ?? []) as Array<{ status?: string | null }>).filter(
-      (a) => a.status === "open" || a.status === "active",
-    ).length;
+    const hardwareIssues =
+      openHwOrders.length +
+      ((hwIssuesRes.data ?? []) as Array<{ status?: string | null }>).filter(
+        (a) => a.status === "open" || a.status === "active",
+      ).length;
     const bugReports = (errorLogsRes as { count?: number })?.count ?? 0;
     const managerQueries = (supportQueriesRes as { count?: number })?.count ?? 0;
 
@@ -395,19 +432,21 @@ export const getAllSubscriptions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     // Check if user is super_admin
-    const { data: isSuperAdmin } = await context.supabase.rpc("has_role", { 
-      _user_id: context.userId, 
-      _role: "super_admin" 
+    const { data: isSuperAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "super_admin",
     });
     if (!isSuperAdmin) throw new Error("Forbidden: super_admin only");
 
     // Get all subscriptions
     const { data: subscriptions, error: subError } = await context.supabase
       .from("subscriptions")
-      .select("id, admin_id, plan_name, plan_description, status, price_per_month, currency, next_payment_date, start_date, end_date, billing_cycle, created_at")
+      .select(
+        "id, admin_id, plan_name, plan_description, status, price_per_month, currency, next_payment_date, start_date, end_date, billing_cycle, created_at",
+      )
       .order("created_at", { ascending: false })
       .limit(500);
-    
+
     if (subError) throw subError;
 
     // Get admin profiles for all subscriptions
@@ -444,7 +483,9 @@ export const getPlatformReportingDetails = createServerFn({ method: "GET" })
     const [hwOrdersRes, hwAlertsRes, errorLogsRes, supportQueriesRes] = await Promise.all([
       context.supabase
         .from("hardware_orders" as never)
-        .select("id, status, customer_name, customer_email, contact_phone, created_at, cancel_reason, notes")
+        .select(
+          "id, status, customer_name, customer_email, contact_phone, created_at, cancel_reason, notes",
+        )
         .in("status", ["new", "approved", "tech_assigned", "pending_payment"] as never)
         .order("created_at", { ascending: false })
         .limit(50),
@@ -463,7 +504,9 @@ export const getPlatformReportingDetails = createServerFn({ method: "GET" })
         .limit(50),
       context.supabase
         .from("activity_logs")
-        .select("id, user_name, user_role, action, description, severity, created_at, admin_id, metadata")
+        .select(
+          "id, user_name, user_role, action, description, severity, created_at, admin_id, metadata",
+        )
         .eq("category", "platform_support")
         .order("created_at", { ascending: false })
         .limit(50),
@@ -519,7 +562,8 @@ export const getTenantDetail = createServerFn({ method: "GET" })
   .inputValidator((d: { adminId: string }) => d)
   .handler(async ({ data, context }) => {
     const { data: isSuper } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId, _role: "super_admin",
+      _user_id: context.userId,
+      _role: "super_admin",
     });
     if (!isSuper) throw new Error("Forbidden");
 
@@ -531,7 +575,9 @@ export const getTenantDetail = createServerFn({ method: "GET" })
         .maybeSingle(),
       context.supabase
         .from("subscriptions")
-        .select("id, plan_name, status, start_date, end_date, max_silos, max_warehouses, max_users, max_batches, price")
+        .select(
+          "id, plan_name, status, start_date, end_date, max_silos, max_warehouses, max_users, max_batches, price",
+        )
         .eq("admin_id", data.adminId)
         .in("status", ["active", "trial"])
         .maybeSingle(),
@@ -562,11 +608,11 @@ export const getTenantDetail = createServerFn({ method: "GET" })
     ]);
 
     const profile = profileRes.data;
-    const sub     = subRes.data;
-    const silos   = silosRes.data ?? [];
+    const sub = subRes.data;
+    const silos = silosRes.data ?? [];
     const warehouses = warehousesRes.data ?? [];
     const recentBatches = batchesRes.data ?? [];
-    const team    = teamRes.data ?? [];
+    const team = teamRes.data ?? [];
 
     // Activity logs — last 10 events for this tenant
     const { data: logs } = await context.supabase
@@ -576,7 +622,10 @@ export const getTenantDetail = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false })
       .limit(10);
 
-    const totalKg = silos.reduce((s: number, silo: any) => s + Number(silo.current_occupancy_kg ?? 0), 0);
+    const totalKg = silos.reduce(
+      (s: number, silo: any) => s + Number(silo.current_occupancy_kg ?? 0),
+      0,
+    );
     const capacityKg = silos.reduce((s: number, silo: any) => s + Number(silo.capacity_kg ?? 0), 0);
 
     return {
@@ -604,7 +653,8 @@ export const sendExpiryReminder = createServerFn({ method: "POST" })
   .inputValidator((d: { adminId: string }) => d)
   .handler(async ({ data, context }) => {
     const { data: isSuper } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId, _role: "super_admin",
+      _user_id: context.userId,
+      _role: "super_admin",
     });
     if (!isSuper) throw new Error("Forbidden");
 
@@ -624,7 +674,8 @@ export const sendExpiryReminder = createServerFn({ method: "POST" })
       p_user_id: data.adminId,
       p_admin_id: data.adminId,
       p_title: `Your ${planName} subscription expires ${endDate}`,
-      p_message: "Renew your subscription to keep access to all your silos, batches, and team members. Contact GrainHero support or upgrade from the subscription page.",
+      p_message:
+        "Renew your subscription to keep access to all your silos, batches, and team members. Contact GrainHero support or upgrade from the subscription page.",
       p_category: "plan",
       p_type: "warning",
       p_action_url: "/subscription",

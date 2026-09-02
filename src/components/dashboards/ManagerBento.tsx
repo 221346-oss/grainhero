@@ -6,7 +6,10 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { listOpenFieldIncidents } from "@/lib/field-settings.functions";
 import { ReportTicketDialog } from "@/components/app/ReportTicketDialog";
-import { MonitoringDiscussionDialog, type MonitoringIncidentItem } from "@/components/app/MonitoringDiscussionDialog";
+import {
+  MonitoringDiscussionDialog,
+  type MonitoringIncidentItem,
+} from "@/components/app/MonitoringDiscussionDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { attachTicketForUser } from "@/lib/ticketMessages";
 import { useTicketUnread } from "@/hooks/useTicketUnread";
@@ -16,7 +19,7 @@ function formatRelativeTime(iso: string) {
   const now = new Date();
   const then = new Date(iso);
   const seconds = Math.floor((now.getTime() - then.getTime()) / 1000);
-  
+
   if (seconds < 60) return "just now";
   const minutes = Math.floor(seconds / 60);
   if (minutes < 60) return `${minutes}m ago`;
@@ -57,7 +60,7 @@ function BentoCard({
   headerAction?: ReactNode;
 }) {
   return (
-    <div className="rounded-xl border bg-card/60 flex flex-col h-[200px]">
+    <div className="rounded-2xl bg-card/60 flex flex-col h-[200px]">
       <header className="flex items-center justify-between px-3 py-2 border-b bg-card/40 rounded-t-xl shrink-0">
         <div className="flex items-center gap-2 min-w-0">
           <h3 className="text-xs font-semibold truncate">{title}</h3>
@@ -129,7 +132,7 @@ function UnreadBadge({ count }: { count: number }) {
   if (count === 0) return null;
   const displayCount = count > 99 ? "99+" : count.toString();
   return (
-    <span className="absolute -top-1 -right-1 h-4 min-w-4 px-1 flex items-center justify-center text-[9px] font-bold bg-red-500 text-white rounded-full border border-white dark:border-slate-900">
+    <span className="absolute -top-1 -right-1 h-4 min-w-4 px-1 flex items-center justify-center text-[9px] font-bold bg-red-500 text-white rounded-full border-white dark:border-slate-900">
       {displayCount}
     </span>
   );
@@ -184,7 +187,8 @@ export function ManagerBento({
 }) {
   const [ticketDialogOpen, setTicketDialogOpen] = useState(false);
   const [discussionOpen, setDiscussionOpen] = useState(false);
-  const [activeDiscussionTicket, setActiveDiscussionTicket] = useState<MonitoringIncidentItem | null>(null);
+  const [activeDiscussionTicket, setActiveDiscussionTicket] =
+    useState<MonitoringIncidentItem | null>(null);
   const [currentUserId, setCurrentUserId] = useState("");
 
   // Get current user ID
@@ -348,7 +352,7 @@ export function ManagerBento({
       {/* ── Bottom Row: Field Incidents & Team on Shift ── */}
       <div className="grid gap-4 md:grid-cols-2">
         {/* Open Field Incidents */}
-        <div className="rounded-xl border bg-card/60 flex flex-col h-[200px]">
+        <div className="rounded-2xl bg-card/60 flex flex-col h-[200px]">
           <header className="flex items-center justify-between px-3 py-2 border-b bg-card/40 rounded-t-xl shrink-0">
             <div className="flex items-center gap-2 min-w-0">
               <h3 className="text-xs font-semibold truncate">Open field incidents</h3>

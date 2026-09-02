@@ -77,9 +77,7 @@ export default function QRCodeDisplay({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            QR Code - Batch {batchId}
-          </DialogTitle>
+          <DialogTitle className="flex items-center gap-2">QR Code - Batch {batchId}</DialogTitle>
           <DialogDescription>
             Scan this QR code to view batch details on mobile devices
           </DialogDescription>
@@ -98,9 +96,7 @@ export default function QRCodeDisplay({
                 <div className="w-[250px] h-[250px] flex items-center justify-center bg-gray-100 rounded-lg">
                   <div className="text-center">
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900 mx-auto mb-2" />
-                    <p className="text-sm text-gray-600">
-                      Generating QR Code...
-                    </p>
+                    <p className="text-sm text-gray-600">Generating QR Code...</p>
                   </div>
                 </div>
               ) : qrImage ? (
@@ -110,11 +106,9 @@ export default function QRCodeDisplay({
                     alt={`QR Code for batch ${batchId}`}
                     width={250}
                     height={250}
-                    className="border rounded-lg shadow-sm mx-auto"
+                    className="rounded-lg shadow-sm mx-auto"
                   />
-                  <p className="text-xs text-muted-foreground mt-2">
-                    QR Code: {qrCode}
-                  </p>
+                  <p className="text-xs text-muted-foreground mt-2">QR Code: {qrCode}</p>
                 </div>
               ) : (
                 <div className="w-[250px] h-[250px] flex items-center justify-center bg-gray-100 rounded-lg">

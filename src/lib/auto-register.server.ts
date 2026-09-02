@@ -78,9 +78,11 @@ async function findOrCreateWarehouse(adminId: string, deviceLocation?: string): 
       const loc = w.location as any;
       return loc?.city === deviceLocation || loc?.address?.includes(deviceLocation);
     });
-    
+
     if (matchedWarehouse) {
-      console.log(`[AutoRegister] Using existing warehouse: ${matchedWarehouse.id} for location ${deviceLocation}`);
+      console.log(
+        `[AutoRegister] Using existing warehouse: ${matchedWarehouse.id} for location ${deviceLocation}`,
+      );
       return matchedWarehouse.id;
     }
   }
@@ -104,13 +106,11 @@ async function findOrCreateWarehouse(adminId: string, deviceLocation?: string): 
     .insert({
       admin_id: adminId,
       created_by: adminId,
-      name: deviceLocation 
-        ? `Warehouse - ${deviceLocation}` 
-        : "Auto-Registered Warehouse",
+      name: deviceLocation ? `Warehouse - ${deviceLocation}` : "Auto-Registered Warehouse",
       warehouse_id: `AUTO-WH-${Date.now()}`,
       status: "active",
       is_active: true,
-      location: deviceLocation 
+      location: deviceLocation
         ? { city: deviceLocation, description: `Auto-created for ${deviceLocation}` }
         : { description: "Auto-created warehouse" },
     })
@@ -121,7 +121,9 @@ async function findOrCreateWarehouse(adminId: string, deviceLocation?: string): 
     throw new Error(`[AutoRegister] Failed to create warehouse: ${error?.message}`);
   }
 
-  console.log(`[AutoRegister] ✅ Created warehouse: ${created.id} for location: ${deviceLocation || "default"}`);
+  console.log(
+    `[AutoRegister] ✅ Created warehouse: ${created.id} for location: ${deviceLocation || "default"}`,
+  );
   return created.id;
 }
 
@@ -150,13 +152,13 @@ async function findOrCreateSilo(
       admin_id: adminId,
       created_by: adminId,
       warehouse_id: warehouseId,
-      name: "Rice Storage Silo",                  // GH1 exact match
-      silo_id: deviceId,                             // GH1 exact match (silo_id: DEVICE_ID)
-      capacity_kg: 1000,                           // GH1 exact match (capacity: 1000)
+      name: "Rice Storage Silo", // GH1 exact match
+      silo_id: deviceId, // GH1 exact match (silo_id: DEVICE_ID)
+      capacity_kg: 1000, // GH1 exact match (capacity: 1000)
       status: "active",
       is_active: true,
       current_conditions: {
-        grain_type: "Rice",                        // GH1 exact match
+        grain_type: "Rice", // GH1 exact match
         description: "Primary GrainHero silo with live Arduino sensor",
       } as unknown as never,
       location: {
@@ -180,9 +182,7 @@ async function findOrCreateSilo(
  * If it does not exist, creates warehouse → silo → device in order.
  * Returns null if admin identity cannot be resolved (logs a warning).
  */
-export async function autoRegisterDevice(
-  deviceId: string,
-): Promise<RegisteredDevice | null> {
+export async function autoRegisterDevice(deviceId: string): Promise<RegisteredDevice | null> {
   // 1. Duplicate guard — return existing row immediately
   const { data: existing } = await supabaseAdmin
     .from("sensor_devices")
@@ -199,8 +199,8 @@ export async function autoRegisterDevice(
   if (!adminId) {
     console.warn(
       `[AutoRegister] ⚠️  Cannot auto-register device ${deviceId}: ` +
-      `no AUTO_REGISTER_ADMIN_ID env var and no super_admin found in user_roles. ` +
-      `Set AUTO_REGISTER_ADMIN_ID to enable auto-registration.`,
+        `no AUTO_REGISTER_ADMIN_ID env var and no super_admin found in user_roles. ` +
+        `Set AUTO_REGISTER_ADMIN_ID to enable auto-registration.`,
     );
     return null;
   }
@@ -219,17 +219,17 @@ export async function autoRegisterDevice(
       .from("sensor_devices")
       .insert({
         device_id: deviceId,
-        device_name: `GrainHero-${deviceId}`,          // GH1 exact match
-        device_type: "sensor",                           // GH1 exact match
-        category: "environmental",                       // GH1 exact match
-        status: "active",                                // GH1 exact match
-        communication_protocol: "firebase",              // GH1 exact match
+        device_name: `GrainHero-${deviceId}`, // GH1 exact match
+        device_type: "sensor", // GH1 exact match
+        category: "environmental", // GH1 exact match
+        status: "active", // GH1 exact match
+        communication_protocol: "firebase", // GH1 exact match
         admin_id: adminId,
         created_by: adminId,
         silo_id: siloId,
         warehouse_id: warehouseId,
         sensor_types: ["temperature", "humidity", "voc"] as never, // GH1 exact match
-        data_transmission_interval: 10,                  // GH1 exact match
+        data_transmission_interval: 10, // GH1 exact match
         // GH1 parity: connection_status defaults to "offline" until first heartbeat
       })
       .select("id, device_id, silo_id, warehouse_id, admin_id")
@@ -239,9 +239,7 @@ export async function autoRegisterDevice(
       throw new Error(`Insert failed: ${error?.message}`);
     }
 
-    console.log(
-      `[AutoRegister] ✅ Auto-registered device: ${deviceId} → silo ${siloId}`,
-    );
+    console.log(`[AutoRegister] ✅ Auto-registered device: ${deviceId} → silo ${siloId}`);
     return device as RegisteredDevice;
   } catch (err) {
     console.error(`[AutoRegister] ❌ Failed to register device ${deviceId}:`, err);

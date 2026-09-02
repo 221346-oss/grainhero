@@ -18,10 +18,16 @@ export const Route = createFileRoute("/api/public/cron/driver-license-expiry")({
         const settings = await loadMarketplaceSettings(sb);
         const warnDays = settings.logistics.licenseExpiryWarnDays;
 
-        const { data: drivers } = await sb.from("drivers")
-          .select("id, full_name, license_expiry, carrier_id").eq("active", true).not("license_expiry", "is", null);
+        const { data: drivers } = await sb
+          .from("drivers")
+          .select("id, full_name, license_expiry, carrier_id")
+          .eq("active", true)
+          .not("license_expiry", "is", null);
 
-        const { data: supers } = await sb.from("user_roles").select("user_id").eq("role", "super_admin");
+        const { data: supers } = await sb
+          .from("user_roles")
+          .select("user_id")
+          .eq("role", "super_admin");
         const superIds = (supers ?? []).map((r: { user_id: string }) => r.user_id);
 
         let notified = 0;
@@ -32,8 +38,12 @@ export const Route = createFileRoute("/api/public/cron/driver-license-expiry")({
           if (!warnDays.includes(days)) continue;
           // dedupe key on activity_logs
           const dedupKey = `driver_license.warn.${d.id}.${days}`;
-          const { data: dup } = await sb.from("activity_logs")
-            .select("id").eq("action", dedupKey).limit(1).maybeSingle();
+          const { data: dup } = await sb
+            .from("activity_logs")
+            .select("id")
+            .eq("action", dedupKey)
+            .limit(1)
+            .maybeSingle();
           if (dup) continue;
           for (const uid of superIds) {
             await sb.from("notifications").insert({

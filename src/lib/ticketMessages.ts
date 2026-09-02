@@ -31,14 +31,14 @@ type Listener = () => void;
 declare global {
   interface Window {
     __gh_ticket_store__?: {
-      messageStore:         Map<string, ChatMessage[]>;
-      channels:             Map<string, RealtimeChannel>;
-      listeners:            Map<string, Set<Listener>>;
-      coreListeners:        Map<string, Set<Listener>>;
-      coreListenersByPair:  Map<string, Listener>;
-      unreadCounts:         Map<string, number>;
-      unreadListeners:      Map<string, Set<Listener>>;
-      attachedForUser:      Set<string>;
+      messageStore: Map<string, ChatMessage[]>;
+      channels: Map<string, RealtimeChannel>;
+      listeners: Map<string, Set<Listener>>;
+      coreListeners: Map<string, Set<Listener>>;
+      coreListenersByPair: Map<string, Listener>;
+      unreadCounts: Map<string, number>;
+      unreadListeners: Map<string, Set<Listener>>;
+      attachedForUser: Set<string>;
     };
   }
 }
@@ -46,14 +46,14 @@ declare global {
 function getStore() {
   if (!window.__gh_ticket_store__) {
     window.__gh_ticket_store__ = {
-      messageStore:        new Map(),
-      channels:            new Map(),
-      listeners:           new Map(),
-      coreListeners:       new Map(),
+      messageStore: new Map(),
+      channels: new Map(),
+      listeners: new Map(),
+      coreListeners: new Map(),
       coreListenersByPair: new Map(),
-      unreadCounts:        new Map(),
-      unreadListeners:     new Map(),
-      attachedForUser:     new Set(),
+      unreadCounts: new Map(),
+      unreadListeners: new Map(),
+      attachedForUser: new Set(),
     };
   }
   return window.__gh_ticket_store__;
@@ -61,26 +61,40 @@ function getStore() {
 
 // ── localStorage ──────────────────────────────────────────────────────────────
 
-function storageKey(ticketId: string) { return `gh_ticket_msgs_${ticketId}`; }
+function storageKey(ticketId: string) {
+  return `gh_ticket_msgs_${ticketId}`;
+}
 
 function loadFromStorage(ticketId: string): ChatMessage[] {
   try {
     const raw = localStorage.getItem(storageKey(ticketId));
     return raw ? (JSON.parse(raw) as ChatMessage[]) : [];
-  } catch { return []; }
+  } catch {
+    return [];
+  }
 }
 
 function saveToStorage(ticketId: string, msgs: ChatMessage[]) {
-  try { localStorage.setItem(storageKey(ticketId), JSON.stringify(msgs)); } catch { /* quota */ }
+  try {
+    localStorage.setItem(storageKey(ticketId), JSON.stringify(msgs));
+  } catch {
+    /* quota */
+  }
 }
 
 function removeFromStorage(ticketId: string) {
-  try { localStorage.removeItem(storageKey(ticketId)); } catch { /* ignore */ }
+  try {
+    localStorage.removeItem(storageKey(ticketId));
+  } catch {
+    /* ignore */
+  }
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function channelName(ticketId: string) { return `ticket-discussion-${ticketId}`; }
+function channelName(ticketId: string) {
+  return `ticket-discussion-${ticketId}`;
+}
 
 function notify(ticketId: string) {
   const s = getStore();
@@ -116,7 +130,7 @@ export function attachTicket(ticketId: string) {
     .on("broadcast", { event: "edit" }, ({ payload }) => {
       const { id, text } = payload as { id: string; text: string };
       const msgs = s.messageStore.get(ticketId) ?? [];
-      const updated = msgs.map((m) => m.id === id ? { ...m, text, edited: true } : m);
+      const updated = msgs.map((m) => (m.id === id ? { ...m, text, edited: true } : m));
       s.messageStore.set(ticketId, updated);
       saveToStorage(ticketId, updated);
       notify(ticketId);
@@ -193,10 +207,14 @@ export function subscribeToTicket(ticketId: string, fn: Listener): () => void {
 
 // ── Unread count tracking ─────────────────────────────────────────────────────
 
-function unreadKey(userId: string, ticketId: string) { return `${userId}:${ticketId}`; }
+function unreadKey(userId: string, ticketId: string) {
+  return `${userId}:${ticketId}`;
+}
 
 function notifyUnread(userId: string) {
-  getStore().unreadListeners.get(userId)?.forEach((fn) => fn());
+  getStore()
+    .unreadListeners.get(userId)
+    ?.forEach((fn) => fn());
 }
 
 /**

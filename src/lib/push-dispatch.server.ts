@@ -20,9 +20,12 @@ type CachedToken = { token: string; exp: number };
 let _tokenCache: CachedToken | null = null;
 
 function b64url(input: ArrayBuffer | Uint8Array | string): string {
-  const bytes = typeof input === "string"
-    ? new TextEncoder().encode(input)
-    : input instanceof Uint8Array ? input : new Uint8Array(input);
+  const bytes =
+    typeof input === "string"
+      ? new TextEncoder().encode(input)
+      : input instanceof Uint8Array
+        ? input
+        : new Uint8Array(input);
   let bin = "";
   for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
   return btoa(bin).replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
@@ -46,7 +49,9 @@ function loadServiceAccount(): ServiceAccount | null {
     const parsed = JSON.parse(raw) as ServiceAccount;
     if (!parsed.project_id || !parsed.client_email || !parsed.private_key) return null;
     return parsed;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 async function getAccessToken(sa: ServiceAccount): Promise<string> {
@@ -66,9 +71,14 @@ async function getAccessToken(sa: ServiceAccount): Promise<string> {
     "pkcs8",
     pemToArrayBuffer(sa.private_key),
     { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
-    false, ["sign"],
+    false,
+    ["sign"],
   );
-  const sig = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", key, new TextEncoder().encode(unsigned));
+  const sig = await crypto.subtle.sign(
+    "RSASSA-PKCS1-v1_5",
+    key,
+    new TextEncoder().encode(unsigned),
+  );
   const jwt = `${unsigned}.${b64url(sig)}`;
 
   const res = await fetch(claim.aud, {
@@ -102,8 +112,11 @@ export async function sendPush(token: string, msg: PushMessage): Promise<SendRes
   const sa = loadServiceAccount();
   if (!sa) return { skipped: true, reason: "not-configured" };
   let accessToken: string;
-  try { accessToken = await getAccessToken(sa); }
-  catch (e) { return { ok: false, error: `token: ${(e as Error).message}` }; }
+  try {
+    accessToken = await getAccessToken(sa);
+  } catch (e) {
+    return { ok: false, error: `token: ${(e as Error).message}` };
+  }
 
   const payload = {
     message: {
@@ -123,17 +136,14 @@ export async function sendPush(token: string, msg: PushMessage): Promise<SendRes
     },
   };
 
-  const res = await fetch(
-    `https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
+  const res = await fetch(`https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
     },
-  );
+    body: JSON.stringify(payload),
+  });
   if (res.ok) {
     const j = (await res.json()) as { name?: string };
     return { ok: true, messageId: j.name ?? null };
@@ -157,24 +167,33 @@ export async function loadUserDevices(sb: SupabaseClient, userId: string) {
 
 /** Mark device revoked after unrecoverable push failure. */
 export async function markDeviceRevoked(sb: SupabaseClient, deviceId: string, reason: string) {
-  await sb.from("mobile_devices").update({
-    revoked_at: new Date().toISOString(),
-    last_push_error: reason.slice(0, 300),
-    last_push_error_at: new Date().toISOString(),
-  } as never).eq("id", deviceId);
+  await sb
+    .from("mobile_devices")
+    .update({
+      revoked_at: new Date().toISOString(),
+      last_push_error: reason.slice(0, 300),
+      last_push_error_at: new Date().toISOString(),
+    } as never)
+    .eq("id", deviceId);
 }
 
 export async function markDeviceSuccess(sb: SupabaseClient, deviceId: string) {
-  await sb.from("mobile_devices").update({
-    last_push_success_at: new Date().toISOString(),
-    last_push_error: null,
-    last_push_error_at: null,
-  } as never).eq("id", deviceId);
+  await sb
+    .from("mobile_devices")
+    .update({
+      last_push_success_at: new Date().toISOString(),
+      last_push_error: null,
+      last_push_error_at: null,
+    } as never)
+    .eq("id", deviceId);
 }
 
 export async function markDeviceError(sb: SupabaseClient, deviceId: string, err: string) {
-  await sb.from("mobile_devices").update({
-    last_push_error: err.slice(0, 300),
-    last_push_error_at: new Date().toISOString(),
-  } as never).eq("id", deviceId);
+  await sb
+    .from("mobile_devices")
+    .update({
+      last_push_error: err.slice(0, 300),
+      last_push_error_at: new Date().toISOString(),
+    } as never)
+    .eq("id", deviceId);
 }

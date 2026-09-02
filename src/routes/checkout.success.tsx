@@ -7,7 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { isAuthApiError, isAuthRetryableFetchError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { getCheckoutSessionSummary, claimPaidCheckoutForUser } from "@/lib/stripe-checkout.functions";
+import {
+  getCheckoutSessionSummary,
+  claimPaidCheckoutForUser,
+} from "@/lib/stripe-checkout.functions";
 import { autoConfirmUserEmail } from "@/lib/auth-verification-email.functions";
 
 const search = z.object({
@@ -20,14 +23,17 @@ export const Route = createFileRoute("/checkout/success")({
     meta: [
       { title: "Welcome to GrainHero 🎉" },
       { name: "description", content: "Your payment is confirmed. Setting up your account…" },
-      { property: 'og:title', content: "Welcome to GrainHero 🎉" },
-      { property: 'og:description', content: "Your payment is confirmed. Setting up your account…" },
-      { property: 'og:url', content: 'https://grainhero.app/checkout/success' },
-      { property: 'og:type', content: 'website' },
-      { name: 'twitter:card', content: 'summary_large_image' },
-      { name: 'robots', content: 'noindex, nofollow' },
+      { property: "og:title", content: "Welcome to GrainHero 🎉" },
+      {
+        property: "og:description",
+        content: "Your payment is confirmed. Setting up your account…",
+      },
+      { property: "og:url", content: "https://grainhero.app/checkout/success" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "robots", content: "noindex, nofollow" },
     ],
-    links: [{ rel: 'canonical', href: 'https://grainhero.app/checkout/success' }],
+    links: [{ rel: "canonical", href: "https://grainhero.app/checkout/success" }],
   }),
   component: SuccessPage,
 });
@@ -100,7 +106,11 @@ function SuccessPage() {
     (async () => {
       try {
         if (sessionId) {
-          try { window.localStorage.setItem(PENDING_SESSION_KEY, sessionId); } catch { /* ignore */ }
+          try {
+            window.localStorage.setItem(PENDING_SESSION_KEY, sessionId);
+          } catch {
+            /* ignore */
+          }
         }
 
         const draft = readDraft();
@@ -113,7 +123,9 @@ function SuccessPage() {
           try {
             const s = await summaryFn({ data: { sessionId } });
             email = s?.email ?? "";
-          } catch { /* ignore */ }
+          } catch {
+            /* ignore */
+          }
         }
 
         if (!email) {
@@ -123,7 +135,11 @@ function SuccessPage() {
 
         if (!password) {
           // Payment succeeded but password wasn't saved — finish signup manually.
-          try { window.localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+          try {
+            window.localStorage.removeItem(DRAFT_KEY);
+          } catch {
+            /* ignore */
+          }
           navigate({
             to: "/auth/signup",
             search: {
@@ -156,7 +172,9 @@ function SuccessPage() {
           }
 
           setStatus("error");
-          setErrorMsg("Something went wrong creating your account. Please contact support or try again.");
+          setErrorMsg(
+            "Something went wrong creating your account. Please contact support or try again.",
+          );
           return;
         }
 
@@ -169,7 +187,9 @@ function SuccessPage() {
         const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
         if (signInError) {
           setStatus("error");
-          setErrorMsg(`Payment received but sign-in failed: ${describeError(signInError)}. Try logging in with your email.`);
+          setErrorMsg(
+            `Payment received but sign-in failed: ${describeError(signInError)}. Try logging in with your email.`,
+          );
           return;
         }
 
@@ -187,7 +207,9 @@ function SuccessPage() {
         try {
           window.localStorage.removeItem(DRAFT_KEY);
           window.localStorage.removeItem(PENDING_SESSION_KEY);
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
 
         setStatus("done");
 
@@ -218,8 +240,8 @@ function SuccessPage() {
               <div className="mx-auto h-14 w-14 rounded-full bg-red-100 flex items-center justify-center">
                 <PartyPopper className="h-7 w-7 text-red-500" />
               </div>
-              <h1 className="text-xl font-bold text-slate-900">Something went wrong</h1>
-              <p className="text-sm text-slate-600">{errorMsg}</p>
+              <h1 className="text-xl font-bold text-foreground">Something went wrong</h1>
+              <p className="text-sm text-muted-foreground">{errorMsg}</p>
               <Button
                 className="w-full bg-[#00a63e] hover:bg-[#029238] text-white"
                 onClick={() => navigate({ to: "/auth/login" })}
@@ -232,13 +254,13 @@ function SuccessPage() {
               <div className="mx-auto h-14 w-14 rounded-full bg-emerald-100 flex items-center justify-center">
                 <CheckCircle2 className="h-7 w-7 text-emerald-600" />
               </div>
-              <h1 className="text-xl font-bold text-slate-900">Payment confirmed!</h1>
-              <p className="text-sm text-slate-600">Taking you to your dashboard…</p>
+              <h1 className="text-xl font-bold text-foreground">Payment confirmed!</h1>
+              <p className="text-sm text-muted-foreground">Taking you to your dashboard…</p>
             </>
           ) : (
             <>
               <Loader2 className="h-10 w-10 animate-spin text-emerald-600 mx-auto" />
-              <p className="text-sm font-medium text-slate-700">{statusMessages[status]}</p>
+              <p className="text-sm font-medium text-foreground">{statusMessages[status]}</p>
             </>
           )}
         </CardContent>
