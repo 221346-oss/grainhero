@@ -335,3 +335,98 @@ export const getAnalyticsOverview = createServerFn({ method: "GET" })
       })),
     };
   });
+
+
+// ── RAG Recommendation per Silo ───────────────────────────────────────────────
+// Calls the Python ML /chat endpoint which runs the full agentic RAG pipeline:
+//   • Retrieves relevant grain-science chunks from the vector knowledge base
+//   • Fetches live sensor readings for this silo from Supabase
+//   • Passes both to Gemini to generate a grounded, actionable recommendation
+// Falls back to Lovable AI Gateway if the ML service is unreachable.
+
+import { z } from "zod";
+
+export const getSiloRecommendation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) =>
+    z.object({
+      siloId:    z.string(),
+      siloName:  z.string(),
+      grainType: z.string().nullable().optional(),
+      riskLevel: z.string().optional(),
+      riskScore: z.number().optional(),
+    }).parse(d),
+  )
+  .handler(async ({ data }) => {
+    const mlUrl =
+      process.env.ML_BACKEND_URL ??
+      process.env.VITE_ML_SERVICE_URL ??
+      "http://localhost:8001";
+
+    const query =
+      `Give a concise 2-sentence spoilage-risk recommendation for silo "${data.siloName}"` +
+      (data.grainType ? ` which stores ${data.grainType}` : "") +
+      (data.riskScore != null ? ` (current risk score ${data.riskScore}%, level: ${data.riskLevel ?? "unknown"})` : "") +
+      ". Focus on the single most important action the operator should take right now.";
+
+    // ── Primary: Python ML /chat (full RAG + live telemetry) ────────────────
+    try {
+      const res = await fetch(`${mlUrl}/chat`, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message:   query,
+          tenant_id: process.env.DEFAULT_TENANT_ID ?? "",
+          // stateless — no session_id so we don't pollute chat history
+        }),
+        signal: AbortSignal.timeout(12_000),
+      });
+
+      if (res.ok) {
+        const json = (await res.json()) as { answer?: string };
+        const answer = json.answer?.trim();
+        if (answer) return { recommendation: answer, source: "rag" as const };
+      }
+    } catch {
+      // ML service offline — fall through to Lovable fallback
+    }
+
+    // ── Fallback: Lovable AI Gateway (Gemini Flash) ──────────────────────────
+    const apiKey = process.env.LOVABLE_API_KEY;
+    if (apiKey) {
+      try {
+        const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method:  "POST",
+          headers: {
+            "Content-Type":    "application/json",
+            "Lovable-API-Key": apiKey,
+          },
+          body: JSON.stringify({
+            model:    "google/gemini-3-flash-preview",
+            messages: [
+              {
+                role:    "system",
+                content: "You are a grain-storage agronomist AI. Give brief, actionable operational advice.",
+              },
+              { role: "user", content: query },
+            ],
+            max_tokens: 120,
+          }),
+          signal: AbortSignal.timeout(10_000),
+        });
+
+        if (res.ok) {
+          const json = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
+          const answer = json.choices?.[0]?.message?.content?.trim();
+          if (answer) return { recommendation: answer, source: "lovable" as const };
+        }
+      } catch {
+        // both paths failed
+      }
+    }
+
+    return {
+      recommendation: "No recommendation available — ML service and AI gateway are currently unreachable.",
+      source: "offline" as const,
+    };
+  });

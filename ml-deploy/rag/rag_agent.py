@@ -56,10 +56,9 @@ if not SUPABASE_URL or not SUPABASE_KEY:
         "Set these in your .env file or Render environment variables."
     )
 
-GEMINI_GEN_URL   = (
-    "https://generativelanguage.googleapis.com/v1beta/models/"
-    "gemini-flash-latest:generateContent?key=" + GEMINI_API_KEY
-)
+LOVABLE_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions"
+LOVABLE_MODEL       = "google/gemini-2.0-flash"
+
 GEMINI_EMBED_URL = (
     "https://generativelanguage.googleapis.com/v1beta/models/"
     "gemini-embedding-001:embedContent?key=" + GEMINI_API_KEY
@@ -265,14 +264,16 @@ def assemble_context(
 SYSTEM_PROMPT = """You are GrainHero AI, an industrial grain storage safety assistant.
 Your role is to give precise, actionable guidance to grain storage operators and farm managers.
 
-STRICT RULES YOU MUST FOLLOW:
-1. Answer ONLY using the CONTEXT provided below (manuals + live sensor data).
-2. If the context does not contain enough information, say exactly:
-   "I do not have sufficient data in the operational manuals or live sensors to answer this reliably."
-3. NEVER invent, guess, or hallucinate grain safety parameters, sensor values, or thresholds.
-4. When live sensor data is available, always reference it explicitly (e.g. "Current temperature is 38.2C").
-5. When recommending actions, be specific and operational (e.g. "Activate aeration fan for at least 4 hours").
-6. Keep responses concise and structured. Use bullet points for action items."""
+GUIDELINES:
+1. Use the CONTEXT provided below (manuals + live sensor data) as your primary source.
+2. If context is available, answer based on it. If context is sparse, use your knowledge of grain storage science.
+3. When live sensor data is available, always reference it explicitly.
+4. Format your response as exactly 3 short action steps, each on its own line, numbered 1, 2, 3.
+5. Each step must be one clear sentence. No sub-bullets. No markdown. No bold. No em dashes. No emojis.
+6. Example format:
+1. Check and record the current temperature and moisture levels immediately.
+2. Activate the aeration fan if temperature exceeds the safe threshold for this grain type.
+3. Schedule a physical inspection within 24 hours if readings remain elevated."""
 
 
 def build_prompt(query: str, context: str, history: List[Dict] = None) -> List[Dict]:
@@ -301,75 +302,52 @@ Please provide a precise, grounded operational response based solely on the cont
 # =============================================================================
 
 def call_gemini(messages: List[Dict], timeout: int = 30) -> Optional[str]:
-    """Calls Gemini 1.5 Flash for generation with retry on 429."""
-    payload = {
-        "contents": messages,
-        "generationConfig": {
-            "temperature": 0.1,   # Low temp = deterministic / factual
-            "maxOutputTokens": 1024,
-            "topP": 0.8,
-        },
-    }
-    for attempt in range(1, 4):
-        try:
-            with httpx.Client(timeout=timeout) as client:
-                resp = client.post(
-                    GEMINI_GEN_URL,
-                    headers={"Content-Type": "application/json"},
-                    json=payload,
-                )
-                if resp.status_code == 429:
-                    wait = attempt * 5
-                    logger.warning("Gemini 429 rate limit hit. Waiting %ds (attempt %d/3)...", wait, attempt)
-                    time.sleep(wait)
-                    continue
-                resp.raise_for_status()
-                data = resp.json()
-                candidates = data.get("candidates", [])
-                if candidates:
-                    return candidates[0]["content"]["parts"][0]["text"]
-                return None
-        except Exception as e:
-            logger.warning("Gemini primary call failed (attempt %d/3): %s", attempt, e)
-            if attempt < 3:
-                time.sleep(3)
-    return None
+    """Calls Gemini via google-genai SDK (supports AQ. key format)."""
+    try:
+        from google import genai
+        from google.genai import types as genai_types
+
+        client = genai.Client(api_key=GEMINI_API_KEY)
+
+        # Separate system instruction from conversation messages
+        system_text = ""
+        conversation_parts = []
+        for i, m in enumerate(messages):
+            parts = m.get("parts", [])
+            text = parts[0].get("text", "") if parts else m.get("content", "")
+            if i == 0 and "GrainHero AI" in text:
+                system_text = text
+            elif text:
+                conversation_parts.append(text)
+
+        full_prompt = "\n\n".join(conversation_parts)
+
+        response = client.models.generate_content(
+            model="gemini-3.6-flash",
+            contents=full_prompt,
+            config=genai_types.GenerateContentConfig(
+                system_instruction=system_text or None,
+                temperature=0.1,
+                max_output_tokens=1024,
+            ),
+        )
+        return response.text.strip() if response.text else None
+
+    except Exception as e:
+        logger.warning("Gemini SDK call failed: %s", e)
+        return None
 
 
 def call_llm_with_failover(messages: List[Dict]) -> str:
-    """
-    Tries Gemini primary first with retries. On failure, falls back gracefully to secondary model.
-    """
-    logger.info("Calling primary LLM (Gemini 1.5 Flash 001)...")
+    """Calls Gemini via SDK with graceful fallback message."""
+    logger.info("Calling LLM via Google Generative AI SDK...")
     result = call_gemini(messages)
 
     if result:
-        logger.info("Primary LLM responded successfully.")
+        logger.info("LLM responded successfully.")
         return result
 
-    # Fallback model
-    logger.warning("Primary failed. Trying fallback model (Gemini 1.5 Flash 002)...")
-    fallback_url = GEMINI_GEN_URL.replace("gemini-flash-latest", "gemini-2.5-flash")
-    try:
-        payload = {
-            "contents": messages,
-            "generationConfig": {"temperature": 0.1, "maxOutputTokens": 1024},
-        }
-        with httpx.Client(timeout=25) as client:
-            resp = client.post(
-                fallback_url,
-                headers={"Content-Type": "application/json"},
-                json=payload,
-            )
-            resp.raise_for_status()
-            data = resp.json()
-            candidates = data.get("candidates", [])
-            if candidates:
-                logger.info("Fallback LLM responded successfully.")
-                return candidates[0]["content"]["parts"][0]["text"]
-    except Exception as e:
-        logger.error("Fallback LLM also failed: %s", e)
-
+    logger.error("All LLM attempts failed.")
     return ("I am currently unable to process your query due to a service disruption. "
             "Please check sensor readings manually and consult the operational manual.")
 
@@ -387,7 +365,7 @@ class GrainHeroAgent:
         
         sys.path.insert(0, str(Path(__file__).resolve().parent))
         from rag_retrieval import HybridRetriever
-        self.retriever  = HybridRetriever(supabase=self.supabase)
+        self.retriever  = HybridRetriever()
         
         logger.info("GrainHero Agent initialized. Tenant: %s", tenant_id)
 

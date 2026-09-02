@@ -56,6 +56,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger("rag_ingest")
 
+# Load environment variables from .env file
+from dotenv import load_dotenv
+load_dotenv()
+
 # ── Environment ───────────────────────────────────────────────────────────────
 # Use .get() with empty string default so the module can be imported
 # safely even when env vars are not yet set (e.g. during server startup).
@@ -754,7 +758,7 @@ Examples:
     group.add_argument("--file", type=Path, help="Path to a single document file.")
     group.add_argument("--dir",  type=Path, help="Path to a directory of documents.")
     parser.add_argument("--category",  required=True,
-                        choices=["manual", "protocol", "report", "guideline", "sensor_log", "other"],
+                        choices=["manual", "protocol", "report", "guideline", "sensor_log", "other", "research_paper"],
                         help="Document category for metadata tagging.")
     parser.add_argument("--tenant-id", required=True,
                         help="UUID of the farm/organization this document belongs to.")
