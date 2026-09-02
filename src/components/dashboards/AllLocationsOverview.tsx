@@ -17,8 +17,9 @@
  * component: the totals and the per-city figures on the cards come from one
  * response, so they cannot drift into showing different months.
  *
- * Three panels in a real reading order — what you have, what it did, where it
- * is — so the numbered eyebrows earn their numbers.
+ * Four panels in a real reading order — what you have, what it did, what it
+ * costs and who is using it, and where it all is — so the numbered eyebrows
+ * earn their numbers.
  *
  * Surface kit rules apply: surfaces group by fill and never by outline, labels
  * are the quiet 10px uppercase register, figures are bold and tabular, deltas
@@ -27,11 +28,12 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { AlertTriangle, Wallet } from "lucide-react";
+import { AlertTriangle, CreditCard, Users, Wallet } from "lucide-react";
 import { Area, AreaChart, ResponsiveContainer } from "recharts";
 import { DeltaChip, Panel, Rail, SectionLabel, compact, fmtPKR } from "@/components/app/surface";
 import { LocationPicker, utilisationTone } from "@/components/app/location/LocationPicker";
 import { getPortfolioSummary, type PortfolioSummary } from "@/lib/portfolio.functions";
+import { getAccountUsage, type AccountUsage } from "@/lib/account-usage.functions";
 import type { LocationCard, PlanUsage } from "@/lib/locations.functions";
 import { RangeChip, type RangeKey } from "./RangeChip";
 import { cn } from "@/lib/utils";
@@ -239,6 +241,151 @@ function PerformancePanel({
   );
 }
 
+/** Month and year — enough to date a renewal without pretending to a time. */
+function shortDate(iso: string | null): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+}
+
+/** "8 months" / "12 days" — a duration a person reads without doing division. */
+function humanDuration(days: number | null): string {
+  if (days === null || days < 0) return "—";
+  if (days < 60) return `${days} ${days === 1 ? "day" : "days"}`;
+  const months = Math.floor(days / 30);
+  if (months < 24) return `${months} months`;
+  return `${Math.floor(days / 365)} years`;
+}
+
+/**
+ * What the account costs, who is on it, and how long it has been running.
+ *
+ * The half of the picture the performance figures do not cover: a renewal date
+ * matters at the end of a term, not at the start of a shift, and it is the
+ * thing an owner cannot find anywhere else once every page is scoped to one
+ * warehouse. A plan is bought per tenant and the team belongs to the account,
+ * so none of this is location-scoped — correctly.
+ */
+function AccountPanel({ data, loading }: { data?: AccountUsage; loading: boolean }) {
+  const plan = data?.plan;
+  const people = data?.people;
+
+  // Expiry is the only thing here that is ever urgent, so it is the only thing
+  // allowed to take a colour. Fourteen days is the point at which a renewal
+  // stops being a date and starts being a task.
+  const days = plan?.daysRemaining ?? null;
+  const expiryTone =
+    days === null ? null : days < 0 ? "text-severity-critical" : days <= 14 ? "text-warning" : null;
+
+  const seats = people?.seatLimit ?? null;
+  const seatPct = seats && people ? Math.min(100, Math.round((people.total / seats) * 100)) : null;
+
+  return (
+    <Panel className="space-y-5">
+      <SectionLabel index="03">Plan and usage</SectionLabel>
+
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,2fr)]">
+        <div className="space-y-2">
+          <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <CreditCard className="h-3 w-3 shrink-0" />
+            Plan
+          </div>
+          <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
+            <span
+              className={cn(
+                "text-2xl font-bold capitalize",
+                loading ? "text-muted-foreground/40" : "text-foreground",
+              )}
+            >
+              {/* "No active plan" is a finding, not a placeholder. Showing it
+                  while the answer is still in flight tells an admin on a paid
+                  plan that they are on none. */}
+              {loading ? "—" : (plan?.name ?? "No active plan")}
+            </span>
+            {plan?.status && (
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                {plan.status}
+              </span>
+            )}
+          </div>
+          {plan && plan.pricePerMonth > 0 && (
+            <div className="text-[13px] font-semibold tabular-nums text-muted-foreground">
+              {fmtPKR.format(plan.pricePerMonth)}
+              <span className="ml-1 text-[11px] font-normal">per month</span>
+            </div>
+          )}
+        </div>
+
+        <div className="grid grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-3">
+          <div className="space-y-1.5">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              {days !== null && days < 0 ? "Expired" : "Renews"}
+            </div>
+            <div className="flex flex-wrap items-baseline gap-x-2">
+              <span
+                className={cn(
+                  "text-[15px] font-bold tabular-nums",
+                  expiryTone ?? "text-foreground",
+                )}
+              >
+                {shortDate(plan?.nextPaymentDate ?? plan?.endDate ?? null)}
+              </span>
+              {days !== null && days >= 0 && (
+                <span
+                  className={cn(
+                    "text-[11px] font-semibold tabular-nums",
+                    expiryTone ?? "text-muted-foreground",
+                  )}
+                >
+                  in {humanDuration(days)}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <Figure label="On GrainHero" value={humanDuration(data?.daysOnPlatform ?? null)} />
+
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <Users className="h-3 w-3 shrink-0" />
+              People
+            </div>
+            <div className="flex flex-wrap items-baseline gap-x-2">
+              <span
+                className={cn(
+                  "text-2xl font-bold tabular-nums",
+                  loading ? "text-muted-foreground/40" : "text-foreground",
+                )}
+              >
+                {loading ? "—" : (people?.total ?? 0)}
+              </span>
+              {seats && (
+                <span className="text-[11px] font-semibold tabular-nums text-muted-foreground">
+                  of {seats} seats
+                </span>
+              )}
+            </div>
+            {seatPct !== null && (
+              <Rail pct={seatPct} tone={seatPct >= 100 ? "warning" : "success"} />
+            )}
+          </div>
+        </div>
+      </div>
+
+      <p className="text-[11px] text-muted-foreground">
+        {people && (
+          <>
+            {people.activeLast30d} of {people.total} active in the last 30 days,{" "}
+            {people.totalLogins.toLocaleString()} sign-ins in total.{" "}
+          </>
+        )}
+        Your plan and your team belong to the account, so these are the same on every location.
+      </p>
+    </Panel>
+  );
+}
+
 export function AllLocationsOverview({
   locations,
   plan,
@@ -261,6 +408,16 @@ export function AllLocationsOverview({
     staleTime: 30_000,
   });
 
+  // Kept out of the range-keyed query on purpose: a plan and a team do not
+  // change with the period being looked at, and refetching them on every range
+  // switch would be work that can only return the same answer.
+  const usageFn = useServerFn(getAccountUsage);
+  const { data: usage, isPending: usagePending } = useQuery({
+    queryKey: ["account-usage"],
+    queryFn: () => usageFn(),
+    staleTime: 5 * 60_000,
+  });
+
   // The same response feeds the totals and the cards, so a card can never show
   // one month while the figure above it shows another.
   const revenueByCity = useMemo(
@@ -279,6 +436,7 @@ export function AllLocationsOverview({
         <div className="space-y-3">
           <EstatePanel locations={locations} />
           <PerformancePanel data={data} loading={isPending} range={range} onRange={setRange} />
+          <AccountPanel data={usage} loading={usagePending} />
         </div>
       }
     />

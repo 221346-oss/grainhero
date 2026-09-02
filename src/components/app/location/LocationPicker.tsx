@@ -329,7 +329,7 @@ export function LocationPicker({
       {summary && <div className="mb-8">{summary}</div>}
 
       <div className="mb-4">
-        <SectionLabel index={summary ? "03" : "01"}>Your locations</SectionLabel>
+        <SectionLabel index={summary ? "04" : "01"}>Your locations</SectionLabel>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
