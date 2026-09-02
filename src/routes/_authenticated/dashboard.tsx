@@ -11,7 +11,8 @@ import { TechnicianDashboard } from "@/components/dashboards/TechnicianDashboard
 import { getImpersonationSession } from "@/components/app/ImpersonationBanner";
 import { useState, useEffect } from "react";
 import { useLocationScope } from "@/components/app/location/LocationScope";
-import { LocationPicker, WarehousePicker } from "@/components/app/location/LocationPicker";
+import { WarehousePicker } from "@/components/app/location/LocationPicker";
+import { AllLocationsOverview } from "@/components/dashboards/AllLocationsOverview";
 import { PlanExpiredPrompt } from "@/components/app/PlanExpiredPrompt";
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -90,7 +91,14 @@ function DashboardPage() {
 }
 
 /**
- * Admins pick a location before the dashboard opens.
+ * Admins pick a location before the scoped dashboard opens — but they land on
+ * the account-wide view first, rather than on navigation alone.
+ *
+ * Scoping every page to one warehouse left nowhere in the app that answered
+ * "how is the whole business doing", which is the question an admin holding
+ * sites in several cities actually opens the app with. So the no-location state
+ * is a real overview — totals across every location, then the cards — instead
+ * of a bare picker, and the header switcher's "All locations" returns to it.
  *
  * The picker is shown even when there is only one location — that decision was
  * taken deliberately, so an admin always sees where their data is coming from
@@ -148,10 +156,10 @@ function AdminDashboardWithLocations({ name }: { name?: string }) {
   return (
     <>
       <PlanExpiredPrompt />
-      <LocationPicker
+      <AllLocationsOverview
         locations={scope.locations}
-        name={name}
         plan={scope.plan}
+        name={name}
         onSelect={(key) => scope.select(key)}
       />
     </>

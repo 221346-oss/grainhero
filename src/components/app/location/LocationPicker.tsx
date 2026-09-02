@@ -1,17 +1,28 @@
 /**
- * LocationPicker — the card grid an admin lands on after signing in.
+ * LocationPicker — the screen an admin lands on after signing in.
  *
- * One card per city. The card is not just navigation: it carries enough live
- * signal (warehouses, silos, how full, what's alerting) to work as a daily
- * triage screen, because an admin with a single site sees it on every login and
- * it has to earn that click.
+ * Two jobs on one page. Above, an optional `summary` slot carries the whole
+ * account added up (see PortfolioSummary) — after location scoping this is the
+ * only place left that answers "how is the business doing" rather than "how is
+ * this warehouse doing". Below, one card per city, which is how you get from
+ * that question to a specific site.
+ *
+ * Keeping both on one screen is the point: the overall figures and the cards
+ * that make them up are read together, and an extra click between them turns a
+ * roll-up into something you have to go and find.
+ *
+ * The card is not just navigation — it carries enough live signal (warehouses,
+ * silos, how full, what's alerting, what it earned) to work as a daily triage
+ * screen, because an admin with a single site sees it on every login and it has
+ * to earn that click.
  *
  * Surface kit rules apply — surfaces group by fill and never by outline, labels
  * are the quiet 10px uppercase register, figures are bold and tabular, and
  * colour is semantic only.
  */
+import type { ReactNode } from "react";
 import { AlertTriangle, ArrowLeft, ArrowRight, MapPin, Warehouse } from "lucide-react";
-import { Rail, SectionLabel, compact } from "@/components/app/surface";
+import { Rail, SectionLabel, compact, fmtPKR } from "@/components/app/surface";
 import type { LocationCard, LocationWarehouse, PlanUsage } from "@/lib/locations.functions";
 import { cn } from "@/lib/utils";
 
@@ -22,7 +33,23 @@ export function utilisationTone(pct: number | null): "success" | "warning" | "cr
   return "success";
 }
 
-export function LocationTile({ loc, onSelect }: { loc: LocationCard; onSelect: () => void }) {
+export function LocationTile({
+  loc,
+  revenue,
+  onSelect,
+}: {
+  loc: LocationCard;
+  /**
+   * What this city earned over the period the summary above is showing.
+   *
+   * Shown only when there is something to show. A city that earned nothing in
+   * the window is indistinguishable, from the card, from one whose figure has
+   * not loaded yet — so printing a confident "Rs 0" for both says less than
+   * printing neither, and the tile still works as navigation without it.
+   */
+  revenue?: number;
+  onSelect: () => void;
+}) {
   const tone = utilisationTone(loc.utilisationPct);
 
   return (
@@ -77,6 +104,17 @@ export function LocationTile({ loc, onSelect }: { loc: LocationCard; onSelect: (
             </span>
           </div>
           <Rail pct={loc.utilisationPct} tone={tone} />
+        </div>
+      )}
+
+      {revenue !== undefined && revenue > 0 && (
+        <div className="flex items-baseline justify-between gap-2">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Revenue
+          </span>
+          <span className="text-[13px] font-bold tabular-nums text-success">
+            {fmtPKR.format(revenue)}
+          </span>
         </div>
       )}
 
@@ -226,11 +264,23 @@ export function LocationPicker({
   locations,
   name,
   plan,
+  summary,
+  revenueByCity,
   onSelect,
 }: {
   locations: LocationCard[];
   name?: string;
   plan?: PlanUsage;
+  /**
+   * The account-wide roll-up, rendered above the cards.
+   *
+   * Passed in rather than fetched here so this component stays the presentation
+   * of a list of locations — the summary needs a range, a query and a loading
+   * state of its own, none of which the card grid should have to know about.
+   */
+  summary?: ReactNode;
+  /** Per-city revenue for the same period as `summary`, keyed by `LocationCard.key`. */
+  revenueByCity?: Record<string, number>;
   onSelect: (key: string) => void;
 }) {
   // An admin whose plan allows warehouses but who has provisioned none yet.
@@ -259,21 +309,37 @@ export function LocationPicker({
     <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
       <header className="mb-8 space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
-          <SectionLabel index="01">Your locations</SectionLabel>
+          {/* Unnumbered: the numbered eyebrows below index the blocks in their
+              reading order, and the page title is not one of them. */}
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Overview
+          </span>
           <PlanAllowance plan={plan} />
         </div>
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">
           {name ? `Welcome back, ${name}` : "Welcome back"}
         </h1>
         <p className="max-w-prose text-[13px] text-muted-foreground">
-          Pick a location to open its dashboard. Each one is kept separate — you&apos;ll only see
-          the silos and warehouses that belong to the city you choose.
+          Everything you own, added up below, then one card per city. Open a location to work in it
+          — inside, each one is kept separate, and you&apos;ll only see the silos and warehouses
+          that belong to the city you chose.
         </p>
       </header>
 
+      {summary && <div className="mb-8">{summary}</div>}
+
+      <div className="mb-4">
+        <SectionLabel index={summary ? "03" : "01"}>Your locations</SectionLabel>
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {locations.map((loc) => (
-          <LocationTile key={loc.key} loc={loc} onSelect={() => onSelect(loc.key)} />
+          <LocationTile
+            key={loc.key}
+            loc={loc}
+            revenue={revenueByCity?.[loc.key]}
+            onSelect={() => onSelect(loc.key)}
+          />
         ))}
       </div>
     </div>

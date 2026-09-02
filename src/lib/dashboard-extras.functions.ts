@@ -3,40 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { fetchDispatchTotals } from "./operations.functions";
 import { resolveLocationScope, byWarehouse, bySilo } from "./page-scope.server";
-
-type Range = "today" | "7d" | "30d" | "mtd" | "ytd";
-function rangeToWindow(range: Range) {
-  const now = new Date();
-  let start = new Date(now);
-  let priorStart = new Date(now);
-  switch (range) {
-    case "today":
-      start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      priorStart = new Date(start.getTime() - 24 * 3600 * 1000);
-      break;
-    case "7d":
-      start = new Date(now.getTime() - 7 * 24 * 3600 * 1000);
-      priorStart = new Date(now.getTime() - 14 * 24 * 3600 * 1000);
-      break;
-    case "30d":
-      start = new Date(now.getTime() - 30 * 24 * 3600 * 1000);
-      priorStart = new Date(now.getTime() - 60 * 24 * 3600 * 1000);
-      break;
-    case "mtd":
-      start = new Date(now.getFullYear(), now.getMonth(), 1);
-      priorStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-      break;
-    case "ytd":
-      start = new Date(now.getFullYear(), 0, 1);
-      priorStart = new Date(now.getFullYear() - 1, 0, 1);
-      break;
-  }
-  return {
-    startISO: start.toISOString(),
-    priorStartISO: priorStart.toISOString(),
-    priorEndISO: start.toISOString(),
-  };
-}
+import { rangeToWindow, type Range } from "./date-window";
 
 export const getDashboardExtras = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
