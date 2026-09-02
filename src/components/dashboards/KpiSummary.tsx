@@ -238,6 +238,9 @@ export function KpiSummary({
               </div>
 
               {/* Neon Sparkline */}
+              {/* Tokens are complete oklch() colours, so they are used bare.
+                  Wrapping one in hsl() yields an invalid colour and the line
+                  silently does not draw. */}
               {revenueSpark && revenueSpark.length > 1 && (
                 <div className="h-10 -mx-1 mt-2">
                   <ResponsiveContainer width="100%" height="100%">
@@ -249,16 +252,12 @@ export function KpiSummary({
                         <linearGradient id="revSparkGrad" x1="0" y1="0" x2="0" y2="1">
                           <stop
                             offset="0%"
-                            stopColor={
-                              revPositive ? "hsl(var(--success))" : "hsl(var(--severity-critical))"
-                            }
+                            stopColor={revPositive ? "var(--success)" : "var(--severity-critical)"}
                             stopOpacity={0.3}
                           />
                           <stop
                             offset="100%"
-                            stopColor={
-                              revPositive ? "hsl(var(--success))" : "hsl(var(--severity-critical))"
-                            }
+                            stopColor={revPositive ? "var(--success)" : "var(--severity-critical)"}
                             stopOpacity={0}
                           />
                         </linearGradient>
@@ -266,9 +265,7 @@ export function KpiSummary({
                       <Area
                         type="monotone"
                         dataKey="v"
-                        stroke={
-                          revPositive ? "hsl(var(--success))" : "hsl(var(--severity-critical))"
-                        }
+                        stroke={revPositive ? "var(--success)" : "var(--severity-critical)"}
                         strokeWidth={1.5}
                         fill="url(#revSparkGrad)"
                         dot={false}

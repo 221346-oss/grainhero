@@ -25,6 +25,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { cityKey, deriveCity } from "./location-scope";
 import { rangeToWindow, type Range } from "./date-window";
+import { legacyBatchRevenue } from "./revenue";
 
 /** What one city contributed over the selected window. */
 export type PortfolioCity = {
@@ -57,23 +58,6 @@ export type PortfolioSummary = {
 function pctDelta(cur: number, prev: number): number {
   if (!prev) return cur ? 100 : 0;
   return Math.round(((cur - prev) / prev) * 100);
-}
-
-/**
- * Revenue for a legacy batch row.
- *
- * Dispatch used to happen per batch and wrote `grain_batches.revenue`; it now
- * happens per silo and writes `grain_dispatches.total_amount`. Both are counted
- * — the same merge `getDashboardExtras` does — so the total does not halve on
- * an account that straddles the change. `revenue` is trusted where present and
- * falls back to price x quantity for rows written before that column existed.
- */
-function legacyBatchRevenue(b: {
-  revenue: number | null;
-  purchase_price_per_kg: number | null;
-  quantity_kg: number | null;
-}): number {
-  return Number(b.revenue ?? Number(b.purchase_price_per_kg ?? 0) * Number(b.quantity_kg ?? 0));
 }
 
 type BatchRow = {

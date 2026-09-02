@@ -4,6 +4,7 @@ import { z } from "zod";
 import { fetchDispatchTotals } from "./operations.functions";
 import { resolveLocationScope, byWarehouse, bySilo } from "./page-scope.server";
 import { rangeToWindow, type Range } from "./date-window";
+import { legacyBatchRevenue } from "./revenue";
 
 export const getDashboardExtras = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -27,7 +28,6 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
     const { startISO, priorStartISO, priorEndISO } = rangeToWindow(range);
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
     const now0 = new Date();
-    const twelveMoAgo = new Date(now0.getFullYear(), now0.getMonth() - 11, 1).toISOString();
     // Everything below used to run as one Promise.all followed by two more
     // sequential `await`s (fetchDispatchTotals, then the revenue-sparkline
     // query) — two extra full network round-trips on every dashboard load,
@@ -168,6 +168,10 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
         .neq("status", "resolved")
         .limit(200),
       fetchDispatchTotals(context.supabase, scope.warehouseIds),
+      // Every dispatched batch, not just the last twelve months. This feeds
+      // the all-time legacy revenue total as well as the twelve-month
+      // sparkline, and the total has to line up with fetchDispatchTotals,
+      // which is also all-time. Same 10k ceiling as that query.
       byWarehouse(
         context.supabase
           .from("grain_batches")
@@ -175,23 +179,31 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
         scope,
       )
         .eq("status", "dispatched")
-        .gte("created_at", twelveMoAgo),
+        .limit(10000),
+      // Also carries `created_at` and `total_amount` so the revenue sparkline
+      // can count live silo dispatches without a second round trip.
       byWarehouse(
-        context.supabase.from("grain_dispatches").select("silo_id, total_qty_kg"),
+        context.supabase
+          .from("grain_dispatches")
+          .select("silo_id, total_qty_kg, created_at, total_amount"),
         scope,
       ).limit(5000),
     ]);
 
     const batches = batchesRes.data ?? [];
-    const legacyRevenue = batches
-      .filter((b) => b.status === "dispatched")
-      .reduce(
-        (s, b) =>
-          s +
-          Number(b.revenue ?? Number(b.purchase_price_per_kg ?? 0) * Number(b.quantity_kg ?? 0)),
-        0,
-      );
-    // TODO(dispatch-refactor): legacyRevenue above is the old per-batch dispatch model
+
+    // Legacy revenue is summed from every dispatched batch (revRowsRes), not
+    // from `batches`. `batches` is the five most recent rows, fetched for the
+    // "Recent batches" table, and summing it meant revenue counted only those
+    // of the last five batches that happened to be dispatched: an account
+    // whose five newest batches were all still stored reported none of its
+    // legacy revenue at all, and every other account reported an arbitrary
+    // slice of it. The figure is all-time (see RevenueMini, "Dispatched
+    // batches"), so it must be counted over every dispatched batch to agree
+    // with dispatchTotals, which is also all-time.
+    const dispatchedBatches = revRowsRes.data ?? [];
+    const legacyRevenue = dispatchedBatches.reduce((s, b) => s + legacyBatchRevenue(b), 0);
+    // TODO(dispatch-refactor): legacyRevenue is the old per-batch dispatch model
     // (grain_batches.revenue) and will stop growing now that dispatch happens from silos
     // (dispatchFromSilo in operations.functions.ts, writing to the `dispatches` table).
     // Merging both here so this dashboard tile doesn't silently drop to zero — replace with
@@ -245,8 +257,13 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
       stored: sumKg((b) => String(b.status) === "stored" && Number(b.risk_score ?? 0) < 70),
     };
 
-    // 12-month revenue sparkline from dispatched batches (revRowsRes fetched
-    // above, in parallel with everything else)
+    // 12-month revenue sparkline.
+    //
+    // Counts BOTH revenue models, the way the `revenue` total above does.
+    // Bucketing only the legacy batches left the sparkline — and `revenueMtd`
+    // and `revenueDeltaPct` derived from it, which is what the dashboard
+    // actually renders — blind to every silo dispatch, so an account that had
+    // moved to the new model showed a flat zero trend under a non-zero total.
     const now = now0;
     const buckets: { key: string; label: string; total: number }[] = [];
     for (let i = 11; i >= 0; i--) {
@@ -257,16 +274,18 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
         total: 0,
       });
     }
-    const revRows = revRowsRes.data;
-    for (const r of revRows ?? []) {
-      const d = new Date(r.created_at as string);
-      const k = `${d.getFullYear()}-${d.getMonth()}`;
-      const b = buckets.find((x) => x.key === k);
-      if (!b) continue;
-      const val = Number(
-        r.revenue ?? Number(r.purchase_price_per_kg ?? 0) * Number(r.quantity_kg ?? 0),
-      );
-      b.total += val;
+    const addToBucket = (iso: string | null, value: number) => {
+      if (!iso) return;
+      const d = new Date(iso);
+      if (Number.isNaN(d.getTime())) return;
+      const b = buckets.find((x) => x.key === `${d.getFullYear()}-${d.getMonth()}`);
+      if (b) b.total += value;
+    };
+    for (const r of dispatchedBatches) {
+      addToBucket(r.created_at as string, legacyBatchRevenue(r));
+    }
+    for (const d of siloDispatchesRes.data ?? []) {
+      addToBucket(d.created_at as string, Number(d.total_amount ?? 0));
     }
     const revenueSpark = buckets.map((b) => b.total);
     const revenueMtd = buckets[buckets.length - 1]?.total ?? 0;
