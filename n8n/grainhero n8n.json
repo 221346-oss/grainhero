@@ -1,0 +1,720 @@
+{
+  "name": "grainhero n8n",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "grainhero-alerts",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "65f05f8c-9159-41e3-8d34-c8be90969775",
+      "name": "Webhook",
+      "webhookId": "901d4027-9e9a-4919-a628-463a47ee23a4"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "81387315-ae2e-44d7-b941-5e0252a6b971",
+              "leftValue": "={{ $json.headers[\"x-webhook-secret\"] }}",
+              "rightValue": "={{ $env[\"N8N_WEBHOOK_SECRET\"] }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {
+          "ignoreCase": false
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        224,
+        0
+      ],
+      "id": "a63e598f-60bf-4a30-8506-79eb982e666c",
+      "name": "If",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "grain_alerts",
+        "limit": 1,
+        "orderBy": "=",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "alert_id",
+              "condition": "eq",
+              "keyValue": "={{ $('Webhook').item.json.body.record.alert_id }}"
+            },
+            {
+              "keyName": "notification_sent",
+              "condition": "eq",
+              "keyValue": "true"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        448,
+        -96
+      ],
+      "id": "262b356d-f921-4eba-a22a-c0b6237acea7",
+      "name": "Get many rows",
+      "credentials": {
+        "supabaseApi": {
+          "id": "Xc0BP5OMoruGeipL",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "94f2a3f4-1f78-49d5-b0fe-51b1243bb3f7",
+              "leftValue": "={{ $json.alert_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "isEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        672,
+        -96
+      ],
+      "id": "6b2f3fdf-f36d-4695-9167-337e2354071a",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the raw webhook payload from Supabase\nconst body = $('Webhook').item.json.body;\nconst record = body.record || body;\n\n// Pull out all the fields we need\nconst alertId     = record.alert_id    || record.id || 'unknown';\nconst adminId     = record.admin_id    || '';\nconst siloId      = record.silo_id     || 'Unknown Silo';\nconst warehouseId = record.warehouse_id || null;\nconst title       = record.title       || 'Grain Alert';\nconst message     = record.message     || '';\nconst priority    = record.priority    || 'medium';\nconst sensorType  = record.sensor_type || '';\nconst triggerCond = record.trigger_conditions || {};\n\n// Get the actual sensor reading and threshold from trigger_conditions\nconst metricValue = triggerCond.value     || null;\nconst threshold   = triggerCond.threshold || null;\nconst metric      = triggerCond.metric    || sensorType;\n\n// Map priority to severity label\nconst severityMap = { critical:'critical', high:'high', medium:'medium', low:'low' };\nconst severity = severityMap[priority] || 'medium';\n\n// Build a human-readable summary line\nconst summary = (metricValue !== null && threshold !== null)\n  ? `${title}: ${metric} reading ${metricValue} exceeded threshold ${threshold}`\n  : message;\n\n// Return clean object — all future nodes use these variables\nreturn [{ json: {\n  alertId,\n  adminId,\n  siloId,\n  warehouseId,\n  title,\n  message,\n  summary,\n  priority,\n  severity,\n  sensorType,\n  metric,\n  metricValue,\n  threshold,\n  triggeredAt: new Date().toISOString(),\n}}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        -192
+      ],
+      "id": "0446161a-32dd-4ccc-b645-a73a86af11d1",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "notification_channel_prefs",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "user_id",
+              "keyValue": "={{ $json.adminId }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        -192
+      ],
+      "id": "56de4be6-74d3-497a-8e4e-c8634c82f060",
+      "name": "Get a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "Xc0BP5OMoruGeipL",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.RAG_API_URL }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "=Silo {{ $('Code in JavaScript').item.json.siloId }} {{ $('Code in JavaScript').item.json.metric }} is {{ $('Code in JavaScript').item.json.metricValue }}, threshold is {{ $('Code in JavaScript').item.json.threshold }}. What should the operator do immediately?"
+            },
+            {
+              "name": "tenant_id",
+              "value": "={{ $('Code in JavaScript').item.json.adminId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1344,
+        -192
+      ],
+      "id": "06adbeb5-d7ba-48d1-844f-81399b6c742f",
+      "name": "HTTP Request",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "grain_alerts",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "alert_id",
+              "condition": "eq",
+              "keyValue": "={{ $('Code in JavaScript1').item.json.alertId }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "ai_recommendation",
+              "fieldValue": "={{ $('HTTP Request').item.json.answer || 'No recommendation available' }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1568,
+        -288
+      ],
+      "id": "af1c9f38-7c8e-4ad3-9197-466f14ed9a27",
+      "name": "Update a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "Xc0BP5OMoruGeipL",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Code in JavaScript1').item.json.priority }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "66b1d5e7-7bc0-4d86-9cb4-12362170338c"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "e6ab4bb3-1461-4a41-8b1c-2c25820591d8",
+                    "leftValue": "critical",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Critical"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "9da7f30d-b628-4742-a865-06521ad8ed3b",
+                    "leftValue": "high",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "High"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "1648a197-ae03-4082-82bd-01a7089d90df",
+                    "leftValue": "medium",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Medium"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "569ff187-d503-4ff8-bf99-abe62d81235e",
+                    "leftValue": "low",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Low"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        1792,
+        -288
+      ],
+      "id": "9ed24599-eeb2-4fae-93c5-46da8e4ba8e8",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "tableId": "notifications",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "admin_id",
+              "fieldValue": "={{ $('Code in JavaScript1').item.json.adminId }}"
+            },
+            {
+              "fieldId": "user_id",
+              "fieldValue": "={{ $('Code in JavaScript1').item.json.adminId }}"
+            },
+            {
+              "fieldId": "title",
+              "fieldValue": "={{ $('Code in JavaScript1').item.json.title }}"
+            },
+            {
+              "fieldId": "message",
+              "fieldValue": "={{ $('Code in JavaScript1').item.json.summary }}"
+            },
+            {
+              "fieldId": "type",
+              "fieldValue": "alert"
+            },
+            {
+              "fieldId": "category",
+              "fieldValue": "system"
+            },
+            {
+              "fieldId": "metadata",
+              "fieldValue": "={{ JSON.stringify({ alert_id: $('Code in JavaScript1').item.json.alertId, silo_id: $('Code in JavaScript1').item.json.siloId, priority: $('Code in JavaScript1').item.json.priority, metric: $('Code in JavaScript1').item.json.metric, value: $('Code in JavaScript1').item.json.metricValue }) }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2240,
+        -336
+      ],
+      "id": "ffd41854-5a5c-4a95-aee9-812726cabbb1",
+      "name": "Create a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "Xc0BP5OMoruGeipL",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "apiKey",
+        "from": "={{ $env.RESEND_FROM_EMAIL }}",
+        "to": "={{ $('Get a row').item.json.email || '' }}",
+        "subject": "=🚨 [{{ $('Code in JavaScript1').item.json.priority.toUpperCase() }}] {{ $('Code in JavaScript1').item.json.siloId }} — {{ $('Code in JavaScript1').item.json.title }} | GrainHero",
+        "html": "=<div style=\"font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f9f9f9;padding:20px\">\n  <div style=\"background:#1a1a2e;color:white;padding:20px;border-radius:8px 8px 0 0\">\n    <h2 style=\"margin:0\">🌾 GrainHero Alert</h2>\n  </div>\n  <div style=\"background:white;padding:20px;border:1px solid #ddd\">\n    <table style=\"width:100%;border-collapse:collapse\">\n      <tr><td style=\"padding:8px;color:#666\">Silo</td><td style=\"padding:8px;font-weight:bold\">{{ $('Code in JavaScript1').item.json.siloId }}</td></tr>\n      <tr style=\"background:#f5f5f5\"><td style=\"padding:8px;color:#666\">Alert</td><td style=\"padding:8px;font-weight:bold\">{{ $('Code in JavaScript1').item.json.title }}</td></tr>\n      <tr><td style=\"padding:8px;color:#666\">Reading</td><td style=\"padding:8px;font-weight:bold;color:#e74c3c\">{{ $('Code in JavaScript1').item.json.metricValue }} (threshold: {{ $('Code in JavaScript1').item.json.threshold }})</td></tr>\n      <tr style=\"background:#f5f5f5\"><td style=\"padding:8px;color:#666\">Priority</td><td style=\"padding:8px;font-weight:bold;color:#e74c3c\">{{ $('Code in JavaScript1').item.json.priority.toUpperCase() }}</td></tr>\n      <tr><td style=\"padding:8px;color:#666\">Time</td><td style=\"padding:8px\">{{ $('Code in JavaScript1').item.json.triggeredAt }}</td></tr>\n    </table>\n    <div style=\"margin-top:20px;padding:15px;background:#fff3cd;border-left:4px solid #f39c12;border-radius:4px\">\n      <h3 style=\"margin:0 0 10px 0;color:#856404\">🤖 AI Recommendation</h3>\n      <p style=\"margin:0;color:#533f03\">{{ $('HTTP Request').item.json.answer || 'Check sensor readings manually and consult operational manual.' }}</p>\n    </div>\n  </div>\n  <div style=\"background:#f0f0f0;padding:10px;text-align:center;border-radius:0 0 8px 8px;font-size:12px;color:#666\">\n    GrainHero, Intelligent Grain Storage Management\n  </div>\n</div>\n",
+        "additionalOptions": {}
+      },
+      "type": "n8n-nodes-resend.resend",
+      "typeVersion": 1,
+      "position": [
+        2144,
+        -560
+      ],
+      "id": "218724a6-eda7-4953-9bc5-afe6f599adc0",
+      "name": "Send a new email",
+      "webhookId": "8b89ebd7-8cfe-4b6d-af06-44c7ad41089a",
+      "credentials": {
+        "resendApi": {
+          "id": "hzp6nXzL9XGzUhGe",
+          "name": "Resend account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://rest.moceanapi.com/rest/1/sms",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "mocean-api-key",
+              "value": "={{ $env.MOCEAN_API_KEY }}"
+            },
+            {
+              "name": "mocean-api-secret",
+              "value": "={{ $env.MOCEAN_API_SECRET }}"
+            },
+            {
+              "name": "mocean-from",
+              "value": "={{ $env.MOCEAN_FROM }}"
+            },
+            {
+              "name": "mocean-to",
+              "value": "={{ $('Get a row').item.json.phone || '' }}"
+            },
+            {
+              "name": "mocean-text",
+              "value": "=GrainHero CRITICAL: {{ $('Code in JavaScript1').item.json.siloId }} {{ $('Code in JavaScript1').item.json.metric }} {{ $('Code in JavaScript1').item.json.metricValue }}. Act now. grainhero.com"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1872,
+        -560
+      ],
+      "id": "ef589732-2b4c-43fd-89ce-fe7b216aaee9",
+      "name": "HTTP Request1",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "grain_alerts",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "alert_id",
+              "fieldValue": "={{ $('Code in JavaScript1').item.json.alertId }}"
+            },
+            {
+              "fieldId": "notification_sent",
+              "fieldValue": "true"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2464,
+        -336
+      ],
+      "id": "d4a4d850-ca4f-4674-9391-65ba177331e2",
+      "name": "Update a row1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "Xc0BP5OMoruGeipL",
+          "name": "Supabase account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Get many rows",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Get many rows": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Get a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a row": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Update a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a row": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Send a new email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create a row",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create a row",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send a new email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create a row",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a new email": {
+      "main": [
+        [
+          {
+            "node": "Create a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Send a new email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a row": {
+      "main": [
+        [
+          {
+            "node": "Update a row1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "5004cd33-694a-43a7-94dd-14e56e1f01fd",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d9e0bc7400300a401fa17cf68b72305e6d21de1431c42c6f3e6f4b6fc7ce79fd"
+  },
+  "nodeGroups": [],
+  "id": "ZZ0MTr39NiN4bCLJ",
+  "tags": []
+}

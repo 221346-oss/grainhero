@@ -1,0 +1,179 @@
+{
+  "name": "GrainHero — Phase 1: Alert → In-App Notification",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "grainhero-alerts",
+        "responseMode": "onReceived",
+        "responseData": "allEntries",
+        "options": {}
+      },
+      "id": "node-webhook",
+      "name": "Receive Alert Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "grainhero-alerts",
+      "notes": "Supabase fires this when a row is inserted into grain_alerts.\nURL: POST /webhook/grainhero-alerts\nSupabase sends the full record as JSON in the request body."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.headers['x-webhook-secret'] }}",
+              "operation": "equal",
+              "value2": "={{ $env[\"N8N_WEBHOOK_SECRET\"] }}"
+            }
+          ]
+        }
+      },
+      "id": "node-check-secret",
+      "name": "Verify Webhook Secret",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [460, 300],
+      "notes": "Security check — rejects any request that does not include\nthe correct x-webhook-secret header.\nThis prevents fake alerts from triggering notifications."
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"error\": \"Unauthorized\" }",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "id": "node-reject",
+      "name": "Reject — Unauthorized",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [680, 460],
+      "notes": "Returns HTTP 401 to Supabase if the secret does not match.\nThis branch only runs when the secret check fails."
+    },
+    {
+      "parameters": {
+        "jsCode": "// ── Extract alert fields from Supabase webhook payload ──────────\n// Supabase DB webhooks send the payload in this shape:\n// { \"type\": \"INSERT\", \"table\": \"grain_alerts\", \"record\": { ... } }\n\nconst body = $input.first().json.body || $input.first().json;\nconst record = body.record || body;\n\n// Pull all the fields we need from the alert record\nconst alertId     = record.alert_id    || record.id || 'unknown';\nconst adminId     = record.admin_id    || '';\nconst siloId      = record.silo_id     || 'Unknown Silo';\nconst title       = record.title       || 'Grain Alert';\nconst message     = record.message     || '';\nconst priority    = record.priority    || 'medium';\nconst sensorType  = record.sensor_type || '';\nconst triggerCond = record.trigger_conditions || {};\nconst warehouseId = record.warehouse_id || null;\nconst batchId     = record.batch_id    || null;\n\n// Extract sensor reading value from trigger_conditions JSON\nconst metricValue = triggerCond.value     || null;\nconst threshold   = triggerCond.threshold || null;\nconst metric      = triggerCond.metric    || sensorType;\n\n// Map priority to notification severity level used in the notifications table\nconst severityMap = {\n  critical: 'critical',\n  high:     'high',\n  medium:   'medium',\n  low:      'low',\n};\nconst severity = severityMap[priority] || 'medium';\n\n// Build a short summary line for the notification\nlet summary = message;\nif (metricValue !== null && threshold !== null) {\n  summary = `${title}: ${metric} reading ${metricValue} exceeded threshold ${threshold}`;\n}\n\nreturn [{\n  json: {\n    alertId,\n    adminId,\n    siloId,\n    warehouseId,\n    batchId,\n    title,\n    message,\n    summary,\n    priority,\n    severity,\n    sensorType,\n    metric,\n    metricValue,\n    threshold,\n    triggeredAt: new Date().toISOString(),\n  }\n}];"
+      },
+      "id": "node-extract",
+      "name": "Extract Alert Fields",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300],
+      "notes": "Parses the Supabase webhook JSON payload and extracts\nall the fields needed by downstream nodes.\nOutputs a clean, flat object with alertId, adminId, siloId,\ntitle, message, priority, severity, metric, value, threshold."
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "tableId": "notifications",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "user_id",
+              "fieldValue": "={{ $json.adminId }}"
+            },
+            {
+              "fieldId": "title",
+              "fieldValue": "={{ $json.title }}"
+            },
+            {
+              "fieldId": "message",
+              "fieldValue": "={{ $json.summary }}"
+            },
+            {
+              "fieldId": "type",
+              "fieldValue": "alert"
+            },
+            {
+              "fieldId": "severity",
+              "fieldValue": "={{ $json.severity }}"
+            },
+            {
+              "fieldId": "is_read",
+              "fieldValue": false
+            },
+            {
+              "fieldId": "metadata",
+              "fieldValue": "={{ JSON.stringify({ alert_id: $json.alertId, silo_id: $json.siloId, sensor_type: $json.sensorType, metric: $json.metric, value: $json.metricValue, threshold: $json.threshold, priority: $json.priority }) }}"
+            }
+          ]
+        }
+      },
+      "id": "node-inapp",
+      "name": "Insert In-App Notification",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [900, 300],
+      "credentials": {
+        "supabaseApi": {
+          "name": "GrainHero Supabase"
+        }
+      },
+      "notes": "Inserts a row into the notifications table.\nYour React frontend listens to this table via Supabase Realtime\nand shows the notification bell/toast automatically.\nNo frontend code changes needed."
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "grain_alerts",
+        "filterType": "string",
+        "filterString": "alert_id=eq.{{ $('Extract Alert Fields').item.json.alertId }}",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "notification_sent",
+              "fieldValue": true
+            }
+          ]
+        }
+      },
+      "id": "node-mark-sent",
+      "name": "Mark Alert notification_sent",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [1120, 300],
+      "credentials": {
+        "supabaseApi": {
+          "name": "GrainHero Supabase"
+        }
+      },
+      "notes": "Sets notification_sent = true on the grain_alerts row.\nThis prevents duplicate notifications if the webhook fires twice\n(e.g. Supabase retries on timeout). Always the last step."
+    }
+  ],
+  "connections": {
+    "Receive Alert Webhook": {
+      "main": [
+        [{ "node": "Verify Webhook Secret", "type": "main", "index": 0 }]
+      ]
+    },
+    "Verify Webhook Secret": {
+      "main": [
+        [{ "node": "Extract Alert Fields",       "type": "main", "index": 0 }],
+        [{ "node": "Reject — Unauthorized",       "type": "main", "index": 0 }]
+      ]
+    },
+    "Extract Alert Fields": {
+      "main": [
+        [{ "node": "Insert In-App Notification", "type": "main", "index": 0 }]
+      ]
+    },
+    "Insert In-App Notification": {
+      "main": [
+        [{ "node": "Mark Alert notification_sent", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "tags": ["grainhero", "alerts", "phase1"],
+  "pinData": {},
+  "versionId": "1.0.0",
+  "meta": {
+    "instanceId": "grainhero-n8n"
+  }
+}

@@ -223,6 +223,17 @@ interface SiloCardItem {
   score: number;
   level: string;
   quantity_kg: number;
+  // Extended fields
+  temperature?: number | null;
+  humidity?: number | null;
+  moisture?: number | null;
+  co2?: number | null;
+  last_reading_at?: string | null;
+  confidence?: number | null;
+  capacity_kg?: number | null;
+  current_occupancy_kg?: number | null;
+  status?: string | null;
+  factors?: string[];
 }
 
 // ── Compact popup dialog with silo info + RAG recommendation ─────────────────
@@ -252,103 +263,173 @@ function SiloDetailDialog({ silo, open, onClose }: {
 
   if (!silo) return null;
 
-  const recommendation = data?.recommendation;
+  const cleanRec = data?.recommendation
+    ?.replace(/\u2014/g, "-").replace(/\u2013/g, "-").replace(/—/g, "-");
   const source = data?.source;
-  const cleanRec = recommendation?.replace(/\u2014/g, "-").replace(/\u2013/g, "-").replace(/—/g, "-");
+
+  const utilization = silo.capacity_kg && silo.current_occupancy_kg
+    ? Math.round((silo.current_occupancy_kg / silo.capacity_kg) * 100)
+    : null;
+
+  const lastRead = silo.last_reading_at
+    ? new Date(silo.last_reading_at).toLocaleString([], { dateStyle: "short", timeStyle: "short" })
+    : null;
+
+  const confidencePct = silo.confidence != null ? Math.round(silo.confidence * 100) : null;
+
+  // helper
+  const InfoRow = ({ label, value, color }: { label: string; value: string; color?: string }) => (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center",
+      padding: "6px 0", borderBottom: "1px solid #f1f5f9" }}>
+      <span style={{ fontSize: "12px", color: "#64748b" }}>{label}</span>
+      <span style={{ fontSize: "12px", fontWeight: 600, color: color ?? "#1e293b" }}>{value}</span>
+    </div>
+  );
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-sm w-full p-0 overflow-hidden rounded-2xl gap-0">
-        {/* Header */}
+
+        {/* Green header */}
         <DialogHeader className="p-0">
-          <div className="flex items-center gap-3 px-4 py-3 border-b border-border" style={{ background: "#d4f0a0" }}>
-            <div className="p-1.5 rounded-lg bg-white/50">
-              <SiloIcon size={24} />
+          <div className="flex items-center gap-3 px-4 py-3" style={{ background: "#d4f0a0" }}>
+            <div style={{ padding: "6px", borderRadius: "8px", background: "rgba(255,255,255,0.5)" }}>
+              <SiloIcon size={22} />
             </div>
             <div className="flex-1 min-w-0">
-              <DialogTitle className="text-sm font-bold leading-tight" style={{ color: "#2d5a1b" }}>{silo.name}</DialogTitle>
-              <DialogDescription className="text-[10px]" style={{ color: "#3a6b28" }}>Silo Details and AI Recommendation</DialogDescription>
+              <DialogTitle className="text-sm font-bold" style={{ color: "#2d5a1b" }}>{silo.name}</DialogTitle>
+              <DialogDescription className="text-[10px]" style={{ color: "#3a6b28" }}>
+                {silo.grain ? `${silo.grain} · ` : ""}{silo.status ?? "active"} · {silo.quantity_kg.toLocaleString()} kg
+              </DialogDescription>
             </div>
+            {silo.last_reading_at && (
+              <span style={{ fontSize: "9px", color: "#3a6b28", background: "rgba(255,255,255,0.4)",
+                padding: "2px 6px", borderRadius: "999px", whiteSpace: "nowrap" }}>
+                {lastRead}
+              </span>
+            )}
           </div>
         </DialogHeader>
 
         {/* Scrollable body */}
-        <div className="overflow-y-auto max-h-[65vh] px-4 py-4 space-y-4" style={{ background: "#ffffff" }}>
+        <div style={{ overflowY: "auto", maxHeight: "70vh", background: "#ffffff", padding: "16px" }}>
 
-          {/* Risk score */}
-          <div className="space-y-1.5">
-            <p style={{ fontSize: "10px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "#64748b" }}>Risk Score</p>
-            <div className="flex items-center gap-2">
-              <span style={{ fontSize: "1.5rem", fontWeight: 900, color: riskColor(silo.level) }}>{silo.score}%</span>
-              <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "999px", textTransform: "capitalize",
-                background: `${riskColor(silo.level)}15`, color: riskColor(silo.level), border: `1px solid ${riskColor(silo.level)}30` }}>
-                {silo.level}
-              </span>
+          {/* ── Risk score ── */}
+          <section style={{ marginBottom: "16px" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
+              <p style={{ fontSize: "10px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "#94a3b8" }}>Risk Score</p>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span style={{ fontSize: "22px", fontWeight: 900, color: riskColor(silo.level) }}>{silo.score}%</span>
+                <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: "999px", textTransform: "capitalize",
+                  background: `${riskColor(silo.level)}15`, color: riskColor(silo.level), border: `1px solid ${riskColor(silo.level)}30` }}>
+                  {silo.level}
+                </span>
+              </div>
             </div>
-            <div className="h-2 rounded-full overflow-hidden" style={{ background: "#f1f5f9" }}>
-              <div className="h-2 rounded-full transition-all duration-700" style={{ width: `${silo.score}%`, background: riskColor(silo.level) }} />
+            <div style={{ height: "6px", background: "#f1f5f9", borderRadius: "3px", overflow: "hidden" }}>
+              <div style={{ height: "6px", width: `${silo.score}%`, background: riskColor(silo.level), borderRadius: "3px", transition: "width 0.6s" }} />
             </div>
-          </div>
+            {confidencePct != null && (
+              <p style={{ fontSize: "10px", color: "#94a3b8", marginTop: "4px" }}>
+                Confidence: {confidencePct}% ({confidencePct >= 80 ? "ML model" : "heuristic estimate"})
+              </p>
+            )}
+          </section>
 
-          {/* Info grid */}
-          <div className="grid grid-cols-2 gap-2">
-            {[
-              { label: "Grain Type", value: silo.grain ?? "Not set",  isRisk: false },
-              { label: "Quantity",   value: silo.quantity_kg != null ? `${silo.quantity_kg.toLocaleString()} kg` : "N/A", isRisk: false },
-              { label: "Risk Level", value: silo.level, isRisk: true },
-              { label: "Data",       value: "Live sensors", isRisk: false },
-            ].map(({ label, value, isRisk }) => (
-              <div key={label} style={{ background: "#f8fafc", borderRadius: "10px", padding: "8px 12px" }}>
-                <p style={{ fontSize: "9px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "#94a3b8", marginBottom: "2px" }}>{label}</p>
-                <p style={{ fontSize: "12px", fontWeight: 700, textTransform: "capitalize", color: isRisk ? riskColor(silo.level) : "#1e293b" }}>{value}</p>
+          {/* ── Risk Factors ── */}
+          {silo.factors && silo.factors.length > 0 && (
+            <section style={{ marginBottom: "16px" }}>
+              <p style={{ fontSize: "10px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "#94a3b8", marginBottom: "6px" }}>Risk Factors</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                {silo.factors.map((f, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: "8px",
+                    background: `${riskColor(silo.level)}08`, border: `1px solid ${riskColor(silo.level)}20`,
+                    borderRadius: "8px", padding: "6px 10px" }}>
+                    <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: riskColor(silo.level), flexShrink: 0 }} />
+                    <span style={{ fontSize: "12px", color: "#334155" }}>{f}</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </section>
+          )}
 
-          {/* AI Recommendation */}
-          <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "12px" }}>
-            <div className="flex items-center gap-1.5 mb-2">
-              <Sparkles style={{ width: "14px", height: "14px", color: "#2FAC0C", flexShrink: 0 }} />
-              <p style={{ fontSize: "10px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "#64748b", flex: 1 }}>AI Recommendation</p>
-              {source === "rag" && <span style={{ fontSize: "8px", background: "#e2e8f0", color: "#64748b", borderRadius: "4px", padding: "1px 6px" }}>live rag</span>}
-              {source === "offline" && <WifiOff style={{ width: "12px", height: "12px", color: "#94a3b8" }} />}
+          {/* ── Current Conditions ── */}
+          {(silo.temperature != null || silo.humidity != null || silo.moisture != null || silo.co2 != null) && (
+            <section style={{ marginBottom: "16px" }}>
+              <p style={{ fontSize: "10px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "#94a3b8", marginBottom: "6px" }}>Current Conditions</p>
+              <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "4px 12px" }}>
+                {silo.temperature != null && <InfoRow label="Temperature" value={`${silo.temperature.toFixed(1)} °C`} color={silo.temperature > 28 ? "#f97316" : "#1e293b"} />}
+                {silo.humidity != null    && <InfoRow label="Humidity"    value={`${silo.humidity.toFixed(0)} %`}    color={silo.humidity > 70 ? "#f97316" : "#1e293b"} />}
+                {silo.moisture != null    && <InfoRow label="Moisture"    value={`${silo.moisture.toFixed(1)} %`}    color={silo.moisture > 14 ? "#ef4444" : "#1e293b"} />}
+                {silo.co2 != null         && <InfoRow label="CO₂"         value={`${silo.co2.toFixed(0)} ppm`}       color={silo.co2 > 1500 ? "#ef4444" : silo.co2 > 800 ? "#f97316" : "#1e293b"} />}
+              </div>
+            </section>
+          )}
+
+          {/* ── Storage Info ── */}
+          <section style={{ marginBottom: "16px" }}>
+            <p style={{ fontSize: "10px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "#94a3b8", marginBottom: "6px" }}>Storage Info</p>
+            <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "4px 12px" }}>
+              <InfoRow label="Grain Type"  value={silo.grain ?? "Not set"} />
+              <InfoRow label="Quantity"    value={`${silo.quantity_kg.toLocaleString()} kg`} />
+              {utilization != null && (
+                <>
+                  <InfoRow label="Capacity"    value={`${silo.capacity_kg?.toLocaleString()} kg`} />
+                  <InfoRow label="Utilization" value={`${utilization}%`} color={utilization > 90 ? "#f97316" : "#1e293b"} />
+                </>
+              )}
+              <InfoRow label="Status"      value={silo.status ?? "active"} />
+              {lastRead && <InfoRow label="Last Reading" value={lastRead} />}
             </div>
-            {isFetching && !cleanRec && (
-              <div className="space-y-1.5 animate-pulse">
-                <div style={{ height: "6px", background: "#e2e8f0", borderRadius: "3px" }} />
-                <div style={{ height: "6px", background: "#e2e8f0", borderRadius: "3px", width: "83%" }} />
-                <div style={{ height: "6px", background: "#e2e8f0", borderRadius: "3px", width: "67%" }} />
+          </section>
+
+          {/* ── AI Recommendation ── */}
+          <section>
+            <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "12px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "10px" }}>
+                <Sparkles style={{ width: "13px", height: "13px", color: "#2FAC0C", flexShrink: 0 }} />
+                <p style={{ fontSize: "10px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "#475569", flex: 1 }}>AI Recommendation</p>
+                {source === "rag"     && <span style={{ fontSize: "8px", background: "#dcfce7", color: "#166534", borderRadius: "4px", padding: "1px 6px" }}>live rag</span>}
+                {source === "offline" && <WifiOff style={{ width: "11px", height: "11px", color: "#94a3b8" }} />}
               </div>
-            )}
-            {isError && !isFetching && (
-              <div className="flex items-center justify-between gap-2">
-                <p style={{ fontSize: "12px", color: "#ef4444" }}>Failed to load recommendation.</p>
-                <button onClick={() => refetch()} style={{ fontSize: "10px", color: "#64748b", display: "flex", alignItems: "center", gap: "4px" }}>
-                  <RotateCcw style={{ width: "12px", height: "12px" }} /> Retry
-                </button>
-              </div>
-            )}
-            {cleanRec && !isFetching && (
-              <div className="space-y-2">
-                {cleanRec.split("\n").map((line: string) => line.trim()).filter((line: string) => line.length > 0)
-                  .map((line: string, i: number) => {
-                    const isStep = /^\d+\./.test(line);
-                    const stepNum = isStep ? line.match(/^(\d+)\./)?.[1] : null;
-                    const text = isStep ? line.replace(/^\d+\.\s*/, "") : line;
-                    return (
-                      <div key={i} className="flex gap-2 items-start">
-                        {stepNum && (
-                          <span style={{ flexShrink: 0, width: "18px", height: "18px", borderRadius: "50%", background: "#2d5a1b",
-                            display: "flex", alignItems: "center", justifyContent: "center",
-                            fontSize: "8px", fontWeight: 700, color: "#fff", marginTop: "2px" }}>{stepNum}</span>
-                        )}
-                        <p style={{ fontSize: "12px", lineHeight: "1.5", color: "#334155", flex: 1 }}>{text}</p>
-                      </div>
-                    );
-                  })}
-              </div>
-            )}
-          </div>
+
+              {isFetching && !cleanRec && (
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  {[1, 0.85, 0.7].map((w, i) => (
+                    <div key={i} className="animate-pulse" style={{ height: "6px", background: "#e2e8f0", borderRadius: "3px", width: `${w * 100}%` }} />
+                  ))}
+                </div>
+              )}
+              {isError && !isFetching && (
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <p style={{ fontSize: "12px", color: "#ef4444" }}>Failed to load recommendation.</p>
+                  <button onClick={() => refetch()} style={{ fontSize: "11px", color: "#64748b", display: "flex", alignItems: "center", gap: "4px" }}>
+                    <RotateCcw style={{ width: "12px", height: "12px" }} /> Retry
+                  </button>
+                </div>
+              )}
+              {cleanRec && !isFetching && (
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  {cleanRec.split("\n").map((l: string) => l.trim()).filter((l: string) => l.length > 0)
+                    .map((line: string, i: number) => {
+                      const isStep = /^\d+\./.test(line);
+                      const stepNum = isStep ? line.match(/^(\d+)\./)?.[1] : null;
+                      const text = isStep ? line.replace(/^\d+\.\s*/, "") : line;
+                      return (
+                        <div key={i} style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
+                          {stepNum && (
+                            <span style={{ flexShrink: 0, width: "18px", height: "18px", borderRadius: "50%",
+                              background: "#2d5a1b", display: "flex", alignItems: "center", justifyContent: "center",
+                              fontSize: "8px", fontWeight: 700, color: "#fff", marginTop: "1px" }}>{stepNum}</span>
+                          )}
+                          <p style={{ fontSize: "13px", lineHeight: "1.55", color: "#1e293b", flex: 1 }}>{text}</p>
+                        </div>
+                      );
+                    })}
+                </div>
+              )}
+            </div>
+          </section>
 
         </div>
       </DialogContent>
@@ -356,88 +437,43 @@ function SiloDetailDialog({ silo, open, onClose }: {
   );
 }
 
-// ── Card with always-visible recommendation ───────────────────────────────────
-function SiloCard({ silo }: { silo: SiloCardItem }) {
-  const fetchRec = useServerFn(getSiloRecommendation);
-
-  const { data, isFetching, isError, refetch } = useQuery({
-    queryKey: ["silo-recommendation", silo.id],
-    queryFn: () =>
-      fetchRec({
-        data: {
-          siloId:    silo.id,
-          siloName:  silo.name,
-          grainType: silo.grain ?? null,
-          riskLevel: silo.level,
-          riskScore: silo.score,
-        },
-      }),
-    enabled: true,
-    staleTime: 5 * 60_000,
-    retry: 1,
-  });
-
-  const cleanRec = data?.recommendation
-    ?.replace(/\u2014/g, "-").replace(/\u2013/g, "-").replace(/—/g, "-");
-  const source = data?.source;
-
+// ── Compact clickable card ─────────────────────────────────────────────────────
+function SiloCard({ silo, onClick }: { silo: SiloCardItem; onClick: () => void }) {
   return (
-    <div className="rounded-xl overflow-hidden shadow-sm border border-slate-200">
-      {/* Header */}
+    <div
+      className="rounded-xl overflow-hidden shadow-sm border border-slate-200 cursor-pointer hover:shadow-md transition-shadow select-none"
+      style={{ background: "#ffffff" }}
+      onClick={onClick}
+      role="button"
+      aria-label={`Open details for ${silo.name}`}
+    >
+      {/* Green header */}
       <div className="flex items-center justify-between px-4 py-3" style={{ background: "#d4f0a0" }}>
-        <span className="font-semibold text-sm tracking-tight" style={{ color: "#2d5a1b" }}>{silo.name}</span>
+        <span className="font-semibold text-sm" style={{ color: "#2d5a1b" }}>{silo.name}</span>
         <SiloIcon />
       </div>
 
-      {/* Body — hardcoded white so theme variables don't bleed green */}
+      {/* Recommendation preview box */}
       <div className="px-4 py-3" style={{ background: "#ffffff" }}>
-
-        {/* Recommendation */}
-        <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "10px", color: "#1e293b" }}>
-          <div className="flex items-center gap-1.5 mb-2">
-            <Sparkles className="h-3 w-3 shrink-0" style={{ color: "#2FAC0C" }} />
-            <p style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "#475569", flex: 1 }}>AI Recommendation</p>
-            {source === "rag" && <span style={{ fontSize: "9px", background: "#e2e8f0", color: "#64748b", borderRadius: "4px", padding: "1px 5px" }}>live</span>}
-            {source === "offline" && <WifiOff style={{ width: "10px", height: "10px", color: "#94a3b8" }} />}
+        <div style={{
+          background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px",
+          padding: "10px", height: "88px", overflow: "hidden", display: "flex", flexDirection: "column",
+        }}>
+          {/* Label */}
+          <div className="flex items-center gap-1.5 shrink-0" style={{ marginBottom: "6px" }}>
+            <Sparkles style={{ width: "11px", height: "11px", color: "#2FAC0C", flexShrink: 0 }} />
+            <p style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "#475569", flex: 1 }}>
+              AI Recommendation
+            </p>
+            <span style={{ fontSize: "9px", color: "#94a3b8" }}>click for details</span>
           </div>
-
-          {isFetching && !cleanRec && (
-            <div className="space-y-1.5 animate-pulse">
-              <div style={{ height: "6px", background: "#e2e8f0", borderRadius: "3px" }} />
-              <div style={{ height: "6px", background: "#e2e8f0", borderRadius: "3px", width: "83%" }} />
-              <div style={{ height: "6px", background: "#e2e8f0", borderRadius: "3px", width: "67%" }} />
-            </div>
-          )}
-          {isError && !isFetching && (
-            <div className="flex items-center gap-2">
-              <p style={{ fontSize: "10px", color: "#ef4444", flex: 1 }}>Failed to load.</p>
-              <button onClick={() => refetch()} style={{ fontSize: "9px", color: "#64748b", display: "flex", alignItems: "center", gap: "3px" }}>
-                <RotateCcw style={{ width: "10px", height: "10px" }} /> Retry
-              </button>
-            </div>
-          )}
-          {cleanRec && !isFetching && (
-            <div className="space-y-1.5">
-              {cleanRec.split("\n").map((l: string) => l.trim()).filter((l: string) => l.length > 0)
-                .map((line: string, i: number) => {
-                  const isStep = /^\d+\./.test(line);
-                  const stepNum = isStep ? line.match(/^(\d+)\./)?.[1] : null;
-                  const text = isStep ? line.replace(/^\d+\.\s*/, "") : line;
-                  return (
-                    <div key={i} className="flex gap-2 items-start">
-                      {stepNum && (
-                        <span style={{ flexShrink: 0, width: "16px", height: "16px", borderRadius: "50%", background: "#2d5a1b",
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                          fontSize: "7px", fontWeight: 700, color: "#fff", marginTop: "2px" }}>{stepNum}</span>
-                      )}
-                      <p style={{ fontSize: "13px", lineHeight: 1.6, color: "#1e293b", flex: 1 }}>{text}</p>
-                    </div>
-                  );
-                })}
-            </div>
-          )}
+          {/* Skeleton preview lines */}
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "5px", justifyContent: "center" }}>
+            <div style={{ height: "5px", background: "#e2e8f0", borderRadius: "3px" }} />
+            <div style={{ height: "5px", background: "#e2e8f0", borderRadius: "3px", width: "80%" }} />
+            <div style={{ height: "5px", background: "#e2e8f0", borderRadius: "3px", width: "60%" }} />
+          </div>
         </div>
-
       </div>
     </div>
   );
@@ -449,28 +485,55 @@ interface SiloFlashCardsProps {
 }
 
 function SiloFlashCards({ predictions }: SiloFlashCardsProps) {
+  const [selected, setSelected] = useState<SiloCardItem | null>(null);
+
   const items: SiloCardItem[] = predictions.length > 0
     ? predictions.slice(0, 6).map((p) => ({
-        id:          p.id,
-        name:        p.name ?? p.silo_id,
-        grain:       p.grain_type as string | undefined,
-        score:       p.score       as number,
-        level:       p.level       as string,
-        quantity_kg: p.quantity_kg as number,
+        id:                   p.id,
+        name:                 p.name ?? p.silo_id,
+        grain:                p.grain_type as string | undefined,
+        score:                p.score       as number,
+        level:                p.level       as string,
+        quantity_kg:          p.quantity_kg as number,
+        temperature:          p.temperature ?? null,
+        humidity:             p.humidity    ?? null,
+        moisture:             p.moisture    ?? null,
+        co2:                  p.co2         ?? null,
+        last_reading_at:      p.last_reading_at ?? null,
+        confidence:           p.confidence  ?? null,
+        capacity_kg:          p.capacity_kg ?? null,
+        current_occupancy_kg: p.current_occupancy_kg ?? null,
+        status:               p.status      ?? null,
+        factors:              Array.isArray(p.factors) ? p.factors : [],
       }))
     : [
-        { id: "preview-1", name: "Silo 1", grain: "Wheat",  score: 28, level: "low",      quantity_kg: 12400 },
-        { id: "preview-2", name: "Silo 2", grain: "Maize",  score: 62, level: "moderate", quantity_kg: 8750  },
-        { id: "preview-3", name: "Silo 3", grain: "Barley", score: 85, level: "high",     quantity_kg: 5100  },
+        { id: "preview-1", name: "Silo 1", grain: "Wheat",  score: 28, level: "low",      quantity_kg: 12400,
+          temperature: 22.5, humidity: 58, moisture: 12.8, co2: 480,
+          last_reading_at: new Date(Date.now() - 3600000).toISOString(),
+          confidence: 0.85, capacity_kg: 20000, current_occupancy_kg: 12400,
+          status: "active", factors: ["Moisture 12.8% borderline"] },
+        { id: "preview-2", name: "Silo 2", grain: "Maize",  score: 62, level: "moderate", quantity_kg: 8750,
+          temperature: 28.1, humidity: 67, moisture: 14.2, co2: 920,
+          last_reading_at: new Date(Date.now() - 7200000).toISOString(),
+          confidence: 0.85, capacity_kg: 15000, current_occupancy_kg: 8750,
+          status: "active", factors: ["High temp 28.1°C", "Moisture 14.2% above safe"] },
+        { id: "preview-3", name: "Silo 3", grain: "Barley", score: 85, level: "high",     quantity_kg: 5100,
+          temperature: 31.4, humidity: 74, moisture: 15.8, co2: 1420,
+          last_reading_at: new Date(Date.now() - 1800000).toISOString(),
+          confidence: 0.85, capacity_kg: 10000, current_occupancy_kg: 5100,
+          status: "active", factors: ["High temp 31.4°C", "High humidity 74%", "Moisture 15.8% above safe", "CO₂ 1420ppm"] },
       ];
 
   return (
-    <div className="mt-2">
-      <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-        {items.map((silo) => (
-          <SiloCard key={silo.id} silo={silo} />
-        ))}
+    <>
+      <div className="mt-2">
+        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          {items.map((silo) => (
+            <SiloCard key={silo.id} silo={silo} onClick={() => setSelected(silo)} />
+          ))}
+        </div>
       </div>
-    </div>
+      <SiloDetailDialog silo={selected} open={!!selected} onClose={() => setSelected(null)} />
+    </>
   );
 }

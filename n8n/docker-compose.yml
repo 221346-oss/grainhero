@@ -1,0 +1,82 @@
+# ============================================================
+# GrainHero n8n — Local Development Stack
+# ============================================================
+# Starts n8n on http://localhost:5678
+#
+# Usage:
+#   docker-compose up -d          ← start in background
+#   docker-compose down           ← stop
+#   docker-compose logs -f n8n    ← tail logs
+# ============================================================
+
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: grainhero-n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      # ── Core ──────────────────────────────────────────────
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:5678/
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+
+      # ── Auth — login to n8n UI ─────────────────────────────
+      # Change these before deploying to Render
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
+
+      # ── Encryption key — protects stored credentials ───────
+      # Generate with: openssl rand -hex 32
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+
+      # ── Timezone ───────────────────────────────────────────
+      - GENERIC_TIMEZONE=Asia/Karachi
+
+      # ── Logging ────────────────────────────────────────────
+      - N8N_LOG_LEVEL=info
+      - N8N_LOG_OUTPUT=console
+
+      # ── Disable telemetry ──────────────────────────────────
+      - N8N_DIAGNOSTICS_ENABLED=false
+      - N8N_VERSION_NOTIFICATIONS_ENABLED=false
+
+      # ── Community nodes ────────────────────────────────────
+      - N8N_COMMUNITY_PACKAGES_ENABLED=true
+      - N8N_UNVERIFIED_PACKAGES_ENABLED=true
+
+      # ── GrainHero custom env vars ──────────────────────────
+      # These are available inside n8n workflow expressions
+      # as {{ $env.VARIABLE_NAME }}
+      - N8N_WEBHOOK_SECRET=${N8N_WEBHOOK_SECRET}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - RAG_API_URL=${RAG_API_URL}
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - RESEND_FROM_EMAIL=${RESEND_FROM_EMAIL}
+      - RESEND_TO_EMAIL=${RESEND_TO_EMAIL}
+      - MOCEAN_API_KEY=${MOCEAN_API_KEY}
+      - MOCEAN_API_SECRET=${MOCEAN_API_SECRET}
+      - MOCEAN_FROM=${MOCEAN_FROM}
+
+    volumes:
+      # Persists n8n data (workflows, credentials, execution history)
+      # so you don't lose everything when the container restarts
+      - n8n_data:/home/node/.n8n
+
+    # Health check — Docker restarts the container if n8n crashes
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:5678/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  n8n_data:
+    external: true
+    name: n8n_n8n_data

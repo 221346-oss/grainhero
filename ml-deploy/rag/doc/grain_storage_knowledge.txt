@@ -1,0 +1,125 @@
+GRAINHERO GRAIN STORAGE OPERATIONAL MANUAL
+==========================================
+
+TEMPERATURE THRESHOLDS BY GRAIN TYPE
+--------------------------------------
+Wheat: Safe storage below 15C. Above 25C triggers rapid spoilage. Ideal: 10-15C.
+Maize (Corn): Safe below 18C. Above 28C accelerates mycotoxin development. Ideal: 12-18C.
+Rice: Safe below 20C. Above 30C causes quality loss. Ideal: 15-20C.
+Sorghum: Safe below 20C. Above 28C increases aflatoxin risk. Ideal: 12-18C.
+Barley: Safe below 15C. Above 22C triggers hotspot formation. Ideal: 10-15C.
+
+MOISTURE CONTENT SAFE LIMITS
+------------------------------
+Wheat: Safe below 13.5%. Critical above 15%. Above 16% = immediate spoilage risk.
+Maize: Safe below 13%. Critical above 14.5%. Above 15.5% = high mold risk.
+Rice: Safe below 14%. Critical above 15.5%. Above 17% = rapid deterioration.
+Sorghum: Safe below 12.5%. Critical above 14%.
+Barley: Safe below 13%. Critical above 14.5%.
+
+HUMIDITY CONTROL
+-----------------
+Relative humidity in storage should be kept below 65%.
+Above 70% RH: mold growth accelerates on grain surface.
+Above 75% RH: insect activity increases significantly.
+Condensation risk occurs when temperature differential exceeds 5C between grain mass and ambient air.
+Aeration fans should activate when RH outside is lower than inside the silo.
+
+CO2 MONITORING
+---------------
+CO2 below 600 ppm: Normal grain respiration, safe condition.
+CO2 600-1000 ppm: Elevated respiration, monitor closely, check moisture.
+CO2 1000-1500 ppm: Warning - active biological activity, inspect for hotspots.
+CO2 above 1500 ppm: Critical - immediate inspection required, potential spoilage in progress.
+CO2 above 3000 ppm: Emergency - evacuate personnel, do not enter silo without ventilation.
+
+VOC (VOLATILE ORGANIC COMPOUNDS)
+----------------------------------
+VOC below 200 ppb: Normal background level.
+VOC 200-500 ppb: Mild off-gassing, possible early mold presence.
+VOC above 500 ppb: Significant microbial or pest activity detected.
+VOC above 1000 ppb: High probability of active spoilage or pest infestation.
+
+AERATION PROTOCOLS
+-------------------
+1. Cooling aeration: Run fans when outside air is 5C or more cooler than grain.
+2. Drying aeration: Run continuously when grain moisture exceeds safe limit by 1%.
+3. Equilibrium aeration: Run when outside RH is below 65% to equalize grain moisture.
+4. Aeration fan runtime: Minimum 4 hours per session for effective temperature equalization.
+5. Never aerate during rain or when outside RH exceeds 85%.
+6. Recommended aeration: 2-4 CFM per bushel for cooling.
+
+PEST DETECTION AND MANAGEMENT
+-------------------------------
+Common stored grain pests: Weevils, Grain Borers, Flour Beetles, Grain Moths.
+Early signs: Fine dust or frass on grain surface, grain clumping, unusual warmth in localized areas.
+Temperature hotspots (more than 5C above average) often indicate pest or mold activity.
+VOC spikes alongside temperature hotspots: 90% probability of active infestation.
+Action threshold: 1-2 insects per kg of grain - immediate fumigation required.
+Preventive treatment: Apply approved protectant when loading new grain batches.
+
+HOTSPOT DETECTION
+------------------
+A hotspot is defined as any point in the grain mass where temperature exceeds the average by 3C or more.
+Hotspots form due to moisture migration, biological activity (mold or insects), or structural issues.
+Response to hotspot:
+  Level 1 (3-5C above average): Increase monitoring frequency to every 6 hours.
+  Level 2 (5-10C above average): Activate aeration immediately, inspect visually.
+  Level 3 (more than 10C above average): Emergency - consider transfer or fumigation.
+
+NATURAL STORAGE LIFE ESTIMATES
+--------------------------------
+Wheat at 12% moisture, 15C: 3-5 years
+Wheat at 14% moisture, 20C: 6-12 months
+Maize at 13% moisture, 18C: 2-3 years
+Maize at 15% moisture, 25C: 3-6 months
+Rice at 14% moisture, 20C: 1-2 years
+Sorghum at 12% moisture, 18C: 2-4 years
+Barley at 13% moisture, 15C: 2-3 years
+
+RISK SCORE INTERPRETATION
+--------------------------
+0-24% (Low): Grain is in optimal condition. Continue routine monitoring every 12-24 hours.
+25-49% (Moderate): Conditions slightly outside optimal range. Increase monitoring to every 6 hours. Check moisture and temperature trends.
+50-74% (High): Significant risk present. Immediate corrective action required. Activate aeration, inspect physically, consider transfer.
+75-100% (Critical): Emergency condition. Grain at immediate risk of spoilage or safety hazard. Take emergency action - transfer, fumigate, or dispose if unsafe.
+
+SENSOR MAINTENANCE
+-------------------
+Temperature cables: Calibrate every 6 months. Replace sensors showing drift more than 1C vs reference.
+Humidity sensors: Clean monthly. Replace annually or when reading variance exceeds 3% RH.
+CO2 sensors: Zero-calibrate every 3 months using fresh outside air reference.
+VOC sensors: Replace sensing element annually for accuracy.
+Regular maintenance reduces false alarms by 60% and improves prediction accuracy.
+
+EMERGENCY PROCEDURES
+---------------------
+Fire in silo: Do not open hatches - this feeds oxygen. Call emergency services immediately.
+CO2 above 3000 ppm: Do not enter. Evacuate 20m radius. Ventilate for minimum 30 minutes before entry.
+Grain avalanche risk: Never walk on grain surface. Use approved entry equipment and buddy system.
+Structural failure warning: Unusual sounds, cracks in walls, or uneven settling - evacuate immediately.
+
+SILO MANAGEMENT BEST PRACTICES
+--------------------------------
+Always inspect grain before loading - reject visibly moldy, wet, or insect-damaged grain.
+Clean silos thoroughly between batches to remove old grain, dust, and debris.
+Sample grain at multiple depths and locations - top, middle, and bottom of the grain mass.
+Maintain a minimum 1 meter headspace above grain for airflow and inspection access.
+Record all temperature and moisture readings with timestamps for trend analysis.
+First In First Out (FIFO): Always use oldest grain first to prevent long-term storage issues.
+Rotate grain every 6-12 months even if conditions are good, to prevent caking and stratification.
+
+GRAIN QUALITY GRADES
+---------------------
+Grade 1 (Premium): Moisture below 12.5%, no visible damage, no foreign material.
+Grade 2 (Standard): Moisture 12.5-14%, minimal damage (less than 2%), minimal foreign material.
+Grade 3 (Feed): Moisture 14-16%, visible damage (2-5%), requires immediate attention.
+Below Grade: Moisture above 16%, significant damage (more than 5%), not suitable for human consumption.
+
+LOADING AND UNLOADING SAFETY
+------------------------------
+Never enter a silo during loading or unloading operations.
+Minimum 2-person team required for any silo entry.
+Lockout/tagout all mechanical equipment before entry.
+Test atmosphere (CO2, O2) before entry after extended storage.
+Wear appropriate PPE: dust mask minimum, respirator for fumigated grain.
